@@ -11,6 +11,7 @@ use std::path::Path;  // path, clear
 
 use id3::Tag;
 
+/// The function that runs from the starting point
 fn visit_dirs(dir: &Path, cb: &Fn(&DirEntry) -> io::Result<()> ) -> io::Result<()> {
     if dir.is_dir() {
         for entry in fs::read_dir(dir)? {
