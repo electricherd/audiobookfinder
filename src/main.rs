@@ -27,6 +27,7 @@ fn visit_dirs(dir: &Path, cb: &Fn(&DirEntry) -> io::Result<()> ) -> io::Result<(
     Ok(())
 }
 
+/// the function to check all files separately
 fn visit_files(cb: &DirEntry) -> io::Result<()> {
     let filetype = tree_magic::from_filepath(&cb.path());
     match filetype.as_ref() {
