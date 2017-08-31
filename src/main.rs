@@ -1,9 +1,15 @@
+//#![feature(alloc_system)]
+//extern crate alloc_system;   // strip down size of binary executable
+
+extern crate id3;
 extern crate tree_magic;  // mime types
 
 use std::io;    
 use std::env;     // args
 use std::fs::{self, DirEntry};  // directory
 use std::path::Path;  // path, clear
+
+use id3::Tag;
 
 fn visit_dirs(dir: &Path, cb: &Fn(&DirEntry) -> io::Result<()> ) -> io::Result<()> {
     if dir.is_dir() {
@@ -22,14 +28,18 @@ fn visit_dirs(dir: &Path, cb: &Fn(&DirEntry) -> io::Result<()> ) -> io::Result<(
 
 fn visit_files(cb: &DirEntry) -> io::Result<()> {
     let filetype = tree_magic::from_filepath(&cb.path());
-    let you = match filetype.as_ref() {
-        "text/plain" => "none",
-        _ => "-",
-    };
-    println!("{:?}",you); //file_name());
+    match filetype.as_ref() {
+        "text/plain" => {},
+        "audio/mpeg" => visit_audio_files(&cb.path()),
+        _ => println!("[{:?}]{:?}",filetype, cb.path()),
+    }
 	Ok(())	
 }
 
+fn visit_audio_files(cb: &Path) {
+    let tag = Tag::read_from_path(cb).unwrap();
+    println!("{:?}",tag.artist().unwrap())
+}
 
 
 
@@ -41,5 +51,7 @@ fn main() {
         path = &args[1];
     }
     let real_path = Path::new(path);
-    visit_dirs(real_path, &visit_files);
+    match visit_dirs(real_path, &visit_files) {
+        _ => println!("Finished!")
+    }
 }
