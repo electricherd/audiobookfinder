@@ -1,6 +1,9 @@
-use std::io;
-use std::fs::{self, DirEntry};
-use std::path::Path;
+extern crate tree_magic;  // mime types
+
+use std::io;    
+use std::env;     // args
+use std::fs::{self, DirEntry};  // directory
+use std::path::Path;  // path, clear
 
 fn visit_dirs(dir: &Path, cb: &Fn(&DirEntry) -> io::Result<()> ) -> io::Result<()> {
     if dir.is_dir() {
@@ -18,7 +21,12 @@ fn visit_dirs(dir: &Path, cb: &Fn(&DirEntry) -> io::Result<()> ) -> io::Result<(
 }
 
 fn visit_files(cb: &DirEntry) -> io::Result<()> {
-	println!("{:?}",cb.path()); //file_name());
+    let filetype = tree_magic::from_filepath(&cb.path());
+    let you = match filetype.as_ref() {
+        "text/plain" => "none",
+        _ => "-",
+    };
+    println!("{:?}",you); //file_name());
 	Ok(())	
 }
 
@@ -26,6 +34,12 @@ fn visit_files(cb: &DirEntry) -> io::Result<()> {
 
 
 fn main() {
-    let path = Path::new(".");
-    visit_dirs(path, &visit_files);
+    let args: Vec<_> = env::args().collect();
+
+    let mut path = ".";
+    if args.len() > 1 {
+        path = &args[1];
+    }
+    let real_path = Path::new(path);
+    visit_dirs(real_path, &visit_files);
 }

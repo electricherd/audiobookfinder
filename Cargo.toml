@@ -4,4 +4,5 @@ version = "0.1.0"
 authors = ["Sven Kroemeke <skroemeke@gmail.com>"]
 
 [dependencies]
-id3 = "0.1.12"
+#id3 = "0.1.12"
+tree_magic = "0.2.0"
