@@ -1,0 +1,7 @@
+[package]
+name = "audiobookfinder"
+version = "0.1.0"
+authors = ["Sven Kroemeke <skroemeke@gmail.com>"]
+
+[dependencies]
+id3 = "0.1.12"
