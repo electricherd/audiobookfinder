@@ -22,9 +22,9 @@ struct Collection<'b> {
     collection : HashMap<&'b str, &'b InfoAlbum<'b> > 
 }
 
-type FileFn<'a,'b: 'a> = &'a Fn(&'a mut Collection, &'b DirEntry) -> io::Result<()>;
+type FileFn = Fn(&mut Collection, &DirEntry) -> io::Result<()>;
 
-impl <'a,'b: 'a> Collection <'a> {
+impl <'a> Collection <'a> {
 
     pub fn new() -> Collection<'a>  {
         Collection { 
@@ -37,16 +37,15 @@ impl <'a,'b: 'a> Collection <'a> {
     }
 
     /// The function that runs from the starting point
-    fn visit_dirs(&mut self, dir: &'b Path, cb: FileFn<'a,'b>) -> io::Result<()> {
+    fn visit_dirs(&mut self, dir: &Path, cb: &FileFn) -> io::Result<()> {
         if dir.is_dir() {
-            let &mut test : &mut Collection<'a> = self;
             for entry in fs::read_dir(dir)? {
                 let entry = entry?;
                 let path = entry.path();
                 if path.is_dir() {
                     self.visit_dirs(&path, cb)?;
                 } else {
-                    cb(test, &entry)?;
+                    cb(self, &entry)?;
                 }
             }
         }
@@ -54,7 +53,7 @@ impl <'a,'b: 'a> Collection <'a> {
     }
 
     /// the function to check all files separately
-    fn visit_files(col: &mut Collection, cb: &'b DirEntry) -> io::Result<()> {
+    fn visit_files(col: &mut Collection, cb: &DirEntry) -> io::Result<()> {
         let filetype = tree_magic::from_filepath(&cb.path());
         match filetype.as_ref() {
             "text/plain" => {},
@@ -64,9 +63,12 @@ impl <'a,'b: 'a> Collection <'a> {
     	Ok(())	
     }
 
-    fn visit_audio_files(&mut self, cb: &'b Path) {
+    fn visit_audio_files(&mut self, cb: &Path) {
         let tag : Tag = Tag::read_from_path(cb).unwrap();
-        println!("{:?}",tag.artist().unwrap())
+        let artist = tag.artist().unwrap();
+        if self.is_already_in_collection(artist) {
+            println!("{:?}",artist);
+        }
     }
 }
 
