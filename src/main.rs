@@ -7,26 +7,25 @@ extern crate tree_magic;  // mime types
 use std::io;    
 use std::env;     // args
 use std::fs::{self, DirEntry};  // directory
-use std::path::Path;  // path, clear
+use std::path::{Path,PathBuf};  // path, clear
 use std::collections::HashMap;
-
 
 use id3::Tag;
 
 /// generell info
-struct InfoAlbum <'b> {
-    reference_path : Vec<&'b Path>,
+struct InfoAlbum {
+    reference_path : Vec<PathBuf>
 }
 
-struct Collection<'b> {     
-    collection : HashMap<&'b str, &'b InfoAlbum<'b> > 
+struct Collection {     
+    collection : HashMap<String, Box<InfoAlbum>>
 }
 
 type FileFn = Fn(&mut Collection, &DirEntry) -> io::Result<()>;
 
-impl <'a> Collection <'a> {
+impl Collection {
 
-    pub fn new() -> Collection<'a>  {
+    pub fn new() -> Collection {
         Collection { 
             collection : HashMap::new() 
         }
@@ -67,7 +66,22 @@ impl <'a> Collection <'a> {
         let tag : Tag = Tag::read_from_path(cb).unwrap();
         let artist = tag.artist().unwrap();
         if self.is_already_in_collection(artist) {
-            println!("{:?}",artist);
+            if let Some(found_box) = self.collection.get_mut(artist) {
+                print!("{{");
+                for i in &found_box.reference_path {
+                    print!("{:?}, ",i);
+                }
+                println!("}}");                
+                found_box.reference_path.push(cb.to_path_buf());
+            } else {
+                //let this_album : InfoAlbum = InfoAlbum { reference_path: vec!(cb.to_path_buf()) };
+                //self.collection.insert(artist.to_owned(),Box::new(this_album));
+                //println!("*****{:?}",artist);
+            }
+        } else {
+            let this_album : InfoAlbum = InfoAlbum { reference_path: vec!(cb.to_path_buf()) };
+            self.collection.insert(artist.to_owned(),Box::new(this_album));
+            println!("*****{:?}",artist);
         }
     }
 }
@@ -76,9 +90,9 @@ impl <'a> Collection <'a> {
 fn main() {
     let args: Vec<_> = env::args().collect();
 
-    let mut collection : Collection<'static> = Collection::new();
+    let mut collection = Collection::new();
 
-    let mut path : &str = ".";
+    let mut path = ".";
     if args.len() > 1 {
         path = &args[1];
     }
