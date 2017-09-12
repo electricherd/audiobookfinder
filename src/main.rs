@@ -4,22 +4,45 @@
 extern crate id3;
 extern crate tree_magic;  // mime types
 
-use std::io;    
-use std::env;     // args
-use std::fs::{self, DirEntry};  // directory
-use std::path::{Path,PathBuf};  // path, clear
-use std::collections::HashMap;
-
 use id3::Tag;
 
-/// generell info
+use std::io;
+use std::env;     // args
+use std::cmp;     // max
+use std::fs::{self, DirEntry};  // directory
+use std::path::{Path,PathBuf};  // path, clear
+use std::collections::hash_map::{HashMap,Entry};
+
+use std::sync::Arc;
+use std::thread;
+
+/// general info
 struct InfoAlbum {
     reference_path : Vec<PathBuf>
 }
 
 struct Collection {     
-    collection : HashMap<String, Box<InfoAlbum>>
+    collection  : HashMap<String, Box<InfoAlbum>>,
+    stats       : Stats
 }
+
+struct Stats {
+    files : Files,
+    audio : Audio,
+}
+
+struct Audio {
+    albums    : u32,
+    max_songs : usize,
+}
+
+struct Files {
+    analyzed: u32,
+    faulty :  u32,
+    searched: u32,
+    other:    u32,
+}
+
 
 type FileFn = Fn(&mut Collection, &DirEntry) -> io::Result<()>;
 
@@ -27,12 +50,12 @@ impl Collection {
 
     pub fn new() -> Collection {
         Collection { 
-            collection : HashMap::new() 
+            collection : HashMap::new(), 
+            stats      : Stats { 
+                          files: Files {analyzed: 0, faulty: 0, searched: 0, other: 0},
+                          audio: Audio {albums: 0, max_songs: 0},
+                        }
         }
-    }
-
-    fn is_already_in_collection(&self, piece: &str) -> bool {
-        self.collection.contains_key(piece)
     }
 
     /// The function that runs from the starting point
@@ -53,51 +76,85 @@ impl Collection {
 
     /// the function to check all files separately
     fn visit_files(col: &mut Collection, cb: &DirEntry) -> io::Result<()> {
+        // count stats
+        col.stats.files.searched += 1;        
+
         let filetype = tree_magic::from_filepath(&cb.path());
-        match filetype.as_ref() {
-            "text/plain" => {},
-            "audio/mpeg" => col.visit_audio_files(&cb.path()),
-            _ => println!("[{:?}]{:?}",filetype, cb.path()),
+        let prefix = filetype.split("/").nth(0);
+        match prefix {
+            Some("audio") => col.visit_audio_files(&cb.path()),
+            Some("text") | Some("application") 
+             | Some("image") => {},
+            _ => {
+                 println!("[{:?}]{:?}",prefix, cb.path());
+                 col.stats.files.other += 1;
+            }
         }
     	Ok(())	
     }
 
     fn visit_audio_files(&mut self, cb: &Path) {
-        let tag : Tag = Tag::read_from_path(cb).unwrap();
-        let artist = tag.artist().unwrap();
-        if self.is_already_in_collection(artist) {
-            if let Some(found_box) = self.collection.get_mut(artist) {
-                print!("{{");
-                for i in &found_box.reference_path {
-                    print!("{:?}, ",i);
+        match Tag::read_from_path(cb) {
+            Ok(tag) => {
+                if let Some(artist) = tag.artist() {
+                    self.stats.files.analyzed += 1;                    
+
+                    let path_buffer = cb.to_path_buf();
+                    match self.collection.entry(String::from(artist)) {
+                        Entry::Occupied(mut entry) => {
+                            entry.get_mut().reference_path.push(path_buffer);
+
+                            let this_albums_length = entry.get().reference_path.len();
+                            self.stats.audio.max_songs = cmp::max(self.stats.audio.max_songs,this_albums_length)
+                        }
+                        Entry::Vacant(entry) => {
+                            let this_album : InfoAlbum = InfoAlbum { reference_path: vec!(path_buffer) };
+                            entry.insert(Box::new(this_album));
+                            self.stats.audio.albums += 1;
+                        }
+                    }
+                } else {
+                    self.stats.files.faulty += 1;
                 }
-                println!("}}");                
-                found_box.reference_path.push(cb.to_path_buf());
-            } else {
-                //let this_album : InfoAlbum = InfoAlbum { reference_path: vec!(cb.to_path_buf()) };
-                //self.collection.insert(artist.to_owned(),Box::new(this_album));
-                //println!("*****{:?}",artist);
-            }
-        } else {
-            let this_album : InfoAlbum = InfoAlbum { reference_path: vec!(cb.to_path_buf()) };
-            self.collection.insert(artist.to_owned(),Box::new(this_album));
-            println!("*****{:?}",artist);
+            },
+            Err(_) => { self.stats.files.faulty += 1}
         }
-    }
+   }
+
+   pub fn print_stats(&self) {
+        println!("albums found         : {:?}", self.stats.audio.albums); 
+        println!("most songs per album : {:?}", self.stats.audio.max_songs); 
+        println!("----------------------");
+        println!("analyzed files       : {:?}", self.stats.files.analyzed);    
+        println!("searched files       : {:?}", self.stats.files.searched);    
+        println!("irrelevant files     : {:?}", self.stats.files.other);    
+        println!("faulty files         : {:?}", self.stats.files.faulty);
+   }
+} // end of impl Collection
+
+
+fn runner(path: &str) {
+    let mut collection = Collection::new();    
+    let thi = Arc::new(vec![path]);
+    let new_path = thi.clone()[0];
+    let child = thread::spawn(move || { 
+        collection.visit_dirs(Path::new(new_path), &Collection::visit_files);
+        collection.print_stats();
+    });
+    child.join();
 }
 
 
 fn main() {
-    let args: Vec<_> = env::args().collect();
-
-    let mut collection = Collection::new();
+    let args : Vec<_> = env::args().collect();
 
     let mut path = ".";
     if args.len() > 1 {
         path = &args[1];
     }
-    let real_path = Path::new(path);
-    match collection.visit_dirs(real_path, &Collection::visit_files) {
-        _ => println!("Finished!")
-    }
+
+    runner(path);
+//        _ => println!("Done!")
+//    }
+    println!("Finished!");
 }
