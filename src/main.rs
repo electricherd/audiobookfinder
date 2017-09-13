@@ -3,6 +3,7 @@
 
 extern crate id3;
 extern crate tree_magic;  // mime types
+extern crate crossbeam;
 
 use id3::Tag;
 
@@ -12,9 +13,6 @@ use std::cmp;     // max
 use std::fs::{self, DirEntry};  // directory
 use std::path::{Path,PathBuf};  // path, clear
 use std::collections::hash_map::{HashMap,Entry};
-
-use std::sync::Arc;
-use std::thread;
 
 /// general info
 struct InfoAlbum {
@@ -135,13 +133,13 @@ impl Collection {
 
 fn runner(path: &str) {
     let mut collection = Collection::new();    
-    let thi = Arc::new(vec![path]);
-    let new_path = thi.clone()[0];
-    let child = thread::spawn(move || { 
-        collection.visit_dirs(Path::new(new_path), &Collection::visit_files);
-        collection.print_stats();
+
+    crossbeam::scope(|scope| {
+        scope.spawn(|| {        
+            collection.visit_dirs(Path::new(path), &Collection::visit_files);
+            collection.print_stats();
+        })
     });
-    child.join();
 }
 
 
