@@ -3,7 +3,7 @@
 
 extern crate id3;
 extern crate tree_magic;  // mime types
-extern crate crossbeam;
+extern crate rayon;
 
 use id3::Tag;
 
@@ -13,6 +13,9 @@ use std::cmp;     // max
 use std::fs::{self, DirEntry};  // directory
 use std::path::{Path,PathBuf};  // path, clear
 use std::collections::hash_map::{HashMap,Entry};
+use std::sync::{Arc, Mutex};
+
+use rayon::prelude::*;
 
 /// general info
 struct InfoAlbum {
@@ -76,7 +79,7 @@ impl Collection {
     fn visit_files(col: &mut Collection, cb: &DirEntry) -> io::Result<()> {
         // count stats
         col.stats.files.searched += 1;        
-
+        
         let filetype = tree_magic::from_filepath(&cb.path());
         let prefix = filetype.split("/").nth(0);
         match prefix {
@@ -131,28 +134,38 @@ impl Collection {
 } // end of impl Collection
 
 
-fn runner(path: &str) {
-    let mut collection = Collection::new();    
-
-    crossbeam::scope(|scope| {
-        scope.spawn(|| {        
-            collection.visit_dirs(Path::new(path), &Collection::visit_files);
-            collection.print_stats();
-        })
-    });
+fn parse_args(args: Vec<String>) -> Vec<String> {
+    let mut result : Vec<String> = Vec::new();
+    if args.len() == 0 {
+        result = vec!(String::from("."));
+    } else {
+        for i in 1..args.len() {
+            result.push(args[i].clone())
+        }
+    }
+    result
 }
+
 
 
 fn main() {
     let args : Vec<_> = env::args().collect();
 
-    let mut path = ".";
-    if args.len() > 1 {
-        path = &args[1];
-    }
+    // take ownership
+    let all_pathes = parse_args(args);
+    
+    // initialize collection
+    let collection_protected = Arc::new(Mutex::new(Collection::new()));
 
-    runner(path);
-//        _ => println!("Done!")
-//    }
+    all_pathes.par_iter().for_each(|elem| {
+        let live_here = collection_protected.clone();
+        let _ = live_here.lock().unwrap().visit_dirs(Path::new(elem),&Collection::visit_files);
+
+    });
+
+    let collection = collection_protected.lock().unwrap();
+    collection.print_stats();
+    
+
     println!("Finished!");
 }

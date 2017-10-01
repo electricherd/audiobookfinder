@@ -5,7 +5,7 @@ authors = ["Sven Kroemeke <skroemeke@gmail.com>"]
 
 [dependencies]
 #alloc_system = "0.1.2"
-crossbeam = "0.3.0"
+rayon = "0.8.2"
 id3 = "0.1.12"
 tree_magic = "0.2.0"
 
