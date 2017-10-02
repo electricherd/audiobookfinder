@@ -5,8 +5,9 @@ authors = ["Sven Kroemeke <skroemeke@gmail.com>"]
 
 [dependencies]
 #alloc_system = "0.1.2"
-rayon = "0.8.2"
+hostname = "0.1.3"
 id3 = "0.1.12"
+rayon = "0.8.2"
 tree_magic = "0.2.0"
 
 [profile.release]
