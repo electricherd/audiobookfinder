@@ -7,15 +7,18 @@
 //extern crate alloc_system;   // strip down size of binary executable
 
 //extern crate hyper;   // sometime, for a good server / client over https communication
+extern crate clap;
 extern crate id3;
 extern crate tree_magic;  // mime types
 extern crate rayon;
 extern crate hostname;
 
+mod tui;
+
 use id3::Tag;     // to identify the audio files
 
 use std::io;      // reading files 
-use std::env;     // args
+
 use std::cmp;     // max
 use std::fs::{self, DirEntry, Permissions};  // directory
 use std::path::{Path,PathBuf};  // path, clear
@@ -26,7 +29,6 @@ use std::os::linux::fs::MetadataExt;
 
 
 use rayon::prelude::*;                           // threading with iterators
-
 
 
 #[allow(dead_code)]
@@ -198,31 +200,49 @@ impl Collection {
 } // end of impl Collection
 
 
-fn parse_args(args: Vec<String>) -> Vec<String> {
-    let mut result : Vec<String> = Vec::new();
-    if args.len() == 0 {
-        result = vec!(String::from("."));
-    } else {
-        for i in 1..args.len() {
-            result.push(args[i].clone())
-        }
-    }
-    result
-}
-
+static INPUT_FOLDERS : &str = "folders";
+static APP_TITLE : &str = "The audiobook finder";
+static ARG_TUI : &str = "tui";
 
 
 fn main() {
-    let args : Vec<_> = env::args().collect();
+    let parse_args = clap::App::new(APP_TITLE)
+                          .version("0.1")
+                          .author("S. K. <skroemeke@gmail.com>")
+                          .about("A audiobook finder")
+                          .arg(clap::Arg::with_name("config")
+                               .short("c")
+                               .long("config")
+                               .value_name("FILE")
+                               .help("Sets a custom config file")
+                               .takes_value(true))
+                          .arg(clap::Arg::with_name(ARG_TUI)
+                               .short("t")
+                               .long("TUI")
+                               .help("Starts the TUI")
+                               .takes_value(false))
+                          .arg(clap::Arg::with_name(INPUT_FOLDERS)
+                               .help("Sets the input folder(s) to use")
+                               .multiple(true)
+                               .required(false)
+                               .default_value(".")) // that is why unwrap works always
+                          .get_matches();
 
-    // parse
-    let all_pathes = parse_args(args);
+    let all_pathes : Vec<&str>  = parse_args.values_of(INPUT_FOLDERS).unwrap().collect();
 
     let hostname = hostname::get_hostname().unwrap_or("undefined".to_string());
-    
+
     //
-    let init_collection = Collection::new(hostname, rayon::current_num_threads());
+    let max_threads = rayon::current_num_threads();
+
+    let init_collection = Collection::new(hostname, max_threads);
     let collection_protected = Arc::new(Mutex::new(init_collection));
+
+    if parse_args.is_present(ARG_TUI) {
+        let mut mytui = tui::Tui::new();
+        mytui.show(max_threads);
+    }
+
 
     all_pathes.par_iter().for_each(|elem| {
         //println!("Start thread number# {:?}", rayon::current_thread_index());
@@ -236,4 +256,6 @@ fn main() {
     result_collection.print_stats();
     
     println!("Finished!");
+
+
 }
