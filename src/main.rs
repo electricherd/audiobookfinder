@@ -12,6 +12,7 @@ extern crate id3;
 extern crate tree_magic;  // mime types
 extern crate rayon;
 extern crate hostname;
+extern crate uuid;
 
 mod tui;
 
@@ -29,6 +30,7 @@ use std::os::linux::fs::MetadataExt;
 
 
 use rayon::prelude::*;                           // threading with iterators
+use uuid::Uuid;
 
 
 #[allow(dead_code)]
@@ -52,7 +54,7 @@ struct InfoAlbum {
 #[allow(dead_code)]
 struct Worker {
     /// identify them.
-    id       : u32, 
+    id       : Uuid, 
     hostname : String,
     max_threads : usize,
 }
@@ -67,8 +69,9 @@ impl Worker {
     /// * '_hostname' - The hostname from remote/local
     /// * '_id' - the identification (each will create an own hash)
     /// * '_maxthreads' - how many threads can the worker create
-    pub fn new(_hostname: String, _id: u32, _maxthreads : usize) -> Worker {
-        Worker { hostname: _hostname, id : _id, max_threads: _maxthreads}
+    pub fn new(_hostname: String, _maxthreads : usize) -> Worker {
+        let new_id = Uuid::new_v4();
+        Worker { hostname: _hostname, id : new_id, max_threads: _maxthreads}
     }
 }
 
@@ -105,7 +108,7 @@ type FileFn = Fn(&mut Collection, &DirEntry) -> io::Result<()>;
 impl Collection {
     pub fn new(_hostname: String, _numthreads: usize) -> Collection {
         Collection { 
-            who   :  Worker::new(_hostname, 0, _numthreads),
+            who   :  Worker::new(_hostname, _numthreads),
             collection : HashMap::new(), 
             stats      : Stats { 
                           files: Files {analyzed: 0, faulty: 0, searched: 0, other: 0},
@@ -151,7 +154,6 @@ impl Collection {
     }
 
     fn visit_audio_files(&mut self, cb: &Path) -> io::Result<()> {
-
         match Tag::read_from_path(cb) {
             Ok(tag) => {
                 if let Some(artist) = tag.artist() {
@@ -224,11 +226,15 @@ fn main() {
                           .arg(clap::Arg::with_name(INPUT_FOLDERS)
                                .help("Sets the input folder(s) to use")
                                .multiple(true)
-                               .required(false)
-                               .default_value(".")) // that is why unwrap works always
+                               .required(false))
                           .get_matches();
 
-    let all_pathes : Vec<&str>  = parse_args.values_of(INPUT_FOLDERS).unwrap().collect();
+    // tricky thing, but I really like that
+    let all_pathes = if let Some(correct_input) = parse_args.values_of(INPUT_FOLDERS) {
+        correct_input.collect()
+    } else {
+        vec!(".")
+    };
 
     let hostname = hostname::get_hostname().unwrap_or("undefined".to_string());
 
@@ -239,13 +245,14 @@ fn main() {
     let collection_protected = Arc::new(Mutex::new(init_collection));
 
     if parse_args.is_present(ARG_TUI) {
-        let mut mytui = tui::Tui::new();
-        mytui.show(max_threads);
+        let mut mytui = tui::Tui::new(&all_pathes);
+        mytui.show();
     }
 
 
     all_pathes.par_iter().for_each(|elem| {
-        //println!("Start thread number# {:?}", rayon::current_thread_index());
+        //rayon::current_thread_index()
+        println!("Start path {:?}", elem);
         let live_here = collection_protected.clone();
 
         let mut pure_collection = live_here.lock().unwrap();
@@ -256,6 +263,4 @@ fn main() {
     result_collection.print_stats();
     
     println!("Finished!");
-
-
 }
