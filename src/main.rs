@@ -12,7 +12,6 @@ extern crate id3;
 extern crate tree_magic;  // mime types
 extern crate rayon;
 extern crate hostname;
-extern crate uuid;
 
 mod tui;
 
@@ -30,7 +29,6 @@ use std::os::linux::fs::MetadataExt;
 
 
 use rayon::prelude::*;                           // threading with iterators
-use uuid::Uuid;
 
 
 #[allow(dead_code)]
@@ -54,7 +52,7 @@ struct InfoAlbum {
 #[allow(dead_code)]
 struct Worker {
     /// identify them.
-    id       : Uuid, 
+    id       : u32, 
     hostname : String,
     max_threads : usize,
 }
@@ -69,9 +67,8 @@ impl Worker {
     /// * '_hostname' - The hostname from remote/local
     /// * '_id' - the identification (each will create an own hash)
     /// * '_maxthreads' - how many threads can the worker create
-    pub fn new(_hostname: String, _maxthreads : usize) -> Worker {
-        let new_id = Uuid::new_v4();
-        Worker { hostname: _hostname, id : new_id, max_threads: _maxthreads}
+    pub fn new(_hostname: String, _id: u32, _maxthreads : usize) -> Worker {
+        Worker { hostname: _hostname, id : _id, max_threads: _maxthreads}
     }
 }
 
@@ -108,7 +105,7 @@ type FileFn = Fn(&mut Collection, &DirEntry) -> io::Result<()>;
 impl Collection {
     pub fn new(_hostname: String, _numthreads: usize) -> Collection {
         Collection { 
-            who   :  Worker::new(_hostname, _numthreads),
+            who   :  Worker::new(_hostname, 0, _numthreads),
             collection : HashMap::new(), 
             stats      : Stats { 
                           files: Files {analyzed: 0, faulty: 0, searched: 0, other: 0},
@@ -206,6 +203,7 @@ static INPUT_FOLDERS : &str = "folders";
 static APP_TITLE : &str = "The audiobook finder";
 static ARG_TUI : &str = "tui";
 
+use std::sync::mpsc;
 
 fn main() {
     let parse_args = clap::App::new(APP_TITLE)
@@ -244,8 +242,9 @@ fn main() {
     let init_collection = Collection::new(hostname, max_threads);
     let collection_protected = Arc::new(Mutex::new(init_collection));
 
+    let (system_sender,_) = mpsc::channel::<tui::SystemMsg>();
     if parse_args.is_present(ARG_TUI) {
-        let mut mytui = tui::Tui::new(&all_pathes);
+        let mut mytui = tui::Tui::new(system_sender,&all_pathes);
         mytui.show();
     }
 
