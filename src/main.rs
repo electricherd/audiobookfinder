@@ -13,7 +13,9 @@ extern crate tree_magic;  // mime types
 extern crate rayon;
 extern crate hostname;
 
-mod tui;
+mod ctrl;
+
+pub use self::ctrl::Ctrl;
 
 use id3::Tag;     // to identify the audio files
 
@@ -26,6 +28,7 @@ use std::collections::hash_map::{HashMap,Entry}; // my main item uses a hash map
 use std::sync::{Arc, Mutex};                     // safe containment and locking
 //use std::os::windows::fs::MetadataExt;
 use std::os::linux::fs::MetadataExt;
+use std::thread;
 
 
 use rayon::prelude::*;                           // threading with iterators
@@ -242,11 +245,9 @@ fn main() {
     let init_collection = Collection::new(hostname, max_threads);
     let collection_protected = Arc::new(Mutex::new(init_collection));
 
-    let (system_sender,_) = mpsc::channel::<tui::SystemMsg>();
-    if parse_args.is_present(ARG_TUI) {
-        let mut mytui = tui::Tui::new(system_sender,&all_pathes);
-        mytui.show();
-    }
+    let data_runner = thread::spawn(|| {
+        let controller = Ctrl::new(&all_pathes);
+    });
 
 
     all_pathes.par_iter().for_each(|elem| {
@@ -260,6 +261,8 @@ fn main() {
 
     let result_collection = collection_protected.lock().unwrap();
     result_collection.print_stats();
+
+    data_runner.join();
     
     println!("Finished!");
 }

@@ -1,11 +1,11 @@
 extern crate cursive;
 
-use self::cursive::Cursive;
+use self::cursive::{Cursive};
 use self::cursive::views::{TextView,Layer, ListView, LinearLayout,Panel};
 use self::cursive::traits::*;
 
-use std::sync::mpsc;
 use std::iter::Iterator;
+use mpsc;
 
 
 pub enum UiMsg {
@@ -18,14 +18,14 @@ pub enum SystemMsg {
 
 pub struct Tui {
     handle : Cursive,
-    ui_receiver: mpsc::Receiver<UiMsg>,
-    ui_sender: mpsc::Sender<UiMsg>,
-    system_sender: mpsc::Sender<SystemMsg>,
+    pub ui_receiver: mpsc::Receiver<UiMsg>,
+    pub ui_sender: mpsc::Sender<UiMsg>,
+    pub system_sender: mpsc::Sender<SystemMsg>,
 }
 
 
-static RECT : usize = 4;
-static SEPERATOR : &str = "...";
+static RECT : usize = 40;
+static SEPERATOR : &str = "..";
 
 impl <'tuilife> Tui {
     pub fn new<'a>(system: mpsc::Sender<SystemMsg>, pathes: &Vec<&str>) -> Tui {
@@ -37,28 +37,29 @@ impl <'tuilife> Tui {
             ui_receiver : _ui_receiver,
             system_sender : system
         };
-        let rows = pathes.len() / RECT + 1;
+        let screen_size = tui.handle.screen_size();
+        let max_cols = screen_size.x / RECT;
 
-        let max_table_width = 22;
+
+        let rows = pathes.len() / max_cols + 1;
+        // 80% of rect size
+        let max_table_width = RECT * 5 / 6;
+
 
         let mut vertical_layout = LinearLayout::vertical();
         for j in 0..rows {
             let mut horizontal_layout = LinearLayout::horizontal();
 
-            let cols = if j < rows-1 {
-                RECT
-            } else {
-                pathes.len() % RECT
-            };
+            let cols = if j < rows-1 { max_cols }else{ pathes.len() % max_cols };
 
             for i in 0..cols {
-                let my_number = j * RECT + i;  // j >= 1
+                let my_number = j * max_cols + i;  // j >= 1
 
                 let differentiate_path = Tui::split_intelligent(pathes,max_table_width);
 
                 let textview = TextView::new(format!("{}",differentiate_path[my_number])).
                                     with_id(format!("t{:?}",my_number)); // from trait
-//                                    .required_size((max_table_width,20));                                    
+                           
                 let mut listview = ListView::new();
                 listview.add_child(": ",textview);
                 let new_panel = Panel::new(listview);
@@ -68,7 +69,7 @@ impl <'tuilife> Tui {
         }
 
         // debug output here
-        let debug_text = tui.handle.screen().layer_sizes().iter().count();
+        let debug_text = max_table_width;
         vertical_layout.add_child(Panel::new(
                           TextView::new(
                            format!("debug_text: {}",debug_text))
@@ -80,21 +81,23 @@ impl <'tuilife> Tui {
     }
 
 
-    fn split_intelligent<'a>(vec : &'a Vec<&str>, max_len: usize) -> Vec<String> {
+    fn split_intelligent<'a>(vec : &'a Vec<&str>, max_len: usize)
+             -> Vec<String> {
         let mut out : Vec<String> = Vec::new();
         for el in vec {
             let real_len = el.chars().count();
             // simple case
             if real_len < max_len {
-                out.push(el.to_string());
+                out.push(format!("{}{}", " ".repeat(max_len - real_len),el.to_string()));
             } else if real_len < max_len/2 {
-                // todo:
                 out.push(el.chars().skip(real_len-max_len).collect::<String>());
             } else {
-                // todo: why 3??? 2 breaks it
-                let real_middle = (real_len-SEPERATOR.chars().count()) / 2; 
-                let first_part = el.chars().take(real_middle).collect::<String>();
-                let last_part = el.chars().skip(real_len-real_middle+1).collect::<String>();
+                let diff = max_len-SEPERATOR.chars().count();
+                let real_middle = diff / 2;
+                let offset = if real_middle*2 < diff { 1 } else { 0 };
+
+                let first_part = el.chars().take(real_middle+offset).collect::<String>();
+                let last_part = el.chars().skip(real_len-real_middle).collect::<String>();
 
                 out.push(format!("{}{}{}",first_part 
                                         ,SEPERATOR
@@ -111,19 +114,19 @@ impl <'tuilife> Tui {
             }
 
 // use https://cafbit.com/post/cursive_writing_terminal_applications_in_rust/
-//            // Process any pending UI messages
-//            while let Some(message) = self.ui_rx.try_iter().next() {
-//                match message {
-//                    UiMessage::UpdateOutput(text) => {
-//                        let mut output = self.cursive
-//                            .find_id::<TextView>("output")
-//                            .unwrap();
-//                        output.set_content(text);
-//                    }
-//                }
-//            }
+           // Process any pending UI messages
+           while let Some(message) = self.ui_receiver.try_iter().next() {
+               match message {
+                   UiMsg::Update(text) => {
+                       let mut output = self.handle
+                           .find_id::<TextView>("output")
+                           .unwrap();
+                       output.set_content(text);
+                   }
+               }
+           }
 
-            // Step the UI
+            // step through the TUI
             self.handle.step();
             true
     }
