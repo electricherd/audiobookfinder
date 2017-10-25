@@ -1,6 +1,6 @@
 
-pub use super::tui::Tui;
-use tui::{SystemMsg,UiMsg};
+mod tui;
+use ctrl::tui::{Tui,SystemMsg,UiMsg};
 
 use mpsc;
 
@@ -11,7 +11,7 @@ pub struct Ctrl {
 
 impl Ctrl {
     /// Create a new controller
-    pub fn new(pathes: &Vec<&str>) -> Result<Ctrl, String> {
+    pub fn new(pathes: &Vec<String>) -> Result<Ctrl, String> {
         let (tx, rx) = mpsc::channel::<SystemMsg>();
         Ok(Ctrl {
             rx: rx,

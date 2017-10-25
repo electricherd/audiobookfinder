@@ -28,7 +28,7 @@ static RECT : usize = 40;
 static SEPERATOR : &str = "..";
 
 impl <'tuilife> Tui {
-    pub fn new<'a>(system: mpsc::Sender<SystemMsg>, pathes: &Vec<&str>) -> Tui {
+    pub fn new<'a>(system: mpsc::Sender<SystemMsg>, pathes: &Vec<String>) -> Tui {
 
         let (_ui_sender, _ui_receiver) = mpsc::channel::<UiMsg>();
         let mut tui = Tui {
@@ -57,8 +57,8 @@ impl <'tuilife> Tui {
 
                 let differentiate_path = Tui::split_intelligent(pathes,max_table_width);
 
-                let textview = TextView::new(format!("{}",differentiate_path[my_number])).
-                                    with_id(format!("t{:?}",my_number)); // from trait
+                let textview = TextView::new(format!("{}",differentiate_path[my_number]))
+                                    .with_id(format!("t{:?}",my_number)); // from trait
                            
                 let mut listview = ListView::new();
                 listview.add_child(": ",textview);
@@ -81,7 +81,7 @@ impl <'tuilife> Tui {
     }
 
 
-    fn split_intelligent<'a>(vec : &'a Vec<&str>, max_len: usize)
+    fn split_intelligent<'a>(vec : &Vec<String>, max_len: usize)
              -> Vec<String> {
         let mut out : Vec<String> = Vec::new();
         for el in vec {
