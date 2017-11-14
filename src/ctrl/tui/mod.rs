@@ -7,25 +7,20 @@ use self::cursive::traits::*;
 use std::iter::Iterator;
 use mpsc;
 
-
-pub enum UiMsg {
-    Update(String)
-}
-pub enum SystemMsg {
-    Update(String)
-}
-
+use ctrl::{SystemMsg,UiMsg,ReceiveDialog};
 
 pub struct Tui {
     handle : Cursive,
     pub ui_receiver: mpsc::Receiver<UiMsg>,
     pub ui_sender: mpsc::Sender<UiMsg>,
     pub system_sender: mpsc::Sender<SystemMsg>,
-}
+} 
 
 
 static RECT : usize = 40;
 static SEPERATOR : &str = "..";
+static DEBUG_TEXT_ID : &str = "debug_info";
+static PATHS_PREFIX_ID : &str = "pf";
 
 impl <'tuilife> Tui {
     pub fn new<'a>(system: mpsc::Sender<SystemMsg>, pathes: &Vec<String>) -> Tui {
@@ -58,7 +53,7 @@ impl <'tuilife> Tui {
                 let differentiate_path = Tui::split_intelligent(pathes,max_table_width);
 
                 let textview = TextView::new(format!("{}",differentiate_path[my_number]))
-                                    .with_id(format!("t{:?}",my_number)); // from trait
+                                    .with_id(format!("{}{:?}",PATHS_PREFIX_ID,my_number)); // from trait
                            
                 let mut listview = ListView::new();
                 listview.add_child(": ",textview);
@@ -73,16 +68,18 @@ impl <'tuilife> Tui {
         vertical_layout.add_child(Panel::new(
                           TextView::new(
                            format!("debug_text: {}",debug_text))
-                    .with_id("debug_info")));
+                    .with_id(DEBUG_TEXT_ID)));
 
         let layer = Layer::new(vertical_layout);
         tui.handle.add_layer(layer);
+
+        // test this, to update every with 20fps / this should be done when something changes ..... grrrr
+        tui.handle.set_fps(20);
         tui 
     }
 
 
-    fn split_intelligent<'a>(vec : &Vec<String>, max_len: usize)
-             -> Vec<String> {
+    fn split_intelligent<'a>(vec : &Vec<String>, max_len: usize) -> Vec<String> {
         let mut out : Vec<String> = Vec::new();
         for el in vec {
             let real_len = el.chars().count();
@@ -109,29 +106,33 @@ impl <'tuilife> Tui {
 
 
     pub fn step(&mut self) -> bool {
-            if !self.handle.is_running() {
-                return false;
-            }
+        if !self.handle.is_running() {
+            return false;
+        }
 
-// use https://cafbit.com/post/cursive_writing_terminal_applications_in_rust/
-           // Process any pending UI messages
-           while let Some(message) = self.ui_receiver.try_iter().next() {
-               match message {
-                   UiMsg::Update(text) => {
+       while let Some(message) = self.ui_receiver.try_iter().next() {
+           match message {
+               UiMsg::Update(recv_dialog,text) => {
+                match recv_dialog {
+                    ReceiveDialog::PathNr{nr} => {
                        let mut output = self.handle
-                           .find_id::<TextView>("output")
+                           .find_id::<TextView>(&format!("{}{}",PATHS_PREFIX_ID,nr))
                            .unwrap();
                        output.set_content(text);
-                   }
+                    },
+                    ReceiveDialog::Debug => {
+                       let mut output = self.handle
+                           .find_id::<TextView>(DEBUG_TEXT_ID)
+                           .unwrap();
+                       output.set_content(text);
+                    }
+                }
                }
            }
+       }
 
-            // step through the TUI
-            self.handle.step();
-            true
-    }
-
-    pub fn show<'a>(&'tuilife mut self) {
-        self.handle.run();        
+        // step through the TUI
+        self.handle.step();
+        true
     }
 } // impl Tui

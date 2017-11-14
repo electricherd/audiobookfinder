@@ -20,6 +20,7 @@ mod data;
 pub use self::data::Collection;
 pub use self::ctrl::Ctrl;
 
+use ctrl::{SystemMsg,ReceiveDialog};
 
 static INPUT_FOLDERS : &str = "folders";
 static APP_TITLE : &str = "The audiobook finder";
@@ -57,38 +58,67 @@ fn main() {
     };
 
     let hostname = hostname::get_hostname().unwrap_or("undefined".to_string());
-
-    //
     let max_threads = rayon::current_num_threads();
 
-    let init_collection = Collection::new(hostname, max_threads);
-    let collection_protected = Arc::new(Mutex::new(init_collection));
+    // check if tui is needed 
+    let has_tui = parse_args.is_present(ARG_TUI);
+
+
+    // prepare the message system
+    let (tx, rx) = mpsc::channel::<SystemMsg>();
+    let tx_mut = Mutex::new(tx.clone());
 
 
     // f*ck in order to copy vec<&str>
     let tui_pathes = all_pathes.iter().map(|s|s.to_string()).collect();
 
-    // 
+    // start the tui thread
     let tui_runner = thread::spawn(move || {
-        let controller = Ctrl::new(&tui_pathes);
-        match controller {
-            Ok(mut controller) => {controller.run();},
-            Err(_) => {}
+        if has_tui {
+            let controller = Ctrl::new(&tui_pathes,rx,tx);        
+            match controller {
+                Ok(mut controller) => {controller.run();},
+                Err(_) => {}
+            }
         }
     });
 
-    all_pathes.par_iter().for_each(|elem| {
-        //rayon::current_thread_index()
-        println!("Start path {:?}", elem);
+
+    let init_collection = Collection::new(hostname, max_threads);
+    let collection_protected = Arc::new(Mutex::new(init_collection));
+
+    // start the search threads, each path its own
+    all_pathes.par_iter().enumerate().for_each(|(index,elem)| {
+        if !has_tui {
+            println!("[{:?}] looking into path {:?}", index, elem);
+        }
         let live_here = collection_protected.clone();
 
         let mut pure_collection = live_here.lock().unwrap();
-        let _ = pure_collection.visit_dirs(Path::new(elem),&data::Collection::visit_files);
+
+        if let Err(_e) = pure_collection.visit_dirs(Path::new(elem),&data::Collection::visit_files) {
+            let text = format!("An error has occurred in search path [{}]!!", index);
+            if has_tui {
+                let debug_message_id = ReceiveDialog::Debug;
+                let text = text.to_string();
+                tx_mut.lock().unwrap().send(SystemMsg::Update(debug_message_id,text)).unwrap();
+            } else {
+                println!("{:?}",text);
+            }
+        } else {
+            // all good, so write some (yet debug) text
+            if has_tui {
+                let text = format!("test{}",index);
+                let path_index = ReceiveDialog::PathNr{nr:index};
+                tx_mut.lock().unwrap().send(SystemMsg::Update(path_index, text)).unwrap();
+            }
+        }
     });
 
     let result_collection = collection_protected.lock().unwrap();
-    result_collection.print_stats();
-
+    if !has_tui {
+        result_collection.print_stats();
+    }
     let _ = tui_runner.join();
     
     println!("Finished!");
