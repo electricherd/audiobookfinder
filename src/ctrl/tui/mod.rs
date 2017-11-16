@@ -2,7 +2,7 @@ extern crate cursive;
 
 use self::cursive::{Cursive};
 use self::cursive::views::{TextView,Layer, ListView, LinearLayout,Panel};
-use self::cursive::traits::*;
+use self::cursive::traits::{Identifiable};
 
 use std::iter::Iterator;
 use mpsc;
@@ -75,6 +75,10 @@ impl <'tuilife> Tui {
 
         // test this, to update every with 20fps / this should be done when something changes ..... grrrr
         tui.handle.set_fps(20);
+
+        // quit by 'q' key
+        tui.handle.add_global_callback('q', |s| s.quit());
+
         tui 
     }
 

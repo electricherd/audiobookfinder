@@ -1,6 +1,7 @@
 //extern crate hyper;   // sometime, for a good server / client over https communication
 extern crate id3;
 extern crate tree_magic;  // mime types
+extern crate uuid;   
 
 use self::id3::Tag;     // to identify the audio files
 
@@ -10,6 +11,8 @@ use std::cmp;     // max
 use std::fs::{self, DirEntry, Permissions};  // directory
 use std::path::{Path,PathBuf};  // path, clear
 use std::collections::hash_map::{HashMap,Entry}; // my main item uses a hash map
+
+use self::uuid::Uuid;
 
 //use std::os::windows::fs::MetadataExt;
 use std::os::linux::fs::MetadataExt;
@@ -35,7 +38,7 @@ struct InfoAlbum {
 #[allow(dead_code)]
 struct Worker {
     /// identify them.
-    id       : u32, 
+    id       : Uuid, 
     hostname : String,
     max_threads : usize,
 }
@@ -50,8 +53,9 @@ impl Worker {
     /// * '_hostname' - The hostname from remote/local
     /// * '_id' - the identification (each will create an own hash)
     /// * '_maxthreads' - how many threads can the worker create
-    pub fn new(_hostname: String, _id: u32, _maxthreads : usize) -> Worker {
-        Worker { hostname: _hostname, id : _id, max_threads: _maxthreads}
+    pub fn new(_hostname: String, maxthreads : usize) -> Worker {
+        let identify = Uuid::new_v4();
+        Worker { hostname: _hostname, id : identify, max_threads: maxthreads}
     }
 }
 
@@ -86,9 +90,9 @@ type FileFn = Fn(&mut Collection, &DirEntry) -> io::Result<()>;
 
 /// This part implements all functions
 impl Collection {
-    pub fn new(_hostname: String, _numthreads: usize) -> Collection {
+    pub fn new(_hostname: String, numthreads: usize) -> Collection {
         Collection { 
-            who   :  Worker::new(_hostname, 0, _numthreads),
+            who   :  Worker::new(_hostname, numthreads),
             collection : HashMap::new(), 
             stats      : Stats { 
                           files: Files {analyzed: 0, faulty: 0, searched: 0, other: 0},
@@ -170,13 +174,28 @@ impl Collection {
    }
 
    pub fn print_stats(&self) {
-        println!("pathes/threads       : {:?}", self.stats.threads);     
-        println!("albums found         : {:?}", self.stats.audio.albums); 
-        println!("most songs per album : {:?}", self.stats.audio.max_songs); 
-        println!("----------------------");
-        println!("analyzed files       : {:?}", self.stats.files.analyzed);    
-        println!("searched files       : {:?}", self.stats.files.searched);    
-        println!("irrelevant files     : {:?}", self.stats.files.other);    
-        println!("faulty files         : {:?}", self.stats.files.faulty);
+        let output_string = format!(
+       "This clients id      : {id:}\n\
+        pathes/threads       : {nr_pathes:>width$}\n\
+        albums found         : {albums_found:>width$}\n\
+        most songs per album : {max_p_album:>width$}\n\
+        ----------------------     \n\
+        analyzed files       : {files_analyzed:>width$}\n\
+        searched files       : {files_searched:>width$}\n\
+        irrelevant files     : {files_irrelevant:>width$}\n\
+        faulty files         : {files_faulty:>width$}\n"
+        ,id=self.who.id.hyphenated().to_string().to_uppercase()
+        ,nr_pathes=self.stats.threads
+        ,albums_found=self.stats.audio.albums
+        ,max_p_album=self.stats.audio.max_songs
+        ,files_analyzed=self.stats.files.analyzed
+        ,files_searched=self.stats.files.searched
+        ,files_irrelevant=self.stats.files.other
+        ,files_faulty=self.stats.files.faulty
+        // awesome, really
+        ,width=5
+        ); 
+
+        println!("{}", output_string);
    }
 } // end of impl Collection

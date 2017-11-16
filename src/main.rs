@@ -11,9 +11,11 @@ extern crate hostname;
 extern crate rayon;
 
 use std::path::{Path};  // path, clear
-use std::sync::{Arc, Mutex};                     // safe containment and locking
+use std::sync::{Arc, Mutex};
 use std::thread;
-use self::rayon::prelude::*;                           // threading with iterators
+use self::rayon::prelude::{IntoParallelRefIterator,
+                           IndexedParallelIterator,
+                           ParallelIterator};
 
 mod ctrl;
 mod data;
@@ -115,8 +117,8 @@ fn main() {
         }
     });
 
-    let result_collection = collection_protected.lock().unwrap();
     if !has_tui {
+        let result_collection = collection_protected.lock().unwrap();        
         result_collection.print_stats();
     }
     let _ = tui_runner.join();
