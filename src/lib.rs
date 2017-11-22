@@ -4,5 +4,6 @@ use std::sync::mpsc;
 
 pub mod ctrl;
 pub mod data;
+pub mod net;
 
 //pub use self::ctrl;

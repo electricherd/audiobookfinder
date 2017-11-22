@@ -13,14 +13,18 @@ extern crate rayon;
 use std::path::{Path};  // path, clear
 use std::sync::{Arc, Mutex};
 use std::thread;
+use std::time::Duration;
 use self::rayon::prelude::{IntoParallelRefIterator,
                            IndexedParallelIterator,
                            ParallelIterator};
 
 mod ctrl;
 mod data;
+mod net;
+
 pub use self::data::Collection;
 pub use self::ctrl::Ctrl;
+pub use self::net::Net;
 
 use ctrl::{SystemMsg,ReceiveDialog};
 
@@ -85,6 +89,15 @@ fn main() {
         }
     });
 
+    // start the net runner
+    let net_runner = thread::spawn(move || {
+        let netfinder = Net::new(&"some computer_id".to_owned());      
+        loop {
+            netfinder.lookup();
+            thread::sleep(Duration::from_millis(500_u64));
+        }
+    });
+
 
     let init_collection = Collection::new(hostname, max_threads);
     let collection_protected = Arc::new(Mutex::new(init_collection));
@@ -121,7 +134,7 @@ fn main() {
         let result_collection = collection_protected.lock().unwrap();        
         result_collection.print_stats();
     }
-    let _ = tui_runner.join();
+    let _ = (tui_runner.join(),net_runner.join());
     
     println!("Finished!");
 }
