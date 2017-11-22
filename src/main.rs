@@ -9,6 +9,7 @@
 extern crate clap;
 extern crate hostname;
 extern crate rayon;
+extern crate uuid;   
 
 use std::path::{Path};  // path, clear
 use std::sync::{Arc, Mutex};
@@ -17,6 +18,7 @@ use std::time::Duration;
 use self::rayon::prelude::{IntoParallelRefIterator,
                            IndexedParallelIterator,
                            ParallelIterator};
+use uuid::Uuid;
 
 mod ctrl;
 mod data;
@@ -89,9 +91,12 @@ fn main() {
         }
     });
 
-    // start the net runner
+    // get an unique id for this client
+    let client_id = Uuid::new_v4();
+
+    // start the net runner thread
     let net_runner = thread::spawn(move || {
-        let netfinder = Net::new(&"some computer_id".to_owned());      
+        let netfinder = Net::new(&client_id.to_string());      
         loop {
             netfinder.lookup();
             thread::sleep(Duration::from_millis(500_u64));
@@ -99,7 +104,7 @@ fn main() {
     });
 
 
-    let init_collection = Collection::new(hostname, max_threads);
+    let init_collection = Collection::new(hostname, &client_id, max_threads);
     let collection_protected = Arc::new(Mutex::new(init_collection));
 
     // start the search threads, each path its own

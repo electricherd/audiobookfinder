@@ -53,9 +53,8 @@ impl Worker {
     /// * '_hostname' - The hostname from remote/local
     /// * '_id' - the identification (each will create an own hash)
     /// * '_maxthreads' - how many threads can the worker create
-    pub fn new(_hostname: String, maxthreads : usize) -> Worker {
-        let identify = Uuid::new_v4();
-        Worker { hostname: _hostname, id : identify, max_threads: maxthreads}
+    pub fn new(_hostname: String, uuid: Uuid, maxthreads : usize) -> Worker {
+        Worker { hostname: _hostname, id : uuid, max_threads: maxthreads}
     }
 }
 
@@ -90,9 +89,9 @@ type FileFn = Fn(&mut Collection, &DirEntry) -> io::Result<()>;
 
 /// This part implements all functions
 impl Collection {
-    pub fn new(_hostname: String, numthreads: usize) -> Collection {
+    pub fn new(_hostname: String, uuid: &Uuid, numthreads: usize) -> Collection {
         Collection { 
-            who   :  Worker::new(_hostname, numthreads),
+            who   :  Worker::new(_hostname, uuid.clone(), numthreads),
             collection : HashMap::new(), 
             stats      : Stats { 
                           files: Files {analyzed: 0, faulty: 0, searched: 0, other: 0},
@@ -175,7 +174,7 @@ impl Collection {
 
    pub fn print_stats(&self) {
         let output_string = format!(
-       "This clients id      : {id:}\n\
+       "This client's id     : {id:}\n\
         pathes/threads       : {nr_pathes:>width$}\n\
         albums found         : {albums_found:>width$}\n\
         most songs per album : {max_p_album:>width$}\n\

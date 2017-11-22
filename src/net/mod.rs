@@ -1,7 +1,8 @@
 //extern crate hyper;   // sometime, for a good server / client over https communication
-extern crate mdns;
+extern crate mdns as io_mdns;
 
-use self::mdns::{Record, RecordKind};
+use self::io_mdns::{Record, RecordKind};
+
 use std::net::IpAddr;
 
 
@@ -13,11 +14,12 @@ pub struct Net {
 
 impl Net {
     pub fn new(name : &String)  -> Net {
+        //let responder = mdns::dResponse::spawn(); 
         Net { my_id : name.clone()}
     }
 
     pub fn lookup(&self) {
-        for response in mdns::discover::all(SERVICE_NAME).unwrap() {
+        for response in io_mdns::discover::all(SERVICE_NAME).unwrap() {
             match response {
                 Ok(good_response) => {
                     let addr = good_response.records()
