@@ -6,7 +6,8 @@ use mpsc::{self};
 
 pub enum ReceiveDialog {
     PathNr { nr : usize},
-    Debug
+    Debug,
+    Host
 }
 
 
@@ -26,10 +27,10 @@ pub struct Ctrl {
 
 impl Ctrl {
     /// Create a new controller
-    pub fn new(pathes: &Vec<String>, receiver: mpsc::Receiver<SystemMsg>, sender: mpsc::Sender<SystemMsg>) -> Result<Ctrl, String> {
+    pub fn new(title: String, pathes: &Vec<String>, receiver: mpsc::Receiver<SystemMsg>, sender: mpsc::Sender<SystemMsg>) -> Result<Ctrl, String> {
         Ok(Ctrl {
             rx: receiver,
-            ui: Tui::new(sender.clone(), &pathes)
+            ui: Tui::new(title,sender.clone(), &pathes)
         })
     }
     /// Run the controller

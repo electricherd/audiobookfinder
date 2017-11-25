@@ -1,8 +1,8 @@
 extern crate cursive;
 
 use self::cursive::{Cursive};
-use self::cursive::views::{TextView,Layer, ListView, LinearLayout,Panel};
-use self::cursive::traits::{Identifiable};
+use self::cursive::views::{Dialog,TextView,Layer, ListView, LinearLayout,Panel};
+use self::cursive::traits::*; //{Identifiable,select};
 
 use std::iter::Iterator;
 use mpsc;
@@ -20,10 +20,11 @@ pub struct Tui {
 static RECT : usize = 40;
 static SEPERATOR : &str = "..";
 static DEBUG_TEXT_ID : &str = "debug_info";
+static VIEW_LIST_HOST : &str = "hostlist";
 static PATHS_PREFIX_ID : &str = "pf";
 
 impl <'tuilife> Tui {
-    pub fn new<'a>(system: mpsc::Sender<SystemMsg>, pathes: &Vec<String>) -> Tui {
+    pub fn new<'a>(title: String, system: mpsc::Sender<SystemMsg>, pathes: &Vec<String>) -> Tui {
 
         let (_ui_sender, _ui_receiver) = mpsc::channel::<UiMsg>();
         let mut tui = Tui {
@@ -42,6 +43,16 @@ impl <'tuilife> Tui {
 
 
         let mut vertical_layout = LinearLayout::vertical();
+
+        // add host list on top
+        
+
+        let host_listview = ListView::new().with_id(VIEW_LIST_HOST);
+
+        vertical_layout.add_child(
+                        Dialog::around(host_listview.fixed_size((20,5))).title("Host list"));        
+
+
         for j in 0..rows {
             let mut horizontal_layout = LinearLayout::horizontal();
 
@@ -70,7 +81,8 @@ impl <'tuilife> Tui {
                            format!("debug_text: {}",debug_text))
                     .with_id(DEBUG_TEXT_ID)));
 
-        let layer = Layer::new(vertical_layout);
+        let layer = Dialog::around(Layer::new(vertical_layout)).title(format!("server uuid: {}",title));
+
         tui.handle.add_layer(layer);
 
         // test this, to update every with 20fps / this should be done when something changes ..... grrrr
@@ -122,13 +134,19 @@ impl <'tuilife> Tui {
                        let mut output = self.handle
                            .find_id::<TextView>(&format!("{}{}",PATHS_PREFIX_ID,nr))
                            .unwrap();
-                       output.set_content(text);
+                       output.set_content(text.clone());
                     },
                     ReceiveDialog::Debug => {
                        let mut output = self.handle
                            .find_id::<TextView>(DEBUG_TEXT_ID)
                            .unwrap();
                        output.set_content(text);
+                    },
+                    ReceiveDialog::Host => {
+                       let mut host_list = self.handle.find_id::<ListView>(VIEW_LIST_HOST).unwrap();
+                       let new_host_entry = TextView::new(format!("{}",text));
+
+                       host_list.add_child("",new_host_entry);
                     }
                 }
                }

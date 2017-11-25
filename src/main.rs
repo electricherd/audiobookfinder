@@ -33,6 +33,8 @@ use ctrl::{SystemMsg,ReceiveDialog};
 static INPUT_FOLDERS : &str = "folders";
 static APP_TITLE : &str = "The audiobook finder";
 static ARG_TUI : &str = "tui";
+static NET_TIMEOUT    : u64 = 10_000_u64;
+static NET_CYCLE_TIME : u64 = 500_u64;
 
 use std::sync::mpsc;
 
@@ -74,16 +76,19 @@ fn main() {
 
     // prepare the message system
     let (tx, rx) = mpsc::channel::<SystemMsg>();
-    let tx_mut = Mutex::new(tx.clone());
-
+    let tx_sys_mut  = Mutex::new(tx.clone());
+    let tx_net_mut  = Mutex::new(tx.clone());
 
     // f*ck in order to copy vec<&str>
     let tui_pathes = all_pathes.iter().map(|s|s.to_string()).collect();
 
+    // get an unique id for this client
+    let client_id = Uuid::new_v4();
+
     // start the tui thread
     let tui_runner = thread::spawn(move || {
         if has_tui {
-            let controller = Ctrl::new(&tui_pathes,rx,tx);        
+            let controller = Ctrl::new(client_id.to_string(), &tui_pathes,rx,tx.clone());        
             match controller {
                 Ok(mut controller) => {controller.run();},
                 Err(_) => {}
@@ -91,15 +96,29 @@ fn main() {
         }
     });
 
-    // get an unique id for this client
-    let client_id = Uuid::new_v4();
 
     // start the net runner thread
+    let tx_net_mut_arc = Arc::new(tx_net_mut);          
     let net_runner = thread::spawn(move || {
-        let netfinder = Net::new(&client_id.to_string());      
-        loop {
+
+        // need to simplify and clarify this here ......
+        let mut netfinder = Net::new(&client_id.to_string(),has_tui,tx_net_mut_arc.lock().unwrap().clone());
+        let mut done = false;
+
+        //let loop_limit = NET_TIMEOUT / NET_CYCLE_TIME;
+        //let mut loop_counter = 0;
+
+
+        while !done {
+            done = true;
             netfinder.lookup();
-            thread::sleep(Duration::from_millis(500_u64));
+            //thread::sleep(Duration::from_millis(NET_CYCLE_TIME));
+
+            // if !has_tui {
+            //   loop_counter += 1;
+            //   println!("count: {:?}", loop_counter);
+            //   done = loop_counter > loop_limit;
+            // }
         }
     });
 
@@ -121,7 +140,7 @@ fn main() {
             if has_tui {
                 let debug_message_id = ReceiveDialog::Debug;
                 let text = text.to_string();
-                tx_mut.lock().unwrap().send(SystemMsg::Update(debug_message_id,text)).unwrap();
+                tx_sys_mut.lock().unwrap().send(SystemMsg::Update(debug_message_id,text)).unwrap();
             } else {
                 println!("{:?}",text);
             }
@@ -130,7 +149,7 @@ fn main() {
             if has_tui {
                 let text = format!("test{}",index);
                 let path_index = ReceiveDialog::PathNr{nr:index};
-                tx_mut.lock().unwrap().send(SystemMsg::Update(path_index, text)).unwrap();
+                tx_sys_mut.lock().unwrap().send(SystemMsg::Update(path_index,text)).unwrap();
             }
         }
     });
