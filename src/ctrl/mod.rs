@@ -4,10 +4,23 @@ use ctrl::tui::Tui;
 
 use mpsc::{self};
 
+pub enum Alive {
+    PathNr { nr: usize},
+    Net
+}
+
+pub struct NetStats {
+    index : usize,
+    max   : usize
+}
+
+
 pub enum ReceiveDialog {
     PathNr { nr : usize},
     Debug,
-    Host
+    Host,
+    Alive,
+    NetStats
 }
 
 
@@ -25,12 +38,16 @@ pub struct Ctrl {
     ui: Tui,
 }
 
+
+
+
+
 impl Ctrl {
     /// Create a new controller
-    pub fn new(title: String, pathes: &Vec<String>, receiver: mpsc::Receiver<SystemMsg>, sender: mpsc::Sender<SystemMsg>) -> Result<Ctrl, String> {
+    pub fn new(title: String, pathes: &Vec<String>, receiver: mpsc::Receiver<SystemMsg>, sender: mpsc::Sender<SystemMsg>, with_net: bool) -> Result<Ctrl, String> {
         Ok(Ctrl {
             rx: receiver,
-            ui: Tui::new(title,sender.clone(), &pathes)
+            ui: Tui::new(title,sender.clone(), &pathes, with_net), 
         })
     }
     /// Run the controller
@@ -49,12 +66,4 @@ impl Ctrl {
             }
         }
     }
-
-    pub fn debug(&mut self, text: String) {
-        self.ui
-            .ui_sender
-            .send(UiMsg::Update(ReceiveDialog::Debug,text))
-            .unwrap();
-    }
-
 } // impl Controller

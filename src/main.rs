@@ -32,6 +32,7 @@ use ctrl::{SystemMsg,ReceiveDialog};
 
 static INPUT_FOLDERS : &str = "folders";
 static APP_TITLE : &str = "The audiobook finder";
+static ARG_NET : &str = "net";
 static ARG_TUI : &str = "tui";
 static NET_TIMEOUT    : u64 = 10_000_u64;
 static NET_CYCLE_TIME : u64 = 500_u64;
@@ -54,6 +55,11 @@ fn main() {
                                .long("TUI")
                                .help("Starts the TUI")
                                .takes_value(false))
+                          .arg(clap::Arg::with_name(ARG_NET)
+                               .short("n")
+                               .long("net")
+                               .help("Starts without net")
+                               .takes_value(false))                          
                           .arg(clap::Arg::with_name(INPUT_FOLDERS)
                                .help("Sets the input folder(s) to use")
                                .multiple(true)
@@ -70,8 +76,12 @@ fn main() {
     let hostname = hostname::get_hostname().unwrap_or("undefined".to_string());
     let max_threads = rayon::current_num_threads();
 
-    // check if tui is needed 
-    let has_tui = parse_args.is_present(ARG_TUI);
+    // check if tui and net search is needed 
+    let has_arg = |x:&str| parse_args.is_present(x);
+
+    let has_tui = has_arg(ARG_TUI);
+    let has_net = has_arg(ARG_NET);
+
 
 
     // prepare the message system
@@ -88,7 +98,7 @@ fn main() {
     // start the tui thread
     let tui_runner = thread::spawn(move || {
         if has_tui {
-            let controller = Ctrl::new(client_id.to_string(), &tui_pathes,rx,tx.clone());        
+            let controller = Ctrl::new(client_id.to_string(), &tui_pathes,rx,tx.clone(), has_net);        
             match controller {
                 Ok(mut controller) => {controller.run();},
                 Err(_) => {}
@@ -96,11 +106,10 @@ fn main() {
         }
     });
 
-
     // start the net runner thread
     let tx_net_mut_arc = Arc::new(tx_net_mut);          
     let net_runner = thread::spawn(move || {
-
+      if has_net {
         // need to simplify and clarify this here ......
         let mut netfinder = Net::new(&client_id.to_string(),has_tui,tx_net_mut_arc.lock().unwrap().clone());
         let mut done = false;
@@ -120,6 +129,7 @@ fn main() {
             //   done = loop_counter > loop_limit;
             // }
         }
+      }
     });
 
 
@@ -147,9 +157,9 @@ fn main() {
         } else {
             // all good, so write some (yet debug) text
             if has_tui {
-                let text = format!("test{}",index);
-                let path_index = ReceiveDialog::PathNr{nr:index};
-                tx_sys_mut.lock().unwrap().send(SystemMsg::Update(path_index,text)).unwrap();
+                //let text = format!("test{}",index);
+                //let path_index = ReceiveDialog::PathNr{nr:index};
+                //tx_sys_mut.lock().unwrap().send(SystemMsg::Update(path_index,text)).unwrap();
             }
         }
     });
@@ -158,7 +168,7 @@ fn main() {
         let result_collection = collection_protected.lock().unwrap();        
         result_collection.print_stats();
     }
-    let _ = (tui_runner.join(),net_runner.join());
+    let _ = (tui_runner.join(), net_runner.join());
     
     println!("Finished!");
 }

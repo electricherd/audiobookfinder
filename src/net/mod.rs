@@ -33,6 +33,8 @@ impl Net {
             let mut count_no_response = 0;
             let mut count_no_cast = 0;
 
+            //let number = all_discoveries.into_iter().cloned().count();
+
             for (index,response) in all_discoveries.enumerate() {                
                     match response {
                         Ok(good_response) => {
@@ -42,7 +44,9 @@ impl Net {
                                 RecordKind::A(addr) => (addr.to_string(),Some(addr.into())),
                                 RecordKind::AAAA(addr) => (addr.to_string(),Some(addr.into())),
                                 RecordKind::CNAME(ref out) => (out.clone(),None),
-                                _ => ("unknown".to_string(),None),
+                                _ => { count_no_cast += 1;
+                                    ("unknown".to_string(),None)},
+
                             };
 
                             let text = if let Some(valid_addr) = addr {
@@ -55,6 +59,7 @@ impl Net {
                             if self.has_tui {
                                 let host_msg = ctrl::ReceiveDialog::Host;
                                 self.tui_sender.send(ctrl::SystemMsg::Update(host_msg,format!("found {}",text))).unwrap();
+                                // send count, too
                             } else {
                                 println!("[{}] found cast device at {}", index, text);                                    
                             }
