@@ -8,12 +8,7 @@ use self::cursive::traits::*; //{Identifiable,select};
 use std::iter::Iterator;
 use mpsc;
 
-use ctrl::{SystemMsg,UiMsg,ReceiveDialog};
-
-struct Alive {
-    host : usize
-}
-
+use ctrl::{SystemMsg,UiMsg,ReceiveDialog,Alive};
 
 pub struct Tui {
     handle : Cursive,
@@ -21,8 +16,14 @@ pub struct Tui {
     pub ui_sender: mpsc::Sender<UiMsg>,
     pub system_sender: mpsc::Sender<SystemMsg>,
 
-    all_alive : Alive
+    alive : AliveDisplayData
 } 
+
+struct AliveDisplayData {
+    host   : usize,
+    pathes : Vec<usize>
+}
+
 
 
 static RECT : usize = 40;
@@ -41,20 +42,13 @@ static ID_HOST_NUMBER : &str = "id_max";
 static ID_HOST_ALIVE : &str = "id_host_alive";
 
 
-impl <'tuilife> Tui {
-    pub fn new<'a>(title: String, system: mpsc::Sender<SystemMsg>, pathes: &Vec<String>, with_net: bool) -> Tui {
 
-        let (_ui_sender, _ui_receiver) = mpsc::channel::<UiMsg>();
-        let mut tui = Tui {
-            handle : Cursive::new(),
-            ui_sender : _ui_sender,
-            ui_receiver : _ui_receiver,
-            system_sender : system,
+impl Tui {
+    pub fn new(title: String, system: mpsc::Sender<SystemMsg>, pathes: &Vec<String>, with_net: bool) -> Tui {
 
-            all_alive : Alive { host : 0}
-        };
+        let later_handle = Cursive::new();
 
-        let screen_size = tui.handle.screen_size();
+        let screen_size = later_handle.screen_size();
         let max_cols = screen_size.x / RECT;
 
 
@@ -90,7 +84,7 @@ impl <'tuilife> Tui {
             );
         }
 
-
+        // draw all pathes
         for j in 0..rows {
             let mut horizontal_layout = LinearLayout::horizontal();
 
@@ -100,11 +94,14 @@ impl <'tuilife> Tui {
                 let my_number = j * max_cols + i;  // j >= 1
 
                 let differentiate_path = Tui::split_intelligent(pathes,max_table_width);
+                let path_name = format!("{}{}",PATHS_PREFIX_ID,my_number);
+
                 horizontal_layout.add_child(
                      Panel::new(LinearLayout::horizontal()
                         .child(
+                            // and link with an id
                             TextView::new(format!("{}",STR_START_ALIVE))
-                            .with_id(format!("{}{:?}",PATHS_PREFIX_ID,my_number))
+                            .with_id(path_name)
                         )
                         .child(
                             TextView::new(format!("{}",differentiate_path[my_number]))
@@ -125,6 +122,17 @@ impl <'tuilife> Tui {
                         Layer::new(vertical_layout)
                         ).title(format!("server uuid: {}",title));
 
+
+        // now build the actual TUI object
+        let (_ui_sender, _ui_receiver) = mpsc::channel::<UiMsg>();
+        let mut tui = Tui {
+            handle : later_handle,
+            ui_sender : _ui_sender,
+            ui_receiver : _ui_receiver,
+            system_sender : system,
+
+            alive : AliveDisplayData { host: 0, pathes: vec![0;pathes.len()]}
+        };
         tui.handle.add_layer(layer);
 
         // test this, to update every with 20fps / this should be done when something changes ..... grrrr
@@ -132,12 +140,11 @@ impl <'tuilife> Tui {
 
         // quit by 'q' key
         tui.handle.add_global_callback('q', |s| s.quit());
-
         tui 
     }
 
 
-    fn split_intelligent<'a>(vec : &Vec<String>, max_len: usize) -> Vec<String> {
+    fn split_intelligent(vec : &Vec<String>, max_len: usize) -> Vec<String> {
         let mut out : Vec<String> = Vec::new();
         for el in vec {
             let real_len = el.chars().count();
@@ -162,13 +169,21 @@ impl <'tuilife> Tui {
         out
     }
 
-    fn alive<'a>(&mut self, view_name: &'a String, nr: &'a mut usize) {
+    fn show_alive(&mut self, signal: Alive) {
+        let (view_name, counter) = match signal {
+            Alive::HOSTSEARCH => { 
+                 (ID_HOST_ALIVE.to_string(),&mut self.alive.host)
+             }
+            Alive::BUSYPATH{nr} => {
+                 (format!("{}{}",PATHS_PREFIX_ID,nr),&mut self.alive.pathes[nr])
+             }
+        };
         let mut output = self.handle
-                           .find_id::<TextView>(view_name);
+                            .find_id::<TextView>(&view_name);
         if let Some(ref mut found) = output {
-            *nr += 1;
-            let out = STR_ALIVE[(*nr)%4];
-            found.set_content(out.to_string());
+             *counter += 1;
+             let out = STR_ALIVE[(*counter)%4];
+             found.set_content(out.to_string());
         }
     }
 
@@ -182,22 +197,21 @@ impl <'tuilife> Tui {
            match message {
                UiMsg::Update(recv_dialog,text) => {
                 match recv_dialog {
-                    ReceiveDialog::PathNr{nr} => {
+                    ReceiveDialog::ShowNewPath{nr} => {
                        let mut output = self.handle
                            .find_id::<TextView>(&format!("{}{}",PATHS_PREFIX_ID,nr))
                            .unwrap();
                        output.set_content(text.clone());
                     },
-                    ReceiveDialog::Host => {
+                    ReceiveDialog::ShowNewHost => {
                        let mut host_list = self.handle.find_id::<ListView>(VIEW_LIST_HOST).unwrap();
                        let new_host_entry = TextView::new(format!("{}",text));
-
                        host_list.add_child("",new_host_entry);
-                       //self.alive(&VIEW_LIST_HOST.to_string(), &mut self.all_alive.host);
                     }
-                    ReceiveDialog::Alive => {},
+                    ReceiveDialog::ShowRunning{what} => {
+                       self.show_alive(what);
+                    },
                     ReceiveDialog::NetStats => {
-
                     },
                     ReceiveDialog::Debug => {
                        let mut output = self.handle

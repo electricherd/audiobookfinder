@@ -1,7 +1,7 @@
 //extern crate hyper;   // sometime, for a good server / client over https communication
 extern crate mdns as io_mdns;
 
-use self::io_mdns::{Record, RecordKind};
+use self::io_mdns::{RecordKind};
 
 use std::net::IpAddr;
 use std::sync::mpsc;
@@ -34,30 +34,23 @@ impl Net {
             let mut count_no_cast = 0;
 
             //let number = all_discoveries.into_iter().cloned().count();
-
             for (index,response) in all_discoveries.enumerate() {                
                     match response {
                         Ok(good_response) => {
 
                           for record in good_response.records() {
-                            let (out_string, addr) : (String,Option<IpAddr>) = match record.kind {
-                                RecordKind::A(addr) => (addr.to_string(),Some(addr.into())),
-                                RecordKind::AAAA(addr) => (addr.to_string(),Some(addr.into())),
-                                RecordKind::CNAME(ref out) => (out.clone(),None),
-                                _ => { count_no_cast += 1;
-                                    ("unknown".to_string(),None)},
-
-                            };
+                            let (out_string, addr) : (String,Option<IpAddr>) = Self::return_address(&record.kind);
 
                             let text = if let Some(valid_addr) = addr {
-                                //self.my_responses.push(valid_addr);
-                                format!(":{}:",valid_addr)
+                                self.my_responses.push(valid_addr);
+                                format!(":{}:",out_string) //valid_addr)
                             } else {
+                                count_no_cast += 1;
                                 out_string
                             };
 
                             if self.has_tui {
-                                let host_msg = ctrl::ReceiveDialog::Host;
+                                let host_msg = ctrl::ReceiveDialog::ShowNewHost;
                                 self.tui_sender.send(ctrl::SystemMsg::Update(host_msg,format!("found {}",text))).unwrap();
                                 // send count, too
                             } else {
@@ -80,4 +73,20 @@ impl Net {
             }
         }
     }
+
+
+    fn return_address(rk : &RecordKind) -> (String,Option<IpAddr>) {
+         let (out_string, addr) : (String,Option<IpAddr>) = match *rk {
+            RecordKind::A(addr) => (addr.to_string(),Some(addr.into())),
+            RecordKind::AAAA(addr) => (addr.to_string(),Some(addr.into())),
+            RecordKind::CNAME(ref out) => (format!("{}",out.clone()),None),
+            RecordKind::MX{preference,ref exchange} => (exchange.clone(),None),
+            RecordKind::TXT(ref out) => (out.clone(),None),
+            RecordKind::PTR(ref out) => (out.clone(),None),
+            _ => { ("unknown".to_string(),None)},
+
+        };
+        (out_string,addr)
+    }
+
 }

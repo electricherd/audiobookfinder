@@ -5,8 +5,8 @@ use ctrl::tui::Tui;
 use mpsc::{self};
 
 pub enum Alive {
-    PathNr { nr: usize},
-    Net
+    BUSYPATH { nr: usize},
+    HOSTSEARCH
 }
 
 pub struct NetStats {
@@ -16,10 +16,10 @@ pub struct NetStats {
 
 
 pub enum ReceiveDialog {
-    PathNr { nr : usize},
+    ShowNewPath { nr : usize},
     Debug,
-    Host,
-    Alive,
+    ShowNewHost,
+    ShowRunning{what: Alive},
     NetStats
 }
 
@@ -37,8 +37,6 @@ pub struct Ctrl {
     rx: mpsc::Receiver<SystemMsg>,
     ui: Tui,
 }
-
-
 
 
 

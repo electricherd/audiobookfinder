@@ -140,6 +140,8 @@ fn main() {
     all_pathes.par_iter().enumerate().for_each(|(index,elem)| {
         if !has_tui {
             println!("[{:?}] looking into path {:?}", index, elem);
+        } else {
+          //start timer
         }
         let live_here = collection_protected.clone();
 
@@ -157,9 +159,9 @@ fn main() {
         } else {
             // all good, so write some (yet debug) text
             if has_tui {
-                //let text = format!("test{}",index);
-                //let path_index = ReceiveDialog::PathNr{nr:index};
-                //tx_sys_mut.lock().unwrap().send(SystemMsg::Update(path_index,text)).unwrap();
+                let text = format!("test{}",index);
+                let message = ReceiveDialog::ShowRunning{what: ctrl::Alive::BUSYPATH{nr:index}};
+                tx_sys_mut.lock().unwrap().send(SystemMsg::Update(message,text)).unwrap();
             }
         }
     });
