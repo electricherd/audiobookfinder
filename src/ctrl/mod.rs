@@ -10,8 +10,8 @@ pub enum Alive {
 }
 
 pub struct NetStats {
-    index : usize,
-    max   : usize
+    pub line  : usize,
+    pub max   : usize
 }
 
 
@@ -20,7 +20,7 @@ pub enum ReceiveDialog {
     Debug,
     ShowNewHost,
     ShowRunning{what: Alive},
-    NetStats
+    ShowStats{show: NetStats}
 }
 
 

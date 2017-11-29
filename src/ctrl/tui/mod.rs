@@ -211,9 +211,13 @@ impl Tui {
                     ReceiveDialog::ShowRunning{what} => {
                        self.show_alive(what);
                     },
-                    ReceiveDialog::NetStats => {
-                    },
-                    ReceiveDialog::Debug => {
+                    ReceiveDialog::ShowStats{show} => {
+                        let output = self.handle
+                            .find_id::<TextView>(ID_HOST_INDEX);
+                        if let Some(mut found) = output {
+                            found.set_content(show.line.to_string());
+                        }
+                    },                    ReceiveDialog::Debug => {
                        let mut output = self.handle
                            .find_id::<TextView>(DEBUG_TEXT_ID)
                            .unwrap();

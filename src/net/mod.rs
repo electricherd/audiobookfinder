@@ -30,6 +30,7 @@ impl Net {
 
     pub fn lookup(&mut self) {
         if let Ok(all_discoveries) = io_mdns::discover::all(SERVICE_NAME) {
+            let mut count_valid = 0;
             let mut count_no_response = 0;
             let mut count_no_cast = 0;
 
@@ -39,23 +40,29 @@ impl Net {
                         Ok(good_response) => {
 
                           for record in good_response.records() {
-                            let (out_string, addr) : (String,Option<IpAddr>) = Self::return_address(&record.kind);
+                            let (out_string, addr) : (Option<String>,Option<IpAddr>) = Self::return_address(&record.kind);
 
-                            let text = if let Some(valid_addr) = addr {
-                                self.my_responses.push(valid_addr);
-                                format!(":{}:",out_string) //valid_addr)
+                            if let Some(valid_out) = out_string {
+
+                                count_valid += 1;
+                                
+                                if let Some(valid_addr) = addr {
+                                    self.my_responses.push(valid_addr);
+                                }
+                                format!(":{}:",valid_out);
+                                if self.has_tui {
+                                    let host_msg = ctrl::ReceiveDialog::ShowNewHost;
+                                    self.tui_sender.send(ctrl::SystemMsg::Update(host_msg,format!("found {}",valid_out))).unwrap();
+                                    let counter_msg = ctrl::ReceiveDialog::ShowStats{show: ctrl::NetStats{ line : count_valid, max: index}};
+                                    self.tui_sender.send(ctrl::SystemMsg::Update(counter_msg,"".to_string())).unwrap();
+                                } else {
+                                    println!("[{}] found cast device at {}", index, valid_out);
+                                }
+
                             } else {
                                 count_no_cast += 1;
-                                out_string
+                                // send update
                             };
-
-                            if self.has_tui {
-                                let host_msg = ctrl::ReceiveDialog::ShowNewHost;
-                                self.tui_sender.send(ctrl::SystemMsg::Update(host_msg,format!("found {}",text))).unwrap();
-                                // send count, too
-                            } else {
-                                println!("[{}] found cast device at {}", index, text);                                    
-                            }
                           }
                         },
                         Err(_) => { count_no_response += 1; }
@@ -75,15 +82,15 @@ impl Net {
     }
 
 
-    fn return_address(rk : &RecordKind) -> (String,Option<IpAddr>) {
-         let (out_string, addr) : (String,Option<IpAddr>) = match *rk {
-            RecordKind::A(addr) => (addr.to_string(),Some(addr.into())),
-            RecordKind::AAAA(addr) => (addr.to_string(),Some(addr.into())),
-            RecordKind::CNAME(ref out) => (format!("{}",out.clone()),None),
-            RecordKind::MX{preference,ref exchange} => (exchange.clone(),None),
-            RecordKind::TXT(ref out) => (out.clone(),None),
-            RecordKind::PTR(ref out) => (out.clone(),None),
-            _ => { ("unknown".to_string(),None)},
+    fn return_address(rk : &RecordKind) -> (Option<String>,Option<IpAddr>) {
+         let (out_string, addr) : (Option<String>,Option<IpAddr>) = match *rk {
+            RecordKind::A(addr) => (Some(addr.to_string()),Some(addr.into())),
+            RecordKind::AAAA(addr) => (Some(addr.to_string()),Some(addr.into())),
+            RecordKind::CNAME(ref out) => (Some(format!("{}",out.clone())),None),
+            RecordKind::MX{preference,ref exchange} => (Some(exchange.clone()),None),
+            RecordKind::TXT(ref out) => (Some(out.clone()),None),
+            RecordKind::PTR(ref out) => (Some(out.clone()),None),
+            _ => { (None,None)},
 
         };
         (out_string,addr)
