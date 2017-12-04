@@ -147,22 +147,32 @@ fn main() {
 
         let mut pure_collection = live_here.lock().unwrap();
 
-        if let Err(_e) = pure_collection.visit_dirs(Path::new(elem),&data::Collection::visit_files) {
-            let text = format!("An error has occurred in search path [{}]!!", index);
-            if has_tui {
-                let debug_message_id = ReceiveDialog::Debug;
-                let text = text.to_string();
-                tx_sys_mut.lock().unwrap().send(SystemMsg::Update(debug_message_id,text)).unwrap();
-            } else {
-                println!("{:?}",text);
-            }
-        } else {
-            // all good, so write some (yet debug) text
-            if has_tui {
-                let text = format!("test{}",index);
-                let message = ReceiveDialog::ShowRunning{what: ctrl::Alive::BUSYPATH{nr:index}};
-                tx_sys_mut.lock().unwrap().send(SystemMsg::Update(message,text)).unwrap();
-            }
+        match pure_collection.visit_dirs(Path::new(elem),&data::Collection::visit_files) {
+            Ok(local_stats) => {
+                let text = format!("\nanalyzed: {an:>width$}, faulty: {fa:>width$}\nsearched: {se:>width$},  other: {ot:>width$}",
+                                        an=local_stats.analyzed, fa=local_stats.faulty,
+                                        se=local_stats.searched, ot=local_stats.other,
+                                        width=3);
+                if has_tui {
+                    let busy_message = ReceiveDialog::ShowRunning{what: ctrl::Alive::BUSYPATH{nr:index}};
+                    tx_sys_mut.lock().unwrap().send(SystemMsg::Update(busy_message,format!("ha"))).unwrap();
+
+                    let stat_message = ReceiveDialog::ShowNewPath{nr:index};
+                    tx_sys_mut.lock().unwrap().send(SystemMsg::Update(stat_message,text)).unwrap();
+                } else {
+                    println!("[{:?}] done {}",index,text);
+                }
+            },
+            Err(_e) =>  {
+                let text = format!("An error has occurred in search path [{}]!!", index);
+                if has_tui {
+                    let debug_message_id = ReceiveDialog::Debug;
+                    let text = text.to_string();
+                    tx_sys_mut.lock().unwrap().send(SystemMsg::Update(debug_message_id,text)).unwrap();
+                } else {
+                    println!("{:?}",text);
+                }
+            },
         }
     });
 

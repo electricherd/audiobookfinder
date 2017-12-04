@@ -66,6 +66,23 @@ pub struct Collection {
     stats       : Stats
 }
 
+pub struct Files {
+    pub analyzed: u32,
+    pub faulty :  u32,
+    pub searched: u32,
+    pub other:    u32,
+}
+
+impl Files {
+    fn add(&mut self, other: &Files) {
+        self.analyzed += other.analyzed;
+        self.faulty += other.faulty;
+        self.searched += other.searched;
+        self.other += other.other;
+    }
+}
+
+
 struct Stats {
     files : Files,
     audio : Audio,
@@ -77,15 +94,8 @@ struct Audio {
     max_songs : usize,
 }
 
-struct Files {
-    analyzed: u32,
-    faulty :  u32,
-    searched: u32,
-    other:    u32,
-}
 
-
-type FileFn = Fn(&mut Collection, &DirEntry) -> io::Result<()>;
+type FileFn = Fn(&mut Collection, &DirEntry, &mut Files) -> io::Result<()>;
 
 /// This part implements all functions
 impl Collection {
@@ -102,41 +112,48 @@ impl Collection {
     }
 
     /// The function that runs from the starting point
-    pub fn visit_dirs(&mut self, dir: &Path, cb: &FileFn) -> io::Result<()> {
+    pub fn visit_dirs(&mut self, dir: &Path, cb: &FileFn) -> io::Result<(Files)> {
+        let mut file_stats = Files{analyzed:0,faulty:0,searched: 0, other: 0};
         if dir.is_dir() {
+
             for entry in fs::read_dir(dir)? {
+                let mut loop_file_stats = &mut file_stats;                
+                
                 let entry = entry?;
                 let path = entry.path();
                 if path.is_dir() {
-                    self.visit_dirs(&path, cb)?;
+                    let file_stats_loop = self.visit_dirs(&path, cb)?;
+                    loop_file_stats.add(&file_stats_loop);
                 } else {
-                    cb(self, &entry)?;
+                    cb(self, &entry, &mut loop_file_stats)?;
                 }
             }
         }
-        Ok(())
+        Ok((file_stats))
     }
 
     /// the function to check all files separately
-    pub fn visit_files(col: &mut Collection, cb: &DirEntry) -> io::Result<()> {
+    pub fn visit_files(col: &mut Collection, cb: &DirEntry, file_stats: &mut Files) -> io::Result<()> {
         // count stats
-        col.stats.files.searched += 1;        
+        col.stats.files.searched += 1;
+        file_stats.searched += 1;        
         
         let filetype = tree_magic::from_filepath(&cb.path());
         let prefix = filetype.split("/").nth(0);
         match prefix {
-            Some("audio") => col.visit_audio_files(&cb.path())?,
+            Some("audio") => col.visit_audio_files(&cb.path(),file_stats)?,
             Some("text") | Some("application") 
              | Some("image") => {},
             _ => {
                  println!("[{:?}]{:?}",prefix, cb.path());
                  col.stats.files.other += 1;
+                 file_stats.other += 1;
             }
         }
     	Ok(())	
     }
 
-    fn visit_audio_files(&mut self, cb: &Path) -> io::Result<()> {
+    fn visit_audio_files(&mut self, cb: &Path, file_stats: &mut Files) -> io::Result<()> {
         match Tag::read_from_path(cb) {
             Ok(tag) => {
                 if let Some(artist) = tag.artist() {
@@ -165,9 +182,13 @@ impl Collection {
                     }
                 } else {
                     self.stats.files.faulty += 1;
+                    file_stats.faulty += 1;
                 }
             },
-            Err(_) => { self.stats.files.faulty += 1}
+            Err(_) => { 
+                self.stats.files.faulty += 1;
+                file_stats.faulty += 1;
+            }
         }
         Ok(())
    }

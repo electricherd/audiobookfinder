@@ -37,6 +37,8 @@ static DEBUG_TEXT_ID : &str = "debug_info";
 static VIEW_LIST_HOST : &str = "hostlist";
 
 static PATHS_PREFIX_ID : &str = "pf";
+static PATH_PREFIX_SEARCH : &str = "pre_path_search";
+
 static ID_HOST_INDEX : &str = "id_host";
 static ID_HOST_NUMBER : &str = "id_max";
 static ID_HOST_ALIVE : &str = "id_host_alive";
@@ -65,7 +67,9 @@ impl Tui {
                 Dialog::around(                
                     LinearLayout::vertical()
                     .child(
-                        ListView::new().with_id(VIEW_LIST_HOST).fixed_size((20,5)))
+                        ListView::new()
+                         .fixed_height(10)
+                         )
                     .child(LinearLayout::horizontal()
                         .child(TextView::new(format!("{}",STR_START_ALIVE))
                             .with_id(ID_HOST_ALIVE))
@@ -88,13 +92,14 @@ impl Tui {
         for j in 0..rows {
             let mut horizontal_layout = LinearLayout::horizontal();
 
-            let cols = if j < rows-1 { max_cols }else{ pathes.len() % max_cols };
+            let cols = if j < rows-1 { max_cols } else { pathes.len() % max_cols };
 
             for i in 0..cols {
                 let my_number = j * max_cols + i;  // j >= 1
 
-                let differentiate_path = Tui::split_intelligent(pathes,max_table_width);
+                let differentiate_path = Self::split_intelligently(pathes,max_table_width);
                 let path_name = format!("{}{}",PATHS_PREFIX_ID,my_number);
+                let path_alive = format!("{}{}",PATH_PREFIX_SEARCH,my_number);
 
                 horizontal_layout.add_child(
                      Panel::new(LinearLayout::horizontal()
@@ -105,6 +110,7 @@ impl Tui {
                         )
                         .child(
                             TextView::new(format!("{}",differentiate_path[my_number]))
+                            .fixed_height(3)
                         )
                     ));
             }
@@ -119,8 +125,8 @@ impl Tui {
                     .with_id(DEBUG_TEXT_ID)));
 
         let layer = Dialog::around(
-                        Layer::new(vertical_layout)
-                        ).title(format!("server uuid: {}",title));
+                        Layer::new(vertical_layout))
+                    .title(format!("Server uuid: {}",title));
 
 
         // now build the actual TUI object
@@ -144,7 +150,7 @@ impl Tui {
     }
 
 
-    fn split_intelligent(vec : &Vec<String>, max_len: usize) -> Vec<String> {
+    fn split_intelligently(vec : &Vec<String>, max_len: usize) -> Vec<String> {
         let mut out : Vec<String> = Vec::new();
         for el in vec {
             let real_len = el.chars().count();
@@ -198,15 +204,15 @@ impl Tui {
                UiMsg::Update(recv_dialog,text) => {
                 match recv_dialog {
                     ReceiveDialog::ShowNewPath{nr} => {
-                       let mut output = self.handle
-                           .find_id::<TextView>(&format!("{}{}",PATHS_PREFIX_ID,nr))
-                           .unwrap();
-                       output.set_content(text.clone());
+                       if let Some(mut found) = self.handle
+                           .find_id::<TextView>(&format!("{}{}",PATHS_PREFIX_ID,nr)) {
+                            //found.append_content(&text.clone());
+                        }
                     },
                     ReceiveDialog::ShowNewHost => {
-                       let mut host_list = self.handle.find_id::<ListView>(VIEW_LIST_HOST).unwrap();
-                       let new_host_entry = TextView::new(format!("{}",text));
-                       host_list.add_child("",new_host_entry);
+                       if let Some(mut host_list) = self.handle.find_id::<ListView>(VIEW_LIST_HOST) {
+                            host_list.add_child("",TextView::new(format!("{}",text)));
+                       }
                     }
                     ReceiveDialog::ShowRunning{what} => {
                        self.show_alive(what);
@@ -217,11 +223,12 @@ impl Tui {
                         if let Some(mut found) = output {
                             found.set_content(show.line.to_string());
                         }
-                    },                    ReceiveDialog::Debug => {
-                       let mut output = self.handle
-                           .find_id::<TextView>(DEBUG_TEXT_ID)
-                           .unwrap();
-                       output.set_content(text);
+                    },                    
+                    ReceiveDialog::Debug => {
+                       if let Some(mut found) = self.handle
+                           .find_id::<TextView>(DEBUG_TEXT_ID) {
+                            found.set_content(text);
+                        }
                     }
                 }
                }
