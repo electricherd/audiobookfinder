@@ -1,7 +1,7 @@
 # audiobookfinder
 An example program to learn [Rust](https://www.rust-lang.org/) and meet its concepts. Find my audiobooks on different machines.
 ## Why Rust?
-Rust is an awesome but difficult to learn programming language using different approaches and concepts to solve the current main software development issues for system programming, such as parallism (what else to do with this multi-core, we are not getting much faster any more), safety (let the computer/compiler do what it can do better than a programmer, more quality but also IOT ... I want safe products at home, that cannot be turn into zombie devices by buffer overflow), and more high-level approaches which lets you implement more functionality in less code.
+Rust is an awesome but difficult to learn programming language using different approaches and concepts to solve the current main software development issues for system programming, such as parallism (what else to do with this multi-core, we are not getting much faster any more), safety (let the computer/compiler do what it can do better than a programmer, more quality but also IOT ... I want safe products at home, that cannot be turned into zombie devices by buffer overflow), and more high-level approaches which lets you implement more functionality in less code.
 
 ## My first program in Rust
 Actually I plan to do something even useful. The program would get all information about (yet) audiobooks on different devices/clients, collect it and then do some actions, like stats, find duplicates, aggregate everything at some place.
