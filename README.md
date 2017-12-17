@@ -24,3 +24,4 @@ yet in plan:
 * exchange of data over net
 * internationalization (which is not really supported yet by Rust)
 * a good and fast data collection
+
