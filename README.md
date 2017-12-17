@@ -1,5 +1,5 @@
 # audiobookfinder
-An example program to learn Rust and meet its concepts. Find my audiobooks on different machines.
+An example program to learn [Rust](https://www.rust-lang.org/) and meet its concepts. Find my audiobooks on different machines.
 ## Why Rust?
 Rust is an awesome but difficult to learn programming language using different approaches and concepts to solve the current main software development issues for system programming, such as parallism (what else to do with this multi-core, we are not getting much faster any more), safety (let the computer/compiler do what it can do better than a programmer, more quality but also IOT ... I want safe products at home, that cannot be turn into zombie devices by buffer overflow), and more high-level approaches which lets you implement more functionality in less code.
 
