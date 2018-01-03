@@ -14,7 +14,7 @@ extern crate uuid;
 use std::path::{Path};  // path, clear
 use std::sync::{Arc, Mutex};
 use std::thread;
-use std::time::Duration;
+
 use self::rayon::prelude::{IntoParallelRefIterator,
                            IndexedParallelIterator,
                            ParallelIterator};
@@ -30,12 +30,10 @@ pub use self::net::Net;
 
 use ctrl::{SystemMsg,ReceiveDialog};
 
-static INPUT_FOLDERS : &str = "folders";
-static APP_TITLE : &str = "The audiobook finder";
-static ARG_NET : &str = "net";
-static ARG_TUI : &str = "tui";
-static NET_TIMEOUT    : u64 = 10_000_u64;
-static NET_CYCLE_TIME : u64 = 500_u64;
+static INPUT_FOLDERS  : &str = "folders";
+static APP_TITLE      : &str = "The audiobook finder";
+static ARG_NET        : &str = "net";
+static ARG_TUI        : &str = "tui";
 
 use std::sync::mpsc;
 
@@ -89,7 +87,7 @@ fn main() {
     let tx_sys_mut  = Mutex::new(tx.clone());
     let tx_net_mut  = Mutex::new(tx.clone());
 
-    // f*ck in order to copy vec<&str>
+    // copy to vec<&str>
     let tui_pathes = all_pathes.iter().map(|s|s.to_string()).collect();
 
     // get an unique id for this client
@@ -98,7 +96,11 @@ fn main() {
     // start the tui thread
     let tui_runner = thread::spawn(move || {
         if has_tui {
-            let controller = Ctrl::new(client_id.to_string(), &tui_pathes,rx,tx.clone(), has_net);        
+            let controller = Ctrl::new(client_id.to_string(),
+                                       &tui_pathes,
+                                       rx,
+                                       tx.clone(),
+                                       has_net);        
             match controller {
                 Ok(mut controller) => {controller.run();},
                 Err(_) => {}
@@ -111,24 +113,10 @@ fn main() {
     let net_runner = thread::spawn(move || {
       if has_net {
         // need to simplify and clarify this here ......
-        let mut netfinder = Net::new(&client_id.to_string(),has_tui,tx_net_mut_arc.lock().unwrap().clone());
-        let mut done = false;
-
-        //let loop_limit = NET_TIMEOUT / NET_CYCLE_TIME;
-        //let mut loop_counter = 0;
-
-
-        while !done {
-            done = true;
-            netfinder.lookup();
-            //thread::sleep(Duration::from_millis(NET_CYCLE_TIME));
-
-            // if !has_tui {
-            //   loop_counter += 1;
-            //   println!("count: {:?}", loop_counter);
-            //   done = loop_counter > loop_limit;
-            // }
-        }
+        let mut netfinder = Net::new(&client_id.to_string(),
+                                     has_tui,
+                                     tx_net_mut_arc.lock().unwrap().clone());
+        netfinder.lookup();
       }
     });
 
@@ -139,20 +127,21 @@ fn main() {
     // start the search threads, each path its own
     all_pathes.par_iter().enumerate().for_each(|(index,elem)| {
         if !has_tui {
-            println!("[{:?}] looking into path {:?}", index, elem);
+          println!("[{:?}] looking into path {:?}", index, elem);
         } else {
-          //start timer
+          //
         }
         let live_here = collection_protected.clone();
-
         let mut pure_collection = live_here.lock().unwrap();
 
         match pure_collection.visit_dirs(Path::new(elem),&data::Collection::visit_files) {
             Ok(local_stats) => {
-                let text = format!("\nanalyzed: {an:>width$}, faulty: {fa:>width$}\nsearched: {se:>width$},  other: {ot:>width$}",
-                                        an=local_stats.analyzed, fa=local_stats.faulty,
-                                        se=local_stats.searched, ot=local_stats.other,
-                                        width=3);
+                let text = format!("\n\
+                                    analyzed: {an:>width$}, faulty: {fa:>width$}\n\
+                                    searched: {se:>width$}, other: {ot:>width$}",
+                                    an=local_stats.analyzed, fa=local_stats.faulty,
+                                    se=local_stats.searched, ot=local_stats.other,
+                                    width=3);
                 if has_tui {
                     let busy_message = ReceiveDialog::ShowRunning{what: ctrl::Alive::BUSYPATH{nr:index}};
                     tx_sys_mut.lock().unwrap().send(SystemMsg::Update(busy_message,format!("ha"))).unwrap();
@@ -179,8 +168,12 @@ fn main() {
     if !has_tui {
         let result_collection = collection_protected.lock().unwrap();        
         result_collection.print_stats();
-    }
-    let _ = (tui_runner.join(), net_runner.join());
+        let _ = net_runner.join();
+    } else {
+        let _ = tui_runner.join();
+        // if tui, net runner shall stop when tui stops    
+        drop(net_runner);
+    }    
     
     println!("Finished!");
 }
