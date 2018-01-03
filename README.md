@@ -15,13 +15,15 @@ The primary goal actually is to learn Rust and to cover various aspects of the l
 * including/using different crates (I don't want to reinvent the wheel)
 * in-code documentation (well, small yet)
 * easy command-line (always was looking for that, nice: [clap](https://github.com/kbknapp/clap-rs))
+* channel/thread communication
 * high level networking (mDNS), having issues there since I would like to try 2 mDNS packages simultanously 
 
 yet in plan:
+* use the test feature of Rust
 * simple timers (using an alive signal in TUI)
 * further lifetimes optimizations
 * client/server authorization/management in a safe way (some small crypto)
 * exchange of data over net
 * internationalization (which is not really supported yet by Rust)
 * a good and fast data collection
-
+* [futures](https://tokio.rs/docs/getting-started/futures/) and ([tokio](https://tokio.rs/)) for async behavior and for networking

@@ -87,7 +87,7 @@ impl Net {
             RecordKind::A(addr) => (Some(addr.to_string()),Some(addr.into())),
             RecordKind::AAAA(addr) => (Some(addr.to_string()),Some(addr.into())),
             RecordKind::CNAME(ref out) => (Some(format!("{}",out.clone())),None),
-            RecordKind::MX{preference,ref exchange} => (Some(exchange.clone()),None),
+            RecordKind::MX{ref exchange, ..} => (Some(exchange.clone()),None),
             RecordKind::TXT(ref out) => (Some(out.clone()),None),
             RecordKind::PTR(ref out) => (Some(out.clone()),None),
             _ => { (None,None)},
