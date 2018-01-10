@@ -1,4 +1,3 @@
-//extern crate hyper;   // sometime, for a good server / client over https communication
 extern crate mdns as io_mdns;
 
 use self::io_mdns::{RecordKind};

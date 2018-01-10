@@ -3,9 +3,15 @@ use ctrl::tui::Tui;
 
 use mpsc::{self};
 
+#[derive(Clone)]
 pub enum Alive {
-    BUSYPATH { nr: usize},
+    BUSYPATH (usize),
     HOSTSEARCH
+}
+
+pub enum Status {
+    ON,
+    OFF
 }
 
 pub struct NetStats {
@@ -18,17 +24,19 @@ pub enum ReceiveDialog {
     ShowNewPath { nr : usize},
     Debug,
     ShowNewHost,
-    ShowRunning{what: Alive},
     ShowStats{show: NetStats}
 }
 
 
 pub enum UiMsg {
-    Update(ReceiveDialog,String)
+    Update(ReceiveDialog,String),
+    Animate(Alive,Status),
+    TimeOut(Alive)
 }
 
 pub enum SystemMsg {
-    Update(ReceiveDialog,String)
+    Update(ReceiveDialog,String),
+    StartAnimation(Alive,Status)
 }
 
 
@@ -57,6 +65,12 @@ impl Ctrl {
                         self.ui
                             .ui_sender
                             .send(UiMsg::Update(recv_dialog,text))
+                            .unwrap();
+                    },
+                    SystemMsg::StartAnimation(signal,on_off) => {
+                        self.ui
+                            .ui_sender
+                            .send(UiMsg::Animate(signal,on_off))
                             .unwrap();
                     }
                 };

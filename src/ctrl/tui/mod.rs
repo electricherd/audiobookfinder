@@ -1,14 +1,21 @@
 extern crate cursive;
+extern crate timer;
+extern crate time;
 
 use self::cursive::{Cursive};
 use self::cursive::align;
 use self::cursive::views::{Dialog,TextView,Layer, ListView, LinearLayout,Panel};
 use self::cursive::traits::*; //{Identifiable,select};
 
+use self::timer::{Timer,Guard}; // MessageTimer
+use self::time::Duration;
+
 use std::iter::Iterator;
+
 use mpsc;
 
-use ctrl::{SystemMsg,UiMsg,ReceiveDialog,Alive};
+use ctrl::{SystemMsg,UiMsg,ReceiveDialog,Alive,Status};
+
 
 pub struct Tui {
     pub ui_receiver: mpsc::Receiver<UiMsg>,
@@ -45,6 +52,8 @@ static PATHS_PREFIX_ID      : &str = "pf";
 static ID_HOST_INDEX        : &str = "id_host";
 static ID_HOST_NUMBER       : &str = "id_max";
 static ID_HOST_ALIVE        : &str = "id_host_alive";
+
+static TIMEOUT_SEARCH       : i64 = 500;
 
 
 impl Tui {
@@ -93,9 +102,6 @@ impl Tui {
                                 host_list.add_child("",TextView::new(format!("{}",text)));
                            }
                         }
-                        ReceiveDialog::ShowRunning{what} => {
-                           self.update_run(what);
-                        },
                         ReceiveDialog::ShowStats{show} => {
                             let output = self.handle
                                 .find_id::<TextView>(ID_HOST_INDEX);
@@ -108,6 +114,34 @@ impl Tui {
                                .find_id::<TextView>(DEBUG_TEXT_ID) {
                                 found.set_content(text);
                             }
+                        }
+                    }
+                },
+                UiMsg::Animate(signal,on_off) => {
+                    let sender_clone = self.ui_sender.clone();
+                    let mut timer = Timer::new();
+                    match on_off {
+                        Status::ON => {
+                            // if timer not started, start
+                            let _guard = timer.schedule_with_delay(Duration::milliseconds(TIMEOUT_SEARCH), move || {
+                                    sender_clone.send(UiMsg::TimeOut(signal.clone())).unwrap();
+                            });
+                        },
+                        Status::OFF => {
+                            //guard[].drop();
+                        }
+                    }
+                },
+                UiMsg::TimeOut(which) => {
+                    match which {
+                        Alive::HOSTSEARCH => {
+                            //1. check if still needs to start
+                            //2. do animation
+                            //3. restart timer
+
+
+                        },
+                        Alive::BUSYPATH(nr) => {
                         }
                     }
                 }
@@ -145,21 +179,24 @@ impl Tui {
     }
 
     fn test_alive<'partial>(&mut self) { //, data: &'partial mut AliveDisplayData) {
+        let mut keep_alive = false;
+
         let data = &self.alive;
         // test net running
         if data.host.runs {
-            let busy_message = ReceiveDialog::ShowRunning{what: Alive::HOSTSEARCH};
-            self.ui_sender.send(UiMsg::Update(busy_message,format!("ha"))).unwrap();
+            //self.ui_sender.send(UiMsg::Update(busy_message,format!("ha"))).unwrap();
+            keep_alive = true;
         }        
 
         // update all running
         data.pathes
            .iter()
-           .filter(|filtered| filtered.runs)
            .enumerate()
+           .filter(|&(_,filtered)| filtered.runs)
            .for_each(|(i,..)| {
-                let busy_message = ReceiveDialog::ShowRunning{what: Alive::BUSYPATH{nr:i}};
-                self.ui_sender.send(UiMsg::Update(busy_message,format!("ha"))).unwrap();
+                //
+                //self.ui_sender.send(UiMsg::Update(busy_message,format!("ha"))).unwrap();
+                keep_alive = true;
         });
     }
 
@@ -169,7 +206,7 @@ impl Tui {
             Alive::HOSTSEARCH => { 
                  (ID_HOST_ALIVE.to_string(),&mut self.alive.host.draw_char)
             }
-            Alive::BUSYPATH{nr} => {
+            Alive::BUSYPATH(nr) => {
                  (format!("{}{}",PATHS_PREFIX_ID,nr),&mut self.alive.pathes[nr].draw_char)
             }
         };
@@ -197,7 +234,7 @@ impl Tui {
                 Alive::HOSTSEARCH => { 
                      self.alive.host.runs = true;
                  }
-                Alive::BUSYPATH{nr} => {
+                Alive::BUSYPATH(nr) => {
                     let ref mut runs = self.alive.pathes[nr].runs;
                     if !*runs {
                         *runs = true;
