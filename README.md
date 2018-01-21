@@ -17,9 +17,10 @@ The primary goal actually is to learn Rust and to cover various aspects of the l
 * easy command-line (always was looking for that, nice: [clap](https://github.com/kbknapp/clap-rs))
 * channel/thread communication
 * high level networking (mDNS), having issues there since I would like to try 2 mDNS packages simultanously 
+* use the test feature of Rust (simple case)
 
 yet in plan:
-* use the test feature of Rust
+* trait example (just simple: extend drop with some print)
 * simple timers (using an alive signal in TUI)
 * further lifetimes optimizations
 * client/server authorization/management in a safe way (some small crypto)

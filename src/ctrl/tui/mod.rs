@@ -329,3 +329,41 @@ impl Tui {
         later_handle
     }
 } // impl Tui
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn split_intelligently_alignment() {
+        let boundary = 20;
+        let input_vec       : Vec<String> = vec!["duck","monkey"]
+                             .iter().map(|s|s.to_string()).collect();
+        let expected_output : Vec<String> = vec!["duck","monkey"]
+                             .iter().map(|s| {
+                                format!("{}{}"," ".repeat(boundary-s.len()),s)
+                            }).collect();
+        let output = Tui::split_intelligently(&input_vec,boundary);
+        assert!( 
+                output.len()==expected_output.len() 
+             && expected_output.iter().zip(output.iter()).all(|(e,o)| e == o)
+        );
+    }
+    #[test]
+    fn split_intelligently_shorten() {
+        let boundary = 15;
+        let input_vec       : Vec<String> = vec!["The duck went swimming.","A cool hat does not fit you."]
+                             .iter().map(|s| s.to_string()).collect();
+        let expected_output : Vec<String> = vec!["The duc..mming.","A cool ..t you."]
+                             .iter().map(|s| s.to_string()).collect();
+        let output = Tui::split_intelligently(&input_vec,boundary);
+        assert!( 
+                output.len()==expected_output.len() 
+             && expected_output.iter().zip(output.iter()).all(|(e,o)|
+             {
+                           e == o 
+             })
+        );
+    }
+
+}
