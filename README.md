@@ -1,7 +1,7 @@
 # audiobookfinder
 An example program to learn [Rust](https://www.rust-lang.org/) and meet its concepts. Find my audiobooks on different machines.
 ## Why Rust?
-Rust is an awesome but difficult to learn programming language using different approaches and concepts to solve the current main software development issues for system programming, such as parallism (what else to do with this multi-core, we are not getting much faster any more), safety (let the computer/compiler do what it can do better than a programmer, more quality but also IOT ... I want safe products at home, that cannot be turned into zombie devices by buffer overflow), and more high-level approaches which lets you implement more functionality in less code.
+Rust is an awesome but difficult to learn programming language using different approaches and concepts to solve the current main software development issues for system programming, such as parallism (what else to do with this multi-core, we are not getting much faster any more), safety and security (let the computer/compiler do what it can do better than a programmer, more quality but also IOT ... I want safe products at home, that cannot be turned into zombie devices by buffer overflow), and more high-level approaches which lets you implement more functionality in less code.
 
 ## My first program in Rust
 Actually I plan to do something even useful. The program would get all information about (yet) audiobooks on different devices/clients, collect it and then do some actions, like stats, find duplicates, aggregate everything at some place.
@@ -18,9 +18,9 @@ The primary goal actually is to learn Rust and to cover various aspects of the l
 * channel/thread communication
 * high level networking (mDNS), having issues there since I would like to try 2 mDNS packages simultanously 
 * use the test feature of Rust (simple case)
+* trait example (a simple drop with print message)
 
 yet in plan:
-* trait example (just simple: extend drop with some print)
 * simple timers (using an alive signal in TUI)
 * further lifetimes optimizations
 * client/server authorization/management in a safe way (some small crypto)

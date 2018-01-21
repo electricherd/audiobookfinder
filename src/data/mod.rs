@@ -219,3 +219,11 @@ impl Collection {
         println!("{}", output_string);
    }
 } // end of impl Collection
+
+impl Drop for Collection {
+    fn drop(&mut self) {
+        println!("Dropping/destroying collection from {}",
+            self.who.id.hyphenated().to_string().to_uppercase())
+        ;
+    }
+}
