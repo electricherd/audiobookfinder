@@ -1,18 +1,15 @@
 extern crate cursive;
-extern crate timer;
-extern crate time;
 
 use self::cursive::{Cursive};
 use self::cursive::align;
 use self::cursive::views::{Dialog,TextView,Layer, ListView, LinearLayout,Panel};
 use self::cursive::traits::*; //{Identifiable,select};
 
-use self::timer::{Timer,Guard}; // MessageTimer
-use self::time::Duration;
+use mpsc;
 
 use std::iter::Iterator;
-
-use mpsc;
+use std::thread;
+use std::time::Duration;
 
 use ctrl::{SystemMsg,UiMsg,ReceiveDialog,Alive,Status};
 
@@ -35,7 +32,6 @@ struct AliveState {
 struct AliveDisplayData {
     host   : AliveState,
     pathes : Vec<AliveState>,
-    timed  : bool
 }
 
 
@@ -53,7 +49,7 @@ static ID_HOST_INDEX        : &str = "id_host";
 static ID_HOST_NUMBER       : &str = "id_max";
 static ID_HOST_ALIVE        : &str = "id_host_alive";
 
-static TIMEOUT_SEARCH       : i64 = 500;
+static TIMEOUT_SEARCH       : u64 = 80;
 
 
 impl Tui {
@@ -71,8 +67,7 @@ impl Tui {
             system_sender : system,
             alive         : AliveDisplayData {
                                         host  :   AliveState{draw_char: 0, runs: false}
-                                      , pathes: vec![AliveState{draw_char: 0, runs: false};pathes.len()]
-                                      , timed : true}
+                                      , pathes: vec![AliveState{draw_char: 0, runs: false};pathes.len()]}
         };
 
         // test this, to update every with 20fps / this should be done when something changes ..... grrrr
@@ -119,30 +114,55 @@ impl Tui {
                 },
                 UiMsg::Animate(signal,on_off) => {
                     let sender_clone = self.ui_sender.clone();
-                    let mut timer = Timer::new();
                     match on_off {
                         Status::ON => {
-                            // if timer not started, start
-                            let _guard = timer.schedule_with_delay(Duration::milliseconds(TIMEOUT_SEARCH), move || {
+                            self.show_alive(signal.clone());
+                            let (already_running, toggle) : (bool,&mut bool)  = match signal {
+                                Alive::BUSYPATH(nr) => {
+                                    (self.alive.pathes[nr].runs,&mut self.alive.pathes[nr].runs)
+                                },
+                                Alive::HOSTSEARCH => {
+                                    (self.alive.host.runs,&mut self.alive.host.runs)
+                                }
+                            };
+                            if !already_running {
+                                *toggle = true;
+                                // if timer not started, start
+                                thread::spawn(move || {
+                                    thread::sleep(Duration::from_millis(TIMEOUT_SEARCH));
                                     sender_clone.send(UiMsg::TimeOut(signal.clone())).unwrap();
-                            });
+                                });
+                            }
                         },
                         Status::OFF => {
-                            //guard[].drop();
+                            let toggle : &mut bool  = match signal {
+                                Alive::BUSYPATH(nr) => {
+                                    &mut self.alive.pathes[nr].runs
+                                },
+                                Alive::HOSTSEARCH => {
+                                    &mut self.alive.host.runs
+                                }
+                            };
+                            *toggle = false;
                         }
                     }
                 },
                 UiMsg::TimeOut(which) => {
-                    match which {
-                        Alive::HOSTSEARCH => {
-                            //1. check if still needs to start
-                            //2. do animation
-                            //3. restart timer
-
-
-                        },
+                    let continue_timeout = match which {
                         Alive::BUSYPATH(nr) => {
+                            self.alive.pathes[nr].runs
+                        },
+                        Alive::HOSTSEARCH => {
+                            self.alive.host.runs
                         }
+                    };
+                    if continue_timeout {
+                        self.show_alive(which.clone());                        
+                        let sender_clone = self.ui_sender.clone();
+                        thread::spawn(move || {
+                            thread::sleep(Duration::from_millis(TIMEOUT_SEARCH));
+                            sender_clone.send(UiMsg::TimeOut(which)).unwrap();
+                        });
                     }
                 }
            }
@@ -178,28 +198,6 @@ impl Tui {
         out
     }
 
-    fn test_alive<'partial>(&mut self) { //, data: &'partial mut AliveDisplayData) {
-        let mut keep_alive = false;
-
-        let data = &self.alive;
-        // test net running
-        if data.host.runs {
-            //self.ui_sender.send(UiMsg::Update(busy_message,format!("ha"))).unwrap();
-            keep_alive = true;
-        }        
-
-        // update all running
-        data.pathes
-           .iter()
-           .enumerate()
-           .filter(|&(_,filtered)| filtered.runs)
-           .for_each(|(i,..)| {
-                //
-                //self.ui_sender.send(UiMsg::Update(busy_message,format!("ha"))).unwrap();
-                keep_alive = true;
-        });
-    }
-
     fn show_alive(&mut self, signal: Alive) {
         //let mut raw = &self.alive; //.lock().unwrap();
         let (view_name, counter) = match signal {
@@ -217,33 +215,6 @@ impl Tui {
              let out = STR_ALIVE[(*counter)%(STR_ALIVE.len()-1)+1];
              found.set_content(out.to_string());
         }
-    }
-
-    fn update_run(&mut self,signal: Alive) {
-        {
-            // whatever it is keep still on updating
-            //let ref mut raw = &self.alive; //.lock().unwrap();
-            {
-                let ref mut timer_runs = self.alive.timed;
-                if !*timer_runs {
-                    // start timer
-                    *timer_runs = true;
-                }
-            }
-            match signal {
-                Alive::HOSTSEARCH => { 
-                     self.alive.host.runs = true;
-                 }
-                Alive::BUSYPATH(nr) => {
-                    let ref mut runs = self.alive.pathes[nr].runs;
-                    if !*runs {
-                        *runs = true;
-                    }
-                }
-            };
-        }
-        // run display update
-        self.show_alive(signal);        
     }
 
     fn build_tui(title: String, pathes: &Vec<String>, with_net: bool) -> Cursive {

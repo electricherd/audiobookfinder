@@ -1,6 +1,6 @@
 [package]
 name = "audiobookfinder"
-version = "0.1.0"
+version = "0.1.5"
 authors = ["Sven Kroemeke <skroemeke@gmail.com>"]
 
 [lib]
@@ -15,8 +15,6 @@ id3 = "*"         # for id3 tags, maybe some other lib later (ogg,flac, etc.)
 mdns = "*"        # for mDNS
 rayon = "*"       # for multi-threading
 # maybe use scram https://github.com/tomprogrammer/scram
-time = "*"
-timer = "*"
 tree_magic = "*"  # for fast file tree operations
 uuid = {version = "*", features = ["v4"]}
 

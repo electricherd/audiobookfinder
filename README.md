@@ -19,10 +19,12 @@ The primary goal actually is to learn Rust and to cover various aspects of the l
 * high level networking (mDNS), having issues there since I would like to try 2 mDNS packages simultanously 
 * use the test feature of Rust (simple case)
 * trait example (a simple drop with print message)
+* simple timers, alive signal in TUI (yet a sleep thread for each timer, not perfect)
 
 yet in plan:
-* simple timers (using an alive signal in TUI)
+* mDNS network fun
 * further lifetimes optimizations
+* nicer timer
 * client/server authorization/management in a safe way (some small crypto)
 * exchange of data over net
 * internationalization (which is not really supported yet by Rust)
