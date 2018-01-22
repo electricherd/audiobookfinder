@@ -8,7 +8,6 @@ name = "tui"
 path = "src/lib.rs"
 
 [dependencies]
-#alloc_system = "0.1.2"
 clap = "*"        # for the command line parsing
 hostname = "*"    # for host recognition
 id3 = "*"         # for id3 tags, maybe some other lib later (ogg,flac, etc.)

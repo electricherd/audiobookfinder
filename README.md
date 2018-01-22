@@ -20,6 +20,7 @@ The primary goal actually is to learn Rust and to cover various aspects of the l
 * use the test feature of Rust (simple case)
 * trait example (a simple drop with print message)
 * simple timers, alive signal in TUI (yet a sleep thread for each timer, not perfect)
+* easy cross compile (and test) for raspberry (v1 and v2, v3)... ok the tui update needs adjustment
 
 yet in plan:
 * mDNS network fun
