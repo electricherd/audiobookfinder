@@ -87,6 +87,7 @@ fn main() {
     let (tx, rx) = mpsc::channel::<SystemMsg>();
     let tx_sys_mut  = Mutex::new(tx.clone());
     let tx_net_mut  = Mutex::new(tx.clone());
+    let tx_net_alive_mut  = Mutex::new(tx.clone());
 
     // copy to vec<&str>
     let tui_pathes = all_pathes.iter().map(|s|s.to_string()).collect();
@@ -97,6 +98,10 @@ fn main() {
     // start the tui thread
     let tui_runner = thread::spawn(move || {
         if has_tui {
+            // start animation .... timer and so on
+            tx_net_alive_mut.lock().unwrap().send(
+                SystemMsg::StartAnimation(Alive::HOSTSEARCH,Status::ON)).unwrap();
+
             let controller = Ctrl::new(client_id.to_string(),
                                        &tui_pathes,
                                        rx,
@@ -106,6 +111,11 @@ fn main() {
                 Ok(mut controller) => {controller.run();},
                 Err(_) => {}
             }
+            // stop animation ....
+            tx_net_alive_mut.lock().unwrap().send(
+                      SystemMsg::StartAnimation(
+                         Alive::HOSTSEARCH,
+                         Status::OFF)).unwrap();
         }
     });
 
@@ -131,7 +141,8 @@ fn main() {
           println!("[{:?}] looking into path {:?}", index, elem);
         } else {
             // start animation .... timer and so on
-            tx_sys_mut.lock().unwrap().send(SystemMsg::StartAnimation(Alive::BUSYPATH(index),Status::ON)).unwrap();
+            tx_sys_mut.lock().unwrap().send(
+                SystemMsg::StartAnimation(Alive::BUSYPATH(index),Status::ON)).unwrap();
         }
         let live_here = collection_protected.clone();
         let mut pure_collection = live_here.lock().unwrap();
@@ -140,7 +151,8 @@ fn main() {
             Ok(local_stats) => {
                 if has_tui {
                     // stop animation
-                    tx_sys_mut.lock().unwrap().send(SystemMsg::StartAnimation(Alive::BUSYPATH(index),Status::OFF)).unwrap();
+                    tx_sys_mut.lock().unwrap().send(
+                      SystemMsg::StartAnimation(Alive::BUSYPATH(index),Status::OFF)).unwrap();
                     //let stat_message = ReceiveDialog::ShowNewPath{nr:index};
                     //tx_sys_mut.lock().unwrap().send(SystemMsg::Update(stat_message,text)).unwrap();
                 } else {
@@ -159,7 +171,8 @@ fn main() {
                 if has_tui {
                     let debug_message_id = ReceiveDialog::Debug;
                     let text = text.to_string();
-                    tx_sys_mut.lock().unwrap().send(SystemMsg::Update(debug_message_id,text)).unwrap();
+                    tx_sys_mut.lock().unwrap().send(
+                      SystemMsg::Update(debug_message_id,text)).unwrap();
                 } else {
                     println!("{:?}",text);
                 }

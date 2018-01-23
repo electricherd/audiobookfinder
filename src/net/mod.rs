@@ -8,7 +8,7 @@ use std::sync::mpsc;
 use ctrl;
 
 
-static SERVICE_NAME: &str = "_tcp.local"; // "_googlecast._tcp.local"
+static SERVICE_NAME: &str = "_http._tcpl"; // "_tcp.local"
 
 pub struct Net {
     my_id : String,
@@ -18,7 +18,8 @@ pub struct Net {
 }
 
 impl Net {
-    pub fn new(name : &String, tui: bool, sender: mpsc::Sender<ctrl::SystemMsg>)  -> Net {
+    pub fn new(name : &String, tui: bool, sender: mpsc::Sender<ctrl::SystemMsg>)
+      -> Net {
         //let responder = mdns::dResponse::spawn(); 
         Net { my_id : name.clone(),
               my_responses : Vec::new(),
@@ -32,14 +33,13 @@ impl Net {
             let mut count_valid = 0;
             let mut count_no_response = 0;
             let mut count_no_cast = 0;
-
-            //let number = all_discoveries.into_iter().cloned().count();
             for (index,response) in all_discoveries.enumerate() {                
                 match response {
                     Ok(good_response) => {
 
                       for record in good_response.records() {
-                        let (out_string, addr) : (Option<String>,Option<IpAddr>) = Self::return_address(&record.kind);
+                        let (out_string, addr) : (Option<String>,Option<IpAddr>)
+                                  = Self::return_address(&record.kind);
 
                         if let Some(valid_out) = out_string {
 
@@ -51,11 +51,17 @@ impl Net {
                             format!(":{}:",valid_out);
                             if self.has_tui {
                                 let host_msg = ctrl::ReceiveDialog::ShowNewHost;
-                                self.tui_sender.send(ctrl::SystemMsg::Update(host_msg,format!("found {}",valid_out))).unwrap();
-                                let counter_msg = ctrl::ReceiveDialog::ShowStats{show: ctrl::NetStats{ line : count_valid, max: index}};
-                                self.tui_sender.send(ctrl::SystemMsg::Update(counter_msg,"".to_string())).unwrap();
+                                self.tui_sender.send(ctrl::SystemMsg::Update(
+                                    host_msg,format!("found {}",valid_out))).unwrap();
+                                let counter_msg = ctrl::ReceiveDialog::ShowStats{
+                                    show: ctrl::NetStats{
+                                     line : count_valid, max: index
+                                }};
+                                self.tui_sender.send(ctrl::SystemMsg::Update(
+                                    counter_msg,"".to_string())).unwrap();
                             } else {
-                                println!("[{}] found cast device at {}", index, valid_out);
+                                println!("[{}] found cast device at {}"
+                                    ,index,valid_out);
                             }
 
                         } else {

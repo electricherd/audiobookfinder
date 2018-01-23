@@ -49,7 +49,10 @@ pub struct Ctrl {
 
 impl Ctrl {
     /// Create a new controller
-    pub fn new(title: String, pathes: &Vec<String>, receiver: mpsc::Receiver<SystemMsg>, sender: mpsc::Sender<SystemMsg>, with_net: bool) -> Result<Ctrl, String> {
+    pub fn new(title: String, pathes: &Vec<String>,
+               receiver: mpsc::Receiver<SystemMsg>,
+               sender: mpsc::Sender<SystemMsg>, with_net: bool)
+           -> Result<Ctrl, String> {
         Ok(Ctrl {
             rx: receiver,
             ui: Tui::new(title,sender.clone(), &pathes, with_net), 
