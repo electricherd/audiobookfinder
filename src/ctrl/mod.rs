@@ -1,61 +1,59 @@
 mod tui;
 use ctrl::tui::Tui;
 
-use mpsc::{self};
+use mpsc;
 
 #[derive(Clone)]
 pub enum Alive {
-    BUSYPATH (usize),
-    HOSTSEARCH
+    BUSYPATH(usize),
+    HOSTSEARCH,
 }
 
 pub enum Status {
     ON,
-    OFF
+    OFF,
 }
 
 pub struct NetStats {
-    pub line  : usize,
-    pub max   : usize
+    pub line: usize,
+    pub max: usize,
 }
-
 
 pub enum ReceiveDialog {
-    ShowNewPath { nr : usize},
+    ShowNewPath { nr: usize },
     Debug,
     ShowNewHost,
-    ShowStats{show: NetStats}
+    ShowStats { show: NetStats },
 }
 
-
 pub enum UiMsg {
-    Update(ReceiveDialog,String),
-    Animate(Alive,Status),
-    TimeOut(Alive)
+    Update(ReceiveDialog, String),
+    Animate(Alive, Status),
+    TimeOut(Alive),
 }
 
 pub enum SystemMsg {
-    Update(ReceiveDialog,String),
-    StartAnimation(Alive,Status)
+    Update(ReceiveDialog, String),
+    StartAnimation(Alive, Status),
 }
-
 
 pub struct Ctrl {
     rx: mpsc::Receiver<SystemMsg>,
     ui: Tui,
 }
 
-
-
 impl Ctrl {
     /// Create a new controller
-    pub fn new(title: String, pathes: &Vec<String>,
-               receiver: mpsc::Receiver<SystemMsg>,
-               sender: mpsc::Sender<SystemMsg>, with_net: bool)
-           -> Result<Ctrl, String> {
+    pub fn new(
+        title: String,
+        pathes: &Vec<String>,
+        receiver: mpsc::Receiver<SystemMsg>,
+        sender: mpsc::Sender<SystemMsg>,
+        with_net: bool,
+    ) -> Result<Ctrl, String> {
         Ok(Ctrl {
             rx: receiver,
-            ui: Tui::new(title,sender.clone(), &pathes, with_net), 
+            ui: Tui::new(title, sender.clone(), &pathes, with_net),
         })
     }
     /// Run the controller
@@ -64,16 +62,16 @@ impl Ctrl {
             while let Some(message) = self.rx.try_iter().next() {
                 // Handle messages arriving from the UI.
                 match message {
-                    SystemMsg::Update(recv_dialog,text) => {
+                    SystemMsg::Update(recv_dialog, text) => {
                         self.ui
                             .ui_sender
-                            .send(UiMsg::Update(recv_dialog,text))
+                            .send(UiMsg::Update(recv_dialog, text))
                             .unwrap();
-                    },
-                    SystemMsg::StartAnimation(signal,on_off) => {
+                    }
+                    SystemMsg::StartAnimation(signal, on_off) => {
                         self.ui
                             .ui_sender
-                            .send(UiMsg::Animate(signal,on_off))
+                            .send(UiMsg::Animate(signal, on_off))
                             .unwrap();
                     }
                 };
