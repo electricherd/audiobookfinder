@@ -1,12 +1,13 @@
-mod tui;
+// include the tui part :-)
+pub mod tui;  // todo: pub is not recommended, I use it for doctest
 use ctrl::tui::Tui;
 
 use std::sync::mpsc;
 
 #[derive(Clone)]
 pub enum Alive {
-    BUSYPATH(usize),
-    HOSTSEARCH,
+    BusyPath(usize),
+    HostSearch,
 }
 
 pub enum Status {
@@ -46,14 +47,14 @@ impl Ctrl {
     /// Create a new controller
     pub fn new(
         title: String,
-        pathes: &Vec<String>,
+        paths: &Vec<String>,
         receiver: mpsc::Receiver<SystemMsg>,
         sender: mpsc::Sender<SystemMsg>,
         with_net: bool,
     ) -> Result<Ctrl, String> {
         Ok(Ctrl {
             rx: receiver,
-            ui: Tui::new(title, sender.clone(), &pathes, with_net),
+            ui: Tui::new(title, sender.clone(), &paths, with_net),
         })
     }
     /// Run the controller

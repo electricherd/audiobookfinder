@@ -98,7 +98,7 @@ fn main() {
             // start animation .... timer and so on
             if let Ok(starter) = tx_net_alive_mut.lock() {
                 starter
-                    .send(SystemMsg::StartAnimation(Alive::HOSTSEARCH, Status::ON))
+                    .send(SystemMsg::StartAnimation(Alive::HostSearch, Status::ON))
                     .unwrap();
             }
 
@@ -112,7 +112,7 @@ fn main() {
             // stop animation ....
             if let Ok(stopper) = tx_net_alive_mut.lock() {
                 stopper
-                    .send(SystemMsg::StartAnimation(Alive::HOSTSEARCH, Status::OFF))
+                    .send(SystemMsg::StartAnimation(Alive::HostSearch, Status::OFF))
                     .unwrap();
             }
         }
@@ -145,7 +145,7 @@ fn main() {
             if let Ok(starter) = tx_sys_mut.lock() {
                 starter
                     .send(SystemMsg::StartAnimation(
-                        Alive::BUSYPATH(index),
+                        Alive::BusyPath(index),
                         Status::ON,
                     ))
                     .unwrap();
@@ -161,7 +161,7 @@ fn main() {
                     if let Ok(stopper) = tx_sys_mut.lock() {
                         stopper
                             .send(SystemMsg::StartAnimation(
-                                Alive::BUSYPATH(index),
+                                Alive::BusyPath(index),
                                 Status::OFF,
                             ))
                             .unwrap();

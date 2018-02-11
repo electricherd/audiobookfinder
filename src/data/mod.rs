@@ -42,9 +42,9 @@ impl Worker {
     /// # Just new
     /// To identify how to comment
     /// # Arguments
-    /// * '_hostname' - The hostname from remote/local
-    /// * '_id' - the identification (each will create an own hash)
-    /// * '_maxthreads' - how many threads can the worker create
+    /// * 'hostname' - The hostname from remote/local
+    /// * 'id' - the identification (each will create an own hash)
+    /// * 'max_threads' - how many threads can the worker create
     pub fn new(_hostname: String, uuid: Uuid, maxthreads: usize) -> Worker {
         Worker {
             hostname: _hostname,

@@ -10,6 +10,8 @@ use std::time::Duration;
 
 use ctrl::{Alive, ReceiveDialog, Status, SystemMsg, UiMsg};
 
+
+
 pub struct Tui {
     pub ui_receiver: mpsc::Receiver<UiMsg>,
     pub ui_sender: mpsc::Sender<UiMsg>,
@@ -129,10 +131,10 @@ impl Tui {
                                 bool,
                                 &mut bool,
                             ) = match signal {
-                                Alive::BUSYPATH(nr) => {
+                                Alive::BusyPath(nr) => {
                                     (self.alive.pathes[nr].runs, &mut self.alive.pathes[nr].runs)
                                 }
-                                Alive::HOSTSEARCH => {
+                                Alive::HostSearch => {
                                     (self.alive.host.runs, &mut self.alive.host.runs)
                                 }
                             };
@@ -147,8 +149,8 @@ impl Tui {
                         }
                         Status::OFF => {
                             let toggle: &mut bool = match signal {
-                                Alive::BUSYPATH(nr) => &mut self.alive.pathes[nr].runs,
-                                Alive::HOSTSEARCH => &mut self.alive.host.runs,
+                                Alive::BusyPath(nr) => &mut self.alive.pathes[nr].runs,
+                                Alive::HostSearch => &mut self.alive.host.runs,
                             };
                             *toggle = false;
                         }
@@ -156,8 +158,8 @@ impl Tui {
                 }
                 UiMsg::TimeOut(which) => {
                     let continue_timeout = match which {
-                        Alive::BUSYPATH(nr) => self.alive.pathes[nr].runs,
-                        Alive::HOSTSEARCH => self.alive.host.runs,
+                        Alive::BusyPath(nr) => self.alive.pathes[nr].runs,
+                        Alive::HostSearch => self.alive.host.runs,
                     };
                     if continue_timeout {
                         self.show_alive(which.clone());
@@ -175,7 +177,20 @@ impl Tui {
         true
     }
 
-    fn split_intelligently(vec: &Vec<String>, max_len: usize) -> Vec<String> {
+    ///    # Example test
+    ///  ```
+    ///  use adfblib::ctrl::tui::Tui;
+    ///
+    ///  let boundary = 15;
+    ///  let input_vec: Vec<String> =
+    ///     vec!["The duck went swimming.".into(),
+    ///         "A cool hat does not fit you.".into()];
+    ///  let expected_output: Vec<String> =
+    ///     vec!["The duc..mming.".into(), "A cool ..t you.".into()];
+    ///  let output = adfblib::ctrl::tui::Tui::split_intelligently(&input_vec, boundary);
+    ///  ```
+    // todo: not public... only due to testing
+    pub fn split_intelligently(vec: &Vec<String>, max_len: usize) -> Vec<String> {
         let mut out: Vec<String> = Vec::new();
         for el in vec {
             let real_len = el.chars().count();
@@ -204,8 +219,8 @@ impl Tui {
 
     fn show_alive(&mut self, signal: Alive) {
         let (view_name, counter) = match signal {
-            Alive::HOSTSEARCH => (ID_HOST_ALIVE.to_string(), &mut self.alive.host.draw_char),
-            Alive::BUSYPATH(nr) => (
+            Alive::HostSearch => (ID_HOST_ALIVE.to_string(), &mut self.alive.host.draw_char),
+            Alive::BusyPath(nr) => (
                 format!("{}{}", PATHS_PREFIX_ID, nr),
                 &mut self.alive.pathes[nr].draw_char,
             ),
@@ -309,8 +324,11 @@ impl Tui {
 mod tests {
     use super::*;
 
+    //run "cargo test -- --nocapture" to see debug println
     fn equal_with_boundary(input: &Vec<String>, expected: &Vec<String>, boundary: usize) -> bool {
         let output = Tui::split_intelligently(&input, boundary);
+        println!("|{:?}|", output);
+        println!("|{:?}|", expected);
         output.len() == expected.len() && output.iter().zip(expected.iter()).all(|(e, o)| e == o)
     }
 
@@ -324,44 +342,28 @@ mod tests {
 
     #[test]
     fn split_intelligently_alignment() {
-        let boundary = 20;
-        let input_vec: Vec<String> = vec!["duck", "monkey"]
-            .iter()
-            .map(|s| s.to_string())
-            .collect();
-        let expected_output: Vec<String> = vec!["duck", "monkey"]
-            .iter()
-            .map(|s| format!("{}{}", " ".repeat(boundary - s.len()), s))
-            .collect();
+        let boundary = 15;
+        let input_vec: Vec<String> = vec!["duck".into(), "monkey".into()];
+        let expected_output: Vec<String> = vec!["           duck".into(), "         monkey".into()];
         assert!(equal_with_boundary(&input_vec, &expected_output, boundary));
     }
 
     #[test]
     fn split_intelligently_fail() {
         let boundary = 20;
-        let input_vec: Vec<String> = vec!["duck", "monkey"]
-            .iter()
-            .map(|s| s.to_string())
-            .collect();
-        let expected_output: Vec<String> = vec!["duckkk", "monkeyyyy"]
-            .iter()
-            .map(|s| format!("{}{}", " ".repeat(boundary - s.len()), s))
-            .collect();
-        assert!( !equal_with_boundary(&input_vec, &expected_output, boundary));
+        let input_vec: Vec<String> = vec!["duck".into(), "monkey".into()];
+        let expected_output: Vec<String> = vec!["duckkk".into(), "monkeyyyy".into()];
+        assert!(!equal_with_boundary(&input_vec, &expected_output, boundary));
     }
 
     #[test]
     fn split_intelligently_shorten() {
         let boundary = 15;
-        let input_vec: Vec<String> =
-            vec!["The duck went swimming.", "A cool hat does not fit you."]
-                .iter()
-                .map(|s| s.to_string())
-                .collect();
-        let expected_output: Vec<String> = vec!["The duc..mming.", "A cool ..t you."]
-            .iter()
-            .map(|s| s.to_string())
-            .collect();
+        let input_vec: Vec<String> = vec![
+            "The duck went swimming.".into(),
+            "A cool hat does not fit you.".into(),
+        ];
+        let expected_output: Vec<String> = vec!["The duc..mming.".into(), "A cool ..t you.".into()];
         assert!(equal_with_boundary(&input_vec, &expected_output, boundary));
     }
 
@@ -369,16 +371,13 @@ mod tests {
     fn split_intelligently_utf8_russian() {
         let boundary = 15;
         let input_vec: Vec<String> = vec![
-            "Герман Гессе родился в семье немецких",
-            "Его мать Мария Гундерт (1842—1902) была",
-        ].iter()
-            .map(|s| s.to_string())
-            .collect();
-        let expected_output: Vec<String> =
-            vec!["Герман ..мецких", "Его мат..) была"]
-                .iter()
-                .map(|s| s.to_string())
-                .collect();
+            "Герман Гессе родился в семье немецких".into(),
+            "Его мать Мария Гундерт (1842—1902) была".into(),
+        ];
+        let expected_output: Vec<String> = vec![
+            "Герман ..мецких".into(),
+            "Его мат..) была".into(),
+        ];
         assert!(equal_with_boundary(&input_vec, &expected_output, boundary));
     }
 

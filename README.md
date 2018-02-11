@@ -24,13 +24,14 @@ The primary goal actually is to learn Rust and to cover various aspects of the l
 * trait example (a simple drop with print message)
 * simple timers, alive signal in TUI (yet a sleep thread for each timer, not perfect)
 * easy cross compile (and test) for raspberry (v1 and v2, v3)... ok the tui update needs adjustment
-* still looking for the right IDE, sublime is good and fast, I am now trying [ATOM](https://atom.io/)
-
-
-
+* still looking for the right IDE
+  - [x] sublime text is good and fast, setup was ok, racer etc.
+  - [x] [ATOM](https://atom.io/), looks good, no refactoring though, many plugins for rust, has README.md syntax :-)
+  - [x] [IntelliJ IDEA](https://intellij-rust.github.io/install.html) [download with snaps](https://blog.jetbrains.com/idea/2017/11/install-intellij-idea-with-snaps/), and then Rust plugin: easy, refactoring, spell-check, nice (but editor ... column select??, close tab??), but looks professional
+* included Rust doctest - though problems, since in contrary of tests pub must be put to access former private mods or functions :-()
 
 yet in plan:
-* nicer timer (until I got tokio timers), at least threadpool
+* nicer timer (until I got tokio timers), at least threadpool with joinhandle
 * mDNS network fun
 * more traits (serialization, iterator, etc. when it makes sense and fun)
 * further lifetimes optimizations
