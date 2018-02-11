@@ -1,11 +1,15 @@
 [package]
 name = "audiobookfinder"
-version = "0.1.6"
+version = "0.1.75"
 authors = ["Sven Kroemeke <skroemeke@gmail.com>"]
 
 [lib]
-name = "tui"
+name = "adfblib"
 path = "src/lib.rs"
+
+[[bin]]
+name = "audiobookfinder"
+path = "src/main.rs"
 
 [dependencies]
 clap = "2.29"         # for the command line parsing

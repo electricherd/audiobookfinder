@@ -1,11 +1,11 @@
-extern crate mdns as io_mdns;
-
-use self::io_mdns::RecordKind;
+use io_mdns;
+use io_mdns::{RecordKind};
 
 use std::net::IpAddr;
 use std::sync::mpsc;
 
 use ctrl;
+
 
 static SERVICE_NAME: &str = "_http._tcpl"; // "_tcp.local"
 

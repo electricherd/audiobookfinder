@@ -1,14 +1,11 @@
-extern crate cursive;
-
-use self::cursive::Cursive;
-use self::cursive::align;
-use self::cursive::views::{Dialog, Layer, LinearLayout, ListView, Panel, TextView};
-use self::cursive::traits::*; //{Identifiable,select};
-
-use mpsc;
+use super::super::cursive::Cursive;
+use super::super::cursive::align;
+use super::super::cursive::views::{Dialog, Layer, LinearLayout, ListView, Panel, TextView};
+use super::super::cursive::traits::*; //{Identifiable,select};
 
 use std::iter::Iterator;
 use std::thread;
+use std::sync::mpsc;
 use std::time::Duration;
 
 use ctrl::{Alive, ReceiveDialog, Status, SystemMsg, UiMsg};
@@ -206,7 +203,6 @@ impl Tui {
     }
 
     fn show_alive(&mut self, signal: Alive) {
-        //let mut raw = &self.alive; //.lock().unwrap();
         let (view_name, counter) = match signal {
             Alive::HOSTSEARCH => (ID_HOST_ALIVE.to_string(), &mut self.alive.host.draw_char),
             Alive::BUSYPATH(nr) => (

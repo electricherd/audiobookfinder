@@ -1,7 +1,7 @@
 mod tui;
 use ctrl::tui::Tui;
 
-use mpsc;
+use std::sync::mpsc;
 
 #[derive(Clone)]
 pub enum Alive {

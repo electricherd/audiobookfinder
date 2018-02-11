@@ -1,21 +1,12 @@
-//extern crate hyper;   // sometime, for a good server / client over https communication
-extern crate id3;
-
-extern crate serde;
-extern crate tree_magic; // mime types
-extern crate uuid;
-
-use self::id3::Tag; // to identify the audio files
+use id3::Tag; // to identify the audio files
+use uuid::Uuid;
+use tree_magic;
 
 use std::io; // reading files
-
 use std::cmp; // max
 use std::fs::{self, DirEntry, Permissions}; // directory
 use std::path::{Path, PathBuf}; // path, clear
 use std::collections::hash_map::{Entry, HashMap}; // my main item uses a hash map
-
-use self::uuid::Uuid;
-
 //use std::os::windows::fs::MetadataExt;
 use std::os::linux::fs::MetadataExt;
 
@@ -93,7 +84,7 @@ struct Stats {
 }
 
 //#[derive(Serialize, Deserialize, Debug)]
-#[derive(Debug)]
+#[derive(Serialize)]
 struct Audio {
     albums: u32,
     max_songs: usize,

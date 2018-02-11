@@ -4,6 +4,8 @@
 //! get all stats about it).
 //#![feature(alloc_system)]
 //extern crate alloc_system;   // strip down size of binary executable
+extern crate adfblib;
+
 extern crate clap;
 extern crate hostname;
 extern crate rayon;
@@ -11,28 +13,21 @@ extern crate uuid;
 
 use std::path::Path; // path, clear
 use std::sync::{Arc, Mutex};
+use std::sync::mpsc;
 use std::thread;
 
-use self::rayon::prelude::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator};
+use rayon::prelude::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator};
 use uuid::Uuid;
 
-mod ctrl;
-mod data;
-mod net;
-
-pub use self::data::Collection;
-pub use self::ctrl::Ctrl;
-pub use self::net::Net;
-
-use ctrl::{ReceiveDialog, SystemMsg};
-use ctrl::{Alive, Status};
+use adfblib::data;
+use adfblib::data::Collection;
+use adfblib::ctrl::{Alive, Ctrl, ReceiveDialog, Status, SystemMsg};
+use adfblib::net::Net;
 
 static INPUT_FOLDERS: &str = "folders";
 static APP_TITLE: &str = "The audiobook finder";
 static ARG_NET: &str = "net";
 static ARG_TUI: &str = "tui";
-
-use std::sync::mpsc;
 
 fn main() {
     let parse_args = clap::App::new(APP_TITLE)
@@ -101,11 +96,11 @@ fn main() {
     let tui_runner = thread::spawn(move || {
         if has_tui {
             // start animation .... timer and so on
-            tx_net_alive_mut
-                .lock()
-                .unwrap()
-                .send(SystemMsg::StartAnimation(Alive::HOSTSEARCH, Status::ON))
-                .unwrap();
+            if let Ok(starter) = tx_net_alive_mut.lock() {
+                starter
+                    .send(SystemMsg::StartAnimation(Alive::HOSTSEARCH, Status::ON))
+                    .unwrap();
+            }
 
             let controller = Ctrl::new(client_id.to_string(), &tui_pathes, rx, tx.clone(), has_net);
             match controller {
@@ -115,11 +110,11 @@ fn main() {
                 Err(_) => {}
             }
             // stop animation ....
-            tx_net_alive_mut
-                .lock()
-                .unwrap()
-                .send(SystemMsg::StartAnimation(Alive::HOSTSEARCH, Status::OFF))
-                .unwrap();
+            if let Ok(stopper) = tx_net_alive_mut.lock() {
+                stopper
+                    .send(SystemMsg::StartAnimation(Alive::HOSTSEARCH, Status::OFF))
+                    .unwrap();
+            }
         }
     });
 
@@ -128,6 +123,7 @@ fn main() {
     let net_runner = thread::spawn(move || {
         if has_net {
             // need to simplify and clarify this here ......
+            // but this lock unwrap is safe
             let mut netfinder = Net::new(
                 &client_id.to_string(),
                 has_tui,
@@ -146,14 +142,14 @@ fn main() {
             println!("[{:?}] looking into path {:?}", index, elem);
         } else {
             // start animation .... timer and so on
-            tx_sys_mut
-                .lock()
-                .unwrap()
-                .send(SystemMsg::StartAnimation(
-                    Alive::BUSYPATH(index),
-                    Status::ON,
-                ))
-                .unwrap();
+            if let Ok(starter) = tx_sys_mut.lock() {
+                starter
+                    .send(SystemMsg::StartAnimation(
+                        Alive::BUSYPATH(index),
+                        Status::ON,
+                    ))
+                    .unwrap();
+            }
         }
         let live_here = collection_protected.clone();
         let mut pure_collection = live_here.lock().unwrap();
@@ -162,14 +158,14 @@ fn main() {
             Ok(local_stats) => {
                 if has_tui {
                     // stop animation
-                    tx_sys_mut
-                        .lock()
-                        .unwrap()
-                        .send(SystemMsg::StartAnimation(
-                            Alive::BUSYPATH(index),
-                            Status::OFF,
-                        ))
-                        .unwrap();
+                    if let Ok(stopper) = tx_sys_mut.lock() {
+                        stopper
+                            .send(SystemMsg::StartAnimation(
+                                Alive::BUSYPATH(index),
+                                Status::OFF,
+                            ))
+                            .unwrap();
+                    }
                 //let stat_message = ReceiveDialog::ShowNewPath{nr:index};
                 //tx_sys_mut.lock().unwrap().send(SystemMsg::Update(stat_message,text)).unwrap();
                 } else {
