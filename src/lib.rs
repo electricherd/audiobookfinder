@@ -1,11 +1,17 @@
 // https://stackoverflow.com/questions/22596920/split-a-module-across-several-files
+//ALL
+#[macro_use]
+extern crate log;
+
+// ctrl
 extern crate cursive;
 pub mod ctrl;
 
 // data
-#[macro_use] extern crate serde_derive;
-extern crate serde;
 extern crate id3;
+extern crate serde;
+#[macro_use]
+extern crate serde_derive;
 extern crate tree_magic; // mime types
 extern crate uuid;
 pub mod data;

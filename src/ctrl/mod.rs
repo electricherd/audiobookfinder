@@ -52,9 +52,10 @@ impl Ctrl {
         sender: mpsc::Sender<SystemMsg>,
         with_net: bool,
     ) -> Result<Ctrl, String> {
+        let c_ui = Tui::new(title, sender.clone(), &paths, with_net)?;
         Ok(Ctrl {
             rx: receiver,
-            ui: Tui::new(title, sender.clone(), &paths, with_net),
+            ui: c_ui
         })
     }
     /// Run the controller

@@ -10,8 +10,6 @@ use std::time::Duration;
 
 use ctrl::{Alive, ReceiveDialog, Status, SystemMsg, UiMsg};
 
-
-
 pub struct Tui {
     pub ui_receiver: mpsc::Receiver<UiMsg>,
     pub ui_sender: mpsc::Sender<UiMsg>,
@@ -30,6 +28,13 @@ struct AliveState {
 struct AliveDisplayData {
     host: AliveState,
     pathes: Vec<AliveState>,
+}
+
+// following the advice for Rust clever enums
+// to say what you mean, even if boolean
+enum AliveSym {
+    GoOn,
+    Stop,
 }
 
 static RECT: usize = 40;
@@ -53,8 +58,8 @@ impl Tui {
         system: mpsc::Sender<SystemMsg>,
         pathes: &Vec<String>,
         with_net: bool,
-    ) -> Tui {
-        let later_handle = Self::build_tui(title, pathes, with_net);
+    ) -> Result<Tui, String> {
+        let later_handle = Self::build_tui(title, pathes, with_net)?;
 
         // now build the actual TUI object
         let (tui_sender, tui_receiver) = mpsc::channel::<UiMsg>();
@@ -82,7 +87,7 @@ impl Tui {
         tui.handle.set_fps(20);
         // quit by 'q' key
         tui.handle.add_global_callback('q', |s| s.quit());
-        tui
+        Ok(tui)
     }
 
     pub fn step(&mut self) -> bool {
@@ -105,7 +110,10 @@ impl Tui {
                             if let Some(mut host_list) =
                                 self.handle.find_id::<ListView>(VIEW_LIST_HOST)
                             {
+                                error!("{:?} should be drawn!!", text);
                                 host_list.add_child("", TextView::new(format!("{}", text)));
+                            } else {
+                                error!("{:?} could not be drawn!!", text);
                             }
                         }
                         ReceiveDialog::ShowStats { show } => {
@@ -126,7 +134,7 @@ impl Tui {
                     let sender_clone = self.ui_sender.clone();
                     match on_off {
                         Status::ON => {
-                            self.show_alive(signal.clone());
+                            self.toggle_alive(signal.clone(), AliveSym::GoOn);
                             let (already_running, toggle): (
                                 bool,
                                 &mut bool,
@@ -148,6 +156,7 @@ impl Tui {
                             }
                         }
                         Status::OFF => {
+                            self.toggle_alive(signal.clone(), AliveSym::Stop);
                             let toggle: &mut bool = match signal {
                                 Alive::BusyPath(nr) => &mut self.alive.pathes[nr].runs,
                                 Alive::HostSearch => &mut self.alive.host.runs,
@@ -162,7 +171,7 @@ impl Tui {
                         Alive::HostSearch => self.alive.host.runs,
                     };
                     if continue_timeout {
-                        self.show_alive(which.clone());
+                        self.toggle_alive(which.clone(), AliveSym::GoOn);
                         let sender_clone = self.ui_sender.clone();
                         thread::spawn(move || {
                             thread::sleep(Duration::from_millis(TIMEOUT_SEARCH));
@@ -187,10 +196,10 @@ impl Tui {
     ///         "A cool hat does not fit you.".into()];
     ///  let expected_output: Vec<String> =
     ///     vec!["The duc..mming.".into(), "A cool ..t you.".into()];
-    ///  let output = adfblib::ctrl::tui::Tui::split_intelligently(&input_vec, boundary);
+    ///  let output = adfblib::ctrl::tui::Tui::split_intelligently_ralign(&input_vec, boundary);
     ///  ```
     // todo: not public... only due to testing
-    pub fn split_intelligently(vec: &Vec<String>, max_len: usize) -> Vec<String> {
+    pub fn split_intelligently_ralign(vec: &Vec<String>, max_len: usize) -> Vec<String> {
         let mut out: Vec<String> = Vec::new();
         for el in vec {
             let real_len = el.chars().count();
@@ -217,7 +226,7 @@ impl Tui {
         out
     }
 
-    fn show_alive(&mut self, signal: Alive) {
+    fn toggle_alive(&mut self, signal: Alive, on: AliveSym) {
         let (view_name, counter) = match signal {
             Alive::HostSearch => (ID_HOST_ALIVE.to_string(), &mut self.alive.host.draw_char),
             Alive::BusyPath(nr) => (
@@ -227,19 +236,32 @@ impl Tui {
         };
         let mut output = self.handle.find_id::<TextView>(&view_name);
         if let Some(ref mut found) = output {
-            *counter += 1;
-            let out = STR_ALIVE[(*counter) % (STR_ALIVE.len() - 1) + 1];
+            let char_idx_to_put = match on {
+                AliveSym::GoOn => {
+                    *counter = (*counter + 1) % (STR_ALIVE.len() - 1);
+                    *counter + 1
+                }
+                AliveSym::Stop => {
+                    0 // the stop symbol's index
+                }
+            };
+            let out = STR_ALIVE[char_idx_to_put];
             found.set_content(out.to_string());
         }
     }
 
-    fn build_tui(title: String, pathes: &Vec<String>, with_net: bool) -> Cursive {
+    fn build_tui(title: String, pathes: &Vec<String>, with_net: bool) -> Result<Cursive, String> {
         let later_handle = Cursive::new();
 
         let screen_size = later_handle.screen_size();
+
         let max_cols = screen_size.x / RECT;
 
+        if max_cols == 0 {
+            return Err("Not able to build tui.".to_string());
+        }
         let rows = pathes.len() / max_cols + 1;
+
         // 80% of rect size
         let max_table_width = RECT * 5 / 6;
 
@@ -250,7 +272,7 @@ impl Tui {
             vertical_layout.add_child(
                 Dialog::around(
                     LinearLayout::vertical()
-                        .child(ListView::new().fixed_height(10))
+                        .child(ListView::new().fixed_height(10).with_id(VIEW_LIST_HOST))
                         .child(
                             LinearLayout::horizontal()
                                 .child(
@@ -287,7 +309,7 @@ impl Tui {
             for i in 0..cols {
                 let my_number = j * max_cols + i; // j >= 1
 
-                let differentiate_path = Self::split_intelligently(pathes, max_table_width);
+                let differentiate_path = Self::split_intelligently_ralign(pathes, max_table_width);
                 let path_name = format!("{}{}", PATHS_PREFIX_ID, my_number);
 
                 horizontal_layout.add_child(Panel::new(
@@ -316,7 +338,7 @@ impl Tui {
             Dialog::around(Layer::new(vertical_layout)).title(format!("This uuid: {}", title));
         let mut later_handle = later_handle;
         later_handle.add_layer(layer);
-        later_handle
+        Ok(later_handle)
     }
 } // impl Tui
 
@@ -326,22 +348,22 @@ mod tests {
 
     //run "cargo test -- --nocapture" to see debug println
     fn equal_with_boundary(input: &Vec<String>, expected: &Vec<String>, boundary: usize) -> bool {
-        let output = Tui::split_intelligently(&input, boundary);
+        let output = Tui::split_intelligently_ralign(&input, boundary);
         println!("|{:?}|", output);
         println!("|{:?}|", expected);
         output.len() == expected.len() && output.iter().zip(expected.iter()).all(|(e, o)| e == o)
     }
 
     #[test]
-    fn split_intelligently_exists() {
+    fn split_intelligently_ralign_exists() {
         let boundary = 20;
         let input_vec: Vec<String> = Vec::new();
-        let _ = Tui::split_intelligently(&input_vec, boundary);
+        let _ = Tui::split_intelligently_ralign(&input_vec, boundary);
         assert!(true);
     }
 
     #[test]
-    fn split_intelligently_alignment() {
+    fn split_intelligently_ralign_alignment() {
         let boundary = 15;
         let input_vec: Vec<String> = vec!["duck".into(), "monkey".into()];
         let expected_output: Vec<String> = vec!["           duck".into(), "         monkey".into()];
@@ -349,7 +371,7 @@ mod tests {
     }
 
     #[test]
-    fn split_intelligently_fail() {
+    fn split_intelligently_ralign_fail() {
         let boundary = 20;
         let input_vec: Vec<String> = vec!["duck".into(), "monkey".into()];
         let expected_output: Vec<String> = vec!["duckkk".into(), "monkeyyyy".into()];
@@ -357,7 +379,7 @@ mod tests {
     }
 
     #[test]
-    fn split_intelligently_shorten() {
+    fn split_intelligently_ralign_shorten() {
         let boundary = 15;
         let input_vec: Vec<String> = vec![
             "The duck went swimming.".into(),
@@ -368,7 +390,7 @@ mod tests {
     }
 
     #[test]
-    fn split_intelligently_utf8_russian() {
+    fn split_intelligently_ralign_utf8_russian() {
         let boundary = 15;
         let input_vec: Vec<String> = vec![
             "Герман Гессе родился в семье немецких".into(),

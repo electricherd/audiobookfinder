@@ -77,11 +77,13 @@ fn main() {
     // check if tui and net search is needed
     let has_arg = |x: &str| parse_args.is_present(x);
 
-    let has_tui = has_arg(ARG_TUI);
+    // has to be mutable because in case of error this might be changed
+    let mut has_tui = has_arg(ARG_TUI);
     let has_net = has_arg(ARG_NET);
 
     // prepare the message system
     let (tx, rx) = mpsc::channel::<SystemMsg>();
+
     let tx_sys_mut = Mutex::new(tx.clone());
     let tx_net_mut = Mutex::new(tx.clone());
     let tx_net_alive_mut = Mutex::new(tx.clone());
@@ -92,6 +94,10 @@ fn main() {
     // get an unique id for this client
     let client_id = Uuid::new_v4();
 
+    // the signal to tell further processes, that tui creation worked
+    // and the messages actually go somewhere, otherwise it will assume: no tui
+    let (send_tui_worked, receiver_tui_worked) = mpsc::channel::<bool>();
+
     // start the tui thread
     let tui_runner = thread::spawn(move || {
         if has_tui {
@@ -101,22 +107,36 @@ fn main() {
                     .send(SystemMsg::StartAnimation(Alive::HostSearch, Status::ON))
                     .unwrap();
             }
-
             let controller = Ctrl::new(client_id.to_string(), &tui_pathes, rx, tx.clone(), has_net);
             match controller {
                 Ok(mut controller) => {
+                    // signal ok
+                    send_tui_worked.send(true).unwrap();
+                    drop(send_tui_worked);
+
+                    // do finally the necessary
                     controller.run();
                 }
-                Err(_) => {}
-            }
-            // stop animation ....
-            if let Ok(stopper) = tx_net_alive_mut.lock() {
-                stopper
-                    .send(SystemMsg::StartAnimation(Alive::HostSearch, Status::OFF))
-                    .unwrap();
+                Err(error_text) => {
+                    println!("{:?}", error_text);
+                    // no tui could be created
+                    send_tui_worked.send(false).unwrap();
+                    drop(send_tui_worked);
+                }
             }
         }
     });
+
+    // blocks that one signal (but that should be very short time)
+    if let Ok(tui_check_receiver) = receiver_tui_worked.recv() {
+        has_tui = tui_check_receiver;
+    } else {
+        println!("Something bad has happenend!!!");
+        has_tui = false;
+    }
+    // make it immutable from now on
+    let has_tui = has_tui;
+
 
     // start the net runner thread
     let tx_net_mut_arc = Arc::new(tx_net_mut);
@@ -133,6 +153,7 @@ fn main() {
         }
     });
 
+    // initialize the data collection for all
     let init_collection = Collection::new(hostname, &client_id, max_threads);
     let collection_protected = Arc::new(Mutex::new(init_collection));
 
@@ -152,9 +173,9 @@ fn main() {
             }
         }
         let live_here = collection_protected.clone();
-        let mut pure_collection = live_here.lock().unwrap();
-
-        match pure_collection.visit_dirs(Path::new(elem), &data::Collection::visit_files) {
+        let locked_collection = live_here.lock();
+        if let Ok(mut pure_collection) = locked_collection {
+            match pure_collection.visit_dirs(Path::new(elem), &data::Collection::visit_files) {
             Ok(local_stats) => {
                 if has_tui {
                     // stop animation
@@ -166,8 +187,6 @@ fn main() {
                             ))
                             .unwrap();
                     }
-                //let stat_message = ReceiveDialog::ShowNewPath{nr:index};
-                //tx_sys_mut.lock().unwrap().send(SystemMsg::Update(stat_message,text)).unwrap();
                 } else {
                     let text = format!(
                         "\n\
@@ -179,7 +198,6 @@ fn main() {
                         ot = local_stats.other,
                         width = 3
                     );
-
                     println!("[{:?}] done {}", index, text);
                 }
             }
@@ -188,21 +206,25 @@ fn main() {
                 if has_tui {
                     let debug_message_id = ReceiveDialog::Debug;
                     let text = text.to_string();
-                    tx_sys_mut
-                        .lock()
-                        .unwrap()
+                    let debug_text = tx_sys_mut
+                        .lock();
+                    if let Ok(debug_text) = debug_text {
+                        debug_text
                         .send(SystemMsg::Update(debug_message_id, text))
                         .unwrap();
+                    }
                 } else {
                     println!("{:?}", text);
                 }
             }
         }
+        }
     });
 
     if !has_tui {
-        let result_collection = collection_protected.lock().unwrap();
-        result_collection.print_stats();
+        if let Ok(result_collection) = collection_protected.lock() {
+            result_collection.print_stats();
+        }
         let _ = net_runner.join();
     } else {
         let _ = tui_runner.join();

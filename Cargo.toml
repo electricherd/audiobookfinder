@@ -15,6 +15,7 @@ path = "src/main.rs"
 clap = "2.29"         # for the command line parsing
 hostname = "0.1.4"    # for host recognition
 id3 = "0.2.3"             # for id3 tags, maybe some other lib later (ogg,flac, etc.)
+log = "0.4"
 mdns = "0.2.2"            # for mDNS
 serde = "1.0"
 serde_derive = "1.0"
