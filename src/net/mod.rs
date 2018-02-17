@@ -1,18 +1,19 @@
 use io_mdns;
-use io_mdns::{RecordKind};
+use io_mdns::RecordKind;
 
 use std::net::IpAddr;
 use std::sync::mpsc;
+use std::fmt::Debug;
+use std::fmt::Display;
 
 use ctrl;
-
 
 static SERVICE_NAME: &str = "_http._tcpl"; // "_tcp.local"
 
 pub struct Net {
     #[allow(dead_code)]
     my_id: String,
-    my_responses: Vec<IpAddr>,
+    addresses_found: Vec<(u16, IpAddr)>,
     tui_sender: mpsc::Sender<ctrl::SystemMsg>,
     has_tui: bool,
 }
@@ -22,7 +23,7 @@ impl Net {
         //let responder = mdns::dResponse::spawn();
         Net {
             my_id: name.clone(),
-            my_responses: Vec::new(),
+            addresses_found: Vec::new(),
             tui_sender: sender,
             has_tui: tui,
         }
@@ -46,7 +47,11 @@ impl Net {
                                 count_valid += 1;
 
                                 if let Some(valid_addr) = addr {
-                                    self.my_responses.push(valid_addr);
+                                    Self::add_addr(
+                                        index as u16,
+                                        valid_addr,
+                                        &mut self.addresses_found,
+                                    );
                                 }
                                 format!(":{}:", valid_out);
                                 if self.has_tui {
@@ -90,6 +95,38 @@ impl Net {
                     width = 3
                 );
                 println!("{}", output_string);
+            }
+        }
+    }
+
+    // A simple function from seen above (but implementing this actually took a while)
+    // But I tried to implement some Generic parts
+    // and also trying iterator reverse, mut borrowing in some funny ways (with internal
+    // mutibility)
+    fn add_addr<T1, T2>(index: T1, input: T2, out: &mut Vec<(T1, T2)>)
+    where
+        T1: PartialEq + Clone,
+        T2: Clone + PartialOrd + Display + Debug, // Display Debug for println output
+    {
+        if out.iter().find(|&e| e.0 == index).is_none() {
+            out.push((index, input));
+        } else {
+            // only store one for each index
+            // just a training for generics in Rust, but since I only use 1 value per index
+            // I wanted to search all from end up
+            // for the following I needed  + Clone for cloned()
+            //                   and        PartialEq for e.0 == index
+            //let same_index : Vec<(T1,T2)> = out.iter().rev().cloned().filter(|e| e.0 == index).collect();
+            //assert!(same_index.len() == 1);
+            let mut same_indeces: Vec<&mut (T1, T2)> =
+                out.iter_mut().rev().filter(|e| e.0 == index).collect();
+
+            // since we checked before if find finds something, also this "find" or collect
+            // should find exactly 1 (since we replace every single one)
+            let ref mut comparer = &mut *same_indeces[0];
+            if comparer.1 > input {
+                println!("{} replaced by {}", input, comparer.1);
+                comparer.1 = input;
             }
         }
     }

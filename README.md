@@ -16,6 +16,7 @@ The primary goal actually is to learn Rust and to cover various aspects of the l
 * architecture (modules), did some rework with file structure but it is not yet perfect in Rust, really. Now the code is better hidden inside a library... this gives some more opportunities
 * high-level functionality of different crates
 * including/using different crates (I don't want to reinvent the wheel)
+* Generics: a little bit about and how to use Generics, really nice, a bit difficult to search and fully adapt for but clear in its usage and powerful!!
 * in-code documentation (well, small yet)
 * easy command-line (always was looking for that, nice: [clap](https://github.com/kbknapp/clap-rs))
 * channel/thread communication
@@ -28,12 +29,11 @@ The primary goal actually is to learn Rust and to cover various aspects of the l
   - [x] sublime text is good and fast, setup was ok, racer etc.
   - [x] [ATOM](https://atom.io/), looks good, no refactoring though, many plugins for rust, has README.md syntax :-)
   - [x] [IntelliJ IDEA](https://intellij-rust.github.io/install.html) [download with snaps](https://blog.jetbrains.com/idea/2017/11/install-intellij-idea-with-snaps/), and then Rust plugin: easy, refactoring, spell-check, nice (but editor ... column select??, close tab??), but looks professional
-* included Rust doctest - though problems, since in contrary of tests pub must be put to access former private mods or functions :-()
+* included Rust doctest - though problems, since in contrary of tests pub must be put to access former private mods or functions :-(
 
 yet in plan:
 * nicer timer (until I got tokio timers), at least threadpool with joinhandle
-* mDNS network fun
-* more traits (serialization, iterator, etc. when it makes sense and fun)
+* mDNS network fun (but unfortunately kick the default crate.io one out ... slows down the machine for whatever unnecessary reason)
 * further lifetimes optimizations
 * client/server authorization/management in a safe way (some small crypto with [thrussh](https://pijul.org/thrussh/))
 * exchange of data over net (probably searialization using [serde](https://docs.serde.rs/serde/))

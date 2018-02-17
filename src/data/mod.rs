@@ -83,8 +83,7 @@ struct Stats {
     threads: u8,
 }
 
-//#[derive(Serialize, Deserialize, Debug)]
-#[derive(Serialize)]
+#[derive(Serialize,Deserialize,Debug)]
 struct Audio {
     albums: u32,
     max_songs: usize,
