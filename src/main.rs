@@ -128,11 +128,13 @@ fn main() {
     });
 
     // blocks that one signal (but that should be very short time)
-    if let Ok(tui_check_receiver) = receiver_tui_worked.recv() {
-        has_tui = tui_check_receiver;
-    } else {
-        println!("Something bad has happenend!!!");
-        has_tui = false;
+    if has_tui {
+        if let Ok(tui_check_receiver) = receiver_tui_worked.recv() {
+            has_tui = tui_check_receiver;
+        } else {
+            println!("Something bad has happenend!!!");
+            has_tui = false;
+        }
     }
     // make it immutable from now on
     let has_tui = has_tui;
