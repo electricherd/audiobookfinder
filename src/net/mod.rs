@@ -1,6 +1,9 @@
 use io_mdns;
 use io_mdns::RecordKind;
 
+use avahi_dns_sd;
+use avahi_dns_sd::DNSService;
+
 use std::net::IpAddr;
 use std::sync::{mpsc, Arc, Mutex};
 use std::fmt::Debug;
@@ -16,6 +19,7 @@ enum Action<T: Send + Clone> {
 }
 
 static SERVICE_NAME: &str = "_http._tcpl"; // "_tcp.local"
+static REGISTER_NAME: &str = "adbf";
 
 pub struct Net {
     #[allow(dead_code)]
@@ -23,34 +27,50 @@ pub struct Net {
     addresses_found: Arc<Mutex<Vec<(u16, IpAddr)>>>,
     tui_sender: mpsc::Sender<ctrl::SystemMsg>,
     has_tui: bool,
+    dns_service: DNSService
 }
 
 impl Net {
-    pub fn new(name: &String, tui: bool, sender: mpsc::Sender<ctrl::SystemMsg>) -> Net {
+    pub fn new(
+        name: &str,
+        tui: bool,
+        sender: mpsc::Sender<ctrl::SystemMsg>,
+    ) -> Result<Net, avahi_dns_sd::DNSError> {
         //let responder = mdns::dResponse::spawn();
-        Net {
-            my_id: name.clone(),
+        let service = DNSService::register(
+            Some(REGISTER_NAME),
+            "_http._tcp",
+            None,
+            None,
+            80,
+            &["path=/"],
+        )?;
+        let net = Net {
+            my_id: name.to_string(),
             addresses_found: Arc::new(Mutex::new(Vec::new())),
             tui_sender: sender,
             has_tui: tui,
-        }
+            dns_service: service,
+        };
+        Ok(net)
     }
 
     pub fn lookup(&mut self) {
         // we are sending IpAddress Action
-        let (send_action, receive_action) = mpsc::channel::<Action<(u16,IpAddr)>>();
+        let (send_action, receive_action) = mpsc::channel::<Action<(u16, IpAddr)>>();
 
         {
             // I might not need that one here
             // maybe to attach some more data
-            let borrow_arc = &self.addresses_found.clone();
+            //let borrow_arc = &self.addresses_found.clone();
 
             thread::spawn(move || loop {
-                println!("waiting for new message: ");
-                if let Ok(ress_mesg) = receive_action.recv() {
-                    match ress_mesg {
+                if let Ok(recv_mesg) = receive_action.recv() {
+                    match recv_mesg {
                         Action::NewAddr(address) => {
-                            println!("received {:?} for {:?}", address.1, address.0);
+                            thread::spawn(move || {
+                                println!("received {:?} for {:?}", address.1, address.0);
+                            });
                         }
                         Action::Stop => {
                             print!("stop received");
@@ -77,12 +97,23 @@ impl Net {
                                 ) = Self::return_address(&record.kind);
 
                                 if let Some(valid_out) = out_string {
-                                    let ref mut new_addr = &mut borrow_arc.lock().unwrap();
+                                    let ref mut already_found_addr =
+                                        &mut borrow_arc.lock().unwrap();
                                     if let Some(valid_addr) = addr {
-                                        if Self::could_add_addr(index as u16, valid_addr, new_addr)
-                                        {
+                                        if Self::could_add_addr(
+                                            index as u16,
+                                            valid_addr,
+                                            already_found_addr,
+                                        ) {
                                             count_valid += 1;
-                                            send_action.send(Action::NewAddr((index as u16,valid_addr))).unwrap();
+
+                                            // get the last good index, this is the final
+                                            // ipv6 address to send request
+                                            if let Some(last_good) = already_found_addr.last() {
+                                                send_action
+                                                    .send(Action::NewAddr(last_good.clone()))
+                                                    .unwrap();
+                                            }
                                         }
                                     }
                                     if self.has_tui {
@@ -106,7 +137,7 @@ impl Net {
                                             ))
                                             .unwrap();
                                     } else {
-                                        println!("[{}] found cast device at {}", index, valid_out);
+                                        //println!("[{}] found cast device at {}", index, valid_out);
                                     }
                                 } else {
                                     count_no_cast += 1;

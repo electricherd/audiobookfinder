@@ -7,8 +7,12 @@ As a C++ developer, I know some of the C++11/14/17 enhancements and some don't c
 For a stunning live-coding example of Rust and an example of how to use trussh, which I'd like to implement, look at
 [Pierre-Étienne Meunier - Building SSH servers in minutes](https://www.youtube.com/watch?v=TKQoPQcKKTw), this is simply awesome.
 
+## Dependencies
+Unfortunately the program now uses mDNS-register with [dns-sd](https://github.com/plietar/rust-dns-sd) depends on Linux on [Avahi](https://www.avahi.org/) libavahi-client-dev or libavahi-compat-libdnssd-dev. It also breaks first the easy cross compilation :-( - I will see where this ends.
+But it works I can see myself with a mDNS scanner, so I can also find other audiobookfinder clients.
+
 ## My first program in Rust
-Actually I plan to do something useful. The program collects all information about (yet) audio books on different devices/clients, collect it and then do something with it, like showing stats, finding duplicates, aggregating everything at one place.
+Actually I plan to do something useful. The program collects all information about (yet) audio books on different devices/clients, stores it and then does something with it, like showing stats, finding duplicates, aggregating everything at one place.
 
 The primary goal is to learn Rust and to cover various aspects of the language, of which some of I already used inside the program, such as:
 * borrowing
@@ -22,7 +26,7 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
 * in-code documentation (well, small yet)
 * easy command-line (always was looking for that, nice: [clap](https://github.com/kbknapp/clap-rs))
 * channel/thread communication (creating worker threads easily, there are plenty implemented yet, not concurrency problems!!)
-* high level networking (mDNS), having issues there since I would like to try 2 mDNS packages simultaneously
+* high level networking (mDNS): theoretically working, but 1st package depends on avahi (register), 2nd causes heavy CPU-load ...
 * use the test feature of Rust (simple case)
 * trait example (a simple drop with print message)
 * simple timers, alive signal in TUI (yet a sleep thread for each timer, not perfect)
@@ -32,7 +36,6 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
   * [ATOM](https://atom.io/), looks good, no refactoring though, many plug-ins for rust, has README.md syntax :-)
   * [IntelliJ IDEA](https://intellij-rust.github.io/install.html) [download with snaps](https://blog.jetbrains.com/idea/2017/11/install-intellij-idea-with-snaps/), and then Rust plug-in: easy, refactoring, spell-check, nice (but editor ... column select??, close tab??), but looks professional
 * included Rust doctest - though problems, since in contrary of tests pub must be put to access former private mods or functions :-(
-* a stub for new worker threads on net when finding IP addresses with mDns
 
 yet in plan:
 - [ ] rework the one stub for worker thread to have many worker threads in net to do something with found addresses (so far http ... why not just send a http request and get an http response)
@@ -45,3 +48,4 @@ yet in plan:
 - [ ] a good and fast data collection
 - [ ] [futures](https://tokio.rs/docs/getting-started/futures/) and ([tokio](https://tokio.rs/)) for async behavior and for networking
 - [ ] maybe a little AI layer on determining audio books duplicates/same author by similar spelling, etc.
+- [ ] get rid of Avahi

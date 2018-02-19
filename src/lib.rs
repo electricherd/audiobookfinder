@@ -18,4 +18,5 @@ pub mod data;
 
 // net
 extern crate mdns as io_mdns;
+extern crate dns_sd as avahi_dns_sd;
 pub mod net;

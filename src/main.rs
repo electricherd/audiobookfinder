@@ -139,19 +139,19 @@ fn main() {
     // make it immutable from now on
     let has_tui = has_tui;
 
-
     // start the net runner thread
     let tx_net_mut_arc = Arc::new(tx_net_mut);
     let net_runner = thread::spawn(move || {
         if has_net {
             // need to simplify and clarify this here ......
             // but this lock unwrap is safe
-            let mut netfinder = Net::new(
+            if let Ok(mut netfinder) = Net::new(
                 &client_id.to_string(),
                 has_tui,
                 tx_net_mut_arc.lock().unwrap().clone(),
-            );
-            netfinder.lookup();
+            ) {
+                netfinder.lookup();
+            }
         }
     });
 
@@ -178,48 +178,47 @@ fn main() {
         let locked_collection = live_here.lock();
         if let Ok(mut pure_collection) = locked_collection {
             match pure_collection.visit_dirs(Path::new(elem), &data::Collection::visit_files) {
-            Ok(local_stats) => {
-                if has_tui {
-                    // stop animation
-                    if let Ok(stopper) = tx_sys_mut.lock() {
-                        stopper
-                            .send(SystemMsg::StartAnimation(
-                                Alive::BusyPath(index),
-                                Status::OFF,
-                            ))
-                            .unwrap();
+                Ok(local_stats) => {
+                    if has_tui {
+                        // stop animation
+                        if let Ok(stopper) = tx_sys_mut.lock() {
+                            stopper
+                                .send(SystemMsg::StartAnimation(
+                                    Alive::BusyPath(index),
+                                    Status::OFF,
+                                ))
+                                .unwrap();
+                        }
+                    } else {
+                        let text = format!(
+                            "\n\
+                             analyzed: {an:>width$}, faulty: {fa:>width$}\n\
+                             searched: {se:>width$}, other: {ot:>width$}",
+                            an = local_stats.analyzed,
+                            fa = local_stats.faulty,
+                            se = local_stats.searched,
+                            ot = local_stats.other,
+                            width = 3
+                        );
+                        println!("[{:?}] done {}", index, text);
                     }
-                } else {
-                    let text = format!(
-                        "\n\
-                         analyzed: {an:>width$}, faulty: {fa:>width$}\n\
-                         searched: {se:>width$}, other: {ot:>width$}",
-                        an = local_stats.analyzed,
-                        fa = local_stats.faulty,
-                        se = local_stats.searched,
-                        ot = local_stats.other,
-                        width = 3
-                    );
-                    println!("[{:?}] done {}", index, text);
+                }
+                Err(_e) => {
+                    let text = format!("An error has occurred in search path [{}]!!", index);
+                    if has_tui {
+                        let debug_message_id = ReceiveDialog::Debug;
+                        let text = text.to_string();
+                        let debug_text = tx_sys_mut.lock();
+                        if let Ok(debug_text) = debug_text {
+                            debug_text
+                                .send(SystemMsg::Update(debug_message_id, text))
+                                .unwrap();
+                        }
+                    } else {
+                        println!("{:?}", text);
+                    }
                 }
             }
-            Err(_e) => {
-                let text = format!("An error has occurred in search path [{}]!!", index);
-                if has_tui {
-                    let debug_message_id = ReceiveDialog::Debug;
-                    let text = text.to_string();
-                    let debug_text = tx_sys_mut
-                        .lock();
-                    if let Ok(debug_text) = debug_text {
-                        debug_text
-                        .send(SystemMsg::Update(debug_message_id, text))
-                        .unwrap();
-                    }
-                } else {
-                    println!("{:?}", text);
-                }
-            }
-        }
         }
     });
 
