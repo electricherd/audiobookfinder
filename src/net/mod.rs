@@ -4,13 +4,23 @@ use io_mdns::RecordKind;
 use avahi_dns_sd;
 use avahi_dns_sd::DNSService;
 
+//use ring;
+
+use thrussh;
+use thrussh_keys;
+
 use std::net::IpAddr;
 use std::sync::{mpsc, Arc, Mutex};
 use std::fmt::Debug;
 use std::fmt::Display;
 use std::thread;
+use std::time::Duration;
 
+use config;
 use ctrl;
+
+pub mod com_server;
+pub mod com_client;
 
 #[derive(Clone)]
 enum Action<T: Send + Clone> {
@@ -18,16 +28,17 @@ enum Action<T: Send + Clone> {
     Stop,
 }
 
-static SERVICE_NAME: &str = "_http._tcpl"; // "_tcp.local"
-static REGISTER_NAME: &str = "adbf";
-
 pub struct Net {
     #[allow(dead_code)]
     my_id: String,
     addresses_found: Arc<Mutex<Vec<(u16, IpAddr)>>>,
     tui_sender: mpsc::Sender<ctrl::SystemMsg>,
     has_tui: bool,
-    dns_service: DNSService
+    ssh_handle: thread::JoinHandle<()>,
+    // deallocate and everything will be done in drop of Net,
+    // so I can:
+    #[allow(dead_code)]
+    dns_handle: DNSService,
 }
 
 impl Net {
@@ -37,12 +48,12 @@ impl Net {
         sender: mpsc::Sender<ctrl::SystemMsg>,
     ) -> Result<Net, avahi_dns_sd::DNSError> {
         //let responder = mdns::dResponse::spawn();
-        let service = DNSService::register(
-            Some(REGISTER_NAME),
-            "_http._tcp",
+        let dns_service = DNSService::register(
+            Some(config::net::MDNS_REGISTER_NAME),
+            config::net::MDNS_SERVICE_NAME,
             None,
             None,
-            80,
+            config::net::MDNS_PORT,
             &["path=/"],
         )?;
         let net = Net {
@@ -50,15 +61,44 @@ impl Net {
             addresses_found: Arc::new(Mutex::new(Vec::new())),
             tui_sender: sender,
             has_tui: tui,
-            dns_service: service,
+            ssh_handle: thread::spawn(|| {}), // empty join handle
+            dns_handle: dns_service,
         };
         Ok(net)
+    }
+
+    pub fn start_com_server(&mut self) -> Result<(), ()> {
+        let has_tui = self.has_tui;
+        // well is this an attached thread ????
+        self.ssh_handle = thread::spawn(move || {
+            if !has_tui {
+                println!("SSH ComServer starting...");
+            }
+            //let rand = ring::rand::SystemRandom::new();
+            let mut config = thrussh::server::Config::default();
+
+            // probably not zero-ed
+            let key_algorithm = thrussh_keys::key::ED25519;
+            // possible: key::ED25519, key::RSA_SHA2_256, key::RSA_SHA2_512
+
+            config.connection_timeout = Some(Duration::from_secs(600));
+            config.auth_rejection_time = Duration::from_secs(3);
+            config
+                .keys
+                .push(thrussh_keys::key::KeyPair::generate(key_algorithm).unwrap());
+            let config = Arc::new(config);
+            let sh = com_server::ComServer {};
+            thrussh::server::run(config, config::net::SSH_CLIENT_AND_PORT, sh);
+            if !has_tui {
+                println!("SSH ComServer been dropped!!");
+            }
+        });
+        Ok(())
     }
 
     pub fn lookup(&mut self) {
         // we are sending IpAddress Action
         let (send_action, receive_action) = mpsc::channel::<Action<(u16, IpAddr)>>();
-
         {
             // I might not need that one here
             // maybe to attach some more data
@@ -81,13 +121,58 @@ impl Net {
             });
         }
         {
+            let has_tui = self.has_tui.clone();
+
             let borrow_arc = &self.addresses_found.clone();
 
-            if let Ok(all_discoveries) = io_mdns::discover::all(SERVICE_NAME) {
+            if let Ok(all_discoveries) = io_mdns::discover::all(config::net::MDNS_SERVICE_NAME) {
                 let mut count_valid = 0;
                 let mut count_no_response = 0;
                 let mut count_no_cast = 0;
+
+                // use a raw timeout to stop search after a time
+                // the nice one should work stop gracefully,
+                // the bad one is necessary due to never ending
+                // io_mdns::discover::all f*cking up
+                //let (timeout_bad_sender, timeout_bad_receiver) = mpsc::channel();
+
+                if !has_tui {
+                    println!("MDNS search: starting");
+                }
+                //let bad_thread = thread::spawn(move || {
+                // this is the long search loop
+                // looking rather inefficient, because cpu goes crazy
+                // don't think this is my fault
+                let (timeout_nice_sender, timeout_nice_receiver) = mpsc::channel();
+
+                let _ = thread::spawn(move || {
+                    thread::sleep(Duration::from_secs(config::net::MDNS_TIMEOUT_SEC as u64));
+                    timeout_nice_sender.send(()).unwrap();
+                    drop(timeout_nice_sender);
+                    if !has_tui {
+                        println!("time out send....");
+                    }
+                });
+
                 for (index, response) in all_discoveries.enumerate() {
+                    // if message came or sender gone continue and leave loop
+                    // don't just kill all of this
+                    match timeout_nice_receiver.try_recv() {
+                        Ok(_) | Err(mpsc::TryRecvError::Disconnected) => {
+                            if !has_tui {
+                                println!(
+                                    "MDNS search: timeout received (should have been {:?} sec)",
+                                    config::net::MDNS_TIMEOUT_SEC
+                                );
+                            }
+                            break;
+                        }
+                        Err(mpsc::TryRecvError::Empty) => {
+                            // do nothing
+                        }
+                    }
+
+                    // just look response
                     match response {
                         Ok(good_response) => {
                             for record in good_response.records() {
@@ -151,7 +236,7 @@ impl Net {
                     }
                 }
 
-                if !self.has_tui {
+                if !has_tui {
                     let output_string = format!(
                         "no response from : {no_resp:>width$}\n\
                          not castable     : {no_cast:>width$}\n",
@@ -161,7 +246,9 @@ impl Net {
                     );
                     println!("{}", output_string);
                 }
+                //});
             }
+
             // other thread should not wait for new messages
             send_action.send(Action::Stop).unwrap();
         }
