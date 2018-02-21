@@ -3,7 +3,11 @@
 #[macro_use]
 extern crate log;
 
+// configuration
+pub mod config;
+
 // ctrl
+// ctrl/tui
 extern crate cursive;
 pub mod ctrl;
 
@@ -17,6 +21,11 @@ extern crate uuid;
 pub mod data;
 
 // net
-extern crate mdns as io_mdns;
+extern crate mdns_discover as io_mdns;
 extern crate dns_sd as avahi_dns_sd;
+// com_client.rs com_server.rs
+extern crate futures;
+extern crate thrussh;
+extern crate thrussh_keys;
+extern crate ring;
 pub mod net;

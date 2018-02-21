@@ -1,10 +1,10 @@
 [package]
 name = "audiobookfinder"
-version = "0.1.75"
+version = "0.1.10"
 authors = ["Sven Kroemeke <skroemeke@gmail.com>"]
 
 [lib]
-name = "adfblib"
+name = "adbflib"
 path = "src/lib.rs"
 
 [[bin]]
@@ -14,15 +14,20 @@ path = "src/main.rs"
 [dependencies]
 clap = "2.29"         # for the command line parsing
 dns-sd  = "0.1.3"     # need avahi-compat-client-dev lib
+futures = "0.1"
 hostname = "0.1.4"    # for host recognition
 id3 = "0.2.3"             # for id3 tags, maybe some other lib later (ogg,flac, etc.)
 log = "0.4"
-mdns = "0.2.2"            # for mDNS
+mdns-discover = { git = "https://github.com/NervosFoundation/rust-mdns-discover", branch = "master" }
+#mdns = "0.2.2"   # using the new for mDNS
 serde = "1.0"
 serde_derive = "1.0"
 rayon = "0.9.0"       # for multi-threading
+ring = "0.12.1"            # crypto for thrussh
 tree_magic = "0.2.0"  # for fast file tree operations
-uuid = {version = "*", features = ["v4"]}
+thrussh = "0.19.2"           # ssh server client crate for communication
+thrussh-keys = "0.9.4"      # ssh server client crate for communication
+uuid = {version = "0.6", features = ["v4"]}
 
 
 

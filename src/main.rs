@@ -2,14 +2,12 @@
 //! useful. Trying to find all my audiobooks on many machines, identify them,
 //! find duplicates (later trying to solve the problem, also including their permissions, different names, but same albums, etc),
 //! get all stats about it).
-//#![feature(alloc_system)]
-//extern crate alloc_system;   // strip down size of binary executable
-extern crate adfblib;
-
 extern crate clap;
 extern crate hostname;
 extern crate rayon;
 extern crate uuid;
+
+extern crate adbflib;
 
 use std::path::Path; // path, clear
 use std::sync::{Arc, Mutex};
@@ -19,10 +17,10 @@ use std::thread;
 use rayon::prelude::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator};
 use uuid::Uuid;
 
-use adfblib::data;
-use adfblib::data::Collection;
-use adfblib::ctrl::{Alive, Ctrl, ReceiveDialog, Status, SystemMsg};
-use adfblib::net::Net;
+use adbflib::data;
+use adbflib::data::Collection;
+use adbflib::ctrl::{Alive, Ctrl, ReceiveDialog, Status, SystemMsg};
+use adbflib::net::Net;
 
 static INPUT_FOLDERS: &str = "folders";
 static APP_TITLE: &str = "The audiobook finder";
@@ -143,14 +141,16 @@ fn main() {
     let tx_net_mut_arc = Arc::new(tx_net_mut);
     let net_runner = thread::spawn(move || {
         if has_net {
-            // need to simplify and clarify this here ......
-            // but this lock unwrap is safe
-            if let Ok(mut netfinder) = Net::new(
+            if let Ok(mut network) = Net::new(
                 &client_id.to_string(),
                 has_tui,
+                // need to simplify and clarify this here ......
+                // but this lock unwrap is safe
                 tx_net_mut_arc.lock().unwrap().clone(),
             ) {
-                netfinder.lookup();
+                if network.start_com_server().is_ok() {
+                    network.lookup();
+                }
             }
         }
     });
