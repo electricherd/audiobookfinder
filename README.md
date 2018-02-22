@@ -1,5 +1,5 @@
 # audiobookfinder
-An example program to learn [Rust](https://www.rust-lang.org/) and meet its concepts by: find audiobooks on different machines.
+An example program to learn [Rust](https://www.rust-lang.org/) and meet its concepts by: find audio books on different machines.
 ## Why Rust?
 Rust is an awesome but difficult to learn programming language using different approaches and concepts to solve the current main software development issues for system programming, such as parallelism (what else to do with this multi-core, we are not getting much faster any more), safety and security (let the computer/compiler do what it can do better than a programmer, more quality but also IOT ... I want safe products at home which cannot be turned into zombie devices by buffer overflow), and more high-level approaches which lets you implement more functionality in less code.
 
@@ -39,6 +39,7 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
   * [IntelliJ IDEA](https://intellij-rust.github.io/install.html) [download with snaps](https://blog.jetbrains.com/idea/2017/11/install-intellij-idea-with-snaps/), and then Rust plug-in: easy, refactoring, spell-check, nice (but editor ... column select??, close tab??), but looks professional
 
 Changes:
+* ssh client with example key does something
 * found emojis :grin:
 * included Rust doctest, since it is mostly a library, works well :smiley:
 * using a config mod
@@ -46,7 +47,6 @@ Changes:
 * common.rs for common helper, such as a thread-pool
 
 Issues:
-* work on Net main loops and refactor (too long functions)
 * no net is a problem
 * mDNS search needs a further timeout, even kill the search as thread kill
 * get rid of Avahi

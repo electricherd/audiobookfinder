@@ -9,6 +9,7 @@ use avahi_dns_sd::DNSService;
 use thrussh;
 use thrussh_keys;
 
+use std;
 use std::net::IpAddr;
 use std::sync::{mpsc, Arc, Mutex};
 use std::fmt::Debug;
@@ -116,23 +117,33 @@ impl Net {
                             });
                         }
                         Action::Stop => {
-                            print!("stop received");
-                            continue; // leave loop
+                            break; // leave loop
                         }
                     }
                 }
             });
         }
-        {
-            let has_tui = self.has_tui.clone();
 
-            let borrow_arc = &self.addresses_found.clone();
+        {
+            // example client, will be done correctly if mDNS finds other instances
+            let mut config = thrussh::client::Config::default();
+            config.connection_timeout = Some(Duration::from_secs(600));
+            let config = Arc::new(config);
+            let client = com_client::ComClient {};
+            if client.run(config, config::net::SSH_HOST_AND_PORT).is_err() {
+                if !self.has_tui {
+                    print!("SSH Client example not working!!!");
+                }
+            }
+        }
+
+        if false {
+            let has_tui = self.has_tui.clone();
 
             if let Ok(all_discoveries) = io_mdns::discover::all(config::net::MDNS_SERVICE_NAME) {
                 let mut count_valid = 0;
                 let mut count_no_response = 0;
                 let mut count_no_cast = 0;
-
 
                 if !has_tui {
                     println!("MDNS search: starting");
@@ -178,60 +189,13 @@ impl Net {
                     // just look response
                     match response {
                         Ok(good_response) => {
-                            for record in good_response.records() {
-                                let (out_string, addr): (
-                                    Option<String>,
-                                    Option<IpAddr>,
-                                ) = Self::return_address(&record.kind);
-
-                                if let Some(valid_out) = out_string {
-                                    let ref mut already_found_addr =
-                                        &mut borrow_arc.lock().unwrap();
-                                    if let Some(valid_addr) = addr {
-                                        if Self::could_add_addr(
-                                            index as u16,
-                                            valid_addr,
-                                            already_found_addr,
-                                        ) {
-                                            count_valid += 1;
-
-                                            // get the last good index, this is the final
-                                            // ipv6 address to send request
-                                            if let Some(last_good) = already_found_addr.last() {
-                                                send_action
-                                                    .send(Action::NewAddr(last_good.clone()))
-                                                    .unwrap();
-                                            }
-                                        }
-                                    }
-                                    if self.has_tui {
-                                        let host_msg = ctrl::ReceiveDialog::ShowNewHost;
-                                        self.tui_sender
-                                            .send(ctrl::SystemMsg::Update(
-                                                host_msg,
-                                                format!("found {}", valid_out),
-                                            ))
-                                            .unwrap();
-                                        let counter_msg = ctrl::ReceiveDialog::ShowStats {
-                                            show: ctrl::NetStats {
-                                                line: count_valid,
-                                                max: index,
-                                            },
-                                        };
-                                        self.tui_sender
-                                            .send(ctrl::SystemMsg::Update(
-                                                counter_msg,
-                                                "".to_string(),
-                                            ))
-                                            .unwrap();
-                                    } else {
-                                        //println!("[{}] found cast device at {}", index, valid_out);
-                                    }
-                                } else {
-                                    count_no_cast += 1;
-                                    // send update
-                                };
-                            }
+                            self.add_records(
+                                &good_response,
+                                send_action.clone(),
+                                index,
+                                &mut count_valid,
+                                &mut count_no_cast,
+                            );
                         }
                         Err(_) => {
                             count_no_response += 1;
@@ -251,9 +215,62 @@ impl Net {
                 }
                 //});
             }
+        }
+        // other thread should not wait for new messages
+        send_action.send(Action::Stop).unwrap();
+    }
 
-            // other thread should not wait for new messages
-            send_action.send(Action::Stop).unwrap();
+    fn add_records(
+        &mut self,
+        good_response: &io_mdns::Response,
+        action: mpsc::Sender<Action<(u16, IpAddr)>>,
+        index: usize,
+        count_valid: &mut usize,
+        count_no_cast: &mut u16,
+    ) {
+        let borrow_arc = &self.addresses_found.clone();
+
+        for record in good_response.records() {
+            let (out_string, addr): (Option<String>, Option<IpAddr>) =
+                Self::return_address(&record.kind);
+
+            if let Some(valid_out) = out_string {
+                let ref mut already_found_addr = &mut borrow_arc.lock().unwrap();
+                if let Some(valid_addr) = addr {
+                    if Self::could_add_addr(index as u16, valid_addr, already_found_addr) {
+                        *count_valid += 1;
+
+                        // get the last good index, this is the final
+                        // ipv6 address to send request
+                        if let Some(last_good) = already_found_addr.last() {
+                            action.send(Action::NewAddr(last_good.clone())).unwrap();
+                        }
+                    }
+                }
+                if self.has_tui {
+                    let host_msg = ctrl::ReceiveDialog::ShowNewHost;
+                    self.tui_sender
+                        .send(ctrl::SystemMsg::Update(
+                            host_msg,
+                            format!("found {}", valid_out),
+                        ))
+                        .unwrap();
+                    let counter_msg = ctrl::ReceiveDialog::ShowStats {
+                        show: ctrl::NetStats {
+                            line: *count_valid,
+                            max: index,
+                        },
+                    };
+                    self.tui_sender
+                        .send(ctrl::SystemMsg::Update(counter_msg, "".to_string()))
+                        .unwrap();
+                } else {
+                    //println!("[{}] found cast device at {}", index, valid_out);
+                }
+            } else {
+                *count_no_cast += 1;
+                // send update
+            };
         }
     }
 
@@ -307,6 +324,7 @@ impl Net {
 
 impl Drop for Net {
     fn drop(&mut self) {
+        std::mem::forget(&self.ssh_handle);
         if !self.has_tui {
             println!("Dropping/destroying net");
         }

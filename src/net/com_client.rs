@@ -4,7 +4,8 @@ use futures::Future;
 
 use thrussh;
 use thrussh::*;
-use thrussh_keys::*;
+use thrussh_keys::key;
+use thrussh_keys::{Result,load_secret_key,decode_secret_key};
 
 use std;
 use std::io::Read;
@@ -13,7 +14,7 @@ use std::sync::Arc;
 use config;
 
 #[derive(Clone)]
-struct ComClient {}
+pub struct ComClient {}
 
 impl client::Handler for ComClient {
     type Error = ();
@@ -52,46 +53,53 @@ impl client::Handler for ComClient {
 }
 
 impl ComClient {
-    fn run(self, configuration: Arc<client::Config>, _: &str) {
-        match std::fs::File::open(config::net::SSH_CLIENT_KEY_FILE) {
-            Ok(mut key_file) => {
-                client::connect(
-                    config::net::SSH_HOST_AND_PORT,
-                    configuration,
-                    None,
-                    self,
-                    |connection| {
-                        let mut key = String::new();
-                        key_file.read_to_string(&mut key).unwrap();
-                        let key = load_secret_key(&key, None).unwrap();
-
-                        connection
-                            .authenticate_key(config::net::SSH_CLIENT_USERNAME, key)
-                            .and_then(|session| {
-                                session
-                                    .channel_open_session()
-                                    .and_then(|(session, channelid)| {
-                                        session.data(channelid, None, "Hello, world!").and_then(
-                                            |(mut session, _)| {
-                                                session.disconnect(
-                                                    Disconnect::ByApplication,
-                                                    "Ciao",
-                                                    "",
-                                                );
+    pub fn run(self, configuration: Arc<client::Config>, _: &str) -> Result<()> {
+        //match std::fs::File::open(config::net::SSH_CLIENT_KEY_FILE) {
+            //Ok(mut key_file) => {
+            //    let mut key = String::new();
+            //    if key_file.read_to_string(&mut key).is_err() {
+            //        println!("not found {:?}", key_file);
+            //    } else {
+                    //if let Ok(key) = load_secret_key(&key, Some(b"b")) {
+                    if let Ok(key) = decode_secret_key(config::net::SSH_CLIENT_SEC_KEY, Some(b"blabla")) {
+                        client::connect(
+                            config::net::SSH_HOST_AND_PORT,
+                            configuration,
+                            None,
+                            self,
+                            |connection| {
+                                connection
+                                    .authenticate_key(config::net::SSH_CLIENT_USERNAME, key)
+                                    .and_then(|session| {
+                                        session.channel_open_session().and_then(
+                                            |(session, channelid)| {
                                                 session
+                                                    .data(channelid, None, "Hello, world!")
+                                                    .and_then(|(mut session, _)| {
+                                                        session.disconnect(
+                                                            Disconnect::ByApplication,
+                                                            "Ciao",
+                                                            "",
+                                                        );
+                                                        session
+                                                    })
                                             },
                                         )
                                     })
-                            })
-                    },
-                ).unwrap();
-            }
-            Err(..) => {
-                println!(
-                    "SSH client key file '{:?}' could not be found!!",
-                    config::net::SSH_CLIENT_KEY_FILE
-                );
-            }
-        }
+                            },
+                        ).unwrap();
+                    } else {
+                        println!("secret key not good");
+                    }
+                //}
+            //}
+            //Err(..) => {
+            //    println!(
+            //        "SSH client key file '{:?}' could not be found!!",
+            //        config::net::SSH_CLIENT_KEY_FILE
+            //    );
+            //}
+        //}
+        Ok(())
     }
 }
