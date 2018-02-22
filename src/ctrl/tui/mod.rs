@@ -9,6 +9,8 @@ use std::sync::mpsc;
 use std::time::Duration;
 
 use ctrl::{Alive, ReceiveDialog, Status, SystemMsg, UiMsg};
+use common::ThreadPool;
+use config;
 
 pub struct Tui {
     pub ui_receiver: mpsc::Receiver<UiMsg>,
@@ -28,6 +30,7 @@ struct AliveState {
 struct AliveDisplayData {
     host: AliveState,
     pathes: Vec<AliveState>,
+    timers: ThreadPool,
 }
 
 // following the advice for Rust clever enums
@@ -49,8 +52,6 @@ static PATHS_PREFIX_ID: &str = "pf";
 static ID_HOST_INDEX: &str = "id_host";
 static ID_HOST_NUMBER: &str = "id_max";
 static ID_HOST_ALIVE: &str = "id_host_alive";
-
-static TIMEOUT_SEARCH: u64 = 80;
 
 impl Tui {
     pub fn new(
@@ -80,6 +81,7 @@ impl Tui {
                     };
                     pathes.len()
                 ],
+                timers: ThreadPool::new(pathes.len() + 1),
             },
         };
 
@@ -135,22 +137,25 @@ impl Tui {
                     match on_off {
                         Status::ON => {
                             self.toggle_alive(signal.clone(), AliveSym::GoOn);
-                            let (already_running, toggle): (
+                            let (already_running, toggle,timeout_id): (
                                 bool,
                                 &mut bool,
+                                usize
                             ) = match signal {
                                 Alive::BusyPath(nr) => {
-                                    (self.alive.pathes[nr].runs, &mut self.alive.pathes[nr].runs)
+                                    (self.alive.pathes[nr].runs, &mut self.alive.pathes[nr].runs,nr+1)
                                 }
                                 Alive::HostSearch => {
-                                    (self.alive.host.runs, &mut self.alive.host.runs)
+                                    (self.alive.host.runs, &mut self.alive.host.runs,0)
                                 }
                             };
                             if !already_running {
                                 *toggle = true;
                                 // if timer not started, start
-                                thread::spawn(move || {
-                                    thread::sleep(Duration::from_millis(TIMEOUT_SEARCH));
+                                self.alive.timers.renew(timeout_id, move || {
+                                    thread::sleep(Duration::from_millis(
+                                        config::tui::ALIVE_REFRESH,
+                                    ));
                                     sender_clone.send(UiMsg::TimeOut(signal.clone())).unwrap();
                                 });
                             }
@@ -166,15 +171,15 @@ impl Tui {
                     }
                 }
                 UiMsg::TimeOut(which) => {
-                    let continue_timeout = match which {
-                        Alive::BusyPath(nr) => self.alive.pathes[nr].runs,
-                        Alive::HostSearch => self.alive.host.runs,
+                    let (continue_timeout, timeout_id) = match which {
+                        Alive::BusyPath(nr) => (self.alive.pathes[nr].runs, nr + 1),
+                        Alive::HostSearch => (self.alive.host.runs, 0),
                     };
                     if continue_timeout {
                         self.toggle_alive(which.clone(), AliveSym::GoOn);
                         let sender_clone = self.ui_sender.clone();
-                        thread::spawn(move || {
-                            thread::sleep(Duration::from_millis(TIMEOUT_SEARCH));
+                        self.alive.timers.renew(timeout_id, move || {
+                            thread::sleep(Duration::from_millis(config::tui::ALIVE_REFRESH));
                             sender_clone.send(UiMsg::TimeOut(which)).unwrap();
                         });
                     }
