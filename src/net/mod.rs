@@ -48,6 +48,9 @@ impl Net {
         sender: mpsc::Sender<ctrl::SystemMsg>,
     ) -> Result<Net, avahi_dns_sd::DNSError> {
         //let responder = mdns::dResponse::spawn();
+
+        // the drop of self.dns_handle will unregister
+        // so I need to keep it like here :-(
         let dns_service = DNSService::register(
             Some(config::net::MDNS_REGISTER_NAME),
             config::net::MDNS_SERVICE_NAME,
@@ -90,7 +93,7 @@ impl Net {
             let sh = com_server::ComServer {};
             thrussh::server::run(config, config::net::SSH_CLIENT_AND_PORT, sh);
             if !has_tui {
-                println!("SSH ComServer been dropped!!");
+                println!("SSH ComServer stopped!!");
             }
         });
         Ok(())
@@ -130,19 +133,16 @@ impl Net {
                 let mut count_no_response = 0;
                 let mut count_no_cast = 0;
 
+
+                if !has_tui {
+                    println!("MDNS search: starting");
+                }
                 // use a raw timeout to stop search after a time
                 // the nice one should work stop gracefully,
                 // the bad one is necessary due to never ending
                 // io_mdns::discover::all f*cking up
                 //let (timeout_bad_sender, timeout_bad_receiver) = mpsc::channel();
-
-                if !has_tui {
-                    println!("MDNS search: starting");
-                }
                 //let bad_thread = thread::spawn(move || {
-                // this is the long search loop
-                // looking rather inefficient, because cpu goes crazy
-                // don't think this is my fault
                 let (timeout_nice_sender, timeout_nice_receiver) = mpsc::channel();
 
                 let _ = thread::spawn(move || {
@@ -154,6 +154,9 @@ impl Net {
                     }
                 });
 
+                // this is the long search loop
+                // looking rather inefficient, because cpu goes crazy
+                // don't think this is my fault
                 for (index, response) in all_discoveries.enumerate() {
                     // if message came or sender gone continue and leave loop
                     // don't just kill all of this
@@ -299,5 +302,13 @@ impl Net {
             _ => (None, None),
         };
         (out_string, addr)
+    }
+}
+
+impl Drop for Net {
+    fn drop(&mut self) {
+        if !self.has_tui {
+            println!("Dropping/destroying net");
+        }
     }
 }

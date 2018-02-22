@@ -15,3 +15,7 @@ pub mod net {
 
     }
 }
+
+pub mod tui {
+    pub static ALIVE_REFRESH: u64 = 80;
+}
