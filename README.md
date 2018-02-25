@@ -1,11 +1,12 @@
-# audiobookfinder
+# audiobookfinder (adbf)
 An example program to learn [Rust](https://www.rust-lang.org/) and meet its concepts by: find audio books on different machines.
+
 ## Why Rust?
 Rust is an awesome but difficult to learn programming language using different approaches and concepts to solve the current main software development issues for system programming, such as parallelism (what else to do with this multi-core, we are not getting much faster any more), safety and security (let the computer/compiler do what it can do better than a programmer, more quality but also IOT ... I want safe products at home which cannot be turned into zombie devices by buffer overflow), and more high-level approaches which lets you implement more functionality in less code.
 
 As a C++ developer, I know some of the C++11/14/17 enhancements and some don't convince me at all, just look here about the "costs" you have and what it looks like in Simon Brand's ["How Rust gets polymorphism right"](https://www.youtube.com/watch?v=VSlBhAOLtFA).
-For a stunning live-coding example of Rust and an example of how to use thrussh, which I'd like to implement, look at
-[Pierre-Étienne Meunier - Building SSH servers in minutes](https://www.youtube.com/watch?v=TKQoPQcKKTw), this is simply awesome.
+For a stunning live-coding example of Rust and an example how to use thrussh, which I'd like to implement, look at
+[Pierre-Étienne Meunier - Building SSH servers in minutes](https://www.youtube.com/watch?v=TKQoPQcKKTw). He uses heavily the compiler for development which is not recommended (better with a well setup IDE) but it is nice as how someone can use it. The crypto details he gives get a bit lost.
 
 ## Dependencies
 Unfortunately the program now uses mDNS-register with [dns-sd](https://github.com/plietar/rust-dns-sd) depends on Linux on [Avahi](https://www.avahi.org/)
@@ -45,17 +46,26 @@ Changes:
 * using a config mod
 * new mDNS crate for searching (which is very cpu consuming, but the new one is just a very recent fork, but hoping)
 * common.rs for common helper, such as a thread-pool
+* client/server authorization/management in a safe way (some small crypto with [thrussh](https://pijul.org/thrussh/))
+* in and used but only as example, not yet understood:  [futures](https://tokio.rs/docs/getting-started/futures/) and ([tokio](https://tokio.rs/)) for async behavior and for networking
+
+ToDo:
+* understand trussh communication, key is still an issues
+* nicer timer (thread pool is good but still with sleep)
+* make cross compiling as easy as possible
+* get rid of Avahi
 
 Issues:
 * no net is a problem
-* mDNS search needs a further timeout, even kill the search as thread kill
-* get rid of Avahi
-* nicer timer (thread pool is good but still with sleep)
+* bad mDNS search interface to external crate needs a further timeout, even kill a newly created search thread.
+* found ip adresses not shown in tui
+* tui update on Raspberry was slow, better find another way
 
-yet in plan:
+Yet in plan:
+* create a key yourself!! And store, which is going to be done if not found at startup
+* communication is now easy with ssh but how to authenticate as a valid adbf? Look at ssh details, and zero-knowledge or something similar: hiding key or secrecy knowledge in code without being to obvious :neutral_face: (first should be a simple string, don't bother too much)
 * rework the one stub for worker thread to have many worker threads in net to do something with found addresses (use thrussh simple example)
-* started: client/server authorization/management in a safe way (some small crypto with [thrussh](https://pijul.org/thrussh/))
-* comes with thrussh: [futures](https://tokio.rs/docs/getting-started/futures/) and ([tokio](https://tokio.rs/)) for async behavior and for networking
+* snap linux packaging / online compiler for various target compilation service (don't remember the name)
 * further lifetimes optimizations
 * exchange of data over net (probably de-/serialization using [serde](https://docs.serde.rs/serde/))
 * internationalization (which is not really supported yet by Rust)
