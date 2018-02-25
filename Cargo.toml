@@ -22,7 +22,7 @@ mdns-discover = { git = "https://github.com/NervosFoundation/rust-mdns-discover"
 #mdns = "0.2.2"   # using mdns-discover instead
 serde = "1.0"
 serde_derive = "1.0"
-rayon = "0.9.0"       # for multi-threading
+rayon = "1.0.0"       # for multi-threading
 ring = "0.12.1"            # crypto for thrussh
 tree_magic = "0.2.0"  # for fast file tree operations
 thrussh = "0.19.2"           # ssh server client crate for communication
