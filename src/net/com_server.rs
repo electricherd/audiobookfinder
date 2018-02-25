@@ -45,7 +45,7 @@ impl thrussh::server::Handler for ComServer {
         mut session: server::Session,
     ) -> Self::FutureUnit {
         println!(
-            "data on channel {:?}: {:?}",
+            "SERVER: data on channel {:?}: {:?}",
             channel,
             std::str::from_utf8(data)
         );

@@ -125,16 +125,22 @@ impl Net {
         }
 
         {
-            // example client, will be done correctly if mDNS finds other instances
-            let mut config = thrussh::client::Config::default();
-            config.connection_timeout = Some(Duration::from_secs(600));
-            let config = Arc::new(config);
-            let client = com_client::ComClient {};
-            if client.run(config, config::net::SSH_HOST_AND_PORT).is_err() {
-                if !self.has_tui {
-                    print!("SSH Client example not working!!!");
+            let has_tui = self.has_tui;
+            thread::spawn(move || {
+                // wait a bit until ssh server is up. This will be moved somewhere else anyway
+                thread::sleep(Duration::from_millis(500));
+                // example client, will be done correctly if mDNS finds other instances
+                let mut config = thrussh::client::Config::default();
+                config.connection_timeout = Some(Duration::from_secs(600));
+                let config = Arc::new(config);
+                let client = com_client::ComClient {};
+                if client.run(config, config::net::SSH_HOST_AND_PORT).is_err() {
+                    if !has_tui {
+                        print!("SSH Client example not working!!!");
+                    }
                 }
-            }
+            });
+            thread::sleep(Duration::from_secs(30));            
         }
 
         if false {
