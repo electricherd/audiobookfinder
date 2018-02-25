@@ -40,7 +40,7 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
   * [IntelliJ IDEA](https://intellij-rust.github.io/install.html) [download with snaps](https://blog.jetbrains.com/idea/2017/11/install-intellij-idea-with-snaps/), and then Rust plug-in: easy, refactoring, spell-check, nice (but editor ... column select??, close tab??), but looks professional
 
 Changes:
-* ssh client with example key does something
+* ssh client with example key works, key now external
 * found emojis :grin:
 * included Rust doctest, since it is mostly a library, works well :smiley:
 * using a config mod
@@ -51,6 +51,8 @@ Changes:
 
 ToDo:
 * understand trussh communication, key is still an issues
+* recheck namespaces and Result ... mixed up
+* use state machine like [state_machine_future](https://github.com/fitzgen/state_machine_future) for client and server, the example looks promising
 * nicer timer (thread pool is good but still with sleep)
 * make cross compiling as easy as possible
 * get rid of Avahi
@@ -63,8 +65,10 @@ Issues:
 
 Yet in plan:
 * create a key yourself!! And store, which is going to be done if not found at startup
+* better Result<T,E>, Error handling (got a little more understanding, this is powerful, yet to be done correctly, mapping is rather confusing, but it needs to be done well)
 * communication is now easy with ssh but how to authenticate as a valid adbf? Look at ssh details, and zero-knowledge or something similar: hiding key or secrecy knowledge in code without being to obvious :neutral_face: (first should be a simple string, don't bother too much)
 * rework the one stub for worker thread to have many worker threads in net to do something with found addresses (use thrussh simple example)
+* using an hopefully nice to use state machine for client server "communication" states
 * snap linux packaging / online compiler for various target compilation service (don't remember the name)
 * further lifetimes optimizations
 * exchange of data over net (probably de-/serialization using [serde](https://docs.serde.rs/serde/))

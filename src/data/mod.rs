@@ -1,7 +1,3 @@
-use id3::Tag; // to identify the audio files
-use uuid::Uuid;
-use tree_magic;
-
 use std::io; // reading files
 use std::cmp; // max
 use std::fs::{self, DirEntry, Permissions}; // directory
@@ -9,6 +5,10 @@ use std::path::{Path, PathBuf}; // path, clear
 use std::collections::hash_map::{Entry, HashMap}; // my main item uses a hash map
 //use std::os::windows::fs::MetadataExt;
 use std::os::linux::fs::MetadataExt;
+
+use id3::Tag; // to identify the audio files
+use uuid::Uuid;
+use tree_magic;
 
 #[allow(dead_code)]
 /// # File info

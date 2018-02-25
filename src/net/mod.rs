@@ -7,7 +7,7 @@ use avahi_dns_sd::DNSService;
 //use ring;
 
 use thrussh;
-use thrussh_keys;
+use thrussh_keys::key;
 
 use std;
 use std::net::IpAddr;
@@ -23,6 +23,9 @@ use ctrl;
 pub mod com_server;
 pub mod com_client;
 
+
+type IpType = (u16, IpAddr);
+
 #[derive(Clone)]
 enum Action<T: Send + Clone> {
     NewAddr(T),
@@ -32,7 +35,7 @@ enum Action<T: Send + Clone> {
 pub struct Net {
     #[allow(dead_code)]
     my_id: String,
-    addresses_found: Arc<Mutex<Vec<(u16, IpAddr)>>>,
+    addresses_found: Arc<Mutex<Vec<IpType>>>,
     tui_sender: mpsc::Sender<ctrl::SystemMsg>,
     has_tui: bool,
     ssh_handle: thread::JoinHandle<()>,
@@ -81,15 +84,14 @@ impl Net {
             //let rand = ring::rand::SystemRandom::new();
             let mut config = thrussh::server::Config::default();
 
-            // probably not zero-ed
-            let key_algorithm = thrussh_keys::key::ED25519;
+            let key_algorithm = key::ED25519;
             // possible: key::ED25519, key::RSA_SHA2_256, key::RSA_SHA2_512
 
             config.connection_timeout = Some(Duration::from_secs(600));
             config.auth_rejection_time = Duration::from_secs(3);
             config
                 .keys
-                .push(thrussh_keys::key::KeyPair::generate(key_algorithm).unwrap());
+                .push(key::KeyPair::generate(key_algorithm).unwrap());
             let config = Arc::new(config);
             let sh = com_server::ComServer {};
             thrussh::server::run(config, config::net::SSH_CLIENT_AND_PORT, sh);
@@ -102,7 +104,7 @@ impl Net {
 
     pub fn lookup(&mut self) {
         // we are sending IpAddress Action
-        let (send_action, receive_action) = mpsc::channel::<Action<(u16, IpAddr)>>();
+        let (send_action, receive_action) = mpsc::channel::<Action<IpType>>();
         {
             // I might not need that one here
             // maybe to attach some more data
@@ -229,7 +231,7 @@ impl Net {
     fn add_records(
         &mut self,
         good_response: &io_mdns::Response,
-        action: mpsc::Sender<Action<(u16, IpAddr)>>,
+        action: mpsc::Sender<Action<IpType>>,
         index: usize,
         count_valid: &mut usize,
         count_no_cast: &mut u16,
