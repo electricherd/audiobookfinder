@@ -1,13 +1,16 @@
 // taken from trussh example (with corrections)
-use thrussh;
-use futures;
-
-use thrussh::*;
-use thrussh::server::{Auth, Session};
-use thrussh_keys::*;
-
 use std;
 use std::net;
+
+use futures;
+
+use thrussh;
+use thrussh::{server,ChannelId};
+use thrussh::server::{Auth, Session};
+
+use thrussh_keys;
+use thrussh_keys::key;
+
 
 #[derive(Clone)]
 pub struct ComServer {}
@@ -51,5 +54,22 @@ impl thrussh::server::Handler for ComServer {
         );
         session.data(channel, None, data); //.unwrap();
         futures::finished((self, session))
+    }
+
+}
+
+impl ComServer {
+    pub fn create_key_file(_name: &str) -> Result<(), thrussh_keys::Error> {
+        match key::KeyPair::generate(key::ED25519) {
+            Some(key::KeyPair::Ed25519(..)) => {
+                //println!("{:?}",edkey);
+            }
+            Some(key::KeyPair::RSA{..}) => {
+                // to be done
+            }
+            None => {}
+        }
+        //
+        Ok(())
     }
 }
