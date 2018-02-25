@@ -43,7 +43,7 @@ impl client::Handler for ComClient {
         session: client::Session,
     ) -> Self::SessionUnit {
         println!(
-            "data on channel {:?} {:?}: {:?}",
+            "CLIENT: data on channel {:?} {:?}: {:?}",
             ext,
             channel,
             std::str::from_utf8(data)
@@ -62,7 +62,7 @@ impl ComClient {
             //    } else {
                     //if let Ok(key) = load_secret_key(&key, Some(b"b")) {
                     if let Ok(key) = decode_secret_key(config::net::SSH_CLIENT_SEC_KEY, Some(b"blabla")) {
-                        client::connect(
+                        if client::connect(
                             config::net::SSH_HOST_AND_PORT,
                             configuration,
                             None,
@@ -87,7 +87,9 @@ impl ComClient {
                                         )
                                     })
                             },
-                        ).unwrap();
+                        ).is_err() {
+                            println!("connection could not be established!");
+                        }
                     } else {
                         println!("secret key not good");
                     }
