@@ -4,7 +4,7 @@ pub mod net {
     pub static MDNS_SERVICE_NAME: &str = "_http._tcp"; // "_tcp.local"
     pub static MDNS_REGISTER_NAME: &str = "adbf";
     pub static MDNS_PORT : u16 = 80;
-    pub static MDNS_TIMEOUT_SEC : u16 = 3;
+    pub static MDNS_TIMEOUT_SEC : u16 = 5;
 
     pub static SSH_CLIENT_USERNAME : & str = "e";
     pub static SSH_CLIENT_AND_PORT : & str = "0.0.0.0:2222";
