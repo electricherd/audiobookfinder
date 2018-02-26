@@ -23,12 +23,11 @@ use ctrl;
 pub mod com_server;
 pub mod com_client;
 
-
 type IpType = (u16, IpAddr);
 
 #[derive(Clone)]
-enum Action<T: Send + Clone> {
-    NewAddr(T),
+enum ToThread<T: Send + Clone> {
+    Data(T),
     Stop,
 }
 
@@ -103,76 +102,152 @@ impl Net {
     }
 
     pub fn lookup(&mut self) {
-        // we are sending IpAddress Action
-        let (send_action, receive_action) = mpsc::channel::<Action<IpType>>();
-        {
-            // I might not need that one here
-            // maybe to attach some more data
-            //let borrow_arc = &self.addresses_found.clone();
+        // we are sending IpAddress ToThread
 
-            thread::spawn(move || loop {
-                if let Ok(recv_mesg) = receive_action.recv() {
-                    match recv_mesg {
-                        Action::NewAddr(address) => {
-                            thread::spawn(move || {
-                                println!("received {:?} for {:?}", address.1, address.0);
-                            });
-                        }
-                        Action::Stop => {
-                            break; // leave loop
-                        }
+        let (sender_ssh_client, receiver_client) = mpsc::channel::<ToThread<IpType>>();
+        let sender_ssh_client_stop = sender_ssh_client.clone();
+        // I might not need that one here
+        // maybe to attach some more data
+        //let borrow_arc = &self.addresses_found.clone();
+        let has_tui = self.has_tui;
+        thread::spawn(move || loop {
+            if let Ok(recv_mesg) = receiver_client.recv() {
+                match recv_mesg {
+                    ToThread::Data(address) => {
+                        thread::spawn(move || {
+                            if !has_tui {
+                                println!("pretending as if trying {:?}!", address);
+                            }
+                            // wait a bit until ssh server is up. This will be moved somewhere else anyway
+                            thread::sleep(Duration::from_millis(500));
+                            // example client, will be done correctly if mDNS finds other instances
+                            let mut config = thrussh::client::Config::default();
+                            config.connection_timeout = Some(Duration::from_secs(600));
+                            let config = Arc::new(config);
+                            let client = com_client::ComClient {};
+                            if client.run(config, config::net::SSH_HOST_AND_PORT).is_err() {
+                                if !has_tui {
+                                    println!("SSH Client example not working!!!");
+                                }
+                            }
+                        });
+                    }
+                    ToThread::Stop => {
+                        break; // leave loop and thread
                     }
                 }
-            });
-        }
+            } else {
+                break; // leave loop and thread
+            }
+        });
 
-        {
-            let has_tui = self.has_tui;
-            thread::spawn(move || {
-                // wait a bit until ssh server is up. This will be moved somewhere else anyway
-                thread::sleep(Duration::from_millis(500));
-                // example client, will be done correctly if mDNS finds other instances
-                let mut config = thrussh::client::Config::default();
-                config.connection_timeout = Some(Duration::from_secs(600));
-                let config = Arc::new(config);
-                let client = com_client::ComClient {};
-                if client.run(config, config::net::SSH_HOST_AND_PORT).is_err() {
+        let mut count_valid = 0;
+        let mut count_no_response = 0;
+        let mut count_no_cast = 0;
+
+        // use a raw timeout to stop search after a time
+        // the nice one should work stop gracefully,
+        // the bad one is necessary due to never ending
+        // io_mdns::discover::all f*cking up
+        //let (timeout_bad_sender, timeout_bad_receiver) = mpsc::channel();
+        let (timeout_nice_sender, timeout_nice_receiver) = mpsc::channel();
+        let (timeout_nice_renewer, timeout_nice_recover) = mpsc::channel();
+        let _timeout_graceful = thread::spawn(move || loop {
+            thread::sleep(Duration::from_secs(config::net::MDNS_TIMEOUT_SEC as u64));
+            // if has been recovered until here ... continue loop
+            match timeout_nice_recover.try_recv() {
+                Ok(_) | Err(mpsc::TryRecvError::Disconnected) => {
                     if !has_tui {
-                        print!("SSH Client example not working!!!");
+                        println!("graceful time out sent....");
+                    }
+                    timeout_nice_sender.send(()).unwrap();
+                    break; // leave loop
+                }
+                Err(mpsc::TryRecvError::Empty) => {
+                    if !has_tui {
+                        println!("graceful time out suspended");
                     }
                 }
-            });
-            thread::sleep(Duration::from_secs(30));            
-        }
+            }
+        });
 
-        if false {
-            let has_tui = self.has_tui.clone();
+        // prepare everything for mdns thread
+        let ctrl_sender = self.tui_sender.clone();
+        let (mdns_send_ip, mdns_receive_ip) = mpsc::channel::<ToThread<(usize, io_mdns::Record)>>();
 
+        let mdns_send_stop = mdns_send_ip.clone();
+        let borrow_arc = self.addresses_found.clone();
+
+        // keep the mdns stuff in a separate thread
+        let _take_mdns_input = thread::spawn(move || loop {
+            match mdns_receive_ip.recv() {
+                Ok(good) => {
+                    match good {
+                        ToThread::Data((index, recv_mesg)) => {
+                            let (out_string, addr): (
+                                Option<String>,
+                                Option<IpAddr>,
+                            ) = Self::return_address(&recv_mesg.kind);
+                            if let Some(valid_out) = out_string {
+                                let ref mut already_found_addr = &mut borrow_arc.lock().unwrap();
+                                if let Some(valid_addr) = addr {
+                                    if Self::could_add_addr(
+                                        index as u16,
+                                        valid_addr,
+                                        already_found_addr,
+                                    ) {
+                                        count_valid += 1;
+
+                                        // get the last good index, this is the final
+                                        // ipv6 address to send request
+                                        if let Some(last_good) = already_found_addr.last() {
+                                            sender_ssh_client
+                                                .send(ToThread::Data(last_good.clone()))
+                                                .unwrap();
+                                            // renew time out
+                                            timeout_nice_renewer.send(()).unwrap();
+                                        }
+                                    }
+                                }
+                                if has_tui {
+                                    let host_msg = ctrl::ReceiveDialog::ShowNewHost;
+                                    ctrl_sender
+                                        .send(ctrl::SystemMsg::Update(
+                                            host_msg,
+                                            format!("found {}", valid_out),
+                                        ))
+                                        .unwrap();
+                                    let counter_msg = ctrl::ReceiveDialog::ShowStats {
+                                        show: ctrl::NetStats {
+                                            line: count_valid,
+                                            max: index,
+                                        },
+                                    };
+                                    ctrl_sender
+                                        .send(ctrl::SystemMsg::Update(counter_msg, "".to_string()))
+                                        .unwrap();
+                                } else {
+                                    //println!("[{}] found cast device at {}", index, valid_out);
+                                }
+                            }
+                        }
+                        ToThread::Stop => {
+                            break; //break loop
+                        }
+                    }
+                }
+                Err(_) => {
+                    count_no_cast += 1;
+                    break; //break loop
+                }
+            }
+        });
+
+        let mdns_thread = thread::spawn(move || {
             if let Ok(all_discoveries) = io_mdns::discover::all(config::net::MDNS_SERVICE_NAME) {
-                let mut count_valid = 0;
-                let mut count_no_response = 0;
-                let mut count_no_cast = 0;
-
                 if !has_tui {
                     println!("MDNS search: starting");
                 }
-                // use a raw timeout to stop search after a time
-                // the nice one should work stop gracefully,
-                // the bad one is necessary due to never ending
-                // io_mdns::discover::all f*cking up
-                //let (timeout_bad_sender, timeout_bad_receiver) = mpsc::channel();
-                //let bad_thread = thread::spawn(move || {
-                let (timeout_nice_sender, timeout_nice_receiver) = mpsc::channel();
-
-                let _ = thread::spawn(move || {
-                    thread::sleep(Duration::from_secs(config::net::MDNS_TIMEOUT_SEC as u64));
-                    timeout_nice_sender.send(()).unwrap();
-                    drop(timeout_nice_sender);
-                    if !has_tui {
-                        println!("time out send....");
-                    }
-                });
-
                 // this is the long search loop
                 // looking rather inefficient, because cpu goes crazy
                 // don't think this is my fault
@@ -187,7 +262,7 @@ impl Net {
                                     config::net::MDNS_TIMEOUT_SEC
                                 );
                             }
-                            break;
+                            break; // leave loop
                         }
                         Err(mpsc::TryRecvError::Empty) => {
                             // do nothing
@@ -196,20 +271,16 @@ impl Net {
 
                     // just look response
                     match response {
-                        Ok(good_response) => {
-                            self.add_records(
-                                &good_response,
-                                send_action.clone(),
-                                index,
-                                &mut count_valid,
-                                &mut count_no_cast,
-                            );
-                        }
+                        Ok(good_response) => for record in good_response.records() {
+                            mdns_send_ip
+                                .send(ToThread::Data((index, record.clone())))
+                                .unwrap();
+                        },
                         Err(_) => {
                             count_no_response += 1;
                         }
                     }
-                }
+                } //end for loop
 
                 if !has_tui {
                     let output_string = format!(
@@ -221,65 +292,15 @@ impl Net {
                     );
                     println!("{}", output_string);
                 }
-                //});
-            }
-        }
-        // other thread should not wait for new messages
-        send_action.send(Action::Stop).unwrap();
-    }
+            } // for loop
+        });
 
-    fn add_records(
-        &mut self,
-        good_response: &io_mdns::Response,
-        action: mpsc::Sender<Action<IpType>>,
-        index: usize,
-        count_valid: &mut usize,
-        count_no_cast: &mut u16,
-    ) {
-        let borrow_arc = &self.addresses_found.clone();
+        // yes, finally we wait for this thread
+        let _ = mdns_thread.join();
 
-        for record in good_response.records() {
-            let (out_string, addr): (Option<String>, Option<IpAddr>) =
-                Self::return_address(&record.kind);
-
-            if let Some(valid_out) = out_string {
-                let ref mut already_found_addr = &mut borrow_arc.lock().unwrap();
-                if let Some(valid_addr) = addr {
-                    if Self::could_add_addr(index as u16, valid_addr, already_found_addr) {
-                        *count_valid += 1;
-
-                        // get the last good index, this is the final
-                        // ipv6 address to send request
-                        if let Some(last_good) = already_found_addr.last() {
-                            action.send(Action::NewAddr(last_good.clone())).unwrap();
-                        }
-                    }
-                }
-                if self.has_tui {
-                    let host_msg = ctrl::ReceiveDialog::ShowNewHost;
-                    self.tui_sender
-                        .send(ctrl::SystemMsg::Update(
-                            host_msg,
-                            format!("found {}", valid_out),
-                        ))
-                        .unwrap();
-                    let counter_msg = ctrl::ReceiveDialog::ShowStats {
-                        show: ctrl::NetStats {
-                            line: *count_valid,
-                            max: index,
-                        },
-                    };
-                    self.tui_sender
-                        .send(ctrl::SystemMsg::Update(counter_msg, "".to_string()))
-                        .unwrap();
-                } else {
-                    //println!("[{}] found cast device at {}", index, valid_out);
-                }
-            } else {
-                *count_no_cast += 1;
-                // send update
-            };
-        }
+        // other thread should not wait for new messages after all
+        sender_ssh_client_stop.send(ToThread::Stop).unwrap();
+        mdns_send_stop.send(ToThread::Stop).unwrap();
     }
 
     // A simple function from seen above (but implementing this actually took a while)

@@ -50,18 +50,23 @@ Changes:
 * in and used but only as example, not yet understood:  [futures](https://tokio.rs/docs/getting-started/futures/) and ([tokio](https://tokio.rs/)) for async behavior and for networking
 
 ToDo:
-* understand trussh communication, key is still an issues
-* recheck namespaces and Result ... mixed up
+* refactor this very long lookup in net/mod.rs
+* after mDNS lookup is back, fix to which it shall connect
+* understand trussh communication, creating key
+* recheck namespaces and Result<thrussh_keys> ... mixed up, unfortunately
 * use state machine like [state_machine_future](https://github.com/fitzgen/state_machine_future) for client and server, the example looks promising
+* redo tui messages, ctrl messages (maybe into extra mod)
 * nicer timer (thread pool is good but still with sleep)
 * make cross compiling as easy as possible
 * get rid of Avahi
+
 
 Issues:
 * no net is a problem
 * bad mDNS search interface to external crate needs a further timeout, even kill a newly created search thread.
 * found ip adresses not shown in tui
 * tui update on Raspberry was slow, better find another way
+
 
 Yet in plan:
 * create a key yourself!! And store, which is going to be done if not found at startup
