@@ -1,13 +1,14 @@
 // https://stackoverflow.com/questions/22596920/split-a-module-across-several-files
-//ALL
+// ALL
+pub mod common;
+pub mod config;
+
+//logger
 #[macro_use]
 extern crate log;
-
-//
-pub mod common;
-
-// configuration
-pub mod config;
+extern crate env_logger;
+extern crate syslog;
+pub mod logit;
 
 // ctrl
 // ctrl/tui
@@ -30,5 +31,4 @@ extern crate dns_sd as avahi_dns_sd;
 extern crate futures;
 extern crate thrussh;
 extern crate thrussh_keys;
-extern crate ring;
 pub mod net;

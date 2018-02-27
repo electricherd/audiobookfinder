@@ -154,7 +154,7 @@ impl Collection {
             Some("audio") => col.visit_audio_files(&cb.path(), file_stats)?,
             Some("text") | Some("application") | Some("image") => {}
             _ => {
-                println!("[{:?}]{:?}", prefix, cb.path());
+                error!("[{:?}]{:?}", prefix, cb.path());
                 col.stats.files.other += 1;
                 file_stats.other += 1;
             }
@@ -231,7 +231,7 @@ impl Collection {
             width = 5
         );
 
-        println!("{}", output_string);
+        info!("{}", output_string);
     }
 } // end of impl Collection
 

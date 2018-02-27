@@ -12,27 +12,26 @@ name = "audiobookfinder"
 path = "src/main.rs"
 
 [dependencies]
-clap = "2.29"         # for the command line parsing
+clap = "2.30"         # for the command line parsing
 dns-sd  = "0.1.3"     # need avahi-compat-client-dev lib
-futures = "0.1"
+env_logger = "0.5.4"  # alongside log
+futures = "0.1.18"
 hostname = "0.1.4"    # for host recognition
 id3 = "0.2.3"             # for id3 tags, maybe some other lib later (ogg,flac, etc.)
 log = "0.4"
 mdns-discover = { git = "https://github.com/NervosFoundation/rust-mdns-discover", branch = "master", version="0.2.0" }
 #mdns = "0.2.2"   # using mdns-discover instead
-serde = "1.0"
-serde_derive = "1.0"
+serde = "1.0.27"
+serde_derive = "1.0.27"
+syslog = "3.3.0"      # another logger for system
 rayon = "1.0.0"       # for multi-threading
-ring = "0.12.1"            # crypto for thrussh
 tree_magic = "0.2.0"  # for fast file tree operations
 thrussh = "0.19.2"           # ssh server client crate for communication
 thrussh-keys = "0.9.4"      # ssh server client crate for communication
 uuid = {version = "0.6", features = ["v4"]}
 
-
-
 [dependencies.cursive]
-version = "0.7.5"
+version = "0.8.0"
 default-features = false
 
 [features]
