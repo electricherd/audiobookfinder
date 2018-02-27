@@ -34,12 +34,12 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
 * thread-pool: a simple self written but nice to use implemention :blush:
 * simple timers, alive signal in TUI (yet a sleep thread for each timer, not perfect)
 * easy cross compile (and test) for raspberry (v1 and v2, v3)... ok the tui update needs adjustment, cross compiling is a bit broken because of dependencies
-* still looking for the right IDE
-  * sublime text is good and fast, setup was ok, racer etc.
-  * [ATOM](https://atom.io/), looks good, no refactoring though, many plug-ins for rust, has README.md syntax :smirk:
-  * [IntelliJ IDEA](https://intellij-rust.github.io/install.html) [download with snaps](https://blog.jetbrains.com/idea/2017/11/install-intellij-idea-with-snaps/), and then Rust plug-in: easy, refactoring, spell-check, nice (but editor ... column select??, close tab??), but looks professional
+* simple logging
 
 Changes:
+* updated all external crates
+* logging mechanism introduced (logit.rs). It was needed because of tui console output was not readable (either syslog or console)
+ * run e.g. with "RUST_LOG=adbflib::net=debug RUST_BACKTRACE=full cargo run -- -n ~/Audiobooks"
 * ssh client with example key works, key now external
 * found emojis :grin:
 * included Rust doctest, since it is mostly a library, works well :smiley:
@@ -52,16 +52,18 @@ Changes:
 ToDo:
 * refactor this very long lookup in net/mod.rs
 * after mDNS lookup is back, fix to which it shall connect
+* redo tui messages, ctrl messages (maybe into extra mod)
 * understand trussh communication, creating key
 * recheck namespaces and Result<thrussh_keys> ... mixed up, unfortunately
 * use state machine like [state_machine_future](https://github.com/fitzgen/state_machine_future) for client and server, the example looks promising
-* redo tui messages, ctrl messages (maybe into extra mod)
 * nicer timer (thread pool is good but still with sleep)
 * make cross compiling as easy as possible
 * get rid of Avahi
 
 
 Issues:
+* logging from other modules too detailed/too much
+* how to decide if an mDNS device is duplicated (more than 1 ipAdress representation, which is correct?, and do they come not within the same record)
 * no net is a problem
 * bad mDNS search interface to external crate needs a further timeout, even kill a newly created search thread.
 * found ip adresses not shown in tui
@@ -77,6 +79,10 @@ Yet in plan:
 * snap linux packaging / online compiler for various target compilation service (don't remember the name)
 * further lifetimes optimizations
 * exchange of data over net (probably de-/serialization using [serde](https://docs.serde.rs/serde/))
+* still looking for the right IDE
+  * sublime text is good and fast, setup was ok, racer etc.
+  * [ATOM](https://atom.io/), looks good, no refactoring though, many plug-ins for rust, has README.md syntax :smirk:
+  * [IntelliJ IDEA](https://intellij-rust.github.io/install.html) [download with snaps](https://blog.jetbrains.com/idea/2017/11/install-intellij-idea-with-snaps/), and then Rust plug-in: easy, refactoring, spell-check, nice (but editor ... column select??, close tab??), but looks professional
 * internationalization (which is not really supported yet by Rust)
 * a good and fast data collection
 * maybe a little AI layer on determining audio books duplicates/same author by similar spelling, etc.
