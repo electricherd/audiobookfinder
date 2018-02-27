@@ -15,6 +15,8 @@ use avahi_dns_sd::DNSService;
 use thrussh;
 use thrussh_keys::key;
 
+use ring;
+
 use config;
 use ctrl;
 
@@ -77,22 +79,23 @@ impl Net {
         self.ssh_handle = thread::spawn(move || {
             info!("SSH ComServer starting...");
 
-            //let rand = ring::rand::SystemRandom::new();
-            let mut config = thrussh::server::Config::default();
-
             let key_algorithm = key::ED25519;
             // possible: key::ED25519, key::RSA_SHA2_256, key::RSA_SHA2_512
 
+            let _ = ring::rand::SystemRandom::new();
+            let mut config = thrussh::server::Config::default();
             config.connection_timeout = Some(Duration::from_secs(600));
             config.auth_rejection_time = Duration::from_secs(3);
             config
                 .keys
                 .push(key::KeyPair::generate(key_algorithm).unwrap());
             let config = Arc::new(config);
-            let sh = com_server::ComServer {
-                name : uuid_name
+
+            let replication_server = com_server::ComServer {
+                name: uuid_name,
+                connector: None,
             };
-            thrussh::server::run(config, config::net::SSH_CLIENT_AND_PORT, sh);
+            thrussh::server::run(config, config::net::SSH_CLIENT_AND_PORT, replication_server);
             warn!("SSH ComServer stopped!!");
         });
         Ok(())
@@ -233,8 +236,11 @@ impl Net {
 
         let mdns_discover_thread = thread::spawn(move || {
             // must be compined
-            let full_name = [config::net::MDNS_REGISTER_NAME,config::net::MDNS_SERVICE_NAME].join(".");
-            info!("Searching for {:?}!",full_name);
+            let full_name = [
+                config::net::MDNS_REGISTER_NAME,
+                config::net::MDNS_SERVICE_NAME,
+            ].join(".");
+            info!("Searching for {:?}!", full_name);
 
             if let Ok(all_discoveries) = io_mdns::discover::all(full_name) {
                 info!("MDNS search: starting");

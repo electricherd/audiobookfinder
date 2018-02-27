@@ -31,4 +31,5 @@ extern crate dns_sd as avahi_dns_sd;
 extern crate futures;
 extern crate thrussh;
 extern crate thrussh_keys;
+extern crate ring;
 pub mod net;

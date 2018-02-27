@@ -5,23 +5,24 @@ use std::net;
 use futures;
 
 use thrussh;
-use thrussh::{server,ChannelId};
+use thrussh::{server, ChannelId};
 use thrussh::server::{Auth, Session};
 
 use thrussh_keys;
 use thrussh_keys::key;
 
-
 #[derive(Clone)]
 pub struct ComServer {
-    pub name : String
+    pub name: String,
+    pub connector: Option<net::SocketAddr>,
 }
 
 impl server::Server for ComServer {
     type Handler = Self;
-    fn new(&self, _: net::SocketAddr) -> Self {
-        ComServer{
-            name : "default".to_string()
+    fn new(&self, connector: net::SocketAddr) -> Self {
+        ComServer {
+            name: self.name.clone(),
+            connector: Some(connector),
         }
     }
 }
@@ -52,7 +53,7 @@ impl thrussh::server::Handler for ComServer {
         mut session: server::Session,
     ) -> Self::FutureUnit {
         debug!(
-            "S [{:?}]: data on channel {:?}: {:?}",
+            "Srv[{:?}]: data on channel {:?}: {:?}",
             self.name,
             channel,
             std::str::from_utf8(data)
@@ -60,7 +61,6 @@ impl thrussh::server::Handler for ComServer {
         session.data(channel, None, data); //.unwrap();
         futures::finished((self, session))
     }
-
 }
 
 impl ComServer {
@@ -69,7 +69,7 @@ impl ComServer {
             Some(key::KeyPair::Ed25519(..)) => {
                 //println!("{:?}",edkey);
             }
-            Some(key::KeyPair::RSA{..}) => {
+            Some(key::KeyPair::RSA { .. }) => {
                 // to be done
             }
             None => {}

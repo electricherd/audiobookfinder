@@ -50,6 +50,7 @@ Changes:
 * in and used but only as example, not yet understood:  [futures](https://tokio.rs/docs/getting-started/futures/) and ([tokio](https://tokio.rs/)) for async behavior and for networking
 
 ToDo:
+* file logging maybe (use [glogg](http://glogg.bonnefon.org/))
 * refactor this very long lookup in net/mod.rs
 * after mDNS lookup is back, fix to which it shall connect
 * redo tui messages, ctrl messages (maybe into extra mod)
