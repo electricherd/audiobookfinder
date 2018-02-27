@@ -26,7 +26,7 @@ impl client::Handler for ComClient {
     type FutureSign = futures::future::FutureResult<(ComClient, thrussh::CryptoVec), Self::Error>;
 
     fn check_server_key(self, server_public_key: &key::PublicKey) -> Self::FutureBool {
-        println!("check_server_key: {:?}", server_public_key);
+        info!("check_server_key: {:?}", server_public_key);
         futures::finished((self, true))
     }
     fn channel_open_confirmation(
@@ -34,7 +34,7 @@ impl client::Handler for ComClient {
         channel: ChannelId,
         session: client::Session,
     ) -> Self::SessionUnit {
-        println!("channel_open_confirmation: {:?}", channel);
+        debug!("channel_open_confirmation: {:?}", channel);
         futures::finished((self, session))
     }
     fn data(
@@ -44,7 +44,7 @@ impl client::Handler for ComClient {
         data: &[u8],
         session: client::Session,
     ) -> Self::SessionUnit {
-        println!(
+        debug!(
             "CLIENT: data on channel {:?} {:?}: {:?}",
             ext,
             channel,
@@ -95,10 +95,10 @@ impl ComClient {
                 },
             ).is_err()
             {
-                println!("connection could not be established!");
+                error!("connection could not be established!");
             }
         } else {
-            println!("secret key not good");
+            error!("secret key not good");
         }
         //}
         //}

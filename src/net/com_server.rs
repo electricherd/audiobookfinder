@@ -13,12 +13,16 @@ use thrussh_keys::key;
 
 
 #[derive(Clone)]
-pub struct ComServer {}
+pub struct ComServer {
+    pub name : String
+}
 
 impl server::Server for ComServer {
     type Handler = Self;
     fn new(&self, _: net::SocketAddr) -> Self {
-        ComServer{}
+        ComServer{
+            name : "default".to_string()
+        }
     }
 }
 
@@ -47,8 +51,9 @@ impl thrussh::server::Handler for ComServer {
         data: &[u8],
         mut session: server::Session,
     ) -> Self::FutureUnit {
-        println!(
-            "SERVER: data on channel {:?}: {:?}",
+        debug!(
+            "S [{:?}]: data on channel {:?}: {:?}",
+            self.name,
             channel,
             std::str::from_utf8(data)
         );

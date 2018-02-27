@@ -1,21 +1,19 @@
+use std;
+use std::fmt::Debug;
+use std::fmt::Display;
+use std::net::IpAddr;
+use std::sync::{mpsc, Arc, Mutex};
+use std::thread;
+use std::time::Duration;
+
 use io_mdns;
 use io_mdns::RecordKind;
 
 use avahi_dns_sd;
 use avahi_dns_sd::DNSService;
 
-//use ring;
-
 use thrussh;
 use thrussh_keys::key;
-
-use std;
-use std::net::IpAddr;
-use std::sync::{mpsc, Arc, Mutex};
-use std::fmt::Debug;
-use std::fmt::Display;
-use std::thread;
-use std::time::Duration;
 
 use config;
 use ctrl;
@@ -32,7 +30,6 @@ enum ToThread<T: Send + Clone> {
 }
 
 pub struct Net {
-    #[allow(dead_code)]
     my_id: String,
     addresses_found: Arc<Mutex<Vec<IpType>>>,
     tui_sender: mpsc::Sender<ctrl::SystemMsg>,
@@ -74,12 +71,12 @@ impl Net {
     }
 
     pub fn start_com_server(&mut self) -> Result<(), ()> {
-        let has_tui = self.has_tui;
         // well is this an attached thread ????
+
+        let uuid_name = self.my_id.clone();
         self.ssh_handle = thread::spawn(move || {
-            if !has_tui {
-                println!("SSH ComServer starting...");
-            }
+            info!("SSH ComServer starting...");
+
             //let rand = ring::rand::SystemRandom::new();
             let mut config = thrussh::server::Config::default();
 
@@ -92,11 +89,11 @@ impl Net {
                 .keys
                 .push(key::KeyPair::generate(key_algorithm).unwrap());
             let config = Arc::new(config);
-            let sh = com_server::ComServer {};
+            let sh = com_server::ComServer {
+                name : uuid_name
+            };
             thrussh::server::run(config, config::net::SSH_CLIENT_AND_PORT, sh);
-            if !has_tui {
-                println!("SSH ComServer stopped!!");
-            }
+            warn!("SSH ComServer stopped!!");
         });
         Ok(())
     }
@@ -115,9 +112,8 @@ impl Net {
                 match recv_mesg {
                     ToThread::Data(address) => {
                         thread::spawn(move || {
-                            if !has_tui {
-                                println!("pretending as if trying {:?}!", address);
-                            }
+                            debug!("pretending as if trying {:?}!", address);
+
                             // wait a bit until ssh server is up. This will be moved somewhere else anyway
                             thread::sleep(Duration::from_millis(500));
                             // example client, will be done correctly if mDNS finds other instances
@@ -126,9 +122,7 @@ impl Net {
                             let config = Arc::new(config);
                             let client = com_client::ComClient {};
                             if client.run(config, config::net::SSH_HOST_AND_PORT).is_err() {
-                                if !has_tui {
-                                    println!("SSH Client example not working!!!");
-                                }
+                                error!("SSH Client example not working!!!");
                             }
                         });
                     }
@@ -148,8 +142,6 @@ impl Net {
         // use a raw timeout to stop search after a time
         // the nice one should work stop gracefully,
         // the bad one is necessary due to never ending
-        // io_mdns::discover::all f*cking up
-        //let (timeout_bad_sender, timeout_bad_receiver) = mpsc::channel();
         let (timeout_nice_sender, timeout_nice_receiver) = mpsc::channel();
         let (timeout_nice_renewer, timeout_nice_recover) = mpsc::channel();
         let _timeout_graceful = thread::spawn(move || loop {
@@ -157,16 +149,12 @@ impl Net {
             // if has been recovered until here ... continue loop
             match timeout_nice_recover.try_recv() {
                 Ok(_) | Err(mpsc::TryRecvError::Disconnected) => {
-                    if !has_tui {
-                        println!("graceful time out sent....");
-                    }
+                    debug!("graceful time out sent....");
                     timeout_nice_sender.send(()).unwrap();
                     break; // leave loop
                 }
                 Err(mpsc::TryRecvError::Empty) => {
-                    if !has_tui {
-                        println!("graceful time out suspended");
-                    }
+                    debug!("graceful time out suspended");
                 }
             }
         });
@@ -243,11 +231,13 @@ impl Net {
             }
         });
 
-        let mdns_thread = thread::spawn(move || {
-            if let Ok(all_discoveries) = io_mdns::discover::all(config::net::MDNS_SERVICE_NAME) {
-                if !has_tui {
-                    println!("MDNS search: starting");
-                }
+        let mdns_discover_thread = thread::spawn(move || {
+            // must be compined
+            let full_name = [config::net::MDNS_REGISTER_NAME,config::net::MDNS_SERVICE_NAME].join(".");
+            info!("Searching for {:?}!",full_name);
+
+            if let Ok(all_discoveries) = io_mdns::discover::all(full_name) {
+                info!("MDNS search: starting");
                 // this is the long search loop
                 // looking rather inefficient, because cpu goes crazy
                 // don't think this is my fault
@@ -256,12 +246,10 @@ impl Net {
                     // don't just kill all of this
                     match timeout_nice_receiver.try_recv() {
                         Ok(_) | Err(mpsc::TryRecvError::Disconnected) => {
-                            if !has_tui {
-                                println!(
-                                    "MDNS search: timeout received (should have been {:?} sec)",
-                                    config::net::MDNS_TIMEOUT_SEC
-                                );
-                            }
+                            warn!(
+                                "MDNS search: timeout received (should have been {:?} sec)",
+                                config::net::MDNS_TIMEOUT_SEC
+                            );
                             break; // leave loop
                         }
                         Err(mpsc::TryRecvError::Empty) => {
@@ -290,13 +278,13 @@ impl Net {
                         no_cast = count_no_cast,
                         width = 3
                     );
-                    println!("{}", output_string);
+                    info!("{}", output_string);
                 }
             } // for loop
         });
 
         // yes, finally we wait for this thread
-        let _ = mdns_thread.join();
+        let _ = mdns_discover_thread.join();
 
         // other thread should not wait for new messages after all
         sender_ssh_client_stop.send(ToThread::Stop).unwrap();
@@ -330,7 +318,7 @@ impl Net {
             // should find exactly 1 (since we replace every single one)
             let ref mut comparer = &mut *same_indeces[0];
             if comparer.1 > input {
-                println!("{} replaced by {}", input, comparer.1);
+                debug!("{} replaced by {}", input, comparer.1);
                 comparer.1 = input;
             }
             false
