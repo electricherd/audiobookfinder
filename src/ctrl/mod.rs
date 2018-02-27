@@ -1,5 +1,5 @@
 // include the tui part :-)
-pub mod tui;  // todo: pub is not recommended, I use it for doctest
+pub mod tui; // todo: pub is not recommended, I use it for doctest
 use ctrl::tui::Tui;
 
 use std::sync::mpsc;
@@ -55,7 +55,7 @@ impl Ctrl {
         let c_ui = Tui::new(title, sender.clone(), &paths, with_net)?;
         Ok(Ctrl {
             rx: receiver,
-            ui: c_ui
+            ui: c_ui,
         })
     }
     /// Run the controller
