@@ -1,0 +1,14 @@
+dist: trusty
+language: rust
+rust:
+  - 1.2.4
+  - nightly
+matrix:
+  allow_failures:
+    - rust: nightly
+cache: cargo
+before-install:
+  - sudo apt-get install -qq libsodium-dev libavahi-compat-libdnssd-dev
+script:
+  - cargo build --verbose --all
+  - cargo test --verbose --all

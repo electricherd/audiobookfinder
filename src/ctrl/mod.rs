@@ -1,4 +1,3 @@
-#![crate_name = "doc"]
 // include the tui part :-)
 pub mod tui; // todo: pub is not recommended, I use it for doctest
 use ctrl::tui::Tui;

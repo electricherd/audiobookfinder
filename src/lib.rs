@@ -1,4 +1,4 @@
-// https://stackoverflow.com/questions/22596920/split-a-module-across-several-files
+#![crate_name = "adbflib"]
 // ALL
 pub mod common;
 pub mod config;
