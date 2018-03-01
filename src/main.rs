@@ -21,7 +21,7 @@ use adbflib::data;
 use adbflib::data::Collection;
 use adbflib::ctrl::{Alive, Ctrl, ReceiveDialog, Status, SystemMsg};
 use adbflib::net::Net;
-use adbflib::logit::Logit;
+use adbflib::logit;
 
 static INPUT_FOLDERS: &str = "folders";
 static APP_TITLE: &str = "The audiobook finder";
@@ -138,7 +138,8 @@ fn main() {
     // make it immutable from now on
     let has_tui = has_tui;
 
-    Logit::init(!has_tui);    
+    // start the logging
+    logit::Logit::init(logit::Log::File);
 
     // start the net runner thread
     let tx_net_mut_arc = Arc::new(tx_net_mut);

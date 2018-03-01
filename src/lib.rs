@@ -8,6 +8,7 @@ pub mod config;
 extern crate log;
 extern crate env_logger;
 extern crate syslog;
+extern crate flexi_logger;
 pub mod logit;
 
 // ctrl
