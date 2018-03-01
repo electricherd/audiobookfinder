@@ -1,4 +1,4 @@
-dist: xenial
+dist: trusty
 language: rust
 rust:
   - nightly
@@ -6,8 +6,11 @@ matrix:
   allow_failures:
     - rust: nightly
 cache: cargo
-install:
-  - sudo apt-get install -qq libsodium-dev -y
+before-install:
+  - sudo apt-get install -y software-properties-common -y
+  - sudo LC_ALL=C.UTF-8 add-apt-repository -y ppa:ondrej/php -y
+  - sudo apt-get update -y
+apt-get install -y libsodium-devinstall:
   - sudo apt-get install -qq libavahi-compat-libdnssd-dev -y
 script:
   - cargo build --verbose --all
