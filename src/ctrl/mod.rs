@@ -1,3 +1,4 @@
+#![crate_name = "doc"]
 // include the tui part :-)
 pub mod tui; // todo: pub is not recommended, I use it for doctest
 use ctrl::tui::Tui;
@@ -15,13 +16,7 @@ pub enum Status {
     OFF,
 }
 
-pub struct NetStats {
-    pub line: usize,
-    pub max: usize,
-}
-
 pub enum ReceiveDialog {
-    ShowNewPath { nr: usize },
     Debug,
     ShowNewHost,
     ShowStats { show: NetStats },
@@ -38,13 +33,25 @@ pub enum SystemMsg {
     StartAnimation(Alive, Status),
 }
 
+pub struct NetStats {
+    pub line: usize,
+    pub max: usize,
+}
+
 pub struct Ctrl {
     rx: mpsc::Receiver<SystemMsg>,
     ui: Tui,
 }
 
 impl Ctrl {
-    /// Create a new controller
+    /// Create a new controller if everything fits.
+    ///
+    /// # Arguments
+    /// * 'title' - The title the tui will display
+    /// * 'paths' - The Pathes that will be searched
+    /// * 'receiver' - The receiver that takes incoming ctrl messages
+    /// * 'sender'   - The sender that sends from ctrl
+    /// * 'with_net' - If ctrl should consider net messages
     pub fn new(
         title: String,
         paths: &Vec<String>,

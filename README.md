@@ -37,6 +37,9 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
 * simple logging
 
 Changes:
+* fixed ui with BoxView and correct id finding (looks like bug is in Cursive)
+* refactored lookup method in net (needs more comments now)
+* file logging in (use [glogg](http://glogg.bonnefon.org/))
 * updated all external crates
 * logging mechanism introduced (logit.rs). It was needed because of tui console output was not readable (either syslog or console)
  * run e.g. with "RUST_LOG=adbflib::net=debug RUST_BACKTRACE=full cargo run -- -n ~/Audiobooks"
@@ -50,11 +53,11 @@ Changes:
 * in and used but only as example, not yet understood:  [futures](https://tokio.rs/docs/getting-started/futures/) and ([tokio](https://tokio.rs/)) for async behavior and for networking
 
 ToDo:
-* file logging maybe (use [glogg](http://glogg.bonnefon.org/))
-* refactor this very long lookup in net/mod.rs
+* create running example (provide test with licence free mp3)
+* fix documentation ("cargo doc --no-deps --open" :smiley:)
 * after mDNS lookup is back, fix to which it shall connect
 * redo tui messages, ctrl messages (maybe into extra mod)
-* understand trussh communication, creating key
+* understand trussh communication, creating key, authorize
 * recheck namespaces and Result<thrussh_keys> ... mixed up, unfortunately
 * use state machine like [state_machine_future](https://github.com/fitzgen/state_machine_future) for client and server, the example looks promising
 * nicer timer (thread pool is good but still with sleep)
@@ -67,17 +70,16 @@ Issues:
 * how to decide if an mDNS device is duplicated (more than 1 ipAdress representation, which is correct?, and do they come not within the same record)
 * no net is a problem
 * bad mDNS search interface to external crate needs a further timeout, even kill a newly created search thread.
-* found ip adresses not shown in tui
 * tui update on Raspberry was slow, better find another way
 
 
 Yet in plan:
 * create a key yourself!! And store, which is going to be done if not found at startup
-* better Result<T,E>, Error handling (got a little more understanding, this is powerful, yet to be done correctly, mapping is rather confusing, but it needs to be done well)
+* Rust workspace for IDE
 * communication is now easy with ssh but how to authenticate as a valid adbf? Look at ssh details, and zero-knowledge or something similar: hiding key or secrecy knowledge in code without being to obvious :neutral_face: (first should be a simple string, don't bother too much)
 * rework the one stub for worker thread to have many worker threads in net to do something with found addresses (use thrussh simple example)
 * using an hopefully nice to use state machine for client server "communication" states
-* snap linux packaging / online compiler for various target compilation service (don't remember the name)
+* snap linux packaging / online compiler like [Travis](https://docs.travis-ci.com/user/getting-started/) for various target compilation service
 * further lifetimes optimizations
 * exchange of data over net (probably de-/serialization using [serde](https://docs.serde.rs/serde/))
 * still looking for the right IDE

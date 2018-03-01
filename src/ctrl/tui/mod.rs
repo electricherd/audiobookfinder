@@ -1,6 +1,6 @@
 use super::super::cursive::Cursive;
 use super::super::cursive::align;
-use super::super::cursive::views::{Dialog, Layer, LinearLayout, ListView, Panel, TextView};
+use super::super::cursive::views::{BoxView, Dialog, Layer, LinearLayout, ListView, Panel, TextView};
 use super::super::cursive::traits::*; //{Identifiable,select};
 
 use std::iter::Iterator;
@@ -42,10 +42,10 @@ enum AliveSym {
 
 static RECT: usize = 40;
 static SEPERATOR: &str = "..";
-static STR_ALIVE: [char; 5] = ['*', '|', '/', '-', '\\']; // first char is start and not animated
+static STR_ALIVE: [char; 6] = ['.', '|', '/', '-', '\\', '*']; // first char is start, last char is stop
 
 static DEBUG_TEXT_ID: &str = "debug_info";
-static VIEW_LIST_HOST: &str = "hostlist";
+static VIEW_LIST_ID: &str = "hostlist";
 
 static PATHS_PREFIX_ID: &str = "pf";
 
@@ -86,7 +86,7 @@ impl Tui {
         };
 
         // test this, to update every with 20fps / this should be done when something changes ..... grrrr
-        tui.handle.set_fps(20);
+        tui.handle.set_fps(40);
         // quit by 'q' key
         tui.handle.add_global_callback('q', |s| s.quit());
         Ok(tui)
@@ -99,39 +99,30 @@ impl Tui {
 
         while let Some(message) = self.ui_receiver.try_iter().next() {
             match message {
-                UiMsg::Update(recv_dialog, text) => {
-                    match recv_dialog {
-                        ReceiveDialog::ShowNewPath { nr } => {
-                            if let Some(mut _found) = self.handle
-                                .find_id::<TextView>(&format!("{}{}", PATHS_PREFIX_ID, nr))
-                            {
-                                //found.append_content(&text.clone());
-                            }
-                        }
-                        ReceiveDialog::ShowNewHost => {
-                            if let Some(mut host_list) =
-                                self.handle.find_id::<ListView>(VIEW_LIST_HOST)
-                            {
-                                error!("{:?} should be drawn!!", text);
-                                host_list.add_child("", TextView::new(format!("{}", text)));
-                            } else {
-                                error!("{:?} could not be drawn!!", text);
-                            }
-                        }
-                        ReceiveDialog::ShowStats { show } => {
-                            let output = self.handle.find_id::<TextView>(ID_HOST_INDEX);
-                            if let Some(mut found) = output {
-                                found.set_content(show.line.to_string());
-                            }
-                        }
-                        ReceiveDialog::Debug => {
-                            if let Some(mut found) = self.handle.find_id::<TextView>(DEBUG_TEXT_ID)
-                            {
-                                found.set_content(text);
-                            }
+                UiMsg::Update(recv_dialog, text) => match recv_dialog {
+                    ReceiveDialog::ShowNewHost => {
+                        if let Some(mut host_list) = self.handle.find_id::<ListView>(VIEW_LIST_ID) {
+                            host_list.add_child("", TextView::new(format!("{}", text)));
+                        } else {
+                            error!("View {} could not be found!", VIEW_LIST_ID);
                         }
                     }
-                }
+                    ReceiveDialog::ShowStats { show } => {
+                         let output = self.handle.find_id::<TextView>(ID_HOST_INDEX);
+                         if let Some(mut found) = output {
+                             found.set_content(show.line.to_string());
+                         } else {
+                             error!("View {} could not be found!", ID_HOST_INDEX);
+                         }
+                     }
+                    ReceiveDialog::Debug => {
+                        if let Some(mut found) = self.handle.find_id::<TextView>(DEBUG_TEXT_ID) {
+                            found.set_content(text);
+                        } else {
+                            error!("Debug view {} could not be found!", DEBUG_TEXT_ID);
+                        }
+                    }
+                },
                 UiMsg::Animate(signal, on_off) => {
                     let sender_clone = self.ui_sender.clone();
                     match on_off {
@@ -243,11 +234,11 @@ impl Tui {
         if let Some(ref mut found) = output {
             let char_idx_to_put = match on {
                 AliveSym::GoOn => {
-                    *counter = (*counter + 1) % (STR_ALIVE.len() - 1);
+                    *counter = (*counter + 1) % (STR_ALIVE.len() - 2);
                     *counter + 1
                 }
                 AliveSym::Stop => {
-                    0 // the stop symbol's index
+                    STR_ALIVE.len() - 1 // the stop symbol's index
                 }
             };
             let out = STR_ALIVE[char_idx_to_put];
@@ -277,7 +268,12 @@ impl Tui {
             vertical_layout.add_child(
                 Dialog::around(
                     LinearLayout::vertical()
-                        .child(ListView::new().fixed_height(10).with_id(VIEW_LIST_HOST))
+                        .child(BoxView::with_fixed_height(
+                            10,
+                            ListView::new()
+                                .child("", TextView::new(""))
+                                .with_id(VIEW_LIST_ID),
+                        ))
                         .child(
                             LinearLayout::horizontal()
                                 .child(

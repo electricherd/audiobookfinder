@@ -113,12 +113,13 @@ impl Net {
         let uuid_name = self.my_id.clone();
 
         let _get_ip_thread = thread::spawn(move || {
+            //
+            //
             Self::spawn_connect_new_clients_threads(receiver_client, uuid_name);
         });
 
         // use a raw timeout to stop search after a time
         // the nice one should work stop gracefully,
-        // the bad one is necessary due to never ending
         let (timeout_nice_sender, timeout_nice_receiver) = mpsc::channel();
         let (timeout_nice_renewer, timeout_nice_recover) = mpsc::channel();
         let _timeout_graceful_thread = thread::spawn(move || loop {
@@ -320,19 +321,30 @@ impl Net {
                                                 .unwrap();
                                             // renew time out
                                             timeout_nice_renewer.send(()).unwrap();
+                                            // send name to tui
+                                            if has_tui {
+                                                ctrl_sender
+                                                    .send(ctrl::SystemMsg::Update(
+                                                        ctrl::ReceiveDialog::ShowNewHost,
+                                                        valid_out,
+                                                    ))
+                                                    .unwrap();
+                                                ctrl_sender
+                                                    .send(ctrl::SystemMsg::Update(
+                                                        ctrl::ReceiveDialog::ShowStats {
+                                                            show: ctrl::NetStats {
+                                                                line: *count_valid,
+                                                                max: index,
+                                                            },
+                                                        },
+                                                        "".to_string(),
+                                                    ))
+                                                    .unwrap();
+                                            } else {
+                                                info!("accepted address: {}", valid_out);
+                                            }
                                         }
                                     }
-                                }
-                                if has_tui {
-                                    let host_msg = ctrl::ReceiveDialog::ShowNewHost;
-                                    ctrl_sender
-                                        .send(ctrl::SystemMsg::Update(
-                                            host_msg,
-                                            format!("found {}", valid_out),
-                                        ))
-                                        .unwrap();
-                                } else {
-                                    //println!("[{}] found cast device at {}", index, valid_out);
                                 }
                             }
                         }
@@ -346,6 +358,16 @@ impl Net {
                     break; //break loop
                 }
             }
+        } // loop ended
+          // finally stop animation
+        if has_tui {
+            info!("Stop animation!");
+            ctrl_sender
+                .send(ctrl::SystemMsg::StartAnimation(
+                    ctrl::Alive::HostSearch,
+                    ctrl::Status::OFF,
+                ))
+                .unwrap();
         }
     }
 

@@ -27,8 +27,7 @@ impl client::Handler for ComClient {
     type SessionUnit = futures::Finished<(Self, client::Session), Self::Error>;
     type FutureSign = futures::future::FutureResult<(ComClient, thrussh::CryptoVec), Self::Error>;
 
-    fn check_server_key(self, server_public_key: &key::PublicKey) -> Self::FutureBool {
-        info!("check_server_key: {:?}", server_public_key);
+    fn check_server_key(self, _server_public_key: &key::PublicKey) -> Self::FutureBool {
         futures::finished((self, true))
     }
     fn channel_open_confirmation(
