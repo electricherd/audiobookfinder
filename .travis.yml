@@ -1,3 +1,4 @@
+# automatic build with travis
 dist: trusty
 language: rust
 rust:
@@ -7,9 +8,11 @@ matrix:
     - rust: nightly
 cache: cargo
 before-install:
-  - sudo apt-get install -y software-properties-common
-  - sudo echo "deb http://ppa.launchpad.net/chris-lea/libsodium/ubuntu trusty main" >> /etc/apt/sources.list
-  - sudo echo "deb-src http://ppa.launchpad.net/chris-lea/libsodium/ubuntu trusty main" >> /etc/apt/sources.list
+  # libsodium is not part of trusty by default
+  #- sudo apt-get install -y software-properties-common
+  #- sudo echo "deb http://ppa.launchpad.net/chris-lea/libsodium/ubuntu trusty main" >> /etc/apt/sources.list
+  #- sudo echo "deb-src http://ppa.launchpad.net/chris-lea/libsodium/ubuntu trusty main" >> /etc/apt/sources.list
+  - sudo add-apt-repository ppa:james-page/0mq -y
   - sudo apt-get update -qq
   - sudo apt-get install libsodium-dev -y
 script:
