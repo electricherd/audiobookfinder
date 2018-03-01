@@ -14,8 +14,8 @@ before-install:
   #- sudo echo "deb-src http://ppa.launchpad.net/chris-lea/libsodium/ubuntu trusty main" >> /etc/apt/sources.list
   - sudo add-apt-repository ppa:james-page/0mq -y
   - sudo apt-get update -qq
-install:  
-  - sudo apt-get install libsodium-dev -y
+install:
+  - sudo apt-get install -qq libavahi-compat-libdnssd-dev -y
 script:
   - cargo build --verbose --all
   - cargo test --verbose --all
