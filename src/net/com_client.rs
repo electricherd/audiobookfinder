@@ -16,7 +16,9 @@ use thrussh_keys::load_secret_key;
 use config;
 
 #[derive(Clone)]
-pub struct ComClient {}
+pub struct ComClient {
+    uuid: String,
+}
 
 impl client::Handler for ComClient {
     type Error = ();
@@ -55,11 +57,17 @@ impl client::Handler for ComClient {
 }
 
 impl ComClient {
+    pub fn new(uuid_name: String) -> ComClient {
+        ComClient { uuid: uuid_name }
+    }
+
     pub fn run(self, configuration: Arc<client::Config>, _: &str) -> thrussh_keys::Result<()> {
         let key = Self::get_key(
             &config::net::SSH_CLIENT_SEC_KEY_PATH,
             &config::net::SSH_CLIENT_SEC_KEY_PASSWD,
         )?;
+        let id = self.uuid.clone();
+
         if client::connect(
             config::net::SSH_HOST_AND_PORT,
             configuration,
@@ -72,16 +80,21 @@ impl ComClient {
                         session
                             .channel_open_session()
                             .and_then(|(session, channelid)| {
-                                session.data(channelid, None, "Hello, world!").and_then(
-                                    |(mut session, _)| {
+                                session
+                                    .data(
+                                        channelid,
+                                        None,
+                                        format!("Hello, this is client {}!", id),
+                                    )
+                                    .and_then(|(mut session, _)| {
                                         session.disconnect(Disconnect::ByApplication, "Ciao", "");
                                         session
-                                    },
-                                )
+                                    })
                             })
                     })
             },
-        ).is_err() {
+        ).is_err()
+        {
             error!("connection could not be established!");
             Err(thrussh_keys::Error::from(thrussh_keys::ErrorKind::Msg(
                 "Connection could not be established!".to_string(),
