@@ -7,7 +7,9 @@ matrix:
     - rust: nightly
 cache: cargo
 install:
-  - sudo apt-get install -qq libsodium-dev libavahi-compat-libdnssd-dev
+  - sudo apt-get update
+  - sudo apt-get install -qq libavahi-compat-libdnssd-dev
+  - sudo apt-get install -qq libsodium-dev
 script:
   - cargo build --verbose --all
   - cargo test --verbose --all
