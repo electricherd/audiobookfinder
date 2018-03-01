@@ -5,7 +5,6 @@ rust:
 matrix:
   allow_failures:
     - rust: nightly
-cache: cargo
 before-install:
   - sudo add-apt-repository ppa:chris-lea/libsodium -y
   - sudo echo "deb http://ppa.launchpad.net/chris-lea/libsodium/ubuntu trusty main" >> /etc/apt/sources.list
