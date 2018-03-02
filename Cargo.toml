@@ -2,10 +2,24 @@
 name = "audiobookfinder"
 version = "0.1.12"
 authors = ["Sven Kroemeke <skroemeke@gmail.com>"]
+license = "MIT" # http://spdx.org/licenses/
+repository = "https://github.com/electricherd/audiobookfinder"
+readme = "README.md"
+documentation = "https://github.com/electricherd/audiobookfinder"
+keywords = ["rust", "tui", "mdns", "ssh"]
+publish = false
+
+[badges]
+#circle-ci = { repository = "...", branch = "master" }
+# Travis CI: `repository` in format "<user>/<project>" is required.
+# `branch` is optional; default is `master`
+#travis-ci = { repository = "...", branch = "master" }
+maintenance = { status = "actively-developed" }
 
 [lib]
 name = "adbflib"
 path = "src/lib.rs"
+bench = true
 
 [[bin]]
 name = "audiobookfinder"
