@@ -1,7 +1,13 @@
+//! This module just holds as a collection of all modules configuration.
+//! Some configuration should be hold in its module but more general parts
+//! (which later may be configurable by a config file) should be put here.
+
+/// The network related configurations
 #[allow(non_camel_case_types)]
 pub mod net {
-
+    /// MDNS service address space
     pub static MDNS_SERVICE_NAME: &str = "_http._tcp"; // "_tcp.local"
+
     pub static MDNS_REGISTER_NAME: &str = "adbf";
     pub static MDNS_PORT : u16 = 80;
     pub static MDNS_TIMEOUT_SEC : u16 = 5;
@@ -20,6 +26,8 @@ pub mod net {
     }
 }
 
+/// The TUI related configurations of a more general purpose
 pub mod tui {
+
     pub static ALIVE_REFRESH: u64 = 80;
 }

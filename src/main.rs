@@ -2,6 +2,7 @@
 //! useful. Trying to find all my audiobooks on many machines, identify them,
 //! find duplicates (later trying to solve the problem, also including their permissions, different names, but same albums, etc),
 //! get all stats about it).
+//! It acts as a wrapper around adbflib, which holds major parts of the implemention.
 extern crate clap;
 extern crate hostname;
 extern crate rayon;

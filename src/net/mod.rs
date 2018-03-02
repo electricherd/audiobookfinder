@@ -1,3 +1,7 @@
+//! The net module is resonsible for the network related parts,
+//! the mDNS registering, mDNS search, ssh server and ssh client.
+//! It also let's us startup and perform everything in yet one step.
+
 use std;
 use std::fmt::Debug;
 use std::fmt::Display;
@@ -31,6 +35,7 @@ enum ToThread<T: Send + Clone> {
     Stop,
 }
 
+/// The Net component keeps controll about everything from net.
 pub struct Net {
     my_id: String,
     addresses_found: Arc<Mutex<Vec<IpType>>>,
@@ -101,6 +106,10 @@ impl Net {
         Ok(())
     }
 
+    /// Lookup yet is the start of the networking.
+    /// It looks for possible mDNS clients and spawns
+    // threads to connect to them.
+    // It uses timeouts, checkups.
     pub fn lookup(&mut self) {
         // we are sending IpAddress ToThread
 
@@ -118,7 +127,7 @@ impl Net {
             Self::spawn_connect_new_clients_threads(receiver_client, uuid_name);
         });
 
-        // use a raw timeout to stop search after a time
+        // use a timeout to stop search after a time
         // the nice one should work stop gracefully,
         let (timeout_nice_sender, timeout_nice_receiver) = mpsc::channel();
         let (timeout_nice_renewer, timeout_nice_recover) = mpsc::channel();
@@ -137,6 +146,7 @@ impl Net {
             }
         });
 
+        // statistics
         let mut count_valid = 0;
         let mut count_no_cast = 0;
         let mut count_no_response = 0;
@@ -148,7 +158,12 @@ impl Net {
         let mdns_send_stop = mdns_send_ip.clone();
         let borrow_arc = self.addresses_found.clone();
 
-        // keep the mdns stuff in a separate thread
+        // take input from mdns_discoper_thread
+        // (new ssh client discovered, or renew timeout).
+        // but also sends if time out a timeout back to
+        // mdns_discover.
+        // If client good send sender_ssh_client to
+        // _get_ip_thread
         let _take_mdns_input_thread = thread::spawn(move || {
             Self::take_mdns_input(
                 mdns_receive_ip,
@@ -185,10 +200,10 @@ impl Net {
         mdns_send_stop.send(ToThread::Stop).unwrap();
     }
 
-    // A simple function from seen above (but implementing this actually took a while)
-    // But I tried to implement some Generic parts
-    // and also trying iterator reverse, mut borrowing in some funny ways (with internal
-    // mutibility)
+    /// A simple function from seen above (but implementing this actually took a while)
+    /// But I tried to implement some Generic parts
+    /// and also trying iterator reverse, mut borrowing in some funny ways (with internal
+    /// mutibility)
     fn could_add_addr<T1, T2>(index: T1, input: T2, out: &mut Vec<(T1, T2)>) -> bool
     where
         T1: PartialEq + Clone,

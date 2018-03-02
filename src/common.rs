@@ -1,5 +1,5 @@
-// common things
-
+//! The common module collects small implementations, that are
+//! needed all around in this project.
 use std::thread;
 
 /// This ThreadPool is just a pool of predefined, fixed number

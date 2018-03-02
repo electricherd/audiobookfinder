@@ -1,3 +1,6 @@
+//! The TUI parts, greatly using [Cursive](https://gyscos.github.io/Cursive/cursive/index.html)
+//! showing table, the paths being searched, an alive for that, also the mDNS search performed
+//! and later status of the connection to the found clients.
 use super::super::cursive::Cursive;
 use super::super::cursive::align;
 use super::super::cursive::views::{BoxView, Dialog, Layer, LinearLayout, ListView, Panel, TextView};

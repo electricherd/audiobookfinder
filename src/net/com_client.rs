@@ -1,4 +1,5 @@
-// taken from trussh example (with corrections)
+//! The ssh client yet of what it will be capable of
+//! and taken from trussh example (with corrections).
 use std;
 use std::sync::Arc;
 use std::env;

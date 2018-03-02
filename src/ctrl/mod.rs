@@ -1,4 +1,7 @@
-// include the tui part :-)
+//! The ctrl module should be the general controller of the program.
+//! Right now, most controlling is in the net module, and here
+//! is only a light facade to the tui messages.
+
 pub mod tui; // todo: pub is not recommended, I use it for doctest
 use ctrl::tui::Tui;
 

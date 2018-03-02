@@ -1,9 +1,10 @@
+//! The oldest module, the data module stores all the data needed to collect.
 use std::io; // reading files
 use std::cmp; // max
 use std::fs::{self, DirEntry, Permissions}; // directory
 use std::path::{Path, PathBuf}; // path, clear
 use std::collections::hash_map::{Entry, HashMap}; // my main item uses a hash map
-//use std::os::windows::fs::MetadataExt;
+                                                  //use std::os::windows::fs::MetadataExt;
 use std::os::linux::fs::MetadataExt;
 
 use id3::Tag; // to identify the audio files
@@ -83,7 +84,7 @@ struct Stats {
     threads: u8,
 }
 
-#[derive(Serialize,Deserialize,Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 struct Audio {
     albums: u32,
     max_songs: usize,

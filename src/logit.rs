@@ -1,3 +1,6 @@
+//! This module lets us be more flexible wiht logging.
+//! It provides different types of loggers for different purposes, if run in tui or
+//! somewhere (maybe a syslog log).
 use env_logger;
 use flexi_logger;
 use syslog;
@@ -12,6 +15,7 @@ pub struct Logit {
     //
 }
 
+/// Uses 3 types of logging yet.
 impl Logit {
     pub fn init(which: Log) {
         match which {
