@@ -12,4 +12,5 @@ Cargo.lock
 # ignore idea Intellij
 .idea/
 *.iml
-
+# ignore log files
+*.log
