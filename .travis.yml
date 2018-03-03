@@ -10,7 +10,7 @@ notification:
       on_success: always
     email:
        on_success: always
-       on_failure: always
+       on_failure: change
 matrix:
   include:
     - os: linux
@@ -18,7 +18,7 @@ matrix:
       sudo: required
 #  allow_failures:
 #    - rust: nightly
-# don't until it compiles completely!!! cache: cargo
+cache: cargo
 install:
   - echo "Building now for $TRAVIS_OS_NAME"
   # libsodium is not part of trusty by default
