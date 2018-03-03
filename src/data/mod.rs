@@ -7,7 +7,7 @@ use std::collections::hash_map::{Entry, HashMap}; // my main item uses a hash ma
                                                   //use std::os::windows::fs::MetadataExt;
 use std::os::linux::fs::MetadataExt;
 
-use id3::Tag; // to identify the audio files
+use id3; // to identify the audio files
 use uuid::Uuid;
 use tree_magic;
 
@@ -164,10 +164,11 @@ impl Collection {
     }
 
     fn visit_audio_files(&mut self, cb: &Path, file_stats: &mut Files) -> io::Result<()> {
-        match Tag::read_from_path(cb) {
+        match id3::Tag::read_from_path(cb) {
             Ok(tag) => {
                 if let Some(artist) = tag.artist() {
                     self.stats.files.analyzed += 1;
+                    file_stats.analyzed += 1;
 
                     let path_buffer = cb.to_path_buf();
 
