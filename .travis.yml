@@ -1,23 +1,35 @@
 # travis CI support (https://travis-ci.org)
 dist: trusty
 language: rust
+os:
+  - linux
 rust:
   - nightly
+notification:
+    slack:
+      on_success: always
+    email:
+       on_success: change
+       on_failure: change
 matrix:
-  allow_failures:
-    - rust: nightly
+  include:
+    - os: linux
+      dist: trusty
+      sudo: required
+#  allow_failures:
+#    - rust: nightly
 # don't until it compiles completely!!! cache: cargo
-script:
 #before-install:
+install:
+  - echo "Building now for $TRAVIS_OS_NAME"
   # libsodium is not part of trusty by default
-  #- sudo apt-get install -y software-properties-common
-  #- sudo echo "deb http://ppa.launchpad.net/chris-lea/libsodium/ubuntu trusty main" >> /etc/apt/sources.list
-  #- sudo echo "deb-src http://ppa.launchpad.net/chris-lea/libsodium/ubuntu trusty main" >> /etc/apt/sources.list
   - sudo add-apt-repository ppa:james-page/0mq -y
   - sudo apt-get update -qq
 #install:
   - sudo apt-get install -qq libavahi-compat-libdnssd-dev -y
   - sudo apt-get install libsodium-dev -y
 #script:
+script:
   - cargo build --verbose --all
   - cargo test --verbose --all
+  - cargo doc --no-deps
