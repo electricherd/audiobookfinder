@@ -27,4 +27,4 @@ install:
   - sudo apt-get install -qq libavahi-compat-libdnssd-dev -y
   - sudo apt-get install libsodium-dev -y
 script:
-  - cargo build && cargo test && cargo doc --no-deps && cargo -- testaudio
+  - cargo build && cargo test && cargo doc --no-deps && cargo run -- testaudio
