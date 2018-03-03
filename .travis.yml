@@ -9,8 +9,8 @@ notification:
     slack:
       on_success: always
     email:
-       on_success: change
-       on_failure: change
+       on_success: always
+       on_failure: always
 matrix:
   include:
     - os: linux
@@ -19,17 +19,12 @@ matrix:
 #  allow_failures:
 #    - rust: nightly
 # don't until it compiles completely!!! cache: cargo
-#before-install:
 install:
   - echo "Building now for $TRAVIS_OS_NAME"
   # libsodium is not part of trusty by default
   - sudo add-apt-repository ppa:james-page/0mq -y
   - sudo apt-get update -qq
-#install:
   - sudo apt-get install -qq libavahi-compat-libdnssd-dev -y
   - sudo apt-get install libsodium-dev -y
-#script:
 script:
-  - cargo build --verbose --all
-  - cargo test --verbose --all
-  - cargo doc --no-deps
+  - cargo build && cargo test && cargo doc --no-deps
