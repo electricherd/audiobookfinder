@@ -29,8 +29,11 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
 * simple timers, alive signal in TUI (yet a sleep thread for each timer, not perfect)
 * easy cross compile (and test) for raspberry (v1 and v2, v3)... ok the tui update needs adjustment, cross compiling is a bit broken because of dependencies
 * logging (own module for that)
+* CI with [travis](https://travis-ci.org/electricherd/audiobookfinder/) works
 
 Changes:
+* applied single test file for travis run: took Bachs Toccata And Fugue In D Minor by Paul Pitman (licence PD)  [orangefreesounds](www.orangefreesounds.com/toccata-and-fugue-in-d-minor/) in rememberring [Monthy Python's grand rugby match](https://www.youtube.com/watch?v=HKv6o7YqHnE).
+* travis CI working
 * more documentation ("cargo doc --no-deps --open")
 * fixed ui with BoxView and correct id finding (looks like bug is in Cursive)
 * refactored lookup method in net (needs more comments now)
@@ -48,12 +51,10 @@ Changes:
 * in and used but only as example, not yet understood:  [futures](https://tokio.rs/docs/getting-started/futures/) and ([tokio](https://tokio.rs/)) for async behavior and for networking
 
 ToDo:
-* trying get run on Travic CI (continuous integration), and maybe on MacOS (raspbery or arm not provided, ubuntu uses trusty :neutral_face:)
-* create running example (provide test with licence free mp3)
-* after mDNS lookup is back, fix to which it shall connect
+* enhance data collection to more than id3 tags, it was difficult to find a nice public domain original mp3 from [wikimedia](https://commons.wikimedia.org/wiki/Main_Page)
 * redo tui messages, ctrl messages (maybe into extra mod)
 * understand trussh communication, creating key, authorize
-* recheck namespaces and Result<thrussh_keys> ... mixed up, unfortunately
+* test more different targets using [this](https://github.com/japaric/trust)
 * use state machine like [state_machine_future](https://github.com/fitzgen/state_machine_future) for client and server, the example looks promising
 * nicer timer (thread pool is good but still with sleep)
 * make cross compiling as easy as possible
