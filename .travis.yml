@@ -31,7 +31,6 @@ before_install:
   - rustup self update
 
 install:
-  - echo "Building ${CRATE_NAME} now for ${TRAVIS_OS_NAME}"
   # libsodium is not part of trusty by default
   - sudo add-apt-repository ppa:james-page/0mq -y
   - sudo apt-get update -qq
