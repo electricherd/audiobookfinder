@@ -1,6 +1,12 @@
 # travis CI support (https://travis-ci.org)
 dist: trusty
 language: rust
+services: docker
+sudo: required
+
+env:
+  global:
+    - CRATE_NAME=audiobookfinder
 os:
   - linux
 rust:
@@ -19,18 +25,24 @@ matrix:
 #  allow_failures:
 #    - rust: nightly
 cache: cargo
+
+before_install:
+  - set -e
+  - rustup self update
+
 install:
-  - echo "Building now for ${TRAVIS_OS_NAME}"
+  - echo "Building ${CRATE_NAME} now for ${TRAVIS_OS_NAME}"
   # libsodium is not part of trusty by default
   - sudo add-apt-repository ppa:james-page/0mq -y
   - sudo apt-get update -qq
   - sudo apt-get install -qq libavahi-compat-libdnssd-dev -y
   - sudo apt-get install libsodium-dev -y
+  # pip for python needed for doc deployment
+  - sudo pip install ghp-import -y
 script:
   - cargo build && cargo test && cargo run -- testaudio
 after_success: |
     cargo doc --no-deps \
-    && echo '<meta http-equiv=refresh content=0;url=audiobookfinder/index.html>' > target/doc/index.html && \
-    sudo pip install ghp-import && \
+    && echo '<meta http-equiv=refresh content=0;url=${CRATE_NAME}/index.html>' > target/doc/index.html && \
     ghp-import -n target/doc && \
     git push -qf https://${gitHubToken}@github.com/${TRAVIS_REPO_SLUG}.git gh-pages
