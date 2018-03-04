@@ -7,8 +7,7 @@ sudo: required
 env:
   global:
     - CRATE_NAME=audiobookfinder
-os:
-  - linux
+
 rust:
   - nightly
 notification:
@@ -22,10 +21,8 @@ matrix:
    - env: TARGET=arm-unknown-linux-gnueabi
   # - env: TARGET=armv7-unknown-linux-gnueabihf
    - env: TARGET=i686-unknown-linux-gnu
-
-#  allow_failures:
-#    - rust: nightly
-cache: cargo
+# disable cache for a small while
+#cache: cargo
 
 before_install:
   - set -e
@@ -42,7 +39,7 @@ script:
   - cargo build && cargo test && cargo run -- testaudio
 after_script: set +e
 after_success: |
-    cargo doc --no-deps \
+    if [ $TARGET = i686-unknown-linux-gnu ]; then cargo doc --no-deps \
     && echo '<meta http-equiv=refresh content=0;url=${CRATE_NAME}/index.html>' > target/doc/index.html && \
     ghp-import -n target/doc && \
-    git push -qf https://${gitHubToken}@github.com/${TRAVIS_REPO_SLUG}.git gh-pages
+    git push -qf https://${gitHubToken}@github.com/${TRAVIS_REPO_SLUG}.git gh-pages; fi
