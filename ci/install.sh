@@ -10,7 +10,7 @@ main() {
         sort=gsort  # for `sort --sort-version`, from brew's coreutils.
     fi
 
-    if $TARGET in
+    case $TARGET in
       i686-unknown-linux-gnu)
         # libsodium is not part of trusty by default
         sudo add-apt-repository ppa:james-page/0mq -y \
