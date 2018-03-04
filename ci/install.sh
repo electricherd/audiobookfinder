@@ -11,7 +11,7 @@ main() {
     fi
 
     if $TARGET in
-      TARGET=i686-unknown-linux-gnu)
+      i686-unknown-linux-gnu)
         # libsodium is not part of trusty by default
         sudo add-apt-repository ppa:james-page/0mq -y \
          && sudo apt-get update -qq \
