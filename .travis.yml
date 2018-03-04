@@ -38,7 +38,7 @@ install:
   - sudo apt-get install -qq libavahi-compat-libdnssd-dev -y
   - sudo apt-get install libsodium-dev -y
   # pip for python needed for doc deployment
-  - sudo pip install ghp-import -y
+  - sudo pip install ghp-import
 script:
   - cargo build && cargo test && cargo run -- testaudio
 after_success: |
