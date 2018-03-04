@@ -19,7 +19,7 @@ notification:
 matrix:
   include:
    #- env: TARGET=arm-unknown-linux-gnueabi (libsodium problem)
-   #- env: TARGET=armv7-unknown-linux-gnueabihf (libsodium problem)
+   - env: TARGET=armv7-unknown-linux-gnueabihf
    - env: TARGET=i686-unknown-linux-gnu
    #- env: TARGET=x86_64-apple-darwin
 # disable cache for a small while

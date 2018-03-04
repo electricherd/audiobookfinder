@@ -19,7 +19,10 @@ main() {
          && sudo apt-get install libsodium-dev -y
       ;;
       armv7-unknown-linux-gnueabihf)
-       sudo apt-get install -qq libavahi-compat-libdnssd-dev -y
+       sudo apt-get install -qq libavahi-compat-libdnssd-dev -y \
+         && sudo add-apt-repository ppa:segf4ult/zeromq -y \
+         && sudo apt-get update -qq \
+         && sudo apt-get install libsodium-dev -y
       ;;
       arm-unknown-linux-gnueabi)
        sudo apt-get install -qq libavahi-compat-libdnssd-dev -y
