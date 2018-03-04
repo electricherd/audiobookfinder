@@ -13,10 +13,16 @@ main() {
     case $TARGET in
       i686-unknown-linux-gnu)
         # libsodium is not part of trusty by default
-        sudo add-apt-repository ppa:james-page/0mq -y \
+       sudo apt-get install -qq libavahi-compat-libdnssd-dev -y \
+         && sudo add-apt-repository ppa:james-page/0mq -y \
          && sudo apt-get update -qq \
-         && sudo apt-get install -qq libavahi-compat-libdnssd-dev -y \
          && sudo apt-get install libsodium-dev -y
+      ;;
+      armv7-unknown-linux-gnueabihf)
+       sudo apt-get install -qq libavahi-compat-libdnssd-dev -y
+      ;;
+      arm-unknown-linux-gnueabi)
+       sudo apt-get install -qq libavahi-compat-libdnssd-dev -y
       ;;
     esac
 

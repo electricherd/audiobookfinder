@@ -18,7 +18,7 @@ notification:
        on_failure: change
 matrix:
   include:
-   #- env: TARGET=arm-unknown-linux-gnueabi
+   - env: TARGET=arm-unknown-linux-gnueabi
    - env: TARGET=armv7-unknown-linux-gnueabihf
    - env: TARGET=i686-unknown-linux-gnu
 # disable cache for a small while
