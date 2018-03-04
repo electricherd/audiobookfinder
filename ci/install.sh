@@ -24,6 +24,10 @@ main() {
       arm-unknown-linux-gnueabi)
        sudo apt-get install -qq libavahi-compat-libdnssd-dev -y
       ;;
+      x86_64-apple-darwin)
+       ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)" < /dev/null 2> /dev/null \
+        && brew install libsodium
+      ;;
     esac
 
     # Builds for iOS are done on OSX, but require the specific target to be

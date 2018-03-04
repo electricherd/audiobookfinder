@@ -18,9 +18,10 @@ notification:
        on_failure: change
 matrix:
   include:
-   - env: TARGET=arm-unknown-linux-gnueabi
-   - env: TARGET=armv7-unknown-linux-gnueabihf
+   #- env: TARGET=arm-unknown-linux-gnueabi (libsodium problem)
+   #- env: TARGET=armv7-unknown-linux-gnueabihf (libsodium problem)
    - env: TARGET=i686-unknown-linux-gnu
+   - env: x86_64-apple-darwin
 # disable cache for a small while
 #cache: cargo
 
@@ -39,4 +40,7 @@ script:
   - cargo build && cargo test && cargo run -- testaudio
 after_script: set +e
 after_success: |
-  - bash ci/document.sh
+    if [ $TARGET = i686-unknown-linux-gnu ]; then cargo doc --no-deps \
+    && echo '<meta http-equiv=refresh content=0;url=${CRATE_NAME}/index.html>' > target/doc/index.html && \
+    ghp-import -n target/doc && \
+    git push -qf https://${gitHubToken}@github.com/${TRAVIS_REPO_SLUG}.git gh-pages; fi
