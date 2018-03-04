@@ -27,7 +27,7 @@ install:
   - sudo apt-get install -qq libavahi-compat-libdnssd-dev -y
   - sudo apt-get install libsodium-dev -y
 script:
-  - cargo build && cargo test &&  && cargo run -- testaudio
+  - cargo build && cargo test && cargo run -- testaudio
 after_success: |
     cargo doc --no-deps \
     && echo '<meta http-equiv=refresh content=0;url=audiobookfinder/index.html>' > target/doc/index.html && \
