@@ -20,11 +20,17 @@ matrix:
 #    - rust: nightly
 cache: cargo
 install:
-  - echo "Building now for "$TRAVIS_OS_NAME
+  - echo "Building now for ${TRAVIS_OS_NAME}"
   # libsodium is not part of trusty by default
   - sudo add-apt-repository ppa:james-page/0mq -y
   - sudo apt-get update -qq
   - sudo apt-get install -qq libavahi-compat-libdnssd-dev -y
   - sudo apt-get install libsodium-dev -y
 script:
-  - cargo build && cargo test && cargo doc --no-deps && cargo run -- testaudio
+  - cargo build && cargo test &&  && cargo run -- testaudio
+after_success: |
+    cargo doc --no-deps \
+    && echo '<meta http-equiv=refresh content=0;url=audiobookfinder/index.html>' > target/doc/index.html && \
+    sudo pip install ghp-import && \
+    ghp-import -n target/doc && \
+    git push -qf https://${gitHubToken}@github.com/${TRAVIS_REPO_SLUG}.git gh-pages
