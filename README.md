@@ -11,7 +11,8 @@ For a stunning live-coding example of Rust and an example how to use thrussh, wh
 ## My first program in Rust
 Actually I plan to do something useful. The program collects all information about (yet) audio books on different devices/clients, stores it and then does something with it, like showing stats, finding duplicates, aggregating everything at one place.
 
-### [Documentation](https://electricherd.github.io/audiobookfinder/audiobookfinder/index.html)
+### Documentation
+Look [here](https://electricherd.github.io/audiobookfinder/audiobookfinder/index.html)!
 
 ### Goals
 The primary goal is to learn Rust and to cover various aspects of the language, of which some of I already used inside the program, such as:
@@ -45,7 +46,7 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
 * file logging in (use [glogg](http://glogg.bonnefon.org/))
 * updated all external crates
 * logging mechanism introduced (`logit.rs`). It was needed because of tui console output was not readable (either syslog or console)
- * run e.g. with 'RUST_LOG=adbflib::net=debug RUST_BACKTRACE=full cargo run -- -n ~/Audiobooks'
+ * run e.g. with `RUST_LOG=adbflib::net=debug RUST_BACKTRACE=full cargo run -- -n ~/Audiobooks`
 * ssh client with example key works, key now external
 * found emojis :grin:
 * included Rust doctest, since it is mostly a library, works well :smiley:
