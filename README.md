@@ -13,6 +13,7 @@ Actually I plan to do something useful. The program collects all information abo
 
 ### [Documentation](https://electricherd.github.io/audiobookfinder/audiobookfinder/index.html)
 
+### Goals
 The primary goal is to learn Rust and to cover various aspects of the language, of which some of I already used inside the program, such as:
 * borrowing
 * shared-data over different threads (not yet lifetime optimized)
@@ -38,12 +39,12 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
 * [documentation](https://electricherd.github.io/audiobookfinder/audiobookfinder/index.html) deployed, awesome: Rust + github + travis +... :sunglasses: (needs javascript enabled)
 * applied single test file for travis run: took Bachs Toccata And Fugue In D Minor by Paul Pitman (licence PD)  [orangefreesounds](www.orangefreesounds.com/toccata-and-fugue-in-d-minor/) in rememberring [Monthy Python's grand rugby match](https://www.youtube.com/watch?v=HKv6o7YqHnE).
 * travis CI working
-* more documentation locally: 'cargo doc --no-deps --open'
+* more documentation locally: `cargo doc --no-deps --open`
 * fixed ui with BoxView and correct id finding (looks like bug is in Cursive)
 * refactored lookup method in net (needs more comments now)
 * file logging in (use [glogg](http://glogg.bonnefon.org/))
 * updated all external crates
-* logging mechanism introduced ('logit.rs'). It was needed because of tui console output was not readable (either syslog or console)
+* logging mechanism introduced (`logit.rs`). It was needed because of tui console output was not readable (either syslog or console)
  * run e.g. with 'RUST_LOG=adbflib::net=debug RUST_BACKTRACE=full cargo run -- -n ~/Audiobooks'
 * ssh client with example key works, key now external
 * found emojis :grin:
@@ -92,6 +93,6 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
 
 ## Dependencies
 Unfortunately the program now uses mDNS-register with [dns-sd](https://github.com/plietar/rust-dns-sd) depends on Linux on [Avahi](https://www.avahi.org/)
-* 'libavahi-client-dev' or 'libavahi-compat-libdnssd-dev'. It also breaks first the easy cross compilation :confused: - I will see where this ends.
+* `libavahi-client-dev` or `libavahi-compat-libdnssd-dev`. It also breaks first the easy cross compilation :confused: - I will see where this ends.
 But it works I can see myself with a mDNS scanner, so I can also find other audiobookfinder clients when I do it correctly
 * libsodium: Since I started to adapt to thrussh I also need libsodium
