@@ -96,4 +96,4 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
 Unfortunately the program now uses mDNS-register with [dns-sd](https://github.com/plietar/rust-dns-sd) depends on Linux on [Avahi](https://www.avahi.org/)
 * `libavahi-client-dev` or `libavahi-compat-libdnssd-dev`. It also breaks first the easy cross compilation :confused: - I will see where this ends.
 But it works I can see myself with a mDNS scanner, so I can also find other audiobookfinder clients when I do it correctly
-* libsodium: Since I started to adapt to thrussh I also need libsodium
+* `libsodium`: Since I started to adapt to thrussh I also need libsodium

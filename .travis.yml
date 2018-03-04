@@ -19,9 +19,10 @@ notification:
        on_failure: change
 matrix:
   include:
-    - os: linux
-      dist: trusty
-      sudo: required
+   - env: TARGET=arm-unknown-linux-gnueabi
+  # - env: TARGET=armv7-unknown-linux-gnueabihf
+   - env: TARGET=i686-unknown-linux-gnu
+
 #  allow_failures:
 #    - rust: nightly
 cache: cargo
@@ -31,15 +32,15 @@ before_install:
   - rustup self update
 
 install:
-  # libsodium is not part of trusty by default
-  - sudo add-apt-repository ppa:james-page/0mq -y
-  - sudo apt-get update -qq
-  - sudo apt-get install -qq libavahi-compat-libdnssd-dev -y
-  - sudo apt-get install libsodium-dev -y
   # pip for python needed for doc deployment
   - sudo pip install ghp-import
+  # from japaric (https://github.com/japaric/trust)
+  - bash ci/install.sh
+  - source ~/.cargo/env || true
+
 script:
   - cargo build && cargo test && cargo run -- testaudio
+after_script: set +e
 after_success: |
     cargo doc --no-deps \
     && echo '<meta http-equiv=refresh content=0;url=${CRATE_NAME}/index.html>' > target/doc/index.html && \
