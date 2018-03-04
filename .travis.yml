@@ -39,5 +39,22 @@ install:
 script:
   - cargo build && cargo test && cargo run -- testaudio
 after_script: set +e
+
+deploy:
+  github-token: ${gitHubToken}
+  file_glob: true
+  file: $CRATE_NAME-$TRAVIS_TAG-$TARGET.*
+  on:
+    condition: $TRAVIS_RUST_VERSION = nightly
+    tags: true
+  provider: releases
+  skip_cleanup: true
+
+branches:
+  only:
+    # release tags
+    - /^v\d+\.\d+\.\d+.*$/
+    - master
+
 after_success: |
   bash ci/document.sh
