@@ -10,9 +10,21 @@ main() {
         sort=gsort  # for `sort --sort-version`, from brew's coreutils.
     fi
 
+    # install additional libraries
+    #
+    # libavahi-compat-libdnssd-dev
+    #   - debian: is not in standard installation but in deb repo
+    #   - macos:  not foundable
+    # libsodium-dev
+    #   - debian:
+    #      - i686: it is only after trusty in repo, but PPA exists
+    #      - armhf: is not in trusty, but PPA exists
+    #   - macos:  need to be tested/see below
+    #
+    #
+    # is jessie libnss-mdns-dev
     case $TARGET in
-      i686-unknown-linux-gnu)
-        # libsodium is not part of trusty by default
+      i686-unknown-linux-gnu | 86_64-unknown-linux-gnu)
        sudo apt-get install -qq libavahi-compat-libdnssd-dev -y \
          && sudo add-apt-repository ppa:james-page/0mq -y \
          && sudo apt-get update -qq \
