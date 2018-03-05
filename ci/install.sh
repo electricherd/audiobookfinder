@@ -39,6 +39,12 @@ main() {
       arm-unknown-linux-gnueabi)
        sudo apt-get install -qq libavahi-compat-libdnssd-dev -y
       ;;
+      aarch64-unknown-linux-gnu)
+       sudo apt-get install -qq libavahi-compat-libdnssd-dev -y
+        && sudo add-apt-repository ppa:chris-lea/libsodium -y \
+        && sudo apt-get update -qq \
+        && sudo apt-get install libsodium-dev -y
+      ;;
       x86_64-apple-darwin)
        ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)" < /dev/null 2> /dev/null \
         && brew install libsodium
