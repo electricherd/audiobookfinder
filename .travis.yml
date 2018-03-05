@@ -47,19 +47,20 @@ after_script:
   - set +e
 
 before_deploy:
-  - cp target/release/$CRATE_NAME target/release/$CRATE_NAME-$TARGET
-  - sha1sum target/release/$CRATE_NAME-$TARGET > target/release/$CRATE_NAME-$TARGET.sha1
+  - sh ci/before_deploy.sh
+  #- cp target/release/$CRATE_NAME target/release/$CRATE_NAME-$TARGET
+  #- sha1sum target/release/$CRATE_NAME-$TARGET > target/release/$CRATE_NAME-$TARGET.sha1
 
 deploy:
   # look at
   api_key: $gitHubToken
   file_glob: true
   file:
-    - target/release/$CRATE_NAME-$TARGET
-    - target/release/$CRATE_NAME-$TARGET.sha1
+    - $CRATE_NAME-$TRAVIS_TAG-$TARGET.*
+  #  - target/release/$CRATE_NAME-$TARGET.sha1
   on:
     condition: $TRAVIS_RUST_VERSION = nightly
-    tags: true
+    #tags: true
     #repo: electricherd/audiobookfinder
   provider: releases
   skip_cleanup: true
