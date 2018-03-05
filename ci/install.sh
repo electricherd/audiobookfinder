@@ -40,7 +40,7 @@ main() {
        sudo apt-get install -qq libavahi-compat-libdnssd-dev -y
       ;;
       aarch64-unknown-linux-gnu)
-       sudo apt-get install -qq libavahi-compat-libdnssd-dev -y
+       sudo apt-get install -qq libavahi-compat-libdnssd-dev -y \
         && sudo add-apt-repository ppa:chris-lea/libsodium -y \
         && sudo apt-get update -qq \
         && sudo apt-get install libsodium-dev -y
