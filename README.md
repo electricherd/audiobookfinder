@@ -37,7 +37,7 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
 * travis built and deployed own public [documentation](https://electricherd.github.io/audiobookfinder/audiobookfinder/index.html)
 
 ### Changes:
-* first travis build [releases](https://github.com/electricherd/audiobookfinder/releases) for 4 platforms
+* first travis build [releases](https://github.com/electricherd/audiobookfinder/releases) for 4 platforms (arm64 = aarch64-unknown-linux-gnu, armhf = armv7-unknown-linux-gnueabihf, i686 = i686-unknown-linux-gnu, x86_64 = x86_64-unknown-linux-gnu)
 * [documentation](https://electricherd.github.io/audiobookfinder/audiobookfinder/index.html) deployed, awesome: Rust + github + travis +... :sunglasses: (needs javascript enabled)
 * applied single test file for travis run: took Bachs Toccata And Fugue In D Minor by Paul Pitman (licence PD)  [orangefreesounds](www.orangefreesounds.com/toccata-and-fugue-in-d-minor/) in rememberring [Monthy Python's grand rugby match](https://www.youtube.com/watch?v=HKv6o7YqHnE).
 * travis CI working
