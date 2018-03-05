@@ -51,7 +51,7 @@ after_script:
 deploy:
   # look at
   # http://blog.simplytestable.com/creating-and-using-a-github-oauth-token-with-travis-and-composer/
-  api_key: $travisOAuth
+  api_key: $gitHubToken
   file_glob: true
   file:
     - target/release/$CRATE_NAME
