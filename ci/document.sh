@@ -1,6 +1,6 @@
 #!bash
 # only document on i686
-if [ $TARGET = i686-unknown-linux-gnu ]; then
+if [ $TARGET = x86_64-unknown-linux-gnu ]; then
    cargo doc --no-deps \
    && echo '<meta http-equiv=refresh content=0;url=${CRATE_NAME}/index.html>' > target/doc/index.html \
    && ghp-import -n target/doc \

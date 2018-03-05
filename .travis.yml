@@ -42,13 +42,16 @@ install:
   - source ~/.cargo/env || true
 
 script:
-  - cargo build && cargo test && cargo run -- testaudio
+  - cargo build --release && cargo test && cargo run -- testaudio
 after_script:
   - set +e
   - sha1sum target/$TARGET/release/$CRATE_NAME > target/$TARGET/release/$CRATE_NAME.sha1
 
 deploy:
-  github-token: $gitHubToken
+  # look at
+  # http://blog.simplytestable.com/creating-and-using-a-github-oauth-token-with-travis-and-composer/
+  api_key:
+    secure: $travisOAuth
   file_glob: true
   file:
     - target/$TARGET/release/$CRATE_NAME
