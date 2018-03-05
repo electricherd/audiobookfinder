@@ -1,6 +1,6 @@
 [package]
 name = "audiobookfinder"
-version = "0.1.12"
+version = "0.1.13"
 authors = ["Sven Kroemeke <skroemeke@gmail.com>"]
 license = "MIT" # http://spdx.org/licenses/
 repository = "https://github.com/electricherd/audiobookfinder"

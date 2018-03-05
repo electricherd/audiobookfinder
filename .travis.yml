@@ -45,20 +45,21 @@ script:
   - cargo build --release && cargo test && cargo run -- testaudio
 after_script:
   - set +e
+
+before_deploy:
   - cp target/release/$CRATE_NAME target/release/$CRATE_NAME-$TARGET
   - sha1sum target/release/$CRATE_NAME-$TARGET > target/release/$CRATE_NAME-$TARGET.sha1
 
 deploy:
   # look at
-  # http://blog.simplytestable.com/creating-and-using-a-github-oauth-token-with-travis-and-composer/
   api_key: $gitHubToken
   file_glob: true
   file:
-    - target/release/$CRATE_NAME
-    #- $CRATE_NAME-$TRAVIS_TAG-$TARGET.*.sha1
+    - target/release/$CRATE_NAME-$TARGET
+    - target/release/$CRATE_NAME-$TARGET.sha1
   on:
     condition: $TRAVIS_RUST_VERSION = nightly
-    #tags: true
+    tags: true
     #repo: electricherd/audiobookfinder
   provider: releases
   skip_cleanup: true
