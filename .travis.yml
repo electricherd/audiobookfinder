@@ -48,7 +48,7 @@ after_script:
   #- sha1sum $CRATE_NAME-$TRAVIS_TAG-$TARGET.* > $CRATE_NAME-$TRAVIS_TAG-$TARGET.*.sha1
 
 deploy:
-  github-token: ${gitHubToken}
+  github-token: $gitHubToken 
   file_glob: true
   file:
     - $CRATE_NAME-$TRAVIS_TAG-$TARGET.*
