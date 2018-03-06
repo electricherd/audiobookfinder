@@ -19,10 +19,10 @@ notification:
        on_failure: change
 matrix:
   include:
-   - env: TARGET=aarch64-unknown-linux-gnu
+   #- env: TARGET=aarch64-unknown-linux-gnu
    #- env: TARGET=arm-unknown-linux-gnueabi (libsodium problem)
    - env: TARGET=armv7-unknown-linux-gnueabihf
-   - env: TARGET=i686-unknown-linux-gnu
+   #- env: TARGET=i686-unknown-linux-gnu
    - env: TARGET=x86_64-unknown-linux-gnu
 
    #- env: TARGET=x86_64-apple-darwin
@@ -42,8 +42,8 @@ install:
   - source ~/.cargo/env || true
 
 script:
-  #- cargo build --target $TARGET --release -- -C lto && cargo test && cargo run -- testaudio
-  - bash ci/script.sh
+  - cargo build --target $TARGET --release -- -C lto && cargo test && cargo run --target $TARGET -- testaudio
+  #- bash ci/script.sh
 after_script:
   - set +e
 
@@ -61,7 +61,7 @@ deploy:
   #  - target/release/$CRATE_NAME-$TARGET.sha1
   on:
     condition: $TRAVIS_RUST_VERSION = nightly
-    #tags: true
+    tags: true
     #repo: electricherd/audiobookfinder
   provider: releases
   skip_cleanup: true
