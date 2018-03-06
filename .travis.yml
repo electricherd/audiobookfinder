@@ -42,7 +42,7 @@ install:
   - source ~/.cargo/env || true
 
 script:
-  - cargo build --target $TARGET --release -- -C lto && cargo test && cargo run --target $TARGET -- testaudio
+  - cargo build --target $TARGET --release && cargo test && cargo run --target $TARGET -- testaudio
   #- bash ci/script.sh
 after_script:
   - set +e
