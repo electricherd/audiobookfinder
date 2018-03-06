@@ -32,6 +32,7 @@ main() {
       ;;
       armv7-unknown-linux-gnueabihf)
        rustup target install armv7-unknown-linux-gnueabihf \
+         && sudo apt-get install -qq arm-linux-gnueabihf-gcc \
          && sudo apt-get install -qq libavahi-compat-libdnssd-dev -y \
          && sudo add-apt-repository ppa:segf4ult/zeromq -y \
          && sudo apt-get update -qq \
