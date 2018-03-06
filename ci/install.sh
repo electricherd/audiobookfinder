@@ -24,8 +24,15 @@ main() {
     #
     # is jessie libnss-mdns-dev
     case $TARGET in
-      i686-unknown-linux-gnu | x86_64-unknown-linux-gnu)
+      x86_64-unknown-linux-gnu)
          sudo apt-get install -qq libavahi-compat-libdnssd-dev -y \
+         && sudo add-apt-repository ppa:james-page/0mq -y \
+         && sudo apt-get update -qq \
+         && sudo apt-get install libsodium-dev -y
+      ;;
+      i686-unknown-linux-gnu)
+       rustup target install i686-unknown-linux-gnu \
+         && sudo apt-get install -qq libavahi-compat-libdnssd-dev -y \
          && sudo add-apt-repository ppa:james-page/0mq -y \
          && sudo apt-get update -qq \
          && sudo apt-get install libsodium-dev -y
