@@ -48,9 +48,9 @@ after_script:
   - set +e
 
 before_deploy:
-  - sh ci/before_deploy.sh
-  #- cp target/release/$CRATE_NAME target/release/$CRATE_NAME-$TARGET
-  #- sha1sum target/release/$CRATE_NAME-$TARGET > target/release/$CRATE_NAME-$TARGET.sha1
+  # - sh ci/before_deploy.sh
+  - cp target/release/$CRATE_NAME target/release/$CRATE_NAME-$TARGET
+  - sha1sum target/release/$CRATE_NAME-$TARGET > target/release/$CRATE_NAME-$TARGET.sha1
 
 deploy:
   # look at
