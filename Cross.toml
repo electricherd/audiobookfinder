@@ -1,4 +1,4 @@
 [target.x86_64-unknown-linux-gnu]
-image = "my/image:0.1.13"
+image = "electricherd/adbfimage:0.1.13"
 [target.armv7-unknown-linux-gnueabihf]
-image = "my/image:0.1.13"
+image = "electricherd/adbfimage:0.1.13"
