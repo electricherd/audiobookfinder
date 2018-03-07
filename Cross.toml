@@ -1,0 +1,4 @@
+[target.armv7-unknown-linux-gnueabihf]
+image = "ci/docker/armv7-unknown-linux-gnueabihf/Dockerfile:0.1.13"
+[target.armv7-unknown-linux-gnueabihf]
+image = "ci/docker/armv7-unknown-linux-gnueabihf/Dockerfile:0.1.13"
