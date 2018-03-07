@@ -32,7 +32,7 @@ cache: cargo
 
 before_install:
   - set -e
-  - rustup self update
+  # - rustup self update
 
 install:
   # pip for python needed for doc deployment
