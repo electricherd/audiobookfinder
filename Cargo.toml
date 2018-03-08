@@ -60,10 +60,11 @@ panic = 'abort'
 [target.armv7-unknown-linux-gnueabihf]
 linker = "arm-linux-gnueabihf-gcc"
 
+# possible enhancements of cross
 # for cross of trust with travis
 # https://github.com/japaric/trust
 # https://github.com/japaric/cross
-[build.env]
+#[build.env]
 #passthrough = [
 #    "RUST_BACKTRACE",
 #    "RUST_LOG",
