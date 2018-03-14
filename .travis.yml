@@ -42,17 +42,17 @@ install:
   - source ~/.cargo/env || true
 
 script:
-  - PKG_CONFIG_ALLOW_CROSS=1 cargo build --target $TARGET --release
-  - PKG_CONFIG_ALLOW_CROSS=1 cargo test
-  - PKG_CONFIG_ALLOW_CROSS=1 cargo run --target $TARGET -- testaudio
-  #- bash ci/script.sh
+  - #PKG_CONFIG_ALLOW_CROSS=1 cargo build --target $TARGET --release
+  - #PKG_CONFIG_ALLOW_CROSS=1 cargo test
+  - #PKG_CONFIG_ALLOW_CROSS=1 cargo run --target $TARGET -- testaudio
+  - bash ci/script.sh
 after_script:
   - set +e
 
 before_deploy:
-  # - sh ci/before_deploy.sh
-  #- cp target/release/$CRATE_NAME target/release/$CRATE_NAME-$TARGET
-  #- sha1sum target/release/$CRATE_NAME-$TARGET > target/release/$CRATE_NAME-$TARGET.sha1
+  - sh ci/before_deploy.sh
+  - cp target/release/$CRATE_NAME target/release/$CRATE_NAME-$TARGET
+  - sha1sum target/release/$CRATE_NAME-$TARGET > target/release/$CRATE_NAME-$TARGET.sha1
 
 deploy:
   # look at
@@ -60,7 +60,7 @@ deploy:
   file_glob: true
   file:
     - $CRATE_NAME-$TRAVIS_TAG-$TARGET.*
-  #  - target/release/$CRATE_NAME-$TARGET.sha1
+    - target/release/$CRATE_NAME-$TARGET.sha1
   on:
     condition: $TRAVIS_RUST_VERSION = nightly
     tags: true

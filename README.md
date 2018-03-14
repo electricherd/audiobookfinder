@@ -37,7 +37,8 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
 * travis built and deployed own public [documentation](https://electricherd.github.io/audiobookfinder/audiobookfinder/index.html)
 
 ### Changes:
-* I supended the usage of [trust](https://github.com/japaric/trust) which uses [cross](https://github.com/japaric/cross), since the develop cross compiling docker images are based on ubuntu 12.02 (deb jessie), and the libsodium, libavahi uses ubuntu ppa from newer versions. I might even go to xenial (deb stretch), then both libs are included by default. But I would have to create my own dockerfile for that, and not just extend the well prepared dockerfiles from cross. :unamused:
+* replaced [id3](https://github.com/jameshurst/rust-id3) with [taglib](https://github.com/ebassi/taglib-rust/) (more external libs, but many more available media tags). Unfortunately it took me quite some time to find some strange difference (didn't work) between [crates.io](https://crates.io/crates/taglib) and original [github.com](https://github.com/ebassi/taglib-rust/) version, so I had to use the git pull rather than the convenient crate.io dependency usage in `Cargo.toml`.
+* I suspended the usage of [trust](https://github.com/japaric/trust) which uses [cross](https://github.com/japaric/cross), since the develop cross compiling docker images are based on ubuntu 12.02 (deb jessie), and the libsodium, libavahi uses ubuntu ppa from newer versions. I might even go to xenial (deb stretch), then both libs are included by default. But I would have to create my own dockerfile for that, and not just extend the well prepared dockerfiles from cross. :unamused:
 * first travis release build, only x64 unfortunately is correct  [releases](https://github.com/electricherd/audiobookfinder/releases). It's more difficult than I thought, but it's clear now.
 * [documentation](https://electricherd.github.io/audiobookfinder/audiobookfinder/index.html) deployed, awesome: Rust + github + travis +... :sunglasses: (needs javascript enabled)
 * applied single test file for travis run: took Bachs Toccata And Fugue In D Minor by Paul Pitman (licence PD)  [orangefreesounds](www.orangefreesounds.com/toccata-and-fugue-in-d-minor/) in rememberring [Monthy Python's grand rugby match](https://www.youtube.com/watch?v=HKv6o7YqHnE).
@@ -99,3 +100,4 @@ Unfortunately the program now uses mDNS-register with [dns-sd](https://github.co
 * `libavahi-client-dev` or `libavahi-compat-libdnssd-dev`. It also breaks first the easy cross compilation :confused: - I will see where this ends.
 But it works I can see myself with a mDNS scanner, so I can also find other audiobookfinder clients when I do it correctly
 * `libsodium`: Since I started to adapt to thrussh I also need libsodium
+* `libtag1-dev` and `libtagc0-dev` for libtag

@@ -1,14 +1,14 @@
 set -ex
 
 main() {
-    local target=
-    if [ $TRAVIS_OS_NAME = linux ]; then
-        target=x86_64-unknown-linux-musl
-        sort=sort
-    else
-        target=x86_64-apple-darwin
-        sort=gsort  # for `sort --sort-version`, from brew's coreutils.
-    fi
+    #local target=
+    #if [ $TRAVIS_OS_NAME = linux ]; then
+    #    target=x86_64-unknown-linux-gnu
+    #    sort=sort
+    #else
+    #    target=x86_64-apple-darwin
+    #    sort=gsort  # for `sort --sort-version`, from brew's coreutils.
+    #fi
 
     # install additional libraries
     #
@@ -28,7 +28,8 @@ main() {
          sudo apt-get install -qq libavahi-compat-libdnssd-dev -y \
          && sudo add-apt-repository ppa:james-page/0mq -y \
          && sudo apt-get update -qq \
-         && sudo apt-get install libsodium-dev -y
+         && sudo apt-get install libsodium-dev -y \
+         && sudo apt-get install libtag1-dev libtagc0-dev -y
 #         docker build -t electricherd/adbfimage:0.1.13 ci/docker/x86_64-unknown-linux-gnu
       ;;
       i686-unknown-linux-gnu)
@@ -36,7 +37,8 @@ main() {
          && sudo apt-get install -qq libavahi-compat-libdnssd-dev -y \
          && sudo add-apt-repository ppa:james-page/0mq -y \
          && sudo apt-get update -qq \
-         && sudo apt-get install libsodium-dev -y
+         && sudo apt-get install libsodium-dev -y \
+         && sudo apt-get install libtag1-dev libtagc0-dev -y
       ;;
       armv7-unknown-linux-gnueabihf)
 #       rustup target install armv7-unknown-linux-gnueabihf \
