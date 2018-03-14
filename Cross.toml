@@ -1,6 +1,6 @@
 # this is the Cross file for
 # cross's docker images.
-# The images are being created 
+# The images are being created
 # within the install script,
 # and all needed built environment built
 # steps move from install-script to
@@ -8,7 +8,9 @@
 #
 # (trust uses cross) see
 # see https://github.com/japaric/cross
-# 
+#
+[build]
+xargo = true
 [target.x86_64-unknown-linux-gnu]
 image = "electricherd/adbfimage:0.1.13"
 [target.armv7-unknown-linux-gnueabihf]
