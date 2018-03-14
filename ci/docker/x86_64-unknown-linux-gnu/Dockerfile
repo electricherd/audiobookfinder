@@ -15,7 +15,8 @@ RUN apt-get update && \
     pkg-config \
     libavahi-compat-libdnssd-dev:amd64 \
     libsodium-dev:amd64 \
-    libtag1-dev:amd64 libtagc0-dev:amd64
+    libtag1-dev:amd64 libtagc0-dev:amd64 \
+    curl
 
 RUN curl -fsSL https://raw.githubusercontent.com/japaric/cross/master/docker/xargo.sh && \
     bash /xargo.sh
