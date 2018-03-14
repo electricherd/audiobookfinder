@@ -3,13 +3,16 @@ FROM ubuntu:14.04
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
+    software-properties-common python-software-properties && \
+    add-apt-repository ppa:james-page/0mq -y && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends  \
     ca-certificates \
     cmake \
     gcc \
     libc6-dev \
     make \
     pkg-config \
-    software-properties-common python-software-properties \
     libavahi-compat-libdnssd-dev:amd64 \
     libsodium-dev:amd64 \
     libtag1-dev:amd64 libtagc0-dev:amd64
