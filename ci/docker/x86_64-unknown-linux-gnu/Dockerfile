@@ -15,15 +15,10 @@ RUN apt-get update && \
     pkg-config \
     libavahi-compat-libdnssd-dev:amd64 \
     libsodium-dev:amd64 \
-    libtag1-dev:amd64 libtagc0-dev:amd64 \
-    curl
+    libtag1-dev:amd64 libtagc0-dev:amd64
 
 RUN curl -fsSL https://raw.githubusercontent.com/japaric/cross/master/docker/xargo.sh > xargo.sh && \
     bash /xargo.sh
-
-RUN curl -fsSL https://raw.githubusercontent.com/japaric/cross/master/docker/cmake.sh > cmake.sh && \
-    apt-get purge --auto-remove -y cmake && \
-    bash /cmake.sh 2.8.11
 
 RUN curl -fsSL https://raw.githubusercontent.com/japaric/cross/master/docker/openssl.sh > openssl.sh && \
     apt-get install -y --no-install-recommends \
