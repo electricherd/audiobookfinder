@@ -30,7 +30,7 @@ main() {
          && sudo apt-get update -qq \
          && sudo apt-get install libsodium-dev -y \
          && sudo apt-get install libtag1-dev libtagc0-dev -y
-#         docker build -t electricherd/adbfimage:0.1.13 ci/docker/x86_64-unknown-linux-gnu
+         docker build -t electricherd/adbfimage:0.1.13 ci/docker/x86_64-unknown-linux-gnu
       ;;
       i686-unknown-linux-gnu)
        rustup target install i686-unknown-linux-gnu \
