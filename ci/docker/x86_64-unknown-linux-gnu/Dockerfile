@@ -3,16 +3,16 @@ FROM ubuntu:14.04
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-    apt-get install software-properties-common python-software-properties -y && \
-    apt-get install libavahi-compat-libdnssd-dev:amd64 -y && \
-    apt-get install libsodium-dev:amd64 -y && \
-    apt-get install libtag1-dev:amd64 libtagc0-dev:amd64 -y
     ca-certificates \
     cmake \
     gcc \
     libc6-dev \
     make \
-    pkg-config
+    pkg-config \
+    software-properties-common python-software-properties \
+    libavahi-compat-libdnssd-dev:amd64 \
+    libsodium-dev:amd64 \
+    libtag1-dev:amd64 libtagc0-dev:amd64
 
 RUN curl -fsSL https://raw.githubusercontent.com/japaric/cross/master/docker/xargo.sh && \
     bash /xargo.sh
