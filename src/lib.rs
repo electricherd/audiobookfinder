@@ -2,6 +2,7 @@
 //! the audiobookfinder program.
 //! In this file all crates are name before the modules which use them.
 #![crate_name = "adbflib"]
+#![crate_type = "lib"]
 // ALL
 pub mod common;
 pub mod config;
@@ -20,7 +21,7 @@ extern crate cursive;
 pub mod ctrl;
 
 // data
-extern crate id3;
+extern crate taglib;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;

@@ -1,6 +1,6 @@
 [package]
 name = "audiobookfinder"
-version = "0.1.13"
+version = "0.1.14"
 authors = ["Sven Kroemeke <skroemeke@gmail.com>"]
 license = "MIT" # http://spdx.org/licenses/
 repository = "https://github.com/electricherd/audiobookfinder"
@@ -11,9 +11,7 @@ publish = false
 
 [badges]
 #circle-ci = { repository = "...", branch = "master" }
-# Travis CI: `repository` in format "<user>/<project>" is required.
-# `branch` is optional; default is `master`
-#travis-ci = { repository = "...", branch = "master" }
+travis-ci = { repository = "electricherd/audiobookfinder", branch = "master" }
 maintenance = { status = "actively-developed" }
 
 [lib]
@@ -32,10 +30,9 @@ env_logger = "0.5.4"  # alongside log
 flexi_logger = "0.7.0" # a more flexible logger
 futures = "0.1.18"
 hostname = "0.1.4"    # for host recognition
-id3 = "0.2.3"             # for id3 tags, maybe some other lib later (ogg,flac, etc.)
+taglib = { git = "https://github.com/ebassi/taglib-rust", branch = "master", version="0.2.0" } # grrrrrrrrr, don't use crates.io version
 log = "0.4"
 mdns-discover = { git = "https://github.com/NervosFoundation/rust-mdns-discover", branch = "master", version="0.2.0" }
-#mdns = "0.2.2"   # using mdns-discover instead
 rayon = "1.0.0"       # for multi-threading
 ring = "0.12.1"  # crypto, used for random generation
 serde = "1.0.27"
