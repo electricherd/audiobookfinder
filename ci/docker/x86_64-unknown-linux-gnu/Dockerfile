@@ -26,7 +26,7 @@ RUN curl -fsSL https://raw.githubusercontent.com/japaric/cross/master/docker/cma
     bash /cmake.sh 2.8.11
 
 RUN curl -fsSL https://raw.githubusercontent.com/japaric/cross/master/docker/openssl.sh > openssl.sh && \
-RUN apt-get install -y --no-install-recommends \
+    apt-get install -y --no-install-recommends \
     g++ \
     zlib1g-dev && \
     bash /openssl.sh linux-x86_64
