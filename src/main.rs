@@ -25,40 +25,60 @@ use adbflib::net::Net;
 use adbflib::logit;
 
 static INPUT_FOLDERS: &str = "folders";
-static APP_TITLE: &str = "The audiobook finder";
+static APP_TITLE: &str = concat!("The audiobook finder (", env!("CARGO_PKG_NAME"), ")");
 static ARG_NET: &str = "net";
 static ARG_TUI: &str = "tui";
 
+const VERSION: &'static str = env!("CARGO_PKG_VERSION");
+const AUTHORS: &'static str = env!("CARGO_PKG_AUTHORS");
+const HOMEPAGE: &'static str = env!("CARGO_PKG_HOMEPAGE");
+const DESCRIPTION: &'static str = env!("CARGO_PKG_DESCRIPTION");
+
 fn main() {
     let parse_args = clap::App::new(APP_TITLE)
-        .version("0.1")
-        .author("S. K. <skroemeke@gmail.com>")
-        .about("A audiobook finder")
+        .version(VERSION)
+        .author(AUTHORS)
+        .about(DESCRIPTION)
+        .long_about::<&str>(&[
+            &DESCRIPTION,
+            "\n\
+             It reads data\
+             from possibly multiple given path(s). Via local network it searches for other \
+             instances of the program, and will later exchange data securely.\n\
+             All information gathered will be used to find duplicates, versions of \
+             different quality, different tags for same content (spelling, \
+             incompleteness).\n\
+             For documentation see: ",
+            &HOMEPAGE,
+            "\n \
+             A program to learn, embrace, and love Rust! \n\
+             Have fun!",
+        ].concat())
         .arg(
             clap::Arg::with_name("config")
                 .short("c")
                 .long("config")
                 .value_name("FILE")
-                .help("Sets a custom config file")
+                .help("Sets custom config file (not implemented yet)")
                 .takes_value(true),
         )
         .arg(
             clap::Arg::with_name(ARG_TUI)
                 .short("t")
                 .long("TUI")
-                .help("Starts the TUI")
+                .help("Run with TUI")
                 .takes_value(false),
         )
         .arg(
             clap::Arg::with_name(ARG_NET)
                 .short("n")
                 .long("net")
-                .help("Starts without net")
+                .help("With net search for other audiobookfinders running in local network.")
                 .takes_value(false),
         )
         .arg(
             clap::Arg::with_name(INPUT_FOLDERS)
-                .help("Sets the input folder(s) to use")
+                .help("Sets multiple input folder(s) to be searched for audio files.")
                 .multiple(true)
                 .required(false),
         )

@@ -5,8 +5,6 @@ An example program to learn [Rust](https://www.rust-lang.org/) and meet its conc
 Rust is an awesome but difficult to learn programming language using different approaches and concepts to solve the current main software development issues for system programming, such as parallelism (what else to do with this multi-core, we are not getting much faster any more), safety and security (let the computer/compiler do what it can do better than a programmer, more quality but also IOT ... I want safe products at home which cannot be turned into zombie devices by buffer overflow), and more high-level approaches which lets you implement more functionality in less code.
 
 As a C++ developer, I know some of the C++11/14/17 enhancements and some don't convince me at all, just look here about the "costs" you have and what it looks like in Simon Brand's ["How Rust gets polymorphism right"](https://www.youtube.com/watch?v=VSlBhAOLtFA).
-For a stunning live-coding example of Rust and an example how to use thrussh, which I'd like to implement, look at
-[Pierre-Étienne Meunier - Building SSH servers in minutes](https://www.youtube.com/watch?v=TKQoPQcKKTw). He uses heavily the compiler for development which is not recommended (better with a well setup IDE) but it is nice as how someone can use it. The crypto details he gives get a bit lost.
 
 ## My first program in Rust
 Actually I plan to do something useful. The program collects all information about (yet) audio books on different devices/clients, stores it and then does something with it, like showing stats, finding duplicates, aggregating everything at one place.
@@ -16,34 +14,36 @@ Look [here](https://electricherd.github.io/audiobookfinder/audiobookfinder/index
 
 ### Goals
 The primary goal is to learn Rust and to cover various aspects of the language, of which some of I already used inside the program, such as:
-* borrowing
+* borrowing: the borrow checker, I am getting more comfortable with it, but very good
 * shared-data over different threads (not yet lifetime optimized)
-* multi-threading ([Rayon](https://github.com/rayon-rs/rayon))
+* multi-threading, a lot of threads and communication is inside, also  ([Rayon](https://github.com/rayon-rs/rayon))
 * an optional graphical interface that even runs on console only machines (the [Cursive](https://github.com/gyscos/Cursive) TUI)
 * architecture (modules), did some rework with file structure but it is not yet perfect in Rust, really. Now the code is better hidden inside a library... this gives some more opportunities
 * high-level functionality of different crates / including/using different crates (I don't want to reinvent the wheel)
 * Generics: a little bit about and how to use Generics, really nice, a bit difficult to search and fully adapt for but clear in its usage and powerful!!
-* in-code documentation with html generation, really nice! (still needs to be published automatically)
+* in-code documentation with html generation, really nice!
 * easy command-line (always was looking for that, nice: [clap](https://github.com/kbknapp/clap-rs))
 * channel/thread communication (creating worker threads easily, there are plenty implemented yet, no concurrency problems!!)
 * high level networking (mDNS): theoretically working, but 1st package depends on avahi ([register](https://github.com/plietar/rust-mdns)), [2nd](https://github.com/dylanmckay/mdns) even [fork](https://github.com/NervosFoundation/rust-mdns-discover) causes heavy CPU-load ...
-* use the test feature of Rust (one mod only yet)
-* trait example (a simple drop with print message)
+* use the test feature of Rust (one mod only yet), also with example test being tested!
+* traits (first a simple drop with print message), but then more, need to be more comfortable with debug for formatting
 * thread-pool: a simple self written but nice to use implemention :blush:
-* simple timers, alive signal in TUI (yet a sleep thread for each timer, not perfect)
-* easy cross compile (and test) for raspberry (v1 and v2, v3)... ok the tui update needs adjustment, cross compiling is a bit broken because of dependencies
-* logging (own module for that)
-* CI with [travis](https://travis-ci.org/electricherd/audiobookfinder/) works
-* travis built and deployed own public [documentation](https://electricherd.github.io/audiobookfinder/audiobookfinder/index.html)
+* simple timers, alive signal in TUI (yet a sleep thread for each timer, not perfect but since thread-pool quite ok)
+* before multiple c-library dependency: easy cross compile (and test) for raspberry (v1 and v2, v3)... ok the tui update needs adjustment
+* logging (own module for that), good
+* CI with [travis](https://travis-ci.org/electricherd/audiobookfinder/) works, cross compiling is still difficult with [trust](https://github.com/japaric/trust), [cross](https://github.com/japaric/cross/), [docker](https://www.docker.com/), need to watch closely to [steed](https://github.com/japaric/steed) for some problem solving.
+* travis automatically built and automatically deployed own public [documentation](https://electricherd.github.io/audiobookfinder/audiobookfinder/index.html)
+* making a library ([adbflib](https://electricherd.github.io/audiobookfinder/adbflib/index.html) as the main part of the program)
 
 ### Changes:
+* more documentation on usage, also including information from `Cargo.toml` data directly
 * replaced [id3](https://github.com/jameshurst/rust-id3) with [taglib](https://github.com/ebassi/taglib-rust/) (more external libs, but many more available media tags). Unfortunately it took me quite some time to find some strange difference (didn't work) between [crates.io](https://crates.io/crates/taglib) and original [github.com](https://github.com/ebassi/taglib-rust/) version, so I had to use the git pull rather than the convenient crate.io dependency usage in `Cargo.toml`.
-* I suspended the usage of [trust](https://github.com/japaric/trust) which uses [cross](https://github.com/japaric/cross), since the develop cross compiling docker images are based on ubuntu 12.02 (deb jessie), and the libsodium, libavahi uses ubuntu ppa from newer versions. I might even go to xenial (deb stretch), then both libs are included by default. But I would have to create my own dockerfile for that, and not just extend the well prepared dockerfiles from cross. :unamused:
-* first travis release build, only x64 unfortunately is correct  [releases](https://github.com/electricherd/audiobookfinder/releases). It's more difficult than I thought, but it's clear now.
-* [documentation](https://electricherd.github.io/audiobookfinder/audiobookfinder/index.html) deployed, awesome: Rust + github + travis +... :sunglasses: (needs javascript enabled)
+* I suspended the usage of [trust](https://github.com/japaric/trust) which uses [cross](https://github.com/japaric/cross), since the develop cross compiling docker images are based on ubuntu 12.04 (deb jessie), and the libsodium, libavahi uses ubuntu ppa from newer versions. I might even go to xenial (deb stretch), then both libs are included by default. But I would have to create my own dockerfile for that, and not just extend the well prepared dockerfiles from cross. :unamused:
+* first travis release build, only x64 unfortunately is correct (with libsodium13 because of trusty and ppa, good luck :expressionless:) [releases](https://github.com/electricherd/audiobookfinder/releases). It's more difficult than I thought, but it's clear now, std is still a problem, suspending work on that for a time.
+* [documentation](https://electricherd.github.io/audiobookfinder/audiobookfinder/index.html) deployed, awesome: Rust + github + travis +... (needs javascript enabled)
 * applied single test file for travis run: took Bachs Toccata And Fugue In D Minor by Paul Pitman (licence PD)  [orangefreesounds](www.orangefreesounds.com/toccata-and-fugue-in-d-minor/) in rememberring [Monthy Python's grand rugby match](https://www.youtube.com/watch?v=HKv6o7YqHnE).
 * travis CI working
-* more documentation locally: `cargo doc --no-deps --open`
+* more documentation locally as html: `cargo doc --no-deps --open`
 * fixed ui with BoxView and correct id finding (looks like bug is in Cursive)
 * refactored lookup method in net (needs more comments now)
 * file logging in (use [glogg](http://glogg.bonnefon.org/))
@@ -52,15 +52,15 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
  * run e.g. with `RUST_LOG=adbflib::net=debug RUST_BACKTRACE=full cargo run -- -n ~/Audiobooks`
 * ssh client with example key works, key now external
 * found emojis :grin:
-* included Rust doctest, since it is mostly a library, works well :smiley:
+* included Rust doctest, since it is mostly a library, works well
 * using a config mod
 * new mDNS crate for searching (which is very cpu consuming, but the new one is just a very recent fork, but hoping)
 * common.rs for common helper, such as a thread-pool
-* client/server authorization/management in a safe way (some small crypto with [thrussh](https://pijul.org/thrussh/))
+* client/server authorization/management in a safe way (some small crypto with [thrussh](https://pijul.org/thrussh/)), looking at [Pierre-Étienne Meunier - Building SSH servers in minutes](https://www.youtube.com/watch?v=TKQoPQcKKTw).
 * in and used but only as example, not yet understood:  [futures](https://tokio.rs/docs/getting-started/futures/) and ([tokio](https://tokio.rs/)) for async behavior and for networking
 
 ### ToDo:
-* enhance data collection to more than id3 tags, it was difficult to find a nice public domain original mp3 from [wikimedia](https://commons.wikimedia.org/wiki/Main_Page)
+* not think of travis CI
 * redo tui messages, ctrl messages (maybe into extra mod)
 * understand trussh communication, creating key, authorize
 * test more different targets using [this](https://github.com/japaric/trust)
