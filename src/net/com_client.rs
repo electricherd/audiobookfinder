@@ -1,8 +1,9 @@
 //! The ssh client yet of what it will be capable of
 //! and taken from trussh example (with corrections).
 use std;
-use std::sync::Arc;
 use std::env;
+use std::net::IpAddr;
+use std::sync::Arc;
 
 use futures;
 use futures::Future;
@@ -61,7 +62,7 @@ impl ComClient {
         ComClient { uuid: uuid_name }
     }
 
-    pub fn run(self, configuration: Arc<client::Config>, _: &str) -> thrussh_keys::Result<()> {
+    pub fn run(self, configuration: Arc<client::Config>, ip_addr: IpAddr) -> thrussh_keys::Result<()> {
         let key = Self::get_key(
             &config::net::SSH_CLIENT_SEC_KEY_PATH,
             &config::net::SSH_CLIENT_SEC_KEY_PASSWD,

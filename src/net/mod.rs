@@ -3,8 +3,7 @@
 //! It also let's us startup and perform everything in yet one step.
 
 use std;
-use std::fmt::Debug;
-use std::fmt::Display;
+
 use std::net::IpAddr;
 use std::sync::{mpsc, Arc, Mutex};
 use std::thread;
@@ -27,8 +26,6 @@ use ctrl;
 pub mod com_server;
 pub mod com_client;
 
-type IpType = (u16, IpAddr);
-
 #[derive(Clone)]
 enum ToThread<T: Send + Clone> {
     Data(T),
@@ -38,7 +35,7 @@ enum ToThread<T: Send + Clone> {
 /// The Net component keeps controll about everything from net.
 pub struct Net {
     my_id: String,
-    addresses_found: Arc<Mutex<Vec<IpType>>>,
+    addresses_found: Arc<Mutex<Vec<IpAddr>>>,
     tui_sender: mpsc::Sender<ctrl::SystemMsg>,
     has_tui: bool,
     ssh_handle: thread::JoinHandle<()>,
@@ -113,7 +110,7 @@ impl Net {
     pub fn lookup(&mut self) {
         // we are sending IpAddress ToThread
 
-        let (sender_ssh_client, receiver_client) = mpsc::channel::<ToThread<IpType>>();
+        let (sender_ssh_client, receiver_client) = mpsc::channel::<ToThread<IpAddr>>();
         let sender_ssh_client_stop = sender_ssh_client.clone();
         // I might not need that one here
         // maybe to attach some more data
@@ -121,10 +118,23 @@ impl Net {
         let has_tui = self.has_tui;
         let uuid_name = self.my_id.clone();
 
+        // to controller messages (mostly tui now)
+        let ctrl_sender = self.tui_sender.clone();
+        let ctrl_sender2 = self.tui_sender.clone();
+
+        // collection of addresses
+        let borrow_arc = self.addresses_found.clone();
+
         let _get_ip_thread = thread::spawn(move || {
             //
             //
-            Self::spawn_connect_new_clients_threads(receiver_client, uuid_name);
+            Self::spawn_connect_new_clients_threads(
+                receiver_client,
+                borrow_arc,
+                ctrl_sender,
+                uuid_name,
+                has_tui,
+            );
         });
 
         // use a timeout to stop search after a time
@@ -152,11 +162,9 @@ impl Net {
         let mut count_no_response = 0;
 
         // prepare everything for mdns thread
-        let ctrl_sender = self.tui_sender.clone();
-        let (mdns_send_ip, mdns_receive_ip) = mpsc::channel::<ToThread<(usize, io_mdns::Record)>>();
+        let (mdns_send_ip, mdns_receive_ip) = mpsc::channel::<ToThread<io_mdns::Record>>();
 
         let mdns_send_stop = mdns_send_ip.clone();
-        let borrow_arc = self.addresses_found.clone();
 
         // take input from mdns_discoper_thread
         // (new ssh client discovered, or renew timeout).
@@ -167,10 +175,9 @@ impl Net {
         let _take_mdns_input_thread = thread::spawn(move || {
             Self::take_mdns_input(
                 mdns_receive_ip,
-                borrow_arc,
                 sender_ssh_client,
                 timeout_nice_renewer,
-                ctrl_sender,
+                ctrl_sender2,
                 has_tui,
                 // change these
                 &mut count_no_cast,
@@ -200,40 +207,6 @@ impl Net {
         mdns_send_stop.send(ToThread::Stop).unwrap();
     }
 
-    /// A simple function from seen above (but implementing this actually took a while)
-    /// But I tried to implement some Generic parts
-    /// and also trying iterator reverse, mut borrowing in some funny ways (with internal
-    /// mutibility)
-    fn could_add_addr<T1, T2>(index: T1, input: T2, out: &mut Vec<(T1, T2)>) -> bool
-    where
-        T1: PartialEq + Clone,
-        T2: Clone + PartialOrd + Display + Debug, // Display Debug for println output
-    {
-        if out.iter().find(|&e| e.0 == index).is_none() {
-            out.push((index, input));
-            true
-        } else {
-            // only store one for each index
-            // just a training for generics in Rust, but since I only use 1 value per index
-            // I wanted to search all from end up
-            // for the following I needed  + Clone for cloned()
-            //                   and        PartialEq for e.0 == index
-            //let same_index : Vec<(T1,T2)> = out.iter().rev().cloned().filter(|e| e.0 == index).collect();
-            //assert!(same_index.len() == 1);
-            let mut same_indeces: Vec<&mut (T1, T2)> =
-                out.iter_mut().rev().filter(|e| e.0 == index).collect();
-
-            // since we checked before if find finds something, also this "find" or collect
-            // should find exactly 1 (since we replace every single one)
-            let ref mut comparer = &mut *same_indeces[0];
-            if comparer.1 > input {
-                debug!("{} replaced by {}", input, comparer.1);
-                comparer.1 = input;
-            }
-            false
-        }
-    }
-
     fn return_address(rk: &RecordKind) -> (Option<String>, Option<IpAddr>) {
         let (out_string, addr): (Option<String>, Option<IpAddr>) = match *rk {
             RecordKind::A(addr) => (Some(addr.to_string()), Some(addr.into())),
@@ -248,7 +221,7 @@ impl Net {
     }
 
     fn mdns_discover(
-        mdns_send_ip: std::sync::mpsc::Sender<ToThread<(usize, io_mdns::Record)>>,
+        mdns_send_ip: std::sync::mpsc::Sender<ToThread<io_mdns::Record>>,
         timeout_nice_receiver: std::sync::mpsc::Receiver<()>,
     ) -> usize {
         // mdns_send_ip  std::sync::mpsc::Sender<net::ToThread<(usize, io_mdns::Record)>>
@@ -267,7 +240,7 @@ impl Net {
             // this is the long search loop
             // looking rather inefficient, because cpu goes crazy
             // don't think this is my fault
-            for (index, response) in all_discoveries.enumerate() {
+            for (_index, response) in all_discoveries.enumerate() {
                 // if message came or sender gone continue and leave loop
                 // don't just kill all of this
                 match timeout_nice_receiver.try_recv() {
@@ -286,9 +259,7 @@ impl Net {
                 // just look response
                 match response {
                     Ok(good_response) => for record in good_response.records() {
-                        mdns_send_ip
-                            .send(ToThread::Data((index, record.clone())))
-                            .unwrap();
+                        mdns_send_ip.send(ToThread::Data(record.clone())).unwrap();
                     },
                     Err(_) => {
                         count_no_response += 1;
@@ -300,9 +271,8 @@ impl Net {
     }
 
     fn take_mdns_input(
-        mdns_receive_ip: std::sync::mpsc::Receiver<ToThread<(usize, io_mdns::Record)>>,
-        borrow_arc: std::sync::Arc<std::sync::Mutex<std::vec::Vec<IpType>>>,
-        sender_ssh_client: std::sync::mpsc::Sender<ToThread<IpType>>,
+        mdns_receive_ip: std::sync::mpsc::Receiver<ToThread<io_mdns::Record>>,
+        sender_ssh_client: std::sync::mpsc::Sender<ToThread<IpAddr>>,
         timeout_nice_renewer: std::sync::mpsc::Sender<()>,
         ctrl_sender: std::sync::mpsc::Sender<ctrl::SystemMsg>,
         has_tui: bool,
@@ -313,54 +283,18 @@ impl Net {
             match mdns_receive_ip.recv() {
                 Ok(good) => {
                     match good {
-                        ToThread::Data((index, recv_mesg)) => {
-                            let (out_string, addr): (
+                        ToThread::Data(recv_mesg) => {
+                            let (_, addr): (
                                 Option<String>,
                                 Option<IpAddr>,
                             ) = Self::return_address(&recv_mesg.kind);
-                            if let Some(valid_out) = out_string {
-                                let ref mut already_found_addr = &mut borrow_arc.lock().unwrap();
-                                if let Some(valid_addr) = addr {
-                                    if Self::could_add_addr(
-                                        index as u16,
-                                        valid_addr,
-                                        already_found_addr,
-                                    ) {
-                                        *count_valid += 1;
-
-                                        // get the last good index, this is the final
-                                        // ipv6 address to send request
-                                        if let Some(last_good) = already_found_addr.last() {
-                                            sender_ssh_client
-                                                .send(ToThread::Data(last_good.clone()))
-                                                .unwrap();
-                                            // renew time out
-                                            timeout_nice_renewer.send(()).unwrap();
-                                            // send name to tui
-                                            if has_tui {
-                                                ctrl_sender
-                                                    .send(ctrl::SystemMsg::Update(
-                                                        ctrl::ReceiveDialog::ShowNewHost,
-                                                        valid_out,
-                                                    ))
-                                                    .unwrap();
-                                                ctrl_sender
-                                                    .send(ctrl::SystemMsg::Update(
-                                                        ctrl::ReceiveDialog::ShowStats {
-                                                            show: ctrl::NetStats {
-                                                                line: *count_valid,
-                                                                max: index,
-                                                            },
-                                                        },
-                                                        "".to_string(),
-                                                    ))
-                                                    .unwrap();
-                                            } else {
-                                                info!("accepted address: {}", valid_out);
-                                            }
-                                        }
-                                    }
-                                }
+                            if let Some(valid_addr) = addr {
+                                *count_valid += 1;
+                                sender_ssh_client
+                                    .send(ToThread::Data(valid_addr.clone()))
+                                    .unwrap();
+                                // renew time out
+                                timeout_nice_renewer.send(()).unwrap();
                             }
                         }
                         ToThread::Stop => {
@@ -387,30 +321,58 @@ impl Net {
     }
 
     fn spawn_connect_new_clients_threads(
-        receiver_client: std::sync::mpsc::Receiver<ToThread<IpType>>,
+        receiver_client: std::sync::mpsc::Receiver<ToThread<IpAddr>>,
+        borrow_arc: std::sync::Arc<std::sync::Mutex<std::vec::Vec<IpAddr>>>,
+        ctrl_sender: std::sync::mpsc::Sender<ctrl::SystemMsg>,
         uuid_name: String,
+        has_tui: bool,
     ) {
         loop {
+            // wait for message
             if let Ok(recv_mesg) = receiver_client.recv() {
                 match recv_mesg {
                     ToThread::Data(address) => {
-                        // 2nd embedded and in loop-thread so copy copied again
-                        let uuid_name = uuid_name.clone();
+                        //
+                        // input address
+                        //
+                        let try_lock = &mut borrow_arc.lock();
+                        if let &mut Ok(ref mut ip_addresses) = try_lock {
+                            // search if ip address is already collected
+                            if ip_addresses.iter().all(|ip| *ip != address) {
+                                // put into collection to not find again
+                                ip_addresses.push(address);
 
-                        let _connect_ip_client_thread = thread::spawn(move || {
-                            debug!("pretending as if trying {:?}!", address);
+                                let count = ip_addresses.len();
+                                if has_tui {
+                                    ctrl_sender
+                                        .send(ctrl::SystemMsg::Update(
+                                            ctrl::ReceiveDialog::ShowNewHost,
+                                            address.to_string(),
+                                        ))
+                                        .unwrap();
+                                    ctrl_sender
+                                        .send(ctrl::SystemMsg::Update(
+                                            ctrl::ReceiveDialog::ShowStats {
+                                                show: ctrl::NetStats {
+                                                    line: count,
+                                                    max: 0,  //index,
+                                                },
+                                            },
+                                            "".to_string(),
+                                        ))
+                                        .unwrap();
+                                }
+                                // 2nd embedded and in loop-thread so copy copied again
+                                let uuid_name = uuid_name.clone();
 
-                            // wait a bit until ssh server is up. This will be moved somewhere else anyway
-                            thread::sleep(Duration::from_millis(500));
-                            // example client, will be done correctly if mDNS finds other instances
-                            let mut config = thrussh::client::Config::default();
-                            config.connection_timeout = Some(Duration::from_secs(600));
-                            let config = Arc::new(config);
-                            let client = com_client::ComClient::new(uuid_name);
-                            if client.run(config, config::net::SSH_HOST_AND_PORT).is_err() {
-                                error!("SSH Client example not working!!!");
+                                // create ssh client in new thread
+                                let _connect_ip_client_thread = thread::spawn(move || {
+                                    Self::create_ssh_client(address, uuid_name);
+                                });
                             }
-                        });
+                        } else {
+                            error!("Could not lock ip address list!");
+                        }
                     }
                     ToThread::Stop => {
                         break; // leave loop and _get_ip_thread
@@ -419,6 +381,19 @@ impl Net {
             } else {
                 break; // leave loop and _get_ip_thread
             }
+        }
+    }
+
+    fn create_ssh_client(address: IpAddr, uuid_name: String) {
+        // wait a bit until ssh server is up. This will be moved somewhere else anyway
+        thread::sleep(Duration::from_millis(500));
+        // example client, will be done correctly if mDNS finds other instances
+        let mut config = thrussh::client::Config::default();
+        config.connection_timeout = Some(Duration::from_secs(600));
+        let config = Arc::new(config);
+        let client = com_client::ComClient::new(uuid_name);
+        if client.run(config, address).is_err() {
+            error!("SSH Client example not working!!!");
         }
     }
 }
