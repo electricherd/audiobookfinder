@@ -62,47 +62,77 @@ impl ComClient {
         ComClient { uuid: uuid_name }
     }
 
-    pub fn run(self, configuration: Arc<client::Config>, ip_addr: IpAddr) -> thrussh_keys::Result<()> {
-        let key = Self::get_key(
+    pub fn run(
+        self,
+        configuration: Arc<client::Config>,
+        ip_addr: IpAddr,
+    ) -> thrussh_keys::Result<()> {
+        let id = self.uuid.clone();
+        Self::get_key(
             &config::net::SSH_CLIENT_SEC_KEY_PATH,
             &config::net::SSH_CLIENT_SEC_KEY_PASSWD,
-        )?;
-        let id = self.uuid.clone();
-
-        if client::connect(
-            config::net::SSH_HOST_AND_PORT,
-            configuration,
-            None,
-            self,
-            |connection| {
-                connection
-                    .authenticate_key(&config::net::SSH_CLIENT_USERNAME, key)
-                    .and_then(|session| {
-                        session
-                            .channel_open_session()
-                            .and_then(|(session, channelid)| {
-                                session
-                                    .data(
-                                        channelid,
-                                        None,
-                                        format!("Hello, this is client {}!", id),
-                                    )
-                                    .and_then(|(mut session, _)| {
-                                        session.disconnect(Disconnect::ByApplication, "Ciao", "");
-                                        session
-                                    })
-                            })
-                    })
-            },
-        ).is_err()
-        {
-            error!("connection could not be established!");
-            Err(thrussh_keys::Error::from(thrussh_keys::ErrorKind::Msg(
-                "Connection could not be established!".to_string(),
-            )))
-        } else {
-            Ok(())
-        }
+        ).and_then(|key| {
+            client::connect(
+                (ip_addr, config::net::SSH_PORT),
+                configuration,
+                None,
+                self,
+                |connection| {
+                    info!("Key file, password ok!");
+                    connection
+                        .authenticate_key(&config::net::SSH_CLIENT_USERNAME, key)
+                        .or_else(|e| {
+                            error!("Authentification didn't work!");
+                            Err(e)
+                        })
+                        .and_then(|session| {
+                            session
+                                .channel_open_session()
+                                .and_then(|(session, channelid)| {
+                                    session
+                                        .data(
+                                            channelid,
+                                            None,
+                                            format!("Hello, this is client {}!", id),
+                                        )
+                                        .and_then(|(mut session, _)| {
+                                            session.disconnect(
+                                                Disconnect::ByApplication,
+                                                "Ciao",
+                                                "",
+                                            );
+                                            session
+                                        })
+                                        .or_else(|e| {
+                                            error!("Session could not be opened!");
+                                            Err(e)
+                                        })
+                                })
+                                .or_else(|e| {
+                                    error!("Channel could not be openend!");
+                                    Err(e)
+                                })
+                        })
+                        .or_else(|e| {
+                            error!("Session could not be created!");
+                            Err(e)
+                        })
+                },
+            ).or_else(|_e| {
+                error!(
+                    "Connection with {:?}:{:?} could not be established!",
+                    ip_addr,
+                    config::net::SSH_PORT
+                );
+                Err(thrussh_keys::Error::from(thrussh_keys::ErrorKind::Msg(
+                    "Connection could not be established!".to_string(),
+                )))
+            })
+        })
+            .or_else(|e| {
+                error!("Key file: {:?}!",e);
+                Err(e)
+            })
     }
 
     fn get_key(priv_key_path: &str, passwd: &str) -> thrussh_keys::Result<key::KeyPair> {
@@ -117,6 +147,7 @@ impl ComClient {
         if std::fs::File::open(&file).is_ok() {
             load_secret_key(&file, Some(passwd.as_bytes()))
         } else {
+            error!("Not found or password wrong: {:?}",&file);
             Err(thrussh_keys::Error::from(thrussh_keys::ErrorKind::Msg(
                 "KeyFile could not be found!".to_string(),
             )))

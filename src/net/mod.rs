@@ -23,8 +23,8 @@ use ring;
 use config;
 use ctrl;
 
-pub mod com_server;
 pub mod com_client;
+pub mod com_server;
 
 #[derive(Clone)]
 enum ToThread<T: Send + Clone> {
@@ -97,7 +97,12 @@ impl Net {
                 name: uuid_name,
                 connector: None,
             };
-            thrussh::server::run(config, config::net::SSH_CLIENT_AND_PORT, replication_server);
+            let address_string = [
+                "0.0.0.0",
+                ":",
+                &config::net::SSH_PORT.to_string(),
+            ].concat();
+            thrussh::server::run(config, &address_string, replication_server);
             warn!("SSH ComServer stopped!!");
         });
         Ok(())
@@ -355,7 +360,7 @@ impl Net {
                                             ctrl::ReceiveDialog::ShowStats {
                                                 show: ctrl::NetStats {
                                                     line: count,
-                                                    max: 0,  //index,
+                                                    max: 0, //index,
                                                 },
                                             },
                                             "".to_string(),

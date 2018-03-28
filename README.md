@@ -31,11 +31,13 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
 * simple timers, alive signal in TUI (yet a sleep thread for each timer, not perfect but since thread-pool quite ok)
 * before multiple c-library dependency: easy cross compile (and test) for raspberry (v1 and v2, v3)... ok the tui update needs adjustment
 * logging (own module for that), good
+* client/server authorization/management in a safe way (some small crypto with [thrussh](https://pijul.org/thrussh/)), looking at [Pierre-Étienne Meunier - Building SSH servers in minutes](https://www.youtube.com/watch?v=TKQoPQcKKTw).
 * CI with [travis](https://travis-ci.org/electricherd/audiobookfinder/) works, cross compiling is still difficult with [trust](https://github.com/japaric/trust), [cross](https://github.com/japaric/cross/), [docker](https://www.docker.com/), need to watch closely to [steed](https://github.com/japaric/steed) for some problem solving.
 * travis automatically built and automatically deployed own public [documentation](https://electricherd.github.io/audiobookfinder/audiobookfinder/index.html)
 * making a library ([adbflib](https://electricherd.github.io/audiobookfinder/adbflib/index.html) as the main part of the program)
 
 ### Changes:
+* finally try ssh connection to found addresses (own ip/server found, but still a [thrussh](https://www.google.de/url?q=https://pijul.org/thrussh/&sa=U&ved=0ahUKEwiBmqnl2I7aAhVD0xQKHb2DCV4QFggUMAA&usg=AOvVaw0hRK-lIPzabrl2u5VQj4fj)  connecting issues, not clear why)
 * corrected mdns thread to add found ip addresses, not before
 * more documentation on usage, also including information from `Cargo.toml` data directly
 * replaced [id3](https://github.com/jameshurst/rust-id3) with [taglib](https://github.com/ebassi/taglib-rust/) (more external libs, but many more available media tags). Unfortunately it took me quite some time to find some strange difference (didn't work) between [crates.io](https://crates.io/crates/taglib) and original [github.com](https://github.com/ebassi/taglib-rust/) version, so I had to use the git pull rather than the convenient crate.io dependency usage in `Cargo.toml`.
@@ -57,8 +59,6 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
 * using a config mod
 * new mDNS crate for searching (which is very cpu consuming, but the new one is just a very recent fork, but hoping)
 * common.rs for common helper, such as a thread-pool
-* client/server authorization/management in a safe way (some small crypto with [thrussh](https://pijul.org/thrussh/)), looking at [Pierre-Étienne Meunier - Building SSH servers in minutes](https://www.youtube.com/watch?v=TKQoPQcKKTw).
-* in and used but only as example, not yet understood:  [futures](https://tokio.rs/docs/getting-started/futures/) and ([tokio](https://tokio.rs/)) for async behavior and for networking
 
 ### ToDo:
 * not think of travis CI
@@ -72,6 +72,7 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
 
 
 ### Issues:
+* client/server authorization/management after working for some time (key issues then), now with localhost (same application but ssh-server) doesn't work.
 * logging from other modules too detailed/too much
 * how to decide if an mDNS device is duplicated (more than 1 ipAdress representation, which is correct?, and do they come not within the same record)
 * no net is a problem
