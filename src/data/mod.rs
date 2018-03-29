@@ -1,16 +1,15 @@
 //! The oldest module, the data module stores all the data needed to collect.
-use std::io; // reading files
-use std::cmp; // max
-use std::fs::{self, DirEntry, Permissions}; // directory
-use std::path::{Path, PathBuf}; // path, clear
-use std::collections::hash_map::{Entry, HashMap}; // my main item uses a hash map
-                                                  //use std::os::windows::fs::MetadataExt;
-use std::os::linux::fs::MetadataExt;
-
+use std::{
+    cmp, //max
+    collections::hash_map::{Entry, HashMap}, // my main item uses a hash map
+    io, // reading files
+    fs::{self, DirEntry, Permissions}, // directory
+    os::linux::fs::MetadataExt, //use std::os::windows::fs::MetadataExt;
+    path::{Path, PathBuf}, // path, clear
+};
 use taglib;
 use uuid::Uuid;
 use tree_magic;
-
 use config;
 
 #[allow(dead_code)]
@@ -170,7 +169,7 @@ impl Collection {
                     } else {
                         col.visit_audio_files(&cb.path(), file_stats).or_else(|_| {
                             col.stats.files.faulty += 1;
-                            file_stats.faulty += 1;                            
+                            file_stats.faulty += 1;
                             error!("ts: {:?}", filetype);
                             Err(io::Error::new(io::ErrorKind::Other, "unknown audio file!"))
                         })

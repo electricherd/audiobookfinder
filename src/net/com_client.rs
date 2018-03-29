@@ -1,20 +1,9 @@
 //! The ssh client yet of what it will be capable of
 //! and taken from trussh example (with corrections).
-use std;
-use std::env;
-use std::net::IpAddr;
-use std::sync::Arc;
-
-use futures;
-use futures::Future;
-
-use thrussh;
-use thrussh::{client, ChannelId, Disconnect};
-
-use thrussh_keys;
-use thrussh_keys::key;
-use thrussh_keys::load_secret_key;
-
+use std::{self,env,net::IpAddr,sync::Arc};
+use futures::{self,Future};
+use thrussh::{self, client, ChannelId, Disconnect};
+use thrussh_keys::{self, key, load_secret_key};
 use config;
 
 #[derive(Clone)]

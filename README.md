@@ -37,7 +37,8 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
 * making a library ([adbflib](https://electricherd.github.io/audiobookfinder/adbflib/index.html) as the main part of the program)
 
 ### Changes:
-* finally try ssh connection to found addresses (own ip/server found, but still a [thrussh](https://www.google.de/url?q=https://pijul.org/thrussh/&sa=U&ved=0ahUKEwiBmqnl2I7aAhVD0xQKHb2DCV4QFggUMAA&usg=AOvVaw0hRK-lIPzabrl2u5VQj4fj)  connecting issues, not clear why)
+* adapted all to more lucid imports (in stable Rust now) 
+* finally try ssh connection to addresses found (own ip/server found, but still a [thrussh](https://www.google.de/url?q=https://pijul.org/thrussh/&sa=U&ved=0ahUKEwiBmqnl2I7aAhVD0xQKHb2DCV4QFggUMAA&usg=AOvVaw0hRK-lIPzabrl2u5VQj4fj)  connecting issues, not clear why)
 * corrected mdns thread to add found ip addresses, not before
 * more documentation on usage, also including information from `Cargo.toml` data directly
 * replaced [id3](https://github.com/jameshurst/rust-id3) with [taglib](https://github.com/ebassi/taglib-rust/) (more external libs, but many more available media tags). Unfortunately it took me quite some time to find some strange difference (didn't work) between [crates.io](https://crates.io/crates/taglib) and original [github.com](https://github.com/ebassi/taglib-rust/) version, so I had to use the git pull rather than the convenient crate.io dependency usage in `Cargo.toml`.
@@ -61,6 +62,7 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
 * common.rs for common helper, such as a thread-pool
 
 ### ToDo:
+* change interface of ctrl messages to possibly decouple ctrl dependency ... maybe
 * not think of travis CI
 * redo tui messages, ctrl messages (maybe into extra mod)
 * understand trussh communication, creating key, authorize

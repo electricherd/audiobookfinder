@@ -4,7 +4,6 @@
 
 pub mod tui; // todo: pub is not recommended, I use it for doctest
 use ctrl::tui::Tui;
-
 use std::sync::mpsc;
 
 #[derive(Clone)]

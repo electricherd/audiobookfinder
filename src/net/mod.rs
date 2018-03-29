@@ -2,24 +2,18 @@
 //! the mDNS registering, mDNS search, ssh server and ssh client.
 //! It also let's us startup and perform everything in yet one step.
 
-use std;
-
-use std::net::IpAddr;
-use std::sync::{mpsc, Arc, Mutex};
-use std::thread;
-use std::time::Duration;
-
-use io_mdns;
-use io_mdns::RecordKind;
-
-use avahi_dns_sd;
-use avahi_dns_sd::DNSService;
-
+use std::{
+    self,
+    net::IpAddr,
+    sync::{mpsc, Arc, Mutex},
+    thread,
+    time::Duration
+};
+use io_mdns::{self,RecordKind};
+use avahi_dns_sd::{self,DNSService};
 use thrussh;
 use thrussh_keys::key;
-
 use ring;
-
 use config;
 use ctrl;
 

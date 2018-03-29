@@ -10,19 +10,35 @@ extern crate uuid;
 
 extern crate adbflib;
 
-use std::path::Path; // path, clear
-use std::sync::{Arc, Mutex};
-use std::sync::mpsc;
-use std::thread;
-
-use rayon::prelude::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator};
+use std::{
+    path::Path, // path, clear
+    sync::{
+        Arc,
+        Mutex,
+        mpsc
+    },
+    thread
+};
+use rayon::prelude::{
+    IndexedParallelIterator,
+    IntoParallelRefIterator,
+    ParallelIterator};
 use uuid::Uuid;
-
-use adbflib::data;
-use adbflib::data::Collection;
-use adbflib::ctrl::{Alive, Ctrl, ReceiveDialog, Status, SystemMsg};
-use adbflib::net::Net;
-use adbflib::logit;
+use adbflib::{
+    data::{
+        self,
+        Collection
+    },
+    ctrl::{
+        Alive,
+        Ctrl,
+        ReceiveDialog,
+        Status,
+        SystemMsg
+    },
+    net::Net,
+    logit
+};
 
 static INPUT_FOLDERS: &str = "folders";
 static APP_TITLE: &str = concat!("The audiobook finder (", env!("CARGO_PKG_NAME"), ")");

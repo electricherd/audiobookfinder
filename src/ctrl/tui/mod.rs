@@ -1,16 +1,18 @@
 //! The TUI parts, greatly using [Cursive](https://gyscos.github.io/Cursive/cursive/index.html)
 //! showing table, the paths being searched, an alive for that, also the mDNS search performed
 //! and later status of the connection to the found clients.
-use super::super::cursive::Cursive;
-use super::super::cursive::align;
-use super::super::cursive::views::{BoxView, Dialog, Layer, LinearLayout, ListView, Panel, TextView};
-use super::super::cursive::traits::*; //{Identifiable,select};
-
-use std::iter::Iterator;
-use std::thread;
-use std::sync::mpsc;
-use std::time::Duration;
-
+use super::super::cursive::{
+    Cursive,
+    align,
+    views::{BoxView, Dialog, Layer, LinearLayout, ListView, Panel, TextView},
+    traits::* //{Identifiable,select};
+};
+use std::{
+    iter::Iterator,
+    sync::mpsc,
+    thread,
+    time::Duration
+};
 use ctrl::{Alive, ReceiveDialog, Status, SystemMsg, UiMsg};
 use common::ThreadPool;
 use config;
