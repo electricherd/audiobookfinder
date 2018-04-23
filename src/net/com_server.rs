@@ -1,18 +1,12 @@
 //! The ssh communication server, decisions will be made here, of how to interact with
 //! the clients, is basically still taken from trussh example (with corrections)
 
-use std::{self,net};
 use futures;
-use thrussh::{
-    self,
-    ChannelId,
-    server::{
-        self,
-        Auth,
-        Session
-    }
-};
-use thrussh_keys::{self,key};
+use std::{self, net};
+use thrussh::{self,
+              server::{self, Auth, Session},
+              ChannelId};
+use thrussh_keys::{self, key};
 
 #[derive(Clone)]
 pub struct ComServer {

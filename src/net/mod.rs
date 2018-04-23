@@ -2,20 +2,18 @@
 //! the mDNS registering, mDNS search, ssh server and ssh client.
 //! It also let's us startup and perform everything in yet one step.
 
-use std::{
-    self,
-    net::IpAddr,
-    sync::{mpsc, Arc, Mutex},
-    thread,
-    time::Duration
-};
-use io_mdns::{self,RecordKind};
-use avahi_dns_sd::{self,DNSService};
-use thrussh;
-use thrussh_keys::key;
-use ring;
+use avahi_dns_sd::{self, DNSService};
 use config;
 use ctrl;
+use io_mdns::{self, RecordKind};
+use ring;
+use std::{self,
+          net::IpAddr,
+          sync::{mpsc, Arc, Mutex},
+          thread,
+          time::Duration};
+use thrussh;
+use thrussh_keys::key;
 
 pub mod com_client;
 pub mod com_server;
@@ -91,11 +89,7 @@ impl Net {
                 name: uuid_name,
                 connector: None,
             };
-            let address_string = [
-                "0.0.0.0",
-                ":",
-                &config::net::SSH_PORT.to_string(),
-            ].concat();
+            let address_string = ["0.0.0.0", ":", &config::net::SSH_PORT.to_string()].concat();
             thrussh::server::run(config, &address_string, replication_server);
             warn!("SSH ComServer stopped!!");
         });

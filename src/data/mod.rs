@@ -1,16 +1,15 @@
 //! The oldest module, the data module stores all the data needed to collect.
-use std::{
-    cmp, //max
-    collections::hash_map::{Entry, HashMap}, // my main item uses a hash map
-    io, // reading files
-    fs::{self, DirEntry, Permissions}, // directory
-    os::linux::fs::MetadataExt, //use std::os::windows::fs::MetadataExt;
-    path::{Path, PathBuf}, // path, clear
-};
-use taglib;
-use uuid::Uuid;
-use tree_magic;
 use config;
+use std::{cmp,                                     //max
+          collections::hash_map::{Entry, HashMap}, // my main item uses a hash map
+          fs::{self, DirEntry, Permissions},       // directory
+          io,                                      // reading files
+          os::linux::fs::MetadataExt,              //use std::os::windows::fs::MetadataExt;
+          path::{Path, PathBuf}};                  // path, clear
+
+use taglib;
+use tree_magic;
+use uuid::Uuid;
 
 #[allow(dead_code)]
 /// # File info

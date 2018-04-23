@@ -37,7 +37,8 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
 * making a library ([adbflib](https://electricherd.github.io/audiobookfinder/adbflib/index.html) as the main part of the program)
 
 ### Changes:
-* adapted all to more lucid imports (in stable Rust now) 
+* updated crates, also formatter changes (alphabetical order)
+* adapted all to more lucid imports (in stable Rust now)
 * finally try ssh connection to addresses found (own ip/server found, but still a [thrussh](https://www.google.de/url?q=https://pijul.org/thrussh/&sa=U&ved=0ahUKEwiBmqnl2I7aAhVD0xQKHb2DCV4QFggUMAA&usg=AOvVaw0hRK-lIPzabrl2u5VQj4fj)  connecting issues, not clear why)
 * corrected mdns thread to add found ip addresses, not before
 * more documentation on usage, also including information from `Cargo.toml` data directly
@@ -62,6 +63,7 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
 * common.rs for common helper, such as a thread-pool
 
 ### ToDo:
+* the thrussh build-in is still an issues, for some reason not working for weeks (a bit demotivating, ok, also vacations :blush:)
 * change interface of ctrl messages to possibly decouple ctrl dependency ... maybe
 * not think of travis CI
 * redo tui messages, ctrl messages (maybe into extra mod)
@@ -91,8 +93,8 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
 * snap linux packaging / online compiler like [Travis](https://docs.travis-ci.com/user/getting-started/) for various target compilation service
 * further lifetimes optimizations
 * exchange of data over net (probably de-/serialization using [serde](https://docs.serde.rs/serde/))
-* still looking for the right IDE
-  * sublime text is good and fast, setup was ok, racer etc.
+* [ATOM](https://atom.io/) is my choice for development, on my Eee Pc [sublime](https://www.sublimetext.com), because of small footprint and performance
+  * [sublime text](https://www.sublimetext.com) is good and fast, setup was ok, racer etc.
   * [ATOM](https://atom.io/), looks good, no refactoring though, many plug-ins for rust, has README.md syntax
   * [IntelliJ IDEA](https://intellij-rust.github.io/install.html) [download with snaps](https://blog.jetbrains.com/idea/2017/11/install-intellij-idea-with-snaps/), and then Rust plug-in: easy, refactoring, spell-check, nice (but editor ... column select??, close tab??), but looks professional
 * internationalization (which is not really supported yet by Rust)

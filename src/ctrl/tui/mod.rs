@@ -1,21 +1,15 @@
 //! The TUI parts, greatly using [Cursive](https://gyscos.github.io/Cursive/cursive/index.html)
 //! showing table, the paths being searched, an alive for that, also the mDNS search performed
 //! and later status of the connection to the found clients.
-use super::super::cursive::{
-    Cursive,
-    align,
-    views::{BoxView, Dialog, Layer, LinearLayout, ListView, Panel, TextView},
-    traits::* //{Identifiable,select};
-};
-use std::{
-    iter::Iterator,
-    sync::mpsc,
-    thread,
-    time::Duration
-};
-use ctrl::{Alive, ReceiveDialog, Status, SystemMsg, UiMsg};
+use super::super::cursive::{align,
+                            traits::*, //{Identifiable,select};
+                            views::{BoxView, Dialog, Layer, LinearLayout, ListView, Panel,
+                                    TextView},
+                            Cursive};
 use common::ThreadPool;
 use config;
+use ctrl::{Alive, ReceiveDialog, Status, SystemMsg, UiMsg};
+use std::{iter::Iterator, sync::mpsc, thread, time::Duration};
 
 pub struct Tui {
     pub ui_receiver: mpsc::Receiver<UiMsg>,
@@ -113,13 +107,13 @@ impl Tui {
                         }
                     }
                     ReceiveDialog::ShowStats { show } => {
-                         let output = self.handle.find_id::<TextView>(ID_HOST_INDEX);
-                         if let Some(mut found) = output {
-                             found.set_content(show.line.to_string());
-                         } else {
-                             error!("View {} could not be found!", ID_HOST_INDEX);
-                         }
-                     }
+                        let output = self.handle.find_id::<TextView>(ID_HOST_INDEX);
+                        if let Some(mut found) = output {
+                            found.set_content(show.line.to_string());
+                        } else {
+                            error!("View {} could not be found!", ID_HOST_INDEX);
+                        }
+                    }
                     ReceiveDialog::Debug => {
                         if let Some(mut found) = self.handle.find_id::<TextView>(DEBUG_TEXT_ID) {
                             found.set_content(text);
@@ -133,16 +127,18 @@ impl Tui {
                     match on_off {
                         Status::ON => {
                             self.toggle_alive(signal.clone(), AliveSym::GoOn);
-                            let (already_running, toggle,timeout_id): (
+                            let (already_running, toggle, timeout_id): (
                                 bool,
                                 &mut bool,
-                                usize
+                                usize,
                             ) = match signal {
-                                Alive::BusyPath(nr) => {
-                                    (self.alive.pathes[nr].runs, &mut self.alive.pathes[nr].runs,nr+1)
-                                }
+                                Alive::BusyPath(nr) => (
+                                    self.alive.pathes[nr].runs,
+                                    &mut self.alive.pathes[nr].runs,
+                                    nr + 1,
+                                ),
                                 Alive::HostSearch => {
-                                    (self.alive.host.runs, &mut self.alive.host.runs,0)
+                                    (self.alive.host.runs, &mut self.alive.host.runs, 0)
                                 }
                             };
                             if !already_running {

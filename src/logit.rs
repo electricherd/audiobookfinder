@@ -3,7 +3,7 @@
 //! somewhere (maybe a syslog log).
 use env_logger;
 use flexi_logger;
-use syslog;
+use syslog::{self, Facility, Formatter3164};
 
 pub enum Log {
     Console,
@@ -19,18 +19,26 @@ pub struct Logit {
 impl Logit {
     pub fn init(which: Log) {
         match which {
-            Log::System => match syslog::unix(syslog::Facility::LOG_USER) {
-                Err(e) => {
-                    env_logger::init();
-                    error!("impossible to connect to syslog: {:?}", e);
-                }
-                Ok(writer) => {
-                    let r = writer.send(syslog::Severity::LOG_ALERT, "Logit init and test!");
-                    if r.is_err() {
-                        println!("error sending the log {}", r.err().expect("got error"));
+            Log::System => {
+                let formatter = Formatter3164 {
+                    facility: Facility::LOG_USER,
+                    hostname: None,
+                    process: env!("CARGO_PKG_NAME").into(),
+                    pid: 42,
+                };
+
+                match syslog::unix(formatter) {
+                    Err(e) => {
+                        env_logger::init();
+                        error!("impossible to connect to syslog: {:?}", e);
+                    }
+                    Ok(mut writer) => {
+                        writer
+                            .err("Logit init and test!")
+                            .expect("could not write error message");;
                     }
                 }
-            },
+            }
             Log::Console => {
                 env_logger::init();
             }

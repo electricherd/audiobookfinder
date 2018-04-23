@@ -1,10 +1,10 @@
 //! The ssh client yet of what it will be capable of
 //! and taken from trussh example (with corrections).
-use std::{self,env,net::IpAddr,sync::Arc};
-use futures::{self,Future};
+use config;
+use futures::{self, Future};
+use std::{self, env, net::IpAddr, sync::Arc};
 use thrussh::{self, client, ChannelId, Disconnect};
 use thrussh_keys::{self, key, load_secret_key};
-use config;
 
 #[derive(Clone)]
 pub struct ComClient {
@@ -119,7 +119,7 @@ impl ComClient {
             })
         })
             .or_else(|e| {
-                error!("Key file: {:?}!",e);
+                error!("Key file: {:?}!", e);
                 Err(e)
             })
     }
@@ -136,7 +136,7 @@ impl ComClient {
         if std::fs::File::open(&file).is_ok() {
             load_secret_key(&file, Some(passwd.as_bytes()))
         } else {
-            error!("Not found or password wrong: {:?}",&file);
+            error!("Not found or password wrong: {:?}", &file);
             Err(thrussh_keys::Error::from(thrussh_keys::ErrorKind::Msg(
                 "KeyFile could not be found!".to_string(),
             )))
