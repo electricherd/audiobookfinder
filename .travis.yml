@@ -4,6 +4,10 @@ language: rust
 services: docker
 sudo: required
 
+addons:
+  apt:
+    update: true
+    
 env:
   global:
     - CRATE_NAME=audiobookfinder
