@@ -1,11 +1,12 @@
 //! The ssh communication server, decisions will be made here, of how to interact with
 //! the clients, is basically still taken from trussh example (with corrections)
-
+use bincode;
 use futures;
+use net::data::DataSession;
 use std::{self, net};
-use thrussh::{self,
-              server::{self, Auth, Session},
-              ChannelId};
+use thrussh::{
+    self, server::{self, Auth, Session}, ChannelId,
+};
 use thrussh_keys::{self, key};
 
 #[derive(Clone)]
@@ -49,12 +50,38 @@ impl thrussh::server::Handler for ComServer {
         data: &[u8],
         mut session: server::Session,
     ) -> Self::FutureUnit {
-        debug!(
-            "Srv[{:?}]: data on channel {:?}: {:?}",
-            self.name,
-            channel,
-            std::str::from_utf8(data)
-        );
+        let session_data: Result<DataSession, _> = bincode::deserialize_from(data);
+        match session_data {
+            Ok(deserialized) => match deserialized {
+                DataSession::Auth { ref auth } => {
+                    let client_id = auth.get_id();
+                    let client_version = auth.get_version();
+                    info!(
+                        "Srv[{:?}]: auth from channel {:?}: with id {:?} and version {:?}",
+                        self.name,
+                        channel,
+                        client_id,
+                        client_version
+                    );
+                }
+                DataSession::Data { .. } => {
+                    info!(
+                        "Srv[{:?}]: data from channel {:?}: {:?}",
+                        self.name,
+                        channel,
+                        std::str::from_utf8(data)
+                    );
+                }
+            },
+            Err(_) => {
+                info!(
+                    "Srv[{:?}]: not valid session data on channel {:?}: {:?}",
+                    self.name,
+                    channel,
+                    std::str::from_utf8(data)
+                );
+            }
+        }
         session.data(channel, None, data); //.unwrap();
         futures::finished((self, session))
     }

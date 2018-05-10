@@ -1,7 +1,9 @@
 //! The ssh client yet of what it will be capable of
 //! and taken from trussh example (with corrections).
+use bincode;
 use config;
 use futures::{self, Future};
+use net::data::{DataAuth, DataSession};
 use std::{self, env, net::IpAddr, sync::Arc};
 use thrussh::{self, client, ChannelId, Disconnect};
 use thrussh_keys::{self, key, load_secret_key};
@@ -36,12 +38,20 @@ impl client::Handler for ComClient {
         data: &[u8],
         session: client::Session,
     ) -> Self::SessionUnit {
-        debug!(
-            "CLIENT: data on channel {:?} {:?}: {:?}",
-            ext,
-            channel,
-            std::str::from_utf8(data)
-        );
+        let res_session: Result<DataSession, _> = bincode::deserialize(&data[..]);
+        if let Ok(work_session) = res_session {
+            match work_session {
+                DataSession::Auth { auth } => {
+                    info!(
+                        "CLIENT: data on channel {:?} {:?}: {:?}",
+                        ext,
+                        channel,
+                        auth.get_id()
+                    );
+                }
+                DataSession::Data { .. } => {}
+            }
+        }
         futures::finished((self, session))
     }
 }
@@ -75,14 +85,22 @@ impl ComClient {
                             Err(e)
                         })
                         .and_then(|session| {
+                            info!("Session could be established!");
                             session
                                 .channel_open_session()
                                 .and_then(|(session, channelid)| {
+                                    info!("Session could be opened, sending out!");
+
+                                    // send real authentification
+                                    let auth_data = DataSession::Auth {
+                                        auth: DataAuth::new(id),
+                                    };
+
                                     session
                                         .data(
                                             channelid,
                                             None,
-                                            format!("Hello, this is client {}!", id),
+                                            bincode::serialize(&auth_data).unwrap(),
                                         )
                                         .and_then(|(mut session, _)| {
                                             session.disconnect(
@@ -119,7 +137,8 @@ impl ComClient {
             })
         })
             .or_else(|e| {
-                error!("Key file: {:?}!", e);
+                // error!("Key file: {:?}!", e);
+                error!("Key file error!");
                 Err(e)
             })
     }

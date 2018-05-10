@@ -37,6 +37,7 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
 * making a library ([adbflib](https://electricherd.github.io/audiobookfinder/adbflib/index.html) as the main part of the program)
 
 ### Changes:
+* thrussh mechanism did always work, no problem, just wrong traces, and irritating ipv6, localhost addresses. Added auth message, with identification, will add simple zero-knowledge mechanism.
 * updated crates, also formatter changes (alphabetical order)
 * adapted all to more lucid imports (in stable Rust now)
 * finally try ssh connection to addresses found (own ip/server found, but still a [thrussh](https://www.google.de/url?q=https://pijul.org/thrussh/&sa=U&ved=0ahUKEwiBmqnl2I7aAhVD0xQKHb2DCV4QFggUMAA&usg=AOvVaw0hRK-lIPzabrl2u5VQj4fj)  connecting issues, not clear why)
@@ -63,10 +64,9 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
 * common.rs for common helper, such as a thread-pool
 
 ### ToDo:
-* the thrussh build-in is still an issues, for some reason not working for weeks (a bit demotivating, ok, also vacations :blush:)
-* change interface of ctrl messages to possibly decouple ctrl dependency ... maybe
+* further client thrussh improvements, add secure identification by using zero-knowledge
+* change interface of ctrl messages to possibly decouple ctrl dependency ... (redo tui messages, ctrl messages (maybe into extra mod)
 * not think of travis CI
-* redo tui messages, ctrl messages (maybe into extra mod)
 * understand trussh communication, creating key, authorize
 * test more different targets using [this](https://github.com/japaric/trust)
 * use state machine like [state_machine_future](https://github.com/fitzgen/state_machine_future) for client and server, the example looks promising
@@ -76,7 +76,6 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
 
 
 ### Issues:
-* client/server authorization/management after working for some time (key issues then), now with localhost (same application but ssh-server) doesn't work.
 * logging from other modules too detailed/too much
 * how to decide if an mDNS device is duplicated (more than 1 ipAdress representation, which is correct?, and do they come not within the same record)
 * no net is a problem
@@ -86,7 +85,6 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
 
 ### Yet in plan:
 * create a key yourself!! And store, which is going to be done if not found at startup
-* Rust workspace for IDE
 * communication is now easy with ssh but how to authenticate as a valid adbf? Look at ssh details, and zero-knowledge or something similar: hiding key or secrecy knowledge in code without being to obvious (first should be a simple string, don't bother too much)
 * rework the one stub for worker thread to have many worker threads in net to do something with found addresses (use thrussh simple example)
 * using an hopefully nice to use state machine for client server *communication* states

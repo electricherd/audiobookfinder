@@ -17,6 +17,7 @@ use thrussh_keys::key;
 
 pub mod com_client;
 pub mod com_server;
+pub mod data;
 
 #[derive(Clone)]
 enum ToThread<T: Send + Clone> {

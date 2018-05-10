@@ -47,6 +47,7 @@ uuid = {version = "0.6", features = ["v4"]}
 
 serde = "1.0"
 serde_derive = "1.0"
+bincode = "1.0"
 
 ring = "0.12"  # crypto, used for random generation
 thrussh = "0.19"           # ssh server client crate for communication
