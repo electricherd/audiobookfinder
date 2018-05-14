@@ -5,19 +5,16 @@
 use avahi_dns_sd::{self, DNSService};
 use config;
 use ctrl;
+use futures::Future;
 use io_mdns::{self, RecordKind};
-use ring;
-use std::{self,
-          net::IpAddr,
-          sync::{mpsc, Arc, Mutex},
-          thread,
-          time::Duration};
-use thrussh;
-use thrussh_keys::key;
+use net::{ssh_client::sc_client::SCClient, ssh_server::SSHServer};
+use std::{
+    self, net::IpAddr, sync::{mpsc, Arc, Mutex}, thread, time::Duration,
+};
 
-pub mod com_client;
-pub mod com_server;
-pub mod data;
+mod ssh_server;
+mod ssh_client;
+mod data;
 
 #[derive(Clone)]
 enum ToThread<T: Send + Clone> {
@@ -68,33 +65,13 @@ impl Net {
     }
 
     pub fn start_com_server(&mut self) -> Result<(), ()> {
-        // well is this an attached thread ????
-
-        let uuid_name = self.my_id.clone();
-        self.ssh_handle = thread::spawn(move || {
-            info!("SSH ComServer starting...");
-
-            let key_algorithm = key::ED25519;
-            // possible: key::ED25519, key::RSA_SHA2_256, key::RSA_SHA2_512
-
-            let _ = ring::rand::SystemRandom::new();
-            let mut config = thrussh::server::Config::default();
-            config.connection_timeout = Some(Duration::from_secs(600));
-            config.auth_rejection_time = Duration::from_secs(3);
-            config
-                .keys
-                .push(key::KeyPair::generate(key_algorithm).unwrap());
-            let config = Arc::new(config);
-
-            let replication_server = com_server::ComServer {
-                name: uuid_name,
-                connector: None,
-            };
-            let address_string = ["0.0.0.0", ":", &config::net::SSH_PORT.to_string()].concat();
-            thrussh::server::run(config, &address_string, replication_server);
-            warn!("SSH ComServer stopped!!");
-        });
-        Ok(())
+        // delegate this somewhere else
+        if let Ok(good_thread) = SSHServer::create_thread(self.my_id.clone()) {
+            self.ssh_handle = good_thread;
+            Ok(())
+        } else {
+            Err(())
+        }
     }
 
     /// Lookup yet is the start of the networking.
@@ -361,7 +338,8 @@ impl Net {
 
                                 // create ssh client in new thread
                                 let _connect_ip_client_thread = thread::spawn(move || {
-                                    Self::create_ssh_client(address, uuid_name);
+                                    let mut new_client_future = SCClient::start(uuid_name, address);
+                                    let _ = new_client_future.poll();
                                 });
                             }
                         } else {
@@ -375,19 +353,6 @@ impl Net {
             } else {
                 break; // leave loop and _get_ip_thread
             }
-        }
-    }
-
-    fn create_ssh_client(address: IpAddr, uuid_name: String) {
-        // wait a bit until ssh server is up. This will be moved somewhere else anyway
-        thread::sleep(Duration::from_millis(500));
-        // example client, will be done correctly if mDNS finds other instances
-        let mut config = thrussh::client::Config::default();
-        config.connection_timeout = Some(Duration::from_secs(600));
-        let config = Arc::new(config);
-        let client = com_client::ComClient::new(uuid_name);
-        if client.run(config, address).is_err() {
-            error!("SSH Client example not working!!!");
         }
     }
 }

@@ -18,6 +18,8 @@ pub mod logit;
 // ctrl
 // ctrl/tui
 extern crate cursive;
+#[macro_use]
+extern crate state_machine_future;
 pub mod ctrl;
 
 // data

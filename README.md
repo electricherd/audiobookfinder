@@ -35,8 +35,11 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
 * CI with [travis](https://travis-ci.org/electricherd/audiobookfinder/) works, cross compiling is still difficult with [trust](https://github.com/japaric/trust), [cross](https://github.com/japaric/cross/), [docker](https://www.docker.com/), need to watch closely to [steed](https://github.com/japaric/steed) for some problem solving.
 * travis automatically built and automatically deployed own public [documentation](https://electricherd.github.io/audiobookfinder/audiobookfinder/index.html)
 * making a library ([adbflib](https://electricherd.github.io/audiobookfinder/adbflib/index.html) as the main part of the program)
+* using a [state machine](https://github.com/fitzgen/state_machine_future) wher
+e it fits, here for client server *communication* states
 
 ### Changes:
+* the client ssh connector (com_client) is behind a state machine (to have reconnect and similar easily)
 * thrussh mechanism did always work, no problem, just wrong traces, and irritating ipv6, localhost addresses. Added auth message, with identification, will add simple zero-knowledge mechanism.
 * updated crates, also formatter changes (alphabetical order)
 * adapted all to more lucid imports (in stable Rust now)
@@ -69,7 +72,7 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
 * not think of travis CI
 * understand trussh communication, creating key, authorize
 * test more different targets using [this](https://github.com/japaric/trust)
-* use state machine like [state_machine_future](https://github.com/fitzgen/state_machine_future) for client and server, the example looks promising
+for client and server, the example looks promising
 * nicer timer (thread pool is good but still with sleep)
 * make cross compiling as easy as possible
 * get rid of Avahi
@@ -87,7 +90,6 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
 * create a key yourself!! And store, which is going to be done if not found at startup
 * communication is now easy with ssh but how to authenticate as a valid adbf? Look at ssh details, and zero-knowledge or something similar: hiding key or secrecy knowledge in code without being to obvious (first should be a simple string, don't bother too much)
 * rework the one stub for worker thread to have many worker threads in net to do something with found addresses (use thrussh simple example)
-* using an hopefully nice to use state machine for client server *communication* states
 * snap linux packaging / online compiler like [Travis](https://docs.travis-ci.com/user/getting-started/) for various target compilation service
 * further lifetimes optimizations
 * exchange of data over net (probably de-/serialization using [serde](https://docs.serde.rs/serde/))
