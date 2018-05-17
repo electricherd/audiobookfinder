@@ -3,8 +3,9 @@
 //! is only a light facade to the tui messages.
 
 pub mod tui; // todo: pub is not recommended, I use it for doctest
-use ctrl::tui::Tui;
 use std::sync::mpsc;
+
+use self::tui::Tui;
 
 #[derive(Clone)]
 pub enum Alive {

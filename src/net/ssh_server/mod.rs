@@ -2,15 +2,15 @@
 
 pub mod com_server;
 
-use config;
+
 use std::{
     sync::{Arc}, thread, time::Duration,
 };
 use thrussh;
-use net::ssh_server::com_server::ComServer;
-use thrussh_keys::key;
 use ring;
-
+use thrussh_keys::key;
+use self::com_server::ComServer;
+use super::super::config;
 
 pub struct SSHServer {
 

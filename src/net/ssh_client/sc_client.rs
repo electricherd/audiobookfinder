@@ -8,17 +8,18 @@
 //! version is only 0.1.6 as of now, but what does it really mean?.
 
 use futures::Poll;
-use net::ssh_client::com_client::ComClient;
 use state_machine_future::RentToOwn;
 use std::{net::IpAddr, sync::Arc, time::Duration};
 use thrussh;
+
+use super::com_client::ComClient;
 
 #[derive(StateMachineFuture)]
 pub enum SCClient {
     #[state_machine_future(start, transitions(Runner))]
     CreateAccordingIP { id: String, address: IpAddr },
 
-    #[state_machine_future(transitions(Finished))]
+    #[state_machine_future(transitions(Finished,Runner))]
     Runner {
         client: ComClient,
         config: Arc<thrussh::client::Config>,
@@ -52,9 +53,16 @@ impl PollSCClient for SCClient {
     }
     fn poll_runner<'a>(runner: &'a mut RentToOwn<'a, Runner>) -> Poll<AfterRunner, ()> {
         let input = runner.take();
-        if input.client.run(input.config, input.address).is_err() {
-            error!("SSH Client example not working!!!");
+        info!("SSH Client do ...");
+        match  input.client.run(input.config, input.address) {
+            Ok(_) => {
+                info!("SSH Client continue ...");
+                //transition!(input)
+            },
+            Err(_) => {
+                error!("SSH Client example not working!!!");
+            }
         }
-        transition!(Finished(()))
+        transition!(Finished(()))        
     }
 }

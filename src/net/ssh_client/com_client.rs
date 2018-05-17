@@ -1,12 +1,13 @@
 //! The ssh client yet of what it will be capable of
 //! and taken from trussh example (with corrections).
 use bincode;
-use config;
 use futures::{self, Future};
-use net::data::{DataAuth, DataSession};
 use std::{self, env, net::IpAddr, sync::Arc};
 use thrussh::{self, client, ChannelId, Disconnect};
 use thrussh_keys::{self, key, load_secret_key};
+
+use super::super::config;
+use super::super::data::{DataAuth, DataSession};
 
 #[derive(Clone)]
 pub struct ComClient {

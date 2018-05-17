@@ -2,12 +2,13 @@
 //! the clients, is basically still taken from trussh example (with corrections)
 use bincode;
 use futures;
-use net::data::DataSession;
 use std::{self, net};
 use thrussh::{
     self, server::{self, Auth, Session}, ChannelId,
 };
 use thrussh_keys::{self, key};
+
+use super::super::data::DataSession;
 
 #[derive(Clone)]
 pub struct ComServer {

@@ -3,8 +3,6 @@
 //! It also let's us startup and perform everything in yet one step.
 
 use avahi_dns_sd::{self, DNSService};
-use config;
-use ctrl;
 use futures::Future;
 use io_mdns::{self, RecordKind};
 use net::{ssh_client::sc_client::SCClient, ssh_server::SSHServer};
@@ -12,9 +10,12 @@ use std::{
     self, net::IpAddr, sync::{mpsc, Arc, Mutex}, thread, time::Duration,
 };
 
-mod ssh_server;
-mod ssh_client;
+use super::config;
+use super::ctrl;
+
 mod data;
+mod ssh_client;
+mod ssh_server;
 
 #[derive(Clone)]
 enum ToThread<T: Send + Clone> {

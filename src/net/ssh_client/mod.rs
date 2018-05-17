@@ -7,5 +7,5 @@
 //! (which is documented excellently in https://github.com/fitzgen/state_machine_future), though
 //! version is only 0.1.6 as of now, but what does it really mean?.
 
-pub mod sc_client;
 mod com_client;
+pub mod sc_client;
