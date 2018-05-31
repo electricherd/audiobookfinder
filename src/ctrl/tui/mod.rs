@@ -1,18 +1,17 @@
 //! The TUI parts, greatly using [Cursive](https://gyscos.github.io/Cursive/cursive/index.html)
 //! showing table, the paths being searched, an alive for that, also the mDNS search performed
 //! and later status of the connection to the found clients.
-use cursive::{align,
-                            traits::*, //{Identifiable,select};
-                            views::{BoxView, Dialog, Layer, LinearLayout, ListView, Panel,
-                                    TextView},
-                            Cursive};
+use cursive::{
+    align,
+    traits::*, //{Identifiable,select};
+    views::{BoxView, Dialog, Layer, LinearLayout, ListView, Panel, TextView},
+    Cursive,
+};
 use std::{iter::Iterator, sync::mpsc, thread, time::Duration};
 
-use super::super::config;
-use super::super::ctrl::{Alive, ReceiveDialog, Status, SystemMsg, UiMsg};
-use super::super::common::ThreadPool;
-
-
+use super::super::{
+    common::ThreadPool, config, ctrl::{Alive, ReceiveDialog, Status, SystemMsg, UiMsg},
+};
 
 pub struct Tui {
     pub ui_receiver: mpsc::Receiver<UiMsg>,

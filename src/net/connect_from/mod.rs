@@ -1,23 +1,18 @@
 ///! The server section of ssh communication
-
 pub mod com_server;
 
-
-use std::{
-    sync::{Arc}, thread, time::Duration,
-};
-use thrussh;
-use ring;
-use thrussh_keys::key;
 use self::com_server::ComServer;
+use ring;
+use std::{sync::Arc, thread, time::Duration};
+use thrussh;
+use thrussh_keys::key;
+
 use super::super::config;
 
-pub struct SSHServer {
+pub struct ConnectFromOutside {}
 
-}
-
-impl SSHServer {
-    pub fn create_thread(uuid_string: String )-> Result<thread::JoinHandle<()>,()> {
+impl ConnectFromOutside {
+    pub fn create_thread(uuid_string: String) -> Result<thread::JoinHandle<()>, ()> {
         Ok(thread::spawn(move || {
             info!("SSH ComServer starting...");
 
@@ -38,7 +33,9 @@ impl SSHServer {
                 connector: None,
             };
             let address_string = ["0.0.0.0", ":", &config::net::SSH_PORT.to_string()].concat();
+
             thrussh::server::run(config, &address_string, replication_server);
+
             warn!("SSH ComServer stopped!!");
         }))
     }

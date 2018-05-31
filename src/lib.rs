@@ -40,4 +40,8 @@ extern crate futures;
 extern crate thrussh;
 extern crate thrussh_keys;
 extern crate ring;
+#[macro_use]
+extern crate lazy_static;
+
+
 pub mod net;

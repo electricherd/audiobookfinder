@@ -27,6 +27,7 @@ path = "src/main.rs"
 
 [dependencies]
 clap = "2.31"         # for the command line parsing
+lazy_static = "1.0"
 
 dns-sd  = "0.1"     # need avahi-compat-client-dev lib
 hostname = "0.1"    # for host recognition
@@ -54,6 +55,7 @@ bincode = "1.0"
 ring = "0.12"  # crypto, used for random generation
 thrussh = "0.19"           # ssh server client crate for communication
 thrussh-keys = "0.9"      # ssh server client crate for communication
+tokio = "*"
 
 
 [dependencies.cursive]

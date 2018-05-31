@@ -83,7 +83,7 @@ impl thrussh::server::Handler for ComServer {
                 );
             }
         }
-        session.data(channel, None, data); //.unwrap();
+        session.data(channel, None, data);
         futures::finished((self, session))
     }
 }

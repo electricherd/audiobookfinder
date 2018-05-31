@@ -2,28 +2,21 @@
 //! using https://github.com/fitzgen/state_machine_future to start with.
 //! https://crates.io/crates/extfsm looks also promising because it supposes to use
 //! standard SCXML (https://en.wikipedia.org/wiki/SCXML), has Version 0.8 yet and seems to
-//!  be done on behalf of! Juniper.
+//! be done on behalf of Juniper.
 //! But unfortunately yet not well documented, so choosing first mentioned one
 //! (which is documented excellently in https://github.com/fitzgen/state_machine_future), though
 //! version is only 0.1.6 as of now, but what does it really mean?.
 
 use futures::Poll;
 use state_machine_future::RentToOwn;
-use std::{net::IpAddr, sync::Arc, time::Duration};
-use thrussh;
-
-use super::com_client::ComClient;
 
 #[derive(StateMachineFuture)]
 pub enum SCClient {
     #[state_machine_future(start, transitions(Runner))]
-    CreateAccordingIP { id: String, address: IpAddr },
+    CreateAccordingIP {  },
 
-    #[state_machine_future(transitions(Finished,Runner))]
+    #[state_machine_future(transitions(Finished, Runner))]
     Runner {
-        client: ComClient,
-        config: Arc<thrussh::client::Config>,
-        address: IpAddr,
     },
 
     #[state_machine_future(ready)]
@@ -38,31 +31,15 @@ impl PollSCClient for SCClient {
         create_according_ip: &'a mut RentToOwn<'a, CreateAccordingIP>,
     ) -> Poll<AfterCreateAccordingIP, ()> {
         let input = create_according_ip.take();
-
-        let mut config = thrussh::client::Config::default();
-        config.connection_timeout = Some(Duration::from_secs(600));
-        let config = Arc::new(config);
-        let client = ComClient::new(input.id);
-
+        info!("connecting to client ...");
         let created_client = Runner {
-            client: client,
-            config: config,
-            address: input.address,
         };
         transition!(created_client)
     }
+
     fn poll_runner<'a>(runner: &'a mut RentToOwn<'a, Runner>) -> Poll<AfterRunner, ()> {
         let input = runner.take();
-        info!("SSH Client do ...");
-        match  input.client.run(input.config, input.address) {
-            Ok(_) => {
-                info!("SSH Client continue ...");
-                //transition!(input)
-            },
-            Err(_) => {
-                error!("SSH Client example not working!!!");
-            }
-        }
-        transition!(Finished(()))        
+        info!("connecting to client and state chart...");
+        transition!(Finished(()))
     }
 }

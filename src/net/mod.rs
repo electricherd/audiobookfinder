@@ -1,21 +1,19 @@
 //! The net module is resonsible for the network related parts,
 //! the mDNS registering, mDNS search, ssh server and ssh client.
 //! It also let's us startup and perform everything in yet one step.
+mod data;
+mod connect_from;
+mod connect_to;
+mod key_keeper;
 
 use avahi_dns_sd::{self, DNSService};
-use futures::Future;
 use io_mdns::{self, RecordKind};
-use net::{ssh_client::sc_client::SCClient, ssh_server::SSHServer};
 use std::{
     self, net::IpAddr, sync::{mpsc, Arc, Mutex}, thread, time::Duration,
 };
 
-use super::config;
-use super::ctrl;
-
-mod data;
-mod ssh_client;
-mod ssh_server;
+use self::{connect_to::ConnectToOther, connect_from::ConnectFromOutside};
+use super::{config, ctrl};
 
 #[derive(Clone)]
 enum ToThread<T: Send + Clone> {
@@ -67,10 +65,15 @@ impl Net {
 
     pub fn start_com_server(&mut self) -> Result<(), ()> {
         // delegate this somewhere else
-        if let Ok(good_thread) = SSHServer::create_thread(self.my_id.clone()) {
-            self.ssh_handle = good_thread;
-            Ok(())
+        if key_keeper::is_good() {
+            if let Ok(good_thread) = ConnectFromOutside::create_thread(self.my_id.clone()) {
+                self.ssh_handle = good_thread;
+                Ok(())
+            } else {
+                Err(())
+            }
         } else {
+            // ToDo: error
             Err(())
         }
     }
@@ -339,8 +342,8 @@ impl Net {
 
                                 // create ssh client in new thread
                                 let _connect_ip_client_thread = thread::spawn(move || {
-                                    let mut new_client_future = SCClient::start(uuid_name, address);
-                                    let _ = new_client_future.poll();
+                                    let connector = ConnectToOther::new(&uuid_name, &address);
+                                    connector.run();
                                 });
                             }
                         } else {
