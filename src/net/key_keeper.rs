@@ -1,12 +1,25 @@
 //! A component to use key
 
 use std::{self, env};
-use thrussh_keys::{self, key, load_secret_key};
+use thrussh;
+use thrussh_keys::{decode_secret_key, key};
 
 use super::super::config;
 
-pub fn get_server_key<'a>() ->  &'a Option<key::KeyPair> {
-    &*SERVER_KEY
+pub fn get_server_key<'a>() -> Option<key::KeyPair> {
+    let passwd = config::net::SSH_CLIENT_SEC_KEY_PASSWD;
+    let copied = (&*SERVER_KEY).clone();
+    copied.and_then(|key_slice| {
+        key_slice
+            .get(..)
+            .and_then(|sliced| match std::str::from_utf8(sliced) {
+                Ok(valid_utf8) => match decode_secret_key(valid_utf8, Some(passwd.as_bytes())) {
+                    Ok(good) => Some(good),
+                    Err(_) => None,
+                },
+                Err(_) => None,
+            })
+    })
 }
 
 pub fn is_good() -> bool {
@@ -14,37 +27,30 @@ pub fn is_good() -> bool {
 }
 
 lazy_static!{
-    static ref SERVER_KEY : Option<key::KeyPair> = {
+    static ref SERVER_KEY : Option<thrussh::CryptoVec> = {
         let priv_key_path = config::net::SSH_CLIENT_SEC_KEY_PATH;
-        let passwd = config::net::SSH_CLIENT_SEC_KEY_PASSWD;
 
         // home is type changed, so always new ...
-        let static_inside = env::home_dir().and_then( |home| {
+        env::home_dir().and_then( |home| {
             home.to_str().and_then( |m_home| {
-                let file = [&m_home, priv_key_path].concat();
-                let result = if std::fs::File::open(&file).is_ok() {
-                    load_secret_key(&file, Some(passwd.as_bytes()))
-                } else {
-                    error!("Not found or password wrong: {:?}", &file);
-                    Err(thrussh_keys::Error::from(thrussh_keys::ErrorKind::Msg(
-                        "KeyFile could not be found!".to_string(),
-                    )))
-                };
-                match result {
-                    Ok(good) => Some(good),
-                    Err(_) => None
+                let filename = [&m_home, priv_key_path].concat();
+                match std::fs::read(&filename) {
+                    Ok(buffer) => {
+                        Some(thrussh::CryptoVec::from_slice(&buffer))
+                    },
+                    Err(_) => {
+                        error!("Not found or password wrong: {:?}", &filename);
+                        None
+                    }
                 }
             }).or_else( || {
-                // toDo: correct this here ... traces my dear
-                //thrussh_keys::Error::from_kind(thrussh_keys::ErrorKind::Msg("Path has illegal symbols!".to_string()));
+                error!("Path to key file has illegal symbols!");
                 None
             }
             )
         }).or_else(|| {
-            //thrussh_keys::Error::from_kind(
-            //thrussh_keys::ErrorKind::NoHomeDir)
+            error!("Home dir not set!");
             None
-        });
-        static_inside
+        })
     };
 }

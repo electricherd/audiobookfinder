@@ -37,8 +37,11 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
 * making a library ([adbflib](https://electricherd.github.io/audiobookfinder/adbflib/index.html) as the main part of the program)
 * using a [state machine](https://github.com/fitzgen/state_machine_future) wher
 e it fits, here for client server *communication* states
+* learning [futures](https://en.wikipedia.org/wiki/Futures_and_promises)
 
 ### Changes:
+* lazy static used to not load server key every time a client connects
+* state machine not yet used (need to think more about "futures" architecture and understand futures and how to combine)
 * the client ssh connector (com_client) is behind a state machine (to have reconnect and similar easily)
 * thrussh mechanism did always work, no problem, just wrong traces, and irritating ipv6, localhost addresses. Added auth message, with identification, will add simple zero-knowledge mechanism.
 * updated crates, also formatter changes (alphabetical order)

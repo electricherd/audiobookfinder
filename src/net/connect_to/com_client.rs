@@ -3,9 +3,9 @@
 
 use bincode;
 use futures::{self, Future};
-use std::{self, env, net::IpAddr, sync::Arc};
+use std::{net::IpAddr, sync::Arc};
 use thrussh::{self, client, ChannelId, Disconnect};
-use thrussh_keys::{self, key, load_secret_key};
+use thrussh_keys::{self, key};
 
 use super::super::{
     config, connect_to::sc_com_to::{SCClient, SCClientFuture}, data::{DataAuth, DataSession},
@@ -82,7 +82,12 @@ impl ComClient {
                 // tokio I assume starts within
                 info!("Key file, password ok!");
 
-                let key = key_keeper::get_server_key().unwrap();
+                let static_server_key_been_already_tested_as_good = key_keeper::get_server_key();
+                assert!(
+                    static_server_key_been_already_tested_as_good.is_some(),
+                    "Key code should have been tested before, so it should never reach this point."
+                );
+                let key = static_server_key_been_already_tested_as_good.unwrap();
 
                 let further = connection.authenticate_key(&config::net::SSH_CLIENT_USERNAME, key);
                 // split
@@ -135,27 +140,5 @@ impl ComClient {
             )))
         });
         info!("run done ......................");
-    }
-
-    pub fn get_connector_key() -> thrussh_keys::Result<key::KeyPair> {
-        let priv_key_path = config::net::SSH_CLIENT_SEC_KEY_PATH;
-        let passwd = config::net::SSH_CLIENT_SEC_KEY_PASSWD;
-
-        // home is type changed, so always new ...
-        let home = env::home_dir().ok_or(thrussh_keys::Error::from_kind(
-            thrussh_keys::ErrorKind::NoHomeDir,
-        ))?;
-        let home: &str = home.to_str().ok_or(thrussh_keys::Error::from_kind(
-            thrussh_keys::ErrorKind::Msg("Path has illegal symbols!".to_string()),
-        ))?;
-        let file = [&home, priv_key_path].concat();
-        if std::fs::File::open(&file).is_ok() {
-            load_secret_key(&file, Some(passwd.as_bytes()))
-        } else {
-            error!("Not found or password wrong: {:?}", &file);
-            Err(thrussh_keys::Error::from(thrussh_keys::ErrorKind::Msg(
-                "KeyFile could not be found!".to_string(),
-            )))
-        }
     }
 }
