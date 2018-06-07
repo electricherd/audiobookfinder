@@ -89,9 +89,8 @@ But it works I can see myself with a mDNS scanner, so I can also find other audi
 * `libtag1-dev` and `libtagc0-dev` for libtag
 
 ## Architecture
-![Diagram](images/diag_architecture_general.png)
- (not yet mastered but I'll leave it for now)
-
+![Diagram](diag_architecture_general.png)
+ 
 ### Issues:
 * logging from other modules too detailed/too much
 * how to decide if an mDNS device is duplicated (more than 1 ipAdress representation, which is correct?, and do they come not within the same record)
