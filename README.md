@@ -18,7 +18,7 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
 * shared-data over different threads (not yet lifetime optimized)
 * multi-threading, a lot of threads and communication is inside, also  ([Rayon](https://github.com/rayon-rs/rayon))
 * an optional graphical interface that even runs on console only machines (the [Cursive](https://github.com/gyscos/Cursive) TUI)
-* architecture (modules), did some rework with file structure but it is not yet perfect in Rust, really. Now the code is better hidden inside a library... this gives some more opportunities
+* [architecture](#architecture) (modules), did some rework with file structure but it is not yet perfect in Rust, really. Now the code is better hidden inside a library... this gives some more opportunities
 * high-level functionality of different crates / including/using different crates (I don't want to reinvent the wheel)
 * Generics: a little bit about and how to use Generics, really nice, a bit difficult to search and fully adapt for but clear in its usage and powerful!!
 * in-code documentation with html generation, really nice!
@@ -40,6 +40,7 @@ e it fits, here for client server *communication* states
 * learning [futures](https://en.wikipedia.org/wiki/Futures_and_promises)
 
 ### Changes:
+* preparing architecture graphics (since decomposing this future thrussh module is yet quite hard for me) using [draw.io](draw.io), which is awesome
 * lazy static used to not load server key every time a client connects
 * state machine not yet used (need to think more about "futures" architecture and understand futures and how to combine)
 * the client ssh connector (com_client) is behind a state machine (to have reconnect and similar easily)
@@ -80,6 +81,15 @@ for client and server, the example looks promising
 * make cross compiling as easy as possible
 * get rid of Avahi
 
+## Dependencies
+Unfortunately the program now uses mDNS-register with [dns-sd](https://github.com/plietar/rust-dns-sd) depends on Linux on [Avahi](https://www.avahi.org/)
+* `libavahi-client-dev` or `libavahi-compat-libdnssd-dev`. It also breaks first the easy cross compilation :confused: - I will see where this ends.
+But it works I can see myself with a mDNS scanner, so I can also find other audiobookfinder clients when I do it correctly
+* `libsodium`: Since I started to adapt to thrussh I also need libsodium
+* `libtag1-dev` and `libtagc0-dev` for libtag
+
+## Architecture
+(soon there will be an image)
 
 ### Issues:
 * logging from other modules too detailed/too much
@@ -103,10 +113,3 @@ for client and server, the example looks promising
 * internationalization (which is not really supported yet by Rust)
 * a good and fast data collection
 * maybe a little AI layer on determining audio books duplicates/same author by similar spelling, etc.
-
-## Dependencies
-Unfortunately the program now uses mDNS-register with [dns-sd](https://github.com/plietar/rust-dns-sd) depends on Linux on [Avahi](https://www.avahi.org/)
-* `libavahi-client-dev` or `libavahi-compat-libdnssd-dev`. It also breaks first the easy cross compilation :confused: - I will see where this ends.
-But it works I can see myself with a mDNS scanner, so I can also find other audiobookfinder clients when I do it correctly
-* `libsodium`: Since I started to adapt to thrussh I also need libsodium
-* `libtag1-dev` and `libtagc0-dev` for libtag
