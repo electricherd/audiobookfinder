@@ -6,11 +6,26 @@ Rust is an awesome but difficult to learn programming language using different a
 
 As a C++ developer, I know some of the C++11/14/17 enhancements and some don't convince me at all, just look here about the "costs" you have and what it looks like in Simon Brand's ["How Rust gets polymorphism right"](https://www.youtube.com/watch?v=VSlBhAOLtFA).
 
+
+# Table of Content
+0. [My first program in Rust](#my-first-program-in-rust)
+1. [Documentation](#documentation)
+2. [Goals](#goals)
+3. [Changes](#changes)
+4. [ToDo](#todo)
+5. [Dependencies](#dependencies)
+6. [Architecture](#architecture)
+7. [Issues](#issues)
+8. [Yet in plan](#yet-in-plan)
+
 ## My first program in Rust
-Actually I plan to do something useful. The program collects all information about (yet) audio books on different devices/clients, stores it and then does something with it, like showing stats, finding duplicates, aggregating everything at one place.
+Actually I plan to do something useful. The program collects all information about (yet) audio books on different devices/clients, stores it and then does something with it, like showing stats, finding duplicates, aggregating everything at one place. [Architecture](#architecture) to understand a bit beforehand is found here.
+
+So far only the state charts and their connection is not done but the general communication/lookup works, collecting some data as well.
+
 
 ### Documentation
-Look [here](https://electricherd.github.io/audiobookfinder/audiobookfinder/index.html)!
+It is an inline [CI](https://travis-ci.org/electricherd/audiobookfinder/) generated documentation which can be found [here](https://electricherd.github.io/audiobookfinder/audiobookfinder/index.html)! Rust does a nice job here as well!
 
 ### Goals
 The primary goal is to learn Rust and to cover various aspects of the language, of which some of I already used inside the program, such as:
@@ -39,7 +54,7 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
 e it fits, here for client server *communication* states
 * learning [futures](https://en.wikipedia.org/wiki/Futures_and_promises)
 
-### Changes:
+### Changes
 * preparing architecture graphics (since decomposing this future thrussh module is yet quite hard for me) using [draw.io](draw.io), which is awesome
 * lazy static used to not load server key every time a client connects
 * state machine not yet used (need to think more about "futures" architecture and understand futures and how to combine)
@@ -70,7 +85,7 @@ e it fits, here for client server *communication* states
 * new mDNS crate for searching (which is very cpu consuming, but the new one is just a very recent fork, but hoping)
 * common.rs for common helper, such as a thread-pool
 
-### ToDo:
+### ToDo
 * further client thrussh improvements, add secure identification by using zero-knowledge
 * change interface of ctrl messages to possibly decouple ctrl dependency ... (redo tui messages, ctrl messages (maybe into extra mod)
 * not think of travis CI
@@ -90,8 +105,8 @@ But it works I can see myself with a mDNS scanner, so I can also find other audi
 
 ## Architecture
 ![Diagram](diag_architecture_general.png)
- 
-### Issues:
+
+### Issues
 * logging from other modules too detailed/too much
 * how to decide if an mDNS device is duplicated (more than 1 ipAdress representation, which is correct?, and do they come not within the same record)
 * no net is a problem
@@ -99,7 +114,7 @@ But it works I can see myself with a mDNS scanner, so I can also find other audi
 * tui update on Raspberry was slow, better find another way
 
 
-### Yet in plan:
+### Yet in plan
 * create a key yourself!! And store, which is going to be done if not found at startup
 * communication is now easy with ssh but how to authenticate as a valid adbf? Look at ssh details, and zero-knowledge or something similar: hiding key or secrecy knowledge in code without being to obvious (first should be a simple string, don't bother too much)
 * rework the one stub for worker thread to have many worker threads in net to do something with found addresses (use thrussh simple example)
