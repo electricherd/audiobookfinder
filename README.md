@@ -55,7 +55,7 @@ e it fits, here for client server *communication* states
 * learning [futures](https://en.wikipedia.org/wiki/Futures_and_promises)
 
 ### Changes
-* preparing architecture graphics (since decomposing this future thrussh module is yet quite hard for me) using [draw.io](draw.io), which is awesome
+* added architecture graphics (since decomposing this future thrussh module is yet quite hard for me) using [draw.io](https://draw.io), which is awesome. Also connectable by [github support](https://about.draw.io/github-support/) directly via [this](https://www.draw.io/?mode=github) ([howTo](https://github.com/jgraph/drawio-github)). 
 * lazy static used to not load server key every time a client connects
 * state machine not yet used (need to think more about "futures" architecture and understand futures and how to combine)
 * the client ssh connector (com_client) is behind a state machine (to have reconnect and similar easily)
