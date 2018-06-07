@@ -89,8 +89,8 @@ But it works I can see myself with a mDNS scanner, so I can also find other audi
 * `libtag1-dev` and `libtagc0-dev` for libtag
 
 ## Architecture
-![Diagram](http://https://github.com/electricherd/audiobookfinder/diag_architecture_general.svg)
-
+![Diagram](https://raw.githubusercontent.com/electricherd/audiobookfinder/master/diag_architecture_general.png)
+ (not yet mastered but I'll leave it for now)
 
 ### Issues:
 * logging from other modules too detailed/too much
