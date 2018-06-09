@@ -19,7 +19,7 @@ As a C++ developer, I know some of the C++11/14/17 enhancements and some don't c
 8. [Yet in plan](#yet-in-plan)
 
 ## My first program in Rust
-Actually I plan to do something useful. The program collects all information about (yet) audio books on different devices/clients, stores it and then does something with it, like showing stats, finding duplicates, aggregating everything at one place. [Architecture](#architecture) to understand a bit beforehand is found here.
+Actually I plan to do something useful. The program collects all information about (yet) audio books on different devices/clients, stores it and then does something with it, like showing stats, finding duplicates, aggregating everything at one place. The task of collecting audio book data (id tag) can be exchanged with any other task, this basically leads to a local network agent approach with zero-config. [Architecture](#architecture) to understand a bit beforehand is found here.
 
 So far only the state charts and their connection is not done but the general communication/lookup works, collecting some data as well.
 
@@ -55,7 +55,8 @@ e it fits, here for client server *communication* states
 * learning [futures](https://en.wikipedia.org/wiki/Futures_and_promises)
 
 ### Changes
-* added architecture graphics (since decomposing this future thrussh module is yet quite hard for me) using [draw.io](https://draw.io), which is awesome. Also connectable by [github support](https://about.draw.io/github-support/) directly via [this](https://www.draw.io/?mode=github) ([howTo](https://github.com/jgraph/drawio-github)). 
+* decomposed a part of thrussh communication to embed a state chart somehow (still question how to combine the state chart with the other future)
+* added architecture graphics using [draw.io](https://draw.io), which is awesome. Also connectable by [github support](https://about.draw.io/github-support/) directly via [this](https://www.draw.io/?mode=github) ([howTo](https://github.com/jgraph/drawio-github)).
 * lazy static used to not load server key every time a client connects
 * state machine not yet used (need to think more about "futures" architecture and understand futures and how to combine)
 * the client ssh connector (com_client) is behind a state machine (to have reconnect and similar easily)
@@ -104,7 +105,8 @@ But it works I can see myself with a mDNS scanner, so I can also find other audi
 * `libtag1-dev` and `libtagc0-dev` for libtag
 
 ## Architecture
-![Diagram](diag_architecture_general.png)
+![Diagram](diag_architecture_general.svg)
+(still early version of drawing, and directly [editable](https://www.draw.io/?mode=github))
 
 ### Issues
 * logging from other modules too detailed/too much

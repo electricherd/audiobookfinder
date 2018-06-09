@@ -55,7 +55,7 @@ bincode = "1.0"
 ring = "0.12"  # crypto, used for random generation
 thrussh = "0.19"           # ssh server client crate for communication
 thrussh-keys = "0.9"      # ssh server client crate for communication
-tokio = "*"
+tokio-io = "0.1"   # has to be same as thrussh uses
 
 
 [dependencies.cursive]

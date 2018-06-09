@@ -40,6 +40,7 @@ extern crate futures;
 extern crate thrussh;
 extern crate thrussh_keys;
 extern crate ring;
+extern crate tokio_io;
 #[macro_use]
 extern crate lazy_static;
 
