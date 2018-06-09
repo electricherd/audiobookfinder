@@ -7,7 +7,7 @@ Rust is an awesome but difficult to learn programming language using different a
 As a C++ developer, I know some of the C++11/14/17 enhancements and some don't convince me at all, just look here about the "costs" you have and what it looks like in Simon Brand's ["How Rust gets polymorphism right"](https://www.youtube.com/watch?v=VSlBhAOLtFA).
 
 
-# Table of Content
+# Table of Contents
 0. [My first program in Rust](#my-first-program-in-rust)
 1. [Documentation](#documentation)
 2. [Goals](#goals)
