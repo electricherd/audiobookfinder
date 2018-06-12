@@ -11,6 +11,7 @@ use io_mdns::{self, RecordKind};
 use std::{
     self, net::IpAddr, sync::{mpsc, Arc, Mutex}, thread, time::Duration,
 };
+use uuid::Uuid;
 
 use self::{connect_to::ConnectToOther, connect_from::ConnectFromOutside};
 use super::{config, ctrl};
@@ -23,7 +24,7 @@ enum ToThread<T: Send + Clone> {
 
 /// The Net component keeps controll about everything from net.
 pub struct Net {
-    my_id: String,
+    my_id: Uuid,
     addresses_found: Arc<Mutex<Vec<IpAddr>>>,
     tui_sender: mpsc::Sender<ctrl::SystemMsg>,
     has_tui: bool,
@@ -36,7 +37,7 @@ pub struct Net {
 
 impl Net {
     pub fn new(
-        name: &str,
+        name: Uuid,
         tui: bool,
         sender: mpsc::Sender<ctrl::SystemMsg>,
     ) -> Result<Net, avahi_dns_sd::DNSError> {
@@ -53,7 +54,7 @@ impl Net {
             &["path=/"],
         )?;
         let net = Net {
-            my_id: name.to_string(),
+            my_id: name,
             addresses_found: Arc::new(Mutex::new(Vec::new())),
             tui_sender: sender,
             has_tui: tui,
@@ -91,7 +92,7 @@ impl Net {
         // maybe to attach some more data
         //let borrow_arc = &self.addresses_found.clone();
         let has_tui = self.has_tui;
-        let uuid_name = self.my_id.clone();
+        let uuid = self.my_id.clone();
 
         // to controller messages (mostly tui now)
         let ctrl_sender = self.tui_sender.clone();
@@ -107,7 +108,7 @@ impl Net {
                 receiver_client,
                 borrow_arc,
                 ctrl_sender,
-                uuid_name,
+                uuid,
                 has_tui,
             );
         });
@@ -299,7 +300,7 @@ impl Net {
         receiver_client: std::sync::mpsc::Receiver<ToThread<IpAddr>>,
         borrow_arc: std::sync::Arc<std::sync::Mutex<std::vec::Vec<IpAddr>>>,
         ctrl_sender: std::sync::mpsc::Sender<ctrl::SystemMsg>,
-        uuid_name: String,
+        uuid: Uuid,
         has_tui: bool,
     ) {
         loop {
@@ -338,11 +339,11 @@ impl Net {
                                         .unwrap();
                                 }
                                 // 2nd embedded and in loop-thread so copy copied again
-                                let uuid_name = uuid_name.clone();
+                                let uuid = uuid.clone();
 
                                 // create ssh client in new thread
                                 let _connect_ip_client_thread = thread::spawn(move || {
-                                    let connector = ConnectToOther::new(&uuid_name, &address);
+                                    let connector = ConnectToOther::new(&uuid, &address);
                                     connector.run();
                                 });
                             }

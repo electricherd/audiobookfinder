@@ -163,7 +163,7 @@ fn main() {
     let net_runner = thread::spawn(move || {
         if has_net {
             if let Ok(mut network) = Net::new(
-                &client_id.to_string(),
+                client_id,
                 has_tui,
                 // need to simplify and clarify this here ......
                 // but this lock unwrap is safe

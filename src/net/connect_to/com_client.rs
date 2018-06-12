@@ -7,6 +7,7 @@ use std::{net::IpAddr, sync::Arc};
 use thrussh;
 use thrussh_keys;
 use tokio_io;
+use uuid::Uuid;
 
 use super::super::{
     config, connect_to::sc_com_to::{SCClient, SCClientFuture}, data::{DataAuth, DataSession},
@@ -15,7 +16,7 @@ use super::super::{
 
 #[derive(Clone)]
 pub struct ComClient {
-    uuid: String,
+    uuid: Uuid,
 }
 
 impl thrussh::client::Handler for ComClient {
@@ -62,8 +63,8 @@ impl thrussh::client::Handler for ComClient {
 }
 
 impl ComClient {
-    pub fn new(uuid_name: String) -> ComClient {
-        ComClient { uuid: uuid_name }
+    pub fn new(uuid: Uuid) -> ComClient {
+        ComClient { uuid: uuid }
     }
 
     pub fn run(self, configuration: Arc<thrussh::client::Config>, ip_addr: &IpAddr) {
@@ -116,7 +117,7 @@ impl ComClient {
     }
 
     fn continue_session<R, H>(
-        id: String,
+        id: Uuid,
         connection: thrussh::client::Connection<R, H>,
     ) -> impl Future<Item = (), Error = thrussh::HandlerError<<H as thrussh::client::Handler>::Error>>
     where
@@ -126,11 +127,11 @@ impl ComClient {
         info!("Session could be established!");
         connection
             .channel_open_session()
-            .and_then(|(session, channelid) | {
+            .and_then(move |(session, channelid) | {
                 info!("Session could be opened, sending out!");
 
                 // send data
-                let datagram = Self::get_data(id);
+                let datagram = Self::get_data(&id);
 
                 Self::send(channelid, datagram, session)
             })
@@ -162,10 +163,10 @@ impl ComClient {
             })
     }
 
-    fn get_data(id: String) -> DataSession {
+    fn get_data(id: &Uuid) -> DataSession {
         // depending on what you want, so far only auth
         DataSession::Auth {
-            auth: DataAuth::new(id),
+            auth: DataAuth::new((*id).clone()),
         }
     }
 

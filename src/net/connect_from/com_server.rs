@@ -7,12 +7,13 @@ use thrussh::{
     self, server::{self, Auth, Session}, ChannelId,
 };
 use thrussh_keys::{self, key};
+use uuid::Uuid;
 
 use super::super::data::DataSession;
 
 #[derive(Clone)]
 pub struct ComServer {
-    pub name: String,
+    pub id: Uuid,
     pub connector: Option<net::SocketAddr>,
 }
 
@@ -20,7 +21,7 @@ impl server::Server for ComServer {
     type Handler = Self;
     fn new(&self, connector: net::SocketAddr) -> Self {
         ComServer {
-            name: self.name.clone(),
+            id : self.id,
             connector: Some(connector),
         }
     }
@@ -59,16 +60,16 @@ impl thrussh::server::Handler for ComServer {
                     let client_version = auth.get_version();
                     info!(
                         "Srv[{:?}]: auth from channel {:?}: with id {:?} and version {:?}",
-                        self.name,
+                        self.id.hyphenated().to_string(),
                         channel,
-                        client_id,
+                        client_id.hyphenated().to_string(),
                         client_version
                     );
                 }
                 DataSession::Data { .. } => {
                     info!(
                         "Srv[{:?}]: data from channel {:?}: {:?}",
-                        self.name,
+                        self.id.hyphenated().to_string(),
                         channel,
                         std::str::from_utf8(data)
                     );
@@ -77,7 +78,7 @@ impl thrussh::server::Handler for ComServer {
             Err(_) => {
                 info!(
                     "Srv[{:?}]: not valid session data on channel {:?}: {:?}",
-                    self.name,
+                    self.id.hyphenated().to_string(),
                     channel,
                     std::str::from_utf8(data)
                 );

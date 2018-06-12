@@ -2,6 +2,7 @@
 
 use std::{net::IpAddr, sync::Arc, time::Duration};
 use thrussh;
+use uuid::Uuid;
 
 use self::com_client::ComClient;
 
@@ -14,7 +15,7 @@ pub struct ConnectToOther {
 }
 
 impl ConnectToOther {
-    pub fn new(uuid: &String, address: &IpAddr) -> ConnectToOther {
+    pub fn new(uuid: &Uuid, address: &IpAddr) -> ConnectToOther {
         let client = ComClient::new(uuid.clone());
         ConnectToOther {
             connector: client,

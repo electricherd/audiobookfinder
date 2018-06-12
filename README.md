@@ -55,6 +55,7 @@ e it fits, here for client server *communication* states
 * learning [futures](https://en.wikipedia.org/wiki/Futures_and_promises)
 
 ### Changes
+* change uuid strings back to uuids, that old decision was due to not have uuid crate dependency everywhere, but that was a bad decision
 * decomposed a part of thrussh communication to embed a state chart somehow (still question how to combine the state chart with the other future)
 * added architecture graphics using [draw.io](https://draw.io), which is awesome. Also connectable by [github support](https://about.draw.io/github-support/) directly via [this](https://www.draw.io/?mode=github) ([howTo](https://github.com/jgraph/drawio-github)).
 * lazy static used to not load server key every time a client connects

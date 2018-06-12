@@ -1,10 +1,11 @@
 //! The data view of the ssh communication, exchange between mainly client and server.
+use uuid::Uuid;
 
 type VersionType = [u8; 3];
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct DataAuth {
-    id: String,
+    id: Uuid,
     version: VersionType,
 }
 
@@ -15,7 +16,7 @@ pub enum DataSession {
 }
 
 impl DataAuth {
-    pub fn new(id: String) -> DataAuth {
+    pub fn new(id: Uuid) -> DataAuth {
         let major: u8 = str::parse(env!("CARGO_PKG_VERSION_MAJOR")).unwrap_or(0);
         let minor: u8 = str::parse(env!("CARGO_PKG_VERSION_MINOR")).unwrap_or(0);
         let patched: u8 = str::parse(env!("CARGO_PKG_VERSION_PATCH")).unwrap_or(0);
@@ -25,7 +26,7 @@ impl DataAuth {
             version: computed_version,
         }
     }
-    pub fn get_id(&self) -> &String {
+    pub fn get_id(&self) -> &Uuid {
         &self.id
     }
     pub fn get_version(&self) -> &VersionType {

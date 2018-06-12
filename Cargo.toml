@@ -44,7 +44,7 @@ tree_magic = "0.2"  # for fast file tree operations
 taglib = { git = "https://github.com/ebassi/taglib-rust", branch = "master", version="0.2" } # grrrrrrrrr, don't use crates.io version
 
 rayon = "1"       # for multi-threading
-uuid = {version = "0.6", features = ["v4"]}
+uuid = {version = "0.6.0", features = ["v4","serde"]}
 
 state_machine_future = "0.1"
 
@@ -56,7 +56,6 @@ ring = "0.12"  # crypto, used for random generation
 thrussh = "0.19"           # ssh server client crate for communication
 thrussh-keys = "0.9"      # ssh server client crate for communication
 tokio-io = "0.1"   # has to be same as thrussh uses
-
 
 [dependencies.cursive]
 version = "0.8"

@@ -6,13 +6,14 @@ use ring;
 use std::{sync::Arc, thread, time::Duration};
 use thrussh;
 use thrussh_keys::key;
+use uuid::Uuid;
 
 use super::super::config;
 
 pub struct ConnectFromOutside {}
 
 impl ConnectFromOutside {
-    pub fn create_thread(uuid_string: String) -> Result<thread::JoinHandle<()>, ()> {
+    pub fn create_thread(uuid : Uuid) -> Result<thread::JoinHandle<()>, ()> {
         Ok(thread::spawn(move || {
             info!("SSH ComServer starting...");
 
@@ -29,7 +30,7 @@ impl ConnectFromOutside {
             let config = Arc::new(config);
 
             let replication_server = ComServer {
-                name: uuid_string,
+                id: uuid,
                 connector: None,
             };
             let address_string = ["0.0.0.0", ":", &config::net::SSH_PORT.to_string()].concat();
