@@ -104,6 +104,7 @@ Unfortunately the program now uses mDNS-register with [dns-sd](https://github.co
 But it works I can see myself with a mDNS scanner, so I can also find other audiobookfinder clients when I do it correctly
 * `libsodium`: Since I started to adapt to thrussh I also need libsodium
 * `libtag1-dev` and `libtagc0-dev` for libtag
+* `libssl-dev` as a clean setup might not have it
 
 ## Architecture
 ![Diagram](diag_architecture_general.svg)
