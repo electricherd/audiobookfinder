@@ -194,7 +194,8 @@ impl Collection {
             .and_then(|file| {
                 match file.tag() {
                     Ok(tag) => {
-                        let artist = tag.artist();
+                        let artist = tag.artist().unwrap_or("unknown".to_string());
+
                         self.stats.files.analyzed += 1;
                         file_stats.analyzed += 1;
 

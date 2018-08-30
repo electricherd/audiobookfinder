@@ -41,7 +41,7 @@ syslog = "4.0"      # another logger for system
 futures = "0.1"
 
 tree_magic = "0.2"  # for fast file tree operations
-taglib = { git = "https://github.com/ebassi/taglib-rust", branch = "master", version="0.2" } # grrrrrrrrr, don't use crates.io version
+taglib = { git = "https://github.com/ebassi/taglib-rust", branch = "master", version="1.0" } # grrrrrrrrr, don't use crates.io version
 
 rayon = "1"       # for multi-threading
 uuid = {version = "0.6.0", features = ["v4","serde"]}
