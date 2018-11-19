@@ -32,6 +32,7 @@ extern crate uuid;
 pub mod data;
 
 // net
+extern crate dirs;
 extern crate bincode;
 extern crate mdns_discover as io_mdns;
 extern crate dns_sd as avahi_dns_sd;

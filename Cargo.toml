@@ -27,6 +27,7 @@ path = "src/main.rs"
 
 [dependencies]
 clap = "2.31"         # for the command line parsing
+dirs = "1.0" 
 lazy_static = "1.0"
 
 dns-sd  = "0.1"     # need avahi-compat-client-dev lib

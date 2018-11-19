@@ -1,6 +1,7 @@
 //! A component to use key
 
-use std::{self, env};
+use dirs;
+use std::{self};
 use thrussh;
 use thrussh_keys::{decode_secret_key, key};
 
@@ -31,7 +32,7 @@ lazy_static!{
         let priv_key_path = config::net::SSH_CLIENT_SEC_KEY_PATH;
 
         // home is type changed, so always new ...
-        env::home_dir().and_then( |home| {
+        dirs::home_dir().and_then( |home| {
             home.to_str().and_then( |m_home| {
                 let filename = [&m_home, priv_key_path].concat();
                 match std::fs::read(&filename) {
