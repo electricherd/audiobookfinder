@@ -17,6 +17,7 @@ use super::super::{
 #[derive(Clone)]
 pub struct ComClient {
     uuid: Uuid,
+    key: Arc<thrussh_keys::key::KeyPair>
 }
 
 impl thrussh::client::Handler for ComClient {
@@ -64,18 +65,24 @@ impl thrussh::client::Handler for ComClient {
 
 impl ComClient {
     pub fn new(uuid: Uuid) -> ComClient {
-        ComClient { uuid: uuid }
+        ComClient {
+             uuid: uuid ,
+             key: Arc::new(key_keeper::get_server_key().unwrap())
+        }
     }
 
     pub fn run(self, configuration: Arc<thrussh::client::Config>, ip_addr: &IpAddr) {
         let id = self.uuid.clone();
+
+        // just use a copy to arc
+        let key = self.key.clone();
         //
         // start the state machine
         //
         // toDo: safe this here with an assert or so
         let sc_future: SCClientFuture = SCClient::start();
 
-        let _ = thrussh::client::connect(
+        let _ = thrussh::client::connect_future(
             (*ip_addr, config::net::SSH_PORT),
             configuration,
             None,
@@ -83,13 +90,6 @@ impl ComClient {
             |connection| {
                 // tokio I assume starts within
                 info!("Key file, password ok!");
-
-                let test_key = key_keeper::get_server_key();
-                assert!(
-                    test_key.is_some(),
-                    "Key code should have been tested before, so it should never reach this point."
-                );
-                let key = test_key.unwrap();
 
                 connection
                     .authenticate_key(&config::net::SSH_CLIENT_USERNAME, key)
@@ -109,8 +109,8 @@ impl ComClient {
                 ip_addr,
                 config::net::SSH_PORT
             );
-            Err(thrussh_keys::Error::from(thrussh_keys::ErrorKind::Msg(
-                "Connection could not be established!".to_string(),
+            Err(thrussh_keys::Error::IO(std::io::Error::new(std::io::ErrorKind::Other,
+                "Connection could not be established!"
             )))
         });
         info!("run done ......................");

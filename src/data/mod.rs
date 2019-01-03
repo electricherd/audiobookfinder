@@ -252,7 +252,7 @@ impl Collection {
              searched files       : {files_searched:>width$}\n\
              irrelevant files     : {files_irrelevant:>width$}\n\
              faulty files         : {files_faulty:>width$}\n",
-            id = self.who.id.hyphenated().to_string().to_uppercase(),
+            id = self.who.id.to_hyphenated().to_string().to_uppercase(),
             nr_pathes = self.stats.threads,
             albums_found = self.stats.audio.albums,
             max_p_album = self.stats.audio.max_songs,
@@ -271,7 +271,7 @@ impl Drop for Collection {
     fn drop(&mut self) {
         println!(
             "Dropping/destroying collection from {}",
-            self.who.id.hyphenated().to_string().to_uppercase()
+            self.who.id.to_hyphenated().to_string().to_uppercase()
         )
 ;
     }

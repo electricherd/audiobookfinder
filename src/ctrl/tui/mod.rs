@@ -250,7 +250,7 @@ impl Tui {
     }
 
     fn build_tui(title: String, pathes: &Vec<String>, with_net: bool) -> Result<Cursive, String> {
-        let later_handle = Cursive::new();
+        let later_handle = Cursive::default();
 
         let screen_size = later_handle.screen_size();
 

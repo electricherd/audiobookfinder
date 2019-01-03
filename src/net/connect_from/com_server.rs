@@ -2,7 +2,7 @@
 //! the clients, is basically still taken from trussh example (with corrections)
 use bincode;
 use futures;
-use std::{self, net};
+use std;
 use thrussh::{
     self, server::{self, Auth, Session}, ChannelId,
 };
@@ -13,22 +13,18 @@ use super::super::data::DataSession;
 
 #[derive(Clone)]
 pub struct ComServer {
-    pub id: Uuid,
-    pub connector: Option<net::SocketAddr>,
+    pub id: Uuid
 }
 
 impl server::Server for ComServer {
     type Handler = Self;
-    fn new(&self, connector: net::SocketAddr) -> Self {
-        ComServer {
-            id : self.id,
-            connector: Some(connector),
-        }
+    fn new(&self) -> Self {
+        self.clone()
     }
 }
 
 impl thrussh::server::Handler for ComServer {
-    type Error = ();
+    type Error = std::io::Error;
     type FutureAuth = futures::Finished<(Self, server::Auth), Self::Error>;
     type FutureUnit = futures::Finished<(Self, server::Session), Self::Error>;
     type FutureBool = futures::Finished<(Self, server::Session, bool), Self::Error>;
@@ -60,16 +56,16 @@ impl thrussh::server::Handler for ComServer {
                     let client_version = auth.get_version();
                     info!(
                         "Srv[{:?}]: auth from channel {:?}: with id {:?} and version {:?}",
-                        self.id.hyphenated().to_string(),
+                        self.id.to_hyphenated().to_string(),
                         channel,
-                        client_id.hyphenated().to_string(),
+                        client_id.to_hyphenated().to_string(),
                         client_version
                     );
                 }
                 DataSession::Data { .. } => {
                     info!(
                         "Srv[{:?}]: data from channel {:?}: {:?}",
-                        self.id.hyphenated().to_string(),
+                        self.id.to_hyphenated().to_string(),
                         channel,
                         std::str::from_utf8(data)
                     );
@@ -78,7 +74,7 @@ impl thrussh::server::Handler for ComServer {
             Err(_) => {
                 info!(
                     "Srv[{:?}]: not valid session data on channel {:?}: {:?}",
-                    self.id.hyphenated().to_string(),
+                    self.id.to_hyphenated().to_string(),
                     channel,
                     std::str::from_utf8(data)
                 );
@@ -91,7 +87,7 @@ impl thrussh::server::Handler for ComServer {
 
 impl ComServer {
     pub fn create_key_file(_name: &str) -> Result<(), thrussh_keys::Error> {
-        match key::KeyPair::generate(key::ED25519) {
+        match key::KeyPair::generate_ed25519() {
             Some(key::KeyPair::Ed25519(..)) => {
                 //println!("{:?}",edkey);
             }

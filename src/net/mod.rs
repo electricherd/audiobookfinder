@@ -189,7 +189,7 @@ impl Net {
             RecordKind::AAAA(addr) => (Some(addr.to_string()), Some(addr.into())),
             RecordKind::CNAME(ref out) => (Some(format!("{}", out.clone())), None),
             RecordKind::MX { ref exchange, .. } => (Some(exchange.clone()), None),
-            RecordKind::TXT(ref out) => (Some(out.clone()), None),
+            RecordKind::TXT(ref vec_out) => (Some(vec_out.join(",")), None),
             RecordKind::PTR(ref out) => (Some(out.clone()), None),
             _ => (None, None),
         };

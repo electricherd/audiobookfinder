@@ -32,7 +32,8 @@ lazy_static = "1.2"
 
 dns-sd  = "0.1"     # need avahi-compat-client-dev lib
 hostname = "0.1"    # for host recognition
-mdns-discover = { git = "https://github.com/NervosFoundation/rust-mdns-discover", branch = "master", version="*" }
+# mdns-discover =  { git = "https://github.com/NervosFoundation/rust-mdns-discover", branch = "master", version="*" }
+mdns = "0.3" # try
 
 env_logger = "0.6"  # alongside log
 flexi_logger = "0.10" # a more flexible logger
@@ -45,7 +46,7 @@ tree_magic = "0.2"  # for fast file tree operations
 taglib = { git = "https://github.com/ebassi/taglib-rust", branch = "master", version="1.0" } # grrrrrrrrr, don't use crates.io version
 
 rayon = "1"       # for multi-threading
-uuid = {version = "0.6", features = ["v4","serde"]}  # !!!0.7
+uuid = {version = "0.7", features = ["v4","serde"]}
 
 state_machine_future = "0.2"
 
@@ -54,12 +55,12 @@ serde_derive = "1.0"
 bincode = "1.0"
 
 ring = "0.13"  # crypto, used for random generation
-thrussh = "0.19"           # ssh server client crate for communication !!!0.20
-thrussh-keys = "0.9"      # ssh server client crate for communication !!! 0.11
+thrussh = "0.20"           # ssh server client crate for communication
+thrussh-keys = "0.11"      # ssh server client crate for communication
 tokio-io = "0.1"    # has to be same as thrussh uses
 
 [dependencies.cursive]
-version = "0.8"  # !!! 0.9
+version = "0.10"
 default-features = false
 
 [features]

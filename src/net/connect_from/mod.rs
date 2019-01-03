@@ -17,21 +17,17 @@ impl ConnectFromOutside {
         Ok(thread::spawn(move || {
             info!("SSH ComServer starting...");
 
-            let key_algorithm = key::ED25519;
-            // possible: key::ED25519, key::RSA_SHA2_256, key::RSA_SHA2_512
-
             let _ = ring::rand::SystemRandom::new();
             let mut config = thrussh::server::Config::default();
             config.connection_timeout = Some(Duration::from_secs(600));
             config.auth_rejection_time = Duration::from_secs(3);
             config
                 .keys
-                .push(key::KeyPair::generate(key_algorithm).unwrap());
+                .push(key::KeyPair::generate_ed25519().unwrap());
             let config = Arc::new(config);
 
             let replication_server = ComServer {
                 id: uuid,
-                connector: None,
             };
             let address_string = ["0.0.0.0", ":", &config::net::SSH_PORT.to_string()].concat();
 
