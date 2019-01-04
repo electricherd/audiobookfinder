@@ -32,10 +32,9 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
 * borrowing: the borrow checker, I am getting more comfortable with it, but very good
 * shared-data over different threads (not yet lifetime optimized)
 * multi-threading, a lot of threads and communication is inside, also  ([Rayon](https://github.com/rayon-rs/rayon))
-* an optional graphical interface that even runs on console only machines (the [Cursive](https://github.com/gyscos/Cursive) TUI)
+* an optional graphical interface that even runs on console only machines (the [Cursive](https://github.com/gyscos/Cursive) TUI), but probably better to use a webui, modern and nice.
 * [architecture](#architecture) (modules), did some rework with file structure but it is not yet perfect in Rust, really. Now the code is better hidden inside a library... this gives some more opportunities
 * high-level functionality of different crates / including/using different crates (I don't want to reinvent the wheel)
-* Generics: a little bit about and how to use Generics, really nice, a bit difficult to search and fully adapt for but clear in its usage and powerful!!
 * in-code documentation with html generation, really nice!
 * easy command-line (always was looking for that, nice: [clap](https://github.com/kbknapp/clap-rs))
 * channel/thread communication (creating worker threads easily, there are plenty implemented yet, no concurrency problems!!)
@@ -53,8 +52,10 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
 * using a [state machine](https://github.com/fitzgen/state_machine_future) wher
 e it fits, here for client server *communication* states
 * learning [futures](https://en.wikipedia.org/wiki/Futures_and_promises)
+* rust macros (some day)
 
 ### Changes
+* added basic webui support: http-server with websockets ([actix](https://actix.rs)), a single page application, the page and websockets are already there but with no functionality and yet ugly (but it connects), I want to use basic parts of [bootstrap](https://getbootstrap.com/), [jquery](https://jquery.com) is already included.
 * change uuid strings back to uuids, that old decision was due to not have uuid crate dependency everywhere, but that was a bad decision
 * decomposed a part of thrussh communication to embed a state chart somehow (still question how to combine the state chart with the other future)
 * added architecture graphics using [draw.io](https://draw.io), which is awesome. Also connectable by [github support](https://about.draw.io/github-support/) directly via [this](https://www.draw.io/?mode=github) ([howTo](https://github.com/jgraph/drawio-github)).
@@ -102,7 +103,7 @@ for client and server, the example looks promising
 Unfortunately the program now uses mDNS-register with [dns-sd](https://github.com/plietar/rust-dns-sd) depends on Linux on [Avahi](https://www.avahi.org/)
 * `libavahi-client-dev` or `libavahi-compat-libdnssd-dev`. It also breaks first the easy cross compilation :confused: - I will see where this ends.
 But it works I can see myself with a mDNS scanner, so I can also find other audiobookfinder clients when I do it correctly
-* `libsodium`: Since I started to adapt to thrussh I also need libsodium
+* `libsodium`: Since I started to adapt to thrussh I also need libsodium (not available for old linux versions)
 * `libtag1-dev` and `libtagc0-dev` for libtag
 * `libssl-dev` as a clean setup might not have it
 
@@ -119,6 +120,7 @@ But it works I can see myself with a mDNS scanner, so I can also find other audi
 
 
 ### Yet in plan
+* add (and later replace cursive TUI) a webui using websockets (I will go with [actix](https://actix.rs), it has websockets and I need a simple http server)
 * create a key yourself!! And store, which is going to be done if not found at startup
 * communication is now easy with ssh but how to authenticate as a valid adbf? Look at ssh details, and zero-knowledge or something similar: hiding key or secrecy knowledge in code without being to obvious (first should be a simple string, don't bother too much)
 * rework the one stub for worker thread to have many worker threads in net to do something with found addresses (use thrussh simple example)

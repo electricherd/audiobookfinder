@@ -18,6 +18,10 @@ pub mod logit;
 // ctrl
 // ctrl/tui
 extern crate cursive;
+// ctrl/webui
+extern crate actix;
+extern crate actix_web;
+
 #[macro_use]
 extern crate state_machine_future;
 pub mod ctrl;
@@ -34,6 +38,7 @@ pub mod data;
 // net
 extern crate dirs;
 extern crate bincode;
+//extern crate mdns_discover as io_mdns;
 extern crate mdns as io_mdns;
 extern crate dns_sd as avahi_dns_sd;
 // com_client.rs com_server.rs

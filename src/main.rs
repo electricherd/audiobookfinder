@@ -123,7 +123,7 @@ fn main() {
                     .send(SystemMsg::StartAnimation(Alive::HostSearch, Status::ON))
                     .unwrap();
             }
-            let controller = Ctrl::new(client_id.to_string(), &tui_pathes, rx, tx.clone(), has_net);
+            let controller = Ctrl::new(client_id, &tui_pathes, rx, tx.clone(), has_net);
             match controller {
                 Ok(mut controller) => {
                     // signal ok

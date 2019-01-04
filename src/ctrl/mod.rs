@@ -3,9 +3,13 @@
 //! is only a light facade to the tui messages.
 
 pub mod tui; // todo: pub is not recommended, I use it for doctest
+mod webui;
+
 use std::sync::mpsc;
+use uuid::Uuid;
 
 use self::tui::Tui;
+use self::webui::WebUI;
 
 #[derive(Clone)]
 pub enum Alive {
@@ -49,19 +53,20 @@ impl Ctrl {
     /// Create a new controller if everything fits.
     ///
     /// # Arguments
-    /// * 'title' - The title the tui will display
-    /// * 'paths' - The Pathes that will be searched
+    /// * 'uuid' - The uuid this client/server uses
+    /// * 'paths' - The paths that will be searched
     /// * 'receiver' - The receiver that takes incoming ctrl messages
     /// * 'sender'   - The sender that sends from ctrl
     /// * 'with_net' - If ctrl should consider net messages
     pub fn new(
-        title: String,
+        uuid: Uuid,
         paths: &Vec<String>,
         receiver: mpsc::Receiver<SystemMsg>,
         sender: mpsc::Sender<SystemMsg>,
         with_net: bool,
     ) -> Result<Ctrl, String> {
-        let c_ui = Tui::new(title, sender.clone(), &paths, with_net)?;
+        let _egal = WebUI::new(uuid, with_net);
+        let c_ui = Tui::new(uuid.to_string(), sender.clone(), &paths, with_net)?;
         Ok(Ctrl {
             rx: receiver,
             ui: c_ui,

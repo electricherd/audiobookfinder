@@ -48,6 +48,9 @@ taglib = { git = "https://github.com/ebassi/taglib-rust", branch = "master", ver
 rayon = "1"       # for multi-threading
 uuid = {version = "0.7", features = ["v4","serde"]}
 
+actix = "0.7"
+actix-web = "0.7"
+
 state_machine_future = "0.2"
 
 serde = "1.0"

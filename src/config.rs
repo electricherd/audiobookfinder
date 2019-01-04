@@ -32,6 +32,20 @@ pub mod tui {
     pub static ALIVE_REFRESH: u64 = 80;
 }
 
+/// The webui related configurations
+pub mod webui {
+    lazy_static!{
+        pub static ref HTML_PAGE : &'static str =
+            include_str!("ctrl/webui/html/single_page.html");
+        pub static ref JS_JQUERY : &'static str =
+            include_str!("ctrl/webui/js/jquery-3.3.1.min.js");
+        pub static ref JS_APP : &'static str =
+            include_str!("ctrl/webui/js/app.js");
+    }
+    pub static HTML_UUID_REPLACE : &str = "!---UUID---!";    
+}
+
+
 /// The data related configurations of a more general purpose
 pub mod data {
     /// ignore those tree_magic extensions. like m3u
