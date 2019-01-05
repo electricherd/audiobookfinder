@@ -5,7 +5,7 @@ function APPStart() {
     state = false;
 
     if ("WebSocket" in window) {
-        var ws = new WebSocket("ws://!---WEBSOCKET---!/ws");
+        var ws = new WebSocket("ws://<!--WEBSOCKET-->/ws");
 
         ws.onopen = function() {
             alert ("Connected");

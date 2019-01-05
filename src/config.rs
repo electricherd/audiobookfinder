@@ -45,9 +45,10 @@ pub mod webui {
         pub static ref HTML_PAGE: &'static str = include_str!("ctrl/webui/html/single_page.html");
         pub static ref JS_JQUERY: &'static str = include_str!("ctrl/webui/js/jquery-3.3.1.min.js");
         pub static ref JS_APP: &'static str = include_str!("ctrl/webui/js/app.js");
+        pub static ref FAVICON: &'static [u8] = include_bytes!("ctrl/webui/gfx/favicon.png");
     }
-    pub static HTML_REPLACE_UUID: &str = "!---UUID---!";
-    pub static HTML_REPLACE_WEBSOCKET: &str = "!---WEBSOCKET---!";
+    pub static HTML_REPLACE_UUID: &str = "<!--UUID-->";
+    pub static HTML_REPLACE_WEBSOCKET: &str = "<!--WEBSOCKET-->";
 }
 
 /// The data related configurations of a more general purpose

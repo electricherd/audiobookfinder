@@ -41,6 +41,9 @@ impl WebUI {
             .default_resource(|r| r.f(WebUI::single_page))
             .resource("/js/{script_name}.js", |r| r.f(WebUI::static_javascript))
             .resource("/ws", |r| r.method(http::Method::GET).f(WebUI::ws_index))
+            .resource("favicon.png", |r| {
+                r.method(http::Method::GET).f(WebUI::static_favicon)
+            })
         })
         .bind(format!("{}", config::net::WEBSOCKET_ADDR));
         if let Ok(configured_server) = web_server {
@@ -88,6 +91,12 @@ impl WebUI {
             // ToDo: not correct
             Err(error::ErrorBadRequest("bad request"))
         }
+    }
+
+    fn static_favicon(_req: &HttpRequest<WebServerState>) -> Result<HttpResponse> {
+        Ok(HttpResponse::build(StatusCode::OK)
+            .content_type("image/png")
+            .body(*config::webui::FAVICON))
     }
 
     fn ws_index(r: &HttpRequest<WebServerState>) -> Result<HttpResponse> {
