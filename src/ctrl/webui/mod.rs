@@ -1,12 +1,15 @@
 //! This is a webui about to replace the TUI, to be nice, better accessable, and
 //! new technology using websockets
-
-use actix::{Actor, StreamHandler, AsyncContext, ActorContext};
-use actix_web::{ws,error, server, App, HttpRequest, HttpResponse, http::{self, StatusCode }, Result, Error};
-use uuid::Uuid;
+use actix::{Actor, ActorContext, AsyncContext, StreamHandler};
+use actix_web::{
+    error,
+    http::{self, StatusCode},
+    server, ws, App, Error, HttpRequest, HttpResponse, Result,
+};
 use std::sync::Arc;
 use std::sync::Mutex;
 use std::time::{Duration, Instant};
+use uuid::Uuid;
 
 use config;
 
@@ -20,35 +23,35 @@ pub struct WebServerState {
     nr_connections: Arc<Mutex<usize>>,
 }
 
-
 pub struct WebUI {
-    uuid : Uuid,
-    serve_others: bool
+    uuid: Uuid,
+    serve_others: bool,
 }
 
 impl WebUI {
-
-
-    pub fn new(id : Uuid, serve : bool)  -> Result<Self,()> {
+    pub fn new(id: Uuid, serve: bool) -> Result<Self, ()> {
         let sys = actix::System::new("http-server");
         let connection_count = Arc::new(Mutex::new(0));
 
-        let web_server = server::HttpServer::new( move
-               || App::with_state(WebServerState{ uuid: id.clone(), nr_connections: connection_count.clone()})
-                   .default_resource(|r| r.f(WebUI::single_page))
-                   .resource("/js/{script_name}.js", |r| r.f(WebUI::static_javascript))
-                   .resource("/ws", |r| r.method(http::Method::GET).f(WebUI::ws_index))
-               )
-               .bind("127.0.0.1:8080");
+        let web_server = server::HttpServer::new(move || {
+            App::with_state(WebServerState {
+                uuid: id.clone(),
+                nr_connections: connection_count.clone(),
+            })
+            .default_resource(|r| r.f(WebUI::single_page))
+            .resource("/js/{script_name}.js", |r| r.f(WebUI::static_javascript))
+            .resource("/ws", |r| r.method(http::Method::GET).f(WebUI::ws_index))
+        })
+        .bind(format!("{}", config::net::WEBSOCKET_ADDR));
         if let Ok(configured_server) = web_server {
             configured_server.start();
             sys.run();
             Ok(WebUI {
-                 uuid: id,
-                 serve_others: serve,
-             })
+                uuid: id,
+                serve_others: serve,
+            })
         } else {
-            Err( () )
+            Err(())
         }
     }
 
@@ -57,30 +60,30 @@ impl WebUI {
         let id = req.state().uuid;
         *(req.state().nr_connections.lock().unwrap()) += 1;
 
-        let uuid_page = str::replace(*config::webui::HTML_PAGE,
-                 config::webui::HTML_UUID_REPLACE,
-                 &id.to_hyphenated().to_string());
+        let uuid_page = str::replace(
+            *config::webui::HTML_PAGE,
+            config::webui::HTML_REPLACE_UUID,
+            &id.to_hyphenated().to_string(),
+        );
         Ok(HttpResponse::build(StatusCode::OK)
-                .content_type("text/html; charset=utf-8")
-                .body(uuid_page))
+            .content_type("text/html; charset=utf-8")
+            .body(uuid_page))
     }
 
     fn static_javascript(req: &HttpRequest<WebServerState>) -> Result<HttpResponse> {
         if let Some(script) = req.match_info().get("script_name") {
             let output = match script {
-                "jquery" => {
-                    *config::webui::JS_JQUERY
-                },
-                "app" => {
-                    *config::webui::JS_APP
-                },
-                _  => {
-                    "this javascript is unknown!"
-                },
+                "jquery" => (*config::webui::JS_JQUERY).to_string(),
+                "app" => str::replace(
+                    *config::webui::JS_APP,
+                    config::webui::HTML_REPLACE_WEBSOCKET,
+                    config::net::WEBSOCKET_ADDR,
+                ),
+                othername => format!("javascript {} is unknown!", othername),
             };
             Ok(HttpResponse::build(StatusCode::OK)
-                    .content_type("text/html; charset=utf-8")
-                    .body(output))
+                .content_type("text/html; charset=utf-8")
+                .body(output))
         } else {
             // ToDo: not correct
             Err(error::ErrorBadRequest("bad request"))

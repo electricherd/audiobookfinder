@@ -1,19 +1,23 @@
 //! The net module is resonsible for the network related parts,
 //! the mDNS registering, mDNS search, ssh server and ssh client.
 //! It also let's us startup and perform everything in yet one step.
-mod data;
 mod connect_from;
 mod connect_to;
+mod data;
 mod key_keeper;
 
 use avahi_dns_sd::{self, DNSService};
 use io_mdns::{self, RecordKind};
 use std::{
-    self, net::IpAddr, sync::{mpsc, Arc, Mutex}, thread, time::Duration,
+    self,
+    net::IpAddr,
+    sync::{mpsc, Arc, Mutex},
+    thread,
+    time::Duration,
 };
 use uuid::Uuid;
 
-use self::{connect_to::ConnectToOther, connect_from::ConnectFromOutside};
+use self::{connect_from::ConnectFromOutside, connect_to::ConnectToOther};
 use super::{config, ctrl};
 
 #[derive(Clone)]
@@ -50,7 +54,7 @@ impl Net {
             config::net::MDNS_SERVICE_NAME,
             None,
             None,
-            config::net::MDNS_PORT,
+            config::net::PORT_MDNS,
             &["path=/"],
         )?;
         let net = Net {
@@ -208,7 +212,8 @@ impl Net {
         let full_name = [
             config::net::MDNS_REGISTER_NAME,
             config::net::MDNS_SERVICE_NAME,
-        ].join(".");
+        ]
+        .join(".");
         info!("Searching for {:?}!", full_name);
 
         if let Ok(all_discoveries) = io_mdns::discover::all(full_name) {
@@ -234,9 +239,11 @@ impl Net {
 
                 // just look response
                 match response {
-                    Ok(good_response) => for record in good_response.records() {
-                        mdns_send_ip.send(ToThread::Data(record.clone())).unwrap();
-                    },
+                    Ok(good_response) => {
+                        for record in good_response.records() {
+                            mdns_send_ip.send(ToThread::Data(record.clone())).unwrap();
+                        }
+                    }
                     Err(_) => {
                         count_no_response += 1;
                     }
@@ -260,10 +267,8 @@ impl Net {
                 Ok(good) => {
                     match good {
                         ToThread::Data(recv_mesg) => {
-                            let (_, addr): (
-                                Option<String>,
-                                Option<IpAddr>,
-                            ) = Self::return_address(&recv_mesg.kind);
+                            let (_, addr): (Option<String>, Option<IpAddr>) =
+                                Self::return_address(&recv_mesg.kind);
                             if let Some(valid_addr) = addr {
                                 *count_valid += 1;
                                 sender_ssh_client

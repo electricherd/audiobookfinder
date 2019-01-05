@@ -10,14 +10,16 @@ use tokio_io;
 use uuid::Uuid;
 
 use super::super::{
-    config, connect_to::sc_com_to::{SCClient, SCClientFuture}, data::{DataAuth, DataSession},
+    config,
+    connect_to::sc_com_to::{SCClient, SCClientFuture},
+    data::{DataAuth, DataSession},
     key_keeper,
 };
 
 #[derive(Clone)]
 pub struct ComClient {
     uuid: Uuid,
-    key: Arc<thrussh_keys::key::KeyPair>
+    key: Arc<thrussh_keys::key::KeyPair>,
 }
 
 impl thrussh::client::Handler for ComClient {
@@ -27,7 +29,10 @@ impl thrussh::client::Handler for ComClient {
     type SessionUnit = futures::Finished<(Self, thrussh::client::Session), Self::Error>;
     type FutureSign = futures::future::FutureResult<(ComClient, thrussh::CryptoVec), Self::Error>;
 
-    fn check_server_key(self, _server_public_key: &thrussh_keys::key::PublicKey) -> Self::FutureBool {
+    fn check_server_key(
+        self,
+        _server_public_key: &thrussh_keys::key::PublicKey,
+    ) -> Self::FutureBool {
         futures::finished((self, true))
     }
     fn channel_open_confirmation(
@@ -66,8 +71,8 @@ impl thrussh::client::Handler for ComClient {
 impl ComClient {
     pub fn new(uuid: Uuid) -> ComClient {
         ComClient {
-             uuid: uuid ,
-             key: Arc::new(key_keeper::get_server_key().unwrap())
+            uuid: uuid,
+            key: Arc::new(key_keeper::get_server_key().unwrap()),
         }
     }
 
@@ -83,7 +88,7 @@ impl ComClient {
         let sc_future: SCClientFuture = SCClient::start();
 
         let _ = thrussh::client::connect_future(
-            (*ip_addr, config::net::SSH_PORT),
+            (*ip_addr, config::net::PORT_SSH),
             configuration,
             None,
             self,
@@ -103,14 +108,16 @@ impl ComClient {
                         Err(e)
                     })
             },
-        ).or_else(|_e| {
+        )
+        .or_else(|_e| {
             error!(
                 "Connection with {:?}:{:?} could not be established!",
                 ip_addr,
-                config::net::SSH_PORT
+                config::net::PORT_SSH
             );
-            Err(thrussh_keys::Error::IO(std::io::Error::new(std::io::ErrorKind::Other,
-                "Connection could not be established!"
+            Err(thrussh_keys::Error::IO(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "Connection could not be established!",
             )))
         });
         info!("run done ......................");
@@ -127,7 +134,7 @@ impl ComClient {
         info!("Session could be established!");
         connection
             .channel_open_session()
-            .and_then(move |(session, channelid) | {
+            .and_then(move |(session, channelid)| {
                 info!("Session could be opened, sending out!");
 
                 // send data
@@ -141,7 +148,7 @@ impl ComClient {
             })
     }
 
-    fn send<R,H>(
+    fn send<R, H>(
         channelid: thrussh::ChannelId,
         to_send_data: DataSession,
         connection: thrussh::client::Connection<R, H>,
@@ -169,5 +176,4 @@ impl ComClient {
             auth: DataAuth::new((*id).clone()),
         }
     }
-
 }
