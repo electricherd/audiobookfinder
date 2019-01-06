@@ -55,6 +55,8 @@ pub mod webui {
                 include_str!("ctrl/webui/3rdparty/bootstrap-3.3.7/js/bootstrap.js");
             pub static ref JS_MIN: &'static str =
                 include_str!("ctrl/webui/3rdparty/bootstrap-3.3.7/js/bootstrap.min.js");
+            pub static ref JS_NPM: &'static str =
+                include_str!("ctrl/webui/3rdparty/bootstrap-3.3.7/js/npm.js");
             pub static ref CSS: &'static str =
                 include_str!("ctrl/webui/3rdparty/bootstrap-3.3.7/css/bootstrap.css");
             pub static ref CSS_MIN: &'static str =

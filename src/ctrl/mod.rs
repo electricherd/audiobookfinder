@@ -6,6 +6,7 @@ pub mod tui; // todo: pub is not recommended, I use it for doctest
 mod webui;
 
 use std::sync::mpsc;
+use std::thread;
 use uuid::Uuid;
 
 use self::tui::Tui;
@@ -65,8 +66,12 @@ impl Ctrl {
         sender: mpsc::Sender<SystemMsg>,
         with_net: bool,
     ) -> Result<Ctrl, String> {
-        let _egal = WebUI::new(uuid, with_net);
+        let _webui_runner = thread::spawn(move || {
+            let _ = WebUI::new(uuid, with_net);
+        });
+
         let c_ui = Tui::new(uuid.to_string(), sender.clone(), &paths, with_net)?;
+
         Ok(Ctrl {
             rx: receiver,
             ui: c_ui,

@@ -49,14 +49,13 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
 * CI with [travis](https://travis-ci.org/electricherd/audiobookfinder/) works, cross compiling is still difficult with [trust](https://github.com/japaric/trust), [cross](https://github.com/japaric/cross/), [docker](https://www.docker.com/), need to watch closely to [steed](https://github.com/japaric/steed) for some problem solving.
 * travis automatically built and automatically deployed own public [documentation](https://electricherd.github.io/audiobookfinder/audiobookfinder/index.html)
 * making a library ([adbflib](https://electricherd.github.io/audiobookfinder/adbflib/index.html) as the main part of the program)
-* using a [state machine](https://github.com/fitzgen/state_machine_future) wher
-e it fits, here for client server *communication* states
+* using a [state machine](https://github.com/fitzgen/state_machine_future) where it fits, here for client server *communication* states
 * learning [futures](https://en.wikipedia.org/wiki/Futures_and_promises)
 * rust macros (some day)
 
 ### Changes
-* included (should work fully offline later, all MIT licensed) 3rdparty css, js-scripts (jsquery is good, but still some problem with boostrap js) and all pages hard-included in to webserver (no loading of files, yet for development still possible), added state for server, connected websocket, designed a favicon plus logo
-* added basic webui support: http-server with websockets ([actix](https://actix.rs)), a single page application, the page and websockets are already there but with no functionality and yet ugly (but it connects), I want to use basic parts of [bootstrap](https://getbootstrap.com/), [jquery](https://jquery.com) is already included.
+* included (should work fully offline later, all MIT licensed) 3rdparty css, js-scripts ([jquery](https://jquery.com),[bootstrap](https://getbootstrap.com/)) and all pages hard-included in to webserver (no loading of files, yet for development still possible), added state for server, connected websocket, designed a favicon plus logo
+* added basic webui support: http-server with websockets ([actix](https://actix.rs)), a single page application, the page and websockets are already there.
 * change uuid strings back to uuids, that old decision was due to not have uuid crate dependency everywhere, but that was a bad decision
 * decomposed a part of thrussh communication to embed a state chart somehow (still question how to combine the state chart with the other future)
 * added architecture graphics using [draw.io](https://draw.io), which is awesome. Also connectable by [github support](https://about.draw.io/github-support/) directly via [this](https://www.draw.io/?mode=github) ([howTo](https://github.com/jgraph/drawio-github)).

@@ -156,17 +156,17 @@ impl WebUI {
             };
             if let Some(content) = output {
                 Ok(HttpResponse::build(StatusCode::OK)
-                    .content_type("text/html; charset=utf-8")
+                    .content_type("text/css; charset=utf-8")
                     .body(content))
             } else {
                 Ok(HttpResponse::build(StatusCode::NOT_FOUND)
-                    .content_type("text/html; charset=utf-8")
-                    .body("1"))
+                    .content_type("text/css; charset=utf-8")
+                    .body(""))
             }
         } else {
             Ok(HttpResponse::build(StatusCode::NOT_FOUND)
-                .content_type("text/html; charset=utf-8")
-                .body("2"))
+                .content_type("text/css; charset=utf-8")
+                .body(""))
         }
     }
 
@@ -175,6 +175,7 @@ impl WebUI {
             let output = match js {
                 "bootstrap.js" => Some(*config::webui::bootstrap::JS),
                 "bootstrap.min.js" => Some(*config::webui::bootstrap::JS),
+                "npm.js" => Some(*config::webui::bootstrap::JS_NPM),
                 _ => {
                     println!("JS: not found {}", js);
                     None
@@ -182,17 +183,17 @@ impl WebUI {
             };
             if let Some(content) = output {
                 Ok(HttpResponse::build(StatusCode::OK)
-                    .content_type("text/html; charset=utf-8")
+                    .content_type("application/javascript; charset=utf-8")
                     .body(content))
             } else {
                 Ok(HttpResponse::build(StatusCode::NOT_FOUND)
-                    .content_type("text/html; charset=utf-8")
-                    .body("3"))
+                    .content_type("application/javascript; charset=utf-8")
+                    .body(""))
             }
         } else {
             Ok(HttpResponse::build(StatusCode::NOT_FOUND)
-                .content_type("text/html; charset=utf-8")
-                .body("4"))
+                .content_type("application/javascript; charset=utf-8")
+                .body(""))
         }
     }
 
