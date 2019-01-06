@@ -4,15 +4,20 @@
 <head>
     <meta http-equiv="content-type" content="text/html; charset=utf-8"></meta>
     <title>First App <!--UUID--> </title>
-    <link rel="stylesheet" href="css/style.css">
     <link rel="icon"
       type="image/png"
       href="favicon.png" />
-    <script src="js/jquery.js"></script>
-    <script src="js/app.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <!-- link rel="stylesheet" href="css/bootstrap.min.css" -->
+    <script src="jquery.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="app.js"></script>
+
 </head>
 
 <body>
+  <div class="container">
         <div id='hello_message'>
                 Connecting...
         </div>
@@ -20,5 +25,22 @@
         <div id='off'>OFF</div>
         <div id='on'>ON</div>
 
+        <button id="btn2">Append</button>
+        <img src="sheep.svg" class="img-circle" alt="Cinque Terre" width="304" height="304">
+        <table class="table table-striped" id='myItemTable'>
+          <thead>
+            <tr>
+              <th>Action</th>
+              <th>Time</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>dummy Action</td>
+              <td>dummy time</td>
+            </tr>
+          </tbody>
+        </table>
+  </div>
 </body>
 </html>

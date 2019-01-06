@@ -41,11 +41,59 @@ pub mod tui {
 
 /// The webui related configurations
 pub mod webui {
+    // 3rd party jquery hard-wired, and needed by bootstrap
+    pub mod jquery {
+        lazy_static! {
+            pub static ref JS_JQUERY: &'static str =
+                include_str!("ctrl/webui/3rdparty/jquery-3.3.1/jquery.min.js");
+        }
+    }
+    // 3rd party bootstrap hard-wired: css 317kb + js 107kb + fonts 216kb
+    pub mod bootstrap {
+        lazy_static! {
+            pub static ref JS: &'static str =
+                include_str!("ctrl/webui/3rdparty/bootstrap-3.3.7/js/bootstrap.js");
+            pub static ref JS_MIN: &'static str =
+                include_str!("ctrl/webui/3rdparty/bootstrap-3.3.7/js/bootstrap.min.js");
+            pub static ref CSS: &'static str =
+                include_str!("ctrl/webui/3rdparty/bootstrap-3.3.7/css/bootstrap.css");
+            pub static ref CSS_MIN: &'static str =
+                include_str!("ctrl/webui/3rdparty/bootstrap-3.3.7/css/bootstrap.min.css");
+            pub static ref CSS_THEME: &'static str =
+                include_str!("ctrl/webui/3rdparty/bootstrap-3.3.7/css/bootstrap-theme.css");
+            pub static ref CSS_THEME_MIN: &'static str =
+                include_str!("ctrl/webui/3rdparty/bootstrap-3.3.7/css/bootstrap-theme.min.css");
+            pub static ref CSS_MAP: &'static str =
+                include_str!("ctrl/webui/3rdparty/bootstrap-3.3.7/css/bootstrap.css.map");
+            pub static ref CSS_MIN_MAP: &'static str =
+                include_str!("ctrl/webui/3rdparty/bootstrap-3.3.7/css/bootstrap.min.css.map");
+            pub static ref CSS_THEME_MAP: &'static str =
+                include_str!("ctrl/webui/3rdparty/bootstrap-3.3.7/css/bootstrap-theme.css.map");
+            pub static ref CSS_THEME_MIN_MAP: &'static str =
+                include_str!("ctrl/webui/3rdparty/bootstrap-3.3.7/css/bootstrap-theme.min.css.map");
+            pub static ref FONT_EOT: &'static [u8] = include_bytes!(
+                "ctrl/webui/3rdparty/bootstrap-3.3.7/fonts/glyphicons-halflings-regular.eot"
+            );
+            pub static ref FONT_TTF: &'static [u8] = include_bytes!(
+                "ctrl/webui/3rdparty/bootstrap-3.3.7/fonts/glyphicons-halflings-regular.ttf"
+            );
+            pub static ref FONT_WOFF: &'static [u8] = include_bytes!(
+                "ctrl/webui/3rdparty/bootstrap-3.3.7/fonts/glyphicons-halflings-regular.woff"
+            );
+            pub static ref FONT_WOFF2: &'static [u8] = include_bytes!(
+                "ctrl/webui/3rdparty/bootstrap-3.3.7/fonts/glyphicons-halflings-regular.woff2"
+            );
+            pub static ref FONT_SVG: &'static [u8] = include_bytes!(
+                "ctrl/webui/3rdparty/bootstrap-3.3.7/fonts/glyphicons-halflings-regular.svg"
+            );
+        }
+    }
+    // own pages
     lazy_static! {
         pub static ref HTML_PAGE: &'static str = include_str!("ctrl/webui/html/single_page.html");
-        pub static ref JS_JQUERY: &'static str = include_str!("ctrl/webui/js/jquery-3.3.1.min.js");
         pub static ref JS_APP: &'static str = include_str!("ctrl/webui/js/app.js");
         pub static ref FAVICON: &'static [u8] = include_bytes!("ctrl/webui/gfx/favicon.png");
+        pub static ref PIC_SHEEP: &'static str = include_str!("ctrl/webui/gfx/sheep.svg");
     }
     pub static HTML_REPLACE_UUID: &str = "<!--UUID-->";
     pub static HTML_REPLACE_WEBSOCKET: &str = "<!--WEBSOCKET-->";

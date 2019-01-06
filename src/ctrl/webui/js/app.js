@@ -3,18 +3,24 @@ window.onload = APPStart;
 // Page onload event handler
 function APPStart() {
     state = false;
+    // guid_id = "<!--UUID-->";
+    guid_id = "devel";
 
+    $(document).ready(function(){
     if ("WebSocket" in window) {
-        var ws = new WebSocket("ws://<!--WEBSOCKET-->/ws");
+        // var ws = new WebSocket("ws://<!--WEBSOCKET-->/ws");
+        var ws = new WebSocket("ws://localhost:8088/ws");
 
         ws.onopen = function() {
             alert ("Connected");
             $('#hello_message').text("Connected");
-            ws.send("yes");
+            ws.send("/start "+"guid_id");
         };
 
         ws.onmessage = function (evt) {
             var received_msg = evt.data;
+            $("#myItemTable").prepend("<tr><td>" + evt.data
+                                + "</td><td>TimeLastname</td></tr>");
         };
 
         ws.onclose = function() {
@@ -28,6 +34,10 @@ function APPStart() {
         // The browser doesn't support WebSocket
         alert("WebSocket NOT supported by your Browser!");
     }
+
+    $("#btn2").click(function(){
+      $("#myItemTable").append("<tr><td>Action</td><td>TimeLastname</td></tr>");
+    });
 
     // program checks if led_state button was clicked
     $('#state').click(function() {
@@ -46,4 +56,5 @@ function APPStart() {
             ws.send("OFF");
         }
     });
+  });
 }
