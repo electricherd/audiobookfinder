@@ -13,33 +13,74 @@
     <script src="js/bootstrap.min.js"></script>
     <script src="app.js"></script>
 
+    <!-- app's own style -->
+    <style type="text/css">
+        .apptable {
+          border-collapse: collapse;
+          width: 100%;
+          background-color: white;
+        }
+      </style>
 </head>
 
 <body>
-  <div class="container">
-        <div id='hello_message'>
-                Connecting...
-        </div>
-        <button id='state'>Turn on</button>
-        <div id='off'>OFF</div>
-        <div id='on'>ON</div>
 
-        <button id="btn2">Append</button>
-        <img src="sheep.svg" class="img-circle" alt="Cinque Terre" width="304" height="304">
-        <table class="table table-striped" id='myItemTable'>
-          <thead>
-            <tr>
-              <th>Action</th>
-              <th>Time</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>dummy Action</td>
-              <td>dummy time</td>
-            </tr>
-          </tbody>
-        </table>
-  </div>
+  <div>
+    <table class="apptable">
+      <tr>
+        <td width="25%" style="vertical-align: top">
+          <img src="sheep.svg" alt="Sheep Logo">
+        </td>
+        <td width="35%" style="vertical-align: top; text-align: center"">
+          <h3>audiobookfinder</h3>
+          <p> Audiobookfinder used with a webui. Nice!!!!
+          <span class="glyphicon glyphicon-gift"></p>
+        </td>
+        <td width="40%">
+          <button id="btn2" type="button" class="btn btn-primary btn-block">Append</button>
+          <div id='hello_message'>
+                  Connecting...
+          </div>
+           <button id="state" type="button" class="btn btn-primary btn-block">Turn on</button>
+          <div id='off'>OFF</div>
+          <div id='on'>ON</div>
+        </td>
+      </tr>
+    </table>
+ </div>
+
+ <div class="container">
+   <div class="row">
+     <div class="col-sm-4">
+       <h3>Status:</h3>
+       <table class="table table-striped" id='MyActionTable'>
+         <thead>
+           <tr>
+             <th>Action</th>
+             <th>Time</th>
+           </tr>
+         </thead>
+         <tbody>
+           <tr>
+             <td>dummy Action</td>
+             <td>dummy time</td>
+           </tr>
+         </tbody>
+       </table>
+     </div>
+     <div class="col-sm-4">
+       <h3>Connection:</h3>
+       <table class="table table-striped" id='MyIPTable'>
+         <thead>
+           <tr>
+             <th>ip addresses found</th>
+           </tr>
+         </thead>
+         <tbody>
+         </tbody>
+       </table>
+     </div>
+   </div>
+ </div>
 </body>
 </html>

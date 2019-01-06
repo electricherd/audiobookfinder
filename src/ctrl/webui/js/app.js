@@ -36,7 +36,7 @@ function APPStart() {
     }
 
     $("#btn2").click(function(){
-      $("#myItemTable").append("<tr><td>Action</td><td>TimeLastname</td></tr>");
+      $("#MyActionTable").append("<tr><td>Action</td><td>TimeLastname</td></tr>");
     });
 
     // program checks if led_state button was clicked
