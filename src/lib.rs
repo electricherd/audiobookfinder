@@ -1,7 +1,6 @@
 //! The adbflib is a facade to many modules that interact with
 //! the audiobookfinder program.
 //! In this file all crates are name before the modules which use them.
-#![feature(const_ip)]
 #![crate_name = "adbflib"]
 #![crate_type = "lib"]
 // ALL
