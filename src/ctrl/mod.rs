@@ -11,6 +11,7 @@ use uuid::Uuid;
 
 use self::tui::Tui;
 use self::webui::WebUI;
+use config;
 
 #[derive(Clone)]
 pub enum Alive {
@@ -48,6 +49,8 @@ pub struct NetStats {
 pub struct Ctrl {
     rx: mpsc::Receiver<SystemMsg>,
     ui: Tui,
+    uuid: Uuid,
+    with_net: bool,
 }
 
 impl Ctrl {
@@ -59,26 +62,24 @@ impl Ctrl {
     /// * 'receiver' - The receiver that takes incoming ctrl messages
     /// * 'sender'   - The sender that sends from ctrl
     /// * 'with_net' - If ctrl should consider net messages
-    pub fn new(
+    pub fn new_tui(
         uuid: Uuid,
         paths: &Vec<String>,
         receiver: mpsc::Receiver<SystemMsg>,
         sender: mpsc::Sender<SystemMsg>,
         with_net: bool,
     ) -> Result<Ctrl, String> {
-        let _webui_runner = thread::spawn(move || {
-            let _ = WebUI::new(uuid, with_net);
-        });
-
         let c_ui = Tui::new(uuid.to_string(), sender.clone(), &paths, with_net)?;
 
         Ok(Ctrl {
             rx: receiver,
             ui: c_ui,
+            uuid: uuid,
+            with_net: with_net,
         })
     }
     /// Run the controller
-    pub fn run(&mut self) {
+    pub fn run_tui(&mut self) {
         while self.ui.step() {
             while let Some(message) = self.rx.try_iter().next() {
                 // Handle messages arriving from the UI.
@@ -97,6 +98,21 @@ impl Ctrl {
                     }
                 };
             }
+        }
+    }
+
+    /// Run the controller
+    pub fn run_webui(&mut self) {
+        let uuid_copy = self.uuid;
+        let net_support = self.with_net;
+        if true {
+            // todo: remove on devel
+            //if webbrowser::open(&["http://", config::net::WEBSOCKET_ADDR].concat()).is_ok() {
+            let _webui_runner = thread::spawn(move || {
+                let _ = WebUI::new(uuid_copy, net_support);
+            });
+        } else {
+            // Todo: debug
         }
     }
 } // impl Controller

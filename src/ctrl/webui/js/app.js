@@ -12,8 +12,7 @@ function APPStart() {
         var ws = new WebSocket("ws://localhost:8088/ws");
 
         ws.onopen = function() {
-            alert ("Connected");
-            $('#hello_message').text("Connected");
+            $('#statusMessage').text("connected");
             ws.send("/start "+"guid_id");
         };
 
@@ -24,7 +23,8 @@ function APPStart() {
         };
 
         ws.onclose = function() {
-             alert("Connection is closed...");
+            $('#statusMessage').text("not connected");
+           alert("Connection is closed...");
         };
 
         window.onbeforeunload = function(event) {

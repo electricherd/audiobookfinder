@@ -9,6 +9,7 @@ use actix_web::{
 use std::sync::Arc;
 use std::sync::Mutex;
 use std::time::{Duration, Instant};
+use hostname;
 use uuid::Uuid;
 
 use config;
@@ -40,6 +41,7 @@ enum WebCommand {
     NewMdnsClient(String),
 }
 
+
 /// The formatters here for json output
 use std::fmt;
 impl fmt::Display for JSONResponse {
@@ -66,10 +68,10 @@ impl WebUI {
                 uuid: id.clone(),
                 nr_connections: connection_count.clone(),
             })
-            //.default_resource(|r| r.f(WebUI::single_page))
-            //.resource("/js/app.js", |r| r.f(WebUI::js_app))
-            .default_resource(|r| r.f(WebUI::dyn_devel_html)) // Todo: only for devel
-            .resource("/app.js", |r| r.f(WebUI::dyn_devel_js)) // todo: only for devel
+            .default_resource(|r| r.f(WebUI::single_page))
+            .resource("/app.js", |r| r.f(WebUI::js_app))
+            //.default_resource(|r| r.f(WebUI::dyn_devel_html)) // Todo: only for devel
+            //.resource("/app.js", |r| r.f(WebUI::dyn_devel_js)) // todo: only for devel
             .resource("/ws", |r| r.method(http::Method::GET).f(WebUI::ws_index))
             .resource("/jquery.min.js", |r| {
                 r.f(|_| {
@@ -94,9 +96,6 @@ impl WebUI {
             })
             .resource("/css/{name}", |r| r.f(WebUI::bootstrap_css))
             .resource("/js/{name}", |r| r.f(WebUI::bootstrap_js))
-            .resource("/fonts/glyphicons-halflings-regular.{name}", |r| {
-                r.f(WebUI::bootstrap_fonts)
-            })
         })
         .bind(format!("{}", config::net::WEBSOCKET_ADDR));
         if let Ok(configured_server) = web_server {
@@ -111,14 +110,6 @@ impl WebUI {
         }
     }
 
-    fn build_default_with_uuid(uuid: &Uuid) -> String {
-        str::replace(
-            *config::webui::HTML_PAGE,
-            config::webui::HTML_REPLACE_UUID,
-            &uuid.to_hyphenated().to_string(),
-        )
-    }
-
     fn dyn_devel_js(_req: &HttpRequest<WebServerState>) -> Result<fs::NamedFile> {
         Ok(fs::NamedFile::open("src/ctrl/webui/js/app.js")?)
     }
@@ -131,7 +122,7 @@ impl WebUI {
         let id = req.state().uuid;
         *(req.state().nr_connections.lock().unwrap()) += 1;
 
-        let uuid_page = Self::build_default_with_uuid(&id);
+        let uuid_page = Self::replace_static_content(*config::webui::HTML_PAGE, &id);
 
         Ok(HttpResponse::build(StatusCode::OK)
             .content_type("text/html; charset=utf-8")
@@ -145,10 +136,14 @@ impl WebUI {
                 "bootstrap.css.map" => Some(*config::webui::bootstrap::CSS_MAP),
                 "bootstrap.min.css" => Some(*config::webui::bootstrap::CSS_MIN),
                 "bootstrap.min.css.map" => Some(*config::webui::bootstrap::CSS_MIN_MAP),
-                "bootstrap-theme.css" => Some(*config::webui::bootstrap::CSS_THEME),
-                "bootstrap-theme.css.map" => Some(*config::webui::bootstrap::CSS_THEME_MAP),
-                "bootstrap-theme.min.css" => Some(*config::webui::bootstrap::CSS_THEME_MIN),
-                "bootstrap-theme.min.css.map" => Some(*config::webui::bootstrap::CSS_THEME_MIN_MAP),
+                "bootstrap-grid.css" => Some(*config::webui::bootstrap::CSS_GRID),
+                "bootstrap-grid.css.map" => Some(*config::webui::bootstrap::CSS_GRID_MAP),
+                "bootstrap-grid.min.css" => Some(*config::webui::bootstrap::CSS_GRID_MIN),
+                "bootstrap-grid.min.css.map" => Some(*config::webui::bootstrap::CSS_GRID_MIN_MAP),
+                "bootstrap-reboot.css" => Some(*config::webui::bootstrap::CSS_REBOOT),
+                "bootstrap-reboot.css.map" => Some(*config::webui::bootstrap::CSS_REBOOT_MAP),
+                "bootstrap-reboot.min.css" => Some(*config::webui::bootstrap::CSS_REBOOT_MIN),
+                "bootstrap-reboot.min.css.map" => Some(*config::webui::bootstrap::CSS_REBOOT_MIN_MAP),
                 _ => {
                     println!("CSS: not found {}", css);
                     None
@@ -174,8 +169,13 @@ impl WebUI {
         if let Some(js) = req.match_info().get("name") {
             let output = match js {
                 "bootstrap.js" => Some(*config::webui::bootstrap::JS),
-                "bootstrap.min.js" => Some(*config::webui::bootstrap::JS),
-                "npm.js" => Some(*config::webui::bootstrap::JS_NPM),
+                "bootstrap.js" => Some(*config::webui::bootstrap::JS_MAP),
+                "bootstrap.min.js" => Some(*config::webui::bootstrap::JS_MIN),
+                "bootstrap.min.js" => Some(*config::webui::bootstrap::JS_MIN_MAP),
+                "bootstrap.bundle.js" => Some(*config::webui::bootstrap::JS_BUNDLE),
+                "bootstrap.bundle.js" => Some(*config::webui::bootstrap::JS_BUNDLE_MAP),
+                "bootstrap.bundle.min.js" => Some(*config::webui::bootstrap::JS_BUNDLE_MIN),
+                "bootstrap.bundle.min.js" => Some(*config::webui::bootstrap::JS_BUNDLE_MIN_MAP),
                 _ => {
                     println!("JS: not found {}", js);
                     None
@@ -197,46 +197,10 @@ impl WebUI {
         }
     }
 
-    fn bootstrap_fonts(req: &HttpRequest<WebServerState>) -> Result<HttpResponse> {
-        if let Some(fonts_ext) = req.match_info().get("name") {
-            let output = match fonts_ext {
-                "eot" => Some(*config::webui::bootstrap::FONT_EOT),
-                "woff" => Some(*config::webui::bootstrap::FONT_WOFF),
-                "woff2" => Some(*config::webui::bootstrap::FONT_WOFF2),
-                "svg" => Some(*config::webui::bootstrap::FONT_SVG),
-                _ => {
-                    println!("font: not found {}", fonts_ext);
-                    None
-                }
-            };
-            if let Some(content) = output {
-                Ok(HttpResponse::build(StatusCode::OK)
-                    .content_type("application/octet-stream")
-                    .body(content))
-            } else {
-                Ok(HttpResponse::build(StatusCode::NOT_FOUND)
-                    .content_type("application/octet-stream")
-                    .body(""))
-            }
-        } else {
-            Ok(HttpResponse::build(StatusCode::NOT_FOUND)
-                .content_type("application/octet-stream")
-                .body(""))
-        }
-    }
-
     fn js_app(req: &HttpRequest<WebServerState>) -> Result<HttpResponse> {
         let id = req.state().uuid;
-        let replace_websocket = str::replace(
-            *config::webui::JS_APP,
-            config::webui::HTML_REPLACE_WEBSOCKET,
-            config::net::WEBSOCKET_ADDR,
-        );
-        let output = str::replace(
-            &replace_websocket,
-            config::webui::HTML_REPLACE_UUID,
-            &id.to_hyphenated().to_string(),
-        );
+
+        let output = Self::replace_static_content(*config::webui::JS_APP, &id);
         Ok(HttpResponse::build(StatusCode::OK)
             .content_type("text/html; charset=utf-8")
             .body(output))
@@ -244,6 +208,34 @@ impl WebUI {
 
     fn ws_index(r: &HttpRequest<WebServerState>) -> Result<HttpResponse> {
         ws::start(r, MyWebSocket::new())
+    }
+
+    fn replace_static_content(html_in: &str, id: &Uuid) -> String {
+        // short inline struct
+        struct ReplaceStatic<'a>{
+            r : &'a str,
+            c : String
+        }
+
+        let uuid = id.to_hyphenated().to_string();
+        let hostname = hostname::get_hostname().unwrap_or("undefined".to_string());
+
+        let changers : [ReplaceStatic;4] = [
+            ReplaceStatic{r: config::net::HTML_REPLACE_STATIC_URL_SOURCE, c : config::net::HTML_URL_SOURCE.to_string()},
+            ReplaceStatic{r: config::webui::HTML_REPLACE_WEBSOCKET, c : config::net::WEBSOCKET_ADDR.to_string()},
+            ReplaceStatic{r: config::webui::HTML_REPLACE_UUID, c : uuid},
+            ReplaceStatic{r: config::webui::HTML_REPLACE_HOSTNAME, c : hostname},
+        ];
+        let mut replace_this = html_in.to_string();
+
+        for replacer in &changers {
+            replace_this = str::replace(
+                &replace_this,
+                &replacer.r,
+                &replacer.c,
+            );
+        }
+        replace_this
     }
 }
 

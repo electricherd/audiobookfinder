@@ -31,6 +31,10 @@ pub mod net {
     pub static SSH_CLIENT_SEC_KEY_PATH: &str = "/.adbf/client_key.priv";
     pub static SSH_CLIENT_SEC_KEY_PASSWD: &str = "adbf";
 
+    // todo: make this statically assemble before
+    pub static HTML_REPLACE_STATIC_URL_SOURCE: &str = "<!--URL_SOURCE-->";
+    pub static HTML_URL_SOURCE: &str = "https://github.com/electricherd/audiobookfinder";
+
     pub struct changeable {}
 }
 
@@ -51,43 +55,62 @@ pub mod webui {
     // 3rd party bootstrap hard-wired: css 317kb + js 107kb + fonts 216kb
     pub mod bootstrap {
         lazy_static! {
+            //
+            // javascript
+            //
+            // bootstrap
             pub static ref JS: &'static str =
-                include_str!("ctrl/webui/3rdparty/bootstrap-3.3.7/js/bootstrap.js");
+                include_str!("ctrl/webui/3rdparty/bootstrap-4.0.0/js/bootstrap.js");
+            pub static ref JS_MAP: &'static str =
+                include_str!("ctrl/webui/3rdparty/bootstrap-4.0.0/js/bootstrap.js.map");
+            // bootstrap min
             pub static ref JS_MIN: &'static str =
-                include_str!("ctrl/webui/3rdparty/bootstrap-3.3.7/js/bootstrap.min.js");
-            pub static ref JS_NPM: &'static str =
-                include_str!("ctrl/webui/3rdparty/bootstrap-3.3.7/js/npm.js");
+                include_str!("ctrl/webui/3rdparty/bootstrap-4.0.0/js/bootstrap.min.js");
+            pub static ref JS_MIN_MAP: &'static str =
+                include_str!("ctrl/webui/3rdparty/bootstrap-4.0.0/js/bootstrap.min.js.map");
+            // bootstrap bundle
+            pub static ref JS_BUNDLE: &'static str =
+                include_str!("ctrl/webui/3rdparty/bootstrap-4.0.0/js/bootstrap.bundle.js");
+            pub static ref JS_BUNDLE_MAP: &'static str =
+                include_str!("ctrl/webui/3rdparty/bootstrap-4.0.0/js/bootstrap.bundle.js.map");
+            // bootstrap bundle min
+            pub static ref JS_BUNDLE_MIN: &'static str =
+                include_str!("ctrl/webui/3rdparty/bootstrap-4.0.0/js/bootstrap.bundle.min.js");
+            pub static ref JS_BUNDLE_MIN_MAP: &'static str =
+                include_str!("ctrl/webui/3rdparty/bootstrap-4.0.0/js/bootstrap.bundle.min.js.map");
+            //
+            // css
+            //
+            // bootstrap
             pub static ref CSS: &'static str =
-                include_str!("ctrl/webui/3rdparty/bootstrap-3.3.7/css/bootstrap.css");
-            pub static ref CSS_MIN: &'static str =
-                include_str!("ctrl/webui/3rdparty/bootstrap-3.3.7/css/bootstrap.min.css");
-            pub static ref CSS_THEME: &'static str =
-                include_str!("ctrl/webui/3rdparty/bootstrap-3.3.7/css/bootstrap-theme.css");
-            pub static ref CSS_THEME_MIN: &'static str =
-                include_str!("ctrl/webui/3rdparty/bootstrap-3.3.7/css/bootstrap-theme.min.css");
+                include_str!("ctrl/webui/3rdparty/bootstrap-4.0.0/css/bootstrap.css");
             pub static ref CSS_MAP: &'static str =
-                include_str!("ctrl/webui/3rdparty/bootstrap-3.3.7/css/bootstrap.css.map");
+                include_str!("ctrl/webui/3rdparty/bootstrap-4.0.0/css/bootstrap.css.map");
+            // boostrap min
+            pub static ref CSS_MIN: &'static str =
+                include_str!("ctrl/webui/3rdparty/bootstrap-4.0.0/css/bootstrap.min.css");
             pub static ref CSS_MIN_MAP: &'static str =
-                include_str!("ctrl/webui/3rdparty/bootstrap-3.3.7/css/bootstrap.min.css.map");
-            pub static ref CSS_THEME_MAP: &'static str =
-                include_str!("ctrl/webui/3rdparty/bootstrap-3.3.7/css/bootstrap-theme.css.map");
-            pub static ref CSS_THEME_MIN_MAP: &'static str =
-                include_str!("ctrl/webui/3rdparty/bootstrap-3.3.7/css/bootstrap-theme.min.css.map");
-            pub static ref FONT_EOT: &'static [u8] = include_bytes!(
-                "ctrl/webui/3rdparty/bootstrap-3.3.7/fonts/glyphicons-halflings-regular.eot"
-            );
-            pub static ref FONT_TTF: &'static [u8] = include_bytes!(
-                "ctrl/webui/3rdparty/bootstrap-3.3.7/fonts/glyphicons-halflings-regular.ttf"
-            );
-            pub static ref FONT_WOFF: &'static [u8] = include_bytes!(
-                "ctrl/webui/3rdparty/bootstrap-3.3.7/fonts/glyphicons-halflings-regular.woff"
-            );
-            pub static ref FONT_WOFF2: &'static [u8] = include_bytes!(
-                "ctrl/webui/3rdparty/bootstrap-3.3.7/fonts/glyphicons-halflings-regular.woff2"
-            );
-            pub static ref FONT_SVG: &'static [u8] = include_bytes!(
-                "ctrl/webui/3rdparty/bootstrap-3.3.7/fonts/glyphicons-halflings-regular.svg"
-            );
+                include_str!("ctrl/webui/3rdparty/bootstrap-4.0.0/css/bootstrap.min.css.map");
+            // bootstrap grid
+            pub static ref CSS_GRID: &'static str =
+                include_str!("ctrl/webui/3rdparty/bootstrap-4.0.0/css/bootstrap-grid.css");
+            pub static ref CSS_GRID_MAP: &'static str =
+                include_str!("ctrl/webui/3rdparty/bootstrap-4.0.0/css/bootstrap-grid.css.map");
+            // bootstrap grid min
+            pub static ref CSS_GRID_MIN: &'static str =
+                include_str!("ctrl/webui/3rdparty/bootstrap-4.0.0/css/bootstrap-grid.min.css");
+            pub static ref CSS_GRID_MIN_MAP: &'static str =
+                include_str!("ctrl/webui/3rdparty/bootstrap-4.0.0/css/bootstrap-grid.min.css.map");
+            // bootstrap reboot
+            pub static ref CSS_REBOOT: &'static str =
+                include_str!("ctrl/webui/3rdparty/bootstrap-4.0.0/css/bootstrap-reboot.css");
+            pub static ref CSS_REBOOT_MAP: &'static str =
+                include_str!("ctrl/webui/3rdparty/bootstrap-4.0.0/css/bootstrap-reboot.css.map");
+            // bootstrap reboot min
+            pub static ref CSS_REBOOT_MIN: &'static str =
+                include_str!("ctrl/webui/3rdparty/bootstrap-4.0.0/css/bootstrap-reboot.min.css");
+            pub static ref CSS_REBOOT_MIN_MAP: &'static str =
+                include_str!("ctrl/webui/3rdparty/bootstrap-4.0.0/css/bootstrap-reboot.min.css.map");
         }
     }
     // own pages
@@ -98,6 +121,7 @@ pub mod webui {
         pub static ref PIC_SHEEP: &'static str = include_str!("ctrl/webui/gfx/sheep.svg");
     }
     pub static HTML_REPLACE_UUID: &str = "<!--UUID-->";
+    pub static HTML_REPLACE_HOSTNAME: &str = "<!--HOSTNAME-->";
     pub static HTML_REPLACE_WEBSOCKET: &str = "<!--WEBSOCKET-->";
 }
 

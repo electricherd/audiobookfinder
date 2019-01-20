@@ -21,6 +21,8 @@ extern crate cursive;
 // ctrl/webui
 extern crate actix;
 extern crate actix_web;
+extern crate hostname;
+extern crate webbrowser;
 
 #[macro_use]
 extern crate state_machine_future;

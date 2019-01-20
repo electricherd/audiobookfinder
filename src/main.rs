@@ -4,26 +4,30 @@
 //! get all stats about it).
 //! It acts as a wrapper around adbflib, which holds major parts of the implemention.
 extern crate clap;
-extern crate hostname;
 extern crate rayon;
 extern crate uuid;
 
 extern crate adbflib;
 
-use adbflib::{ctrl::{Alive, Ctrl, ReceiveDialog, Status, SystemMsg},
-              data::{self, Collection},
-              logit,
-              net::Net};
+use adbflib::{
+    ctrl::{Alive, Ctrl, ReceiveDialog, Status, SystemMsg},
+    data::{self, Collection},
+    logit,
+    net::Net,
+};
 use rayon::prelude::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator};
-use std::{path::Path, // path, clear
-          sync::{mpsc, Arc, Mutex},
-          thread};
+use std::{
+    path::Path, // path, clear
+    sync::{mpsc, Arc, Mutex},
+    thread,
+};
 use uuid::Uuid;
 
 static INPUT_FOLDERS: &str = "folders";
 static APP_TITLE: &str = concat!("The audiobook finder (", env!("CARGO_PKG_NAME"), ")");
 static ARG_NET: &str = "net";
 static ARG_TUI: &str = "tui";
+static ARG_WEBUI: &str = "webui";
 
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 const AUTHORS: &'static str = env!("CARGO_PKG_AUTHORS");
@@ -35,21 +39,24 @@ fn main() {
         .version(VERSION)
         .author(AUTHORS)
         .about(DESCRIPTION)
-        .long_about::<&str>(&[
-            &DESCRIPTION,
-            "\n\
-             It reads data\
-             from possibly multiple given path(s). Via local network it searches for other \
-             instances of the program, and will later exchange data securely.\n\
-             All information gathered will be used to find duplicates, versions of \
-             different quality, different tags for same content (spelling, \
-             incompleteness).\n\
-             For documentation see: ",
-            &HOMEPAGE,
-            "\n \
-             A program to learn, embrace, and love Rust! \n\
-             Have fun!",
-        ].concat())
+        .long_about::<&str>(
+            &[
+                &DESCRIPTION,
+                "\n\
+                 It reads data\
+                 from possibly multiple given path(s). Via local network it searches for other \
+                 instances of the program, and will later exchange data securely.\n\
+                 All information gathered will be used to find duplicates, versions of \
+                 different quality, different tags for same content (spelling, \
+                 incompleteness).\n\
+                 For documentation see: ",
+                &HOMEPAGE,
+                "\n \
+                 A program to learn, embrace, and love Rust! \n\
+                 Have fun!",
+            ]
+            .concat(),
+        )
         .arg(
             clap::Arg::with_name("config")
                 .short("c")
@@ -61,14 +68,21 @@ fn main() {
         .arg(
             clap::Arg::with_name(ARG_TUI)
                 .short("t")
-                .long("TUI")
+                .long(ARG_TUI)
                 .help("Run with TUI")
+                .takes_value(false),
+        )
+        .arg(
+            clap::Arg::with_name(ARG_WEBUI)
+                .short("w")
+                .long(ARG_WEBUI)
+                .help("Run with-in a webui.")
                 .takes_value(false),
         )
         .arg(
             clap::Arg::with_name(ARG_NET)
                 .short("n")
-                .long("net")
+                .long(ARG_NET)
                 .help("With net search for other audiobookfinders running in local network.")
                 .takes_value(false),
         )
@@ -87,7 +101,6 @@ fn main() {
         vec!["."]
     };
 
-    let hostname = hostname::get_hostname().unwrap_or("undefined".to_string());
     let max_threads = rayon::current_num_threads();
 
     // check if tui and net search is needed
@@ -95,6 +108,10 @@ fn main() {
 
     // has to be mutable because in case of error this might be changed
     let mut has_tui = has_arg(ARG_TUI);
+    let has_webui = has_arg(ARG_WEBUI);
+
+    // either one will have a ui, representing data and error messages
+    let has_ui = has_tui || has_webui;
     let has_net = has_arg(ARG_NET);
 
     // prepare the message system
@@ -115,29 +132,40 @@ fn main() {
     let (send_tui_worked, receiver_tui_worked) = mpsc::channel::<bool>();
 
     // start the tui thread
-    let tui_runner = thread::spawn(move || {
-        if has_tui {
+    let ui_runner = thread::spawn(move || {
+        // has_ui checked here, and not thread, because we need the handle even
+        // if we don't use it
+        if has_ui {
             // start animation .... timer and so on
-            if let Ok(starter) = tx_net_alive_mut.lock() {
-                starter
-                    .send(SystemMsg::StartAnimation(Alive::HostSearch, Status::ON))
-                    .unwrap();
+            if has_tui {
+                if let Ok(starter) = tx_net_alive_mut.lock() {
+                    starter
+                        .send(SystemMsg::StartAnimation(Alive::HostSearch, Status::ON))
+                        .unwrap();
+                }
             }
-            let controller = Ctrl::new(client_id, &tui_pathes, rx, tx.clone(), has_net);
+            let controller = Ctrl::new_tui(client_id, &tui_pathes, rx, tx.clone(), has_net);
             match controller {
                 Ok(mut controller) => {
-                    // signal ok
-                    send_tui_worked.send(true).unwrap();
-                    drop(send_tui_worked);
+                    if has_webui {
+                        controller.run_webui()
+                    }
+                    if has_tui {
+                        // signal ok
+                        send_tui_worked.send(true).unwrap();
+                        drop(send_tui_worked);
 
-                    // do finally the necessary
-                    controller.run();
+                        // do finally the necessary
+                        controller.run_tui();
+                    }
                 }
                 Err(error_text) => {
                     println!("{:?}", error_text);
                     // no tui could be created
-                    send_tui_worked.send(false).unwrap();
-                    drop(send_tui_worked);
+                    if has_tui {
+                        send_tui_worked.send(false).unwrap();
+                        drop(send_tui_worked);
+                    }
                 }
             }
         }
@@ -153,7 +181,7 @@ fn main() {
         }
     }
     // make it immutable from now on
-    let has_tui = has_tui;
+    let has_ui = has_tui || has_webui;
 
     // start the logging
     logit::Logit::init(logit::Log::File);
@@ -177,22 +205,24 @@ fn main() {
     });
 
     // initialize the data collection for all
-    let init_collection = Collection::new(hostname, &client_id, max_threads);
+    let init_collection = Collection::new(&client_id, max_threads);
     let collection_protected = Arc::new(Mutex::new(init_collection));
 
     // start the search threads, each path its own
     all_pathes.par_iter().enumerate().for_each(|(index, elem)| {
-        if !has_tui {
+        if !has_ui {
             println!("[{:?}] looking into path {:?}", index, elem);
         } else {
             // start animation .... timer and so on
-            if let Ok(starter) = tx_sys_mut.lock() {
-                starter
-                    .send(SystemMsg::StartAnimation(
-                        Alive::BusyPath(index),
-                        Status::ON,
-                    ))
-                    .unwrap();
+            if has_tui {
+                if let Ok(starter) = tx_sys_mut.lock() {
+                    starter
+                        .send(SystemMsg::StartAnimation(
+                            Alive::BusyPath(index),
+                            Status::ON,
+                        ))
+                        .unwrap();
+                }
             }
         }
         let live_here = collection_protected.clone();
@@ -200,15 +230,17 @@ fn main() {
         if let Ok(mut pure_collection) = locked_collection {
             match pure_collection.visit_dirs(Path::new(elem), &data::Collection::visit_files) {
                 Ok(local_stats) => {
-                    if has_tui {
+                    if has_ui {
                         // stop animation
-                        if let Ok(stopper) = tx_sys_mut.lock() {
-                            stopper
-                                .send(SystemMsg::StartAnimation(
-                                    Alive::BusyPath(index),
-                                    Status::OFF,
-                                ))
-                                .unwrap();
+                        if has_tui {
+                            if let Ok(stopper) = tx_sys_mut.lock() {
+                                stopper
+                                    .send(SystemMsg::StartAnimation(
+                                        Alive::BusyPath(index),
+                                        Status::OFF,
+                                    ))
+                                    .unwrap();
+                            }
                         }
                     } else {
                         let text = format!(
@@ -226,14 +258,16 @@ fn main() {
                 }
                 Err(_e) => {
                     let text = format!("An error has occurred in search path [{}]!!", index);
-                    if has_tui {
-                        let debug_message_id = ReceiveDialog::Debug;
-                        let text = text.to_string();
-                        let debug_text = tx_sys_mut.lock();
-                        if let Ok(debug_text) = debug_text {
-                            debug_text
-                                .send(SystemMsg::Update(debug_message_id, text))
-                                .unwrap();
+                    if has_ui {
+                        if has_tui {
+                            let debug_message_id = ReceiveDialog::Debug;
+                            let text = text.to_string();
+                            let debug_text = tx_sys_mut.lock();
+                            if let Ok(debug_text) = debug_text {
+                                debug_text
+                                    .send(SystemMsg::Update(debug_message_id, text))
+                                    .unwrap();
+                            }
                         }
                     } else {
                         println!("{:?}", text);
@@ -243,13 +277,13 @@ fn main() {
         }
     });
 
-    if !has_tui {
+    if !has_ui {
         if let Ok(result_collection) = collection_protected.lock() {
             result_collection.print_stats();
         }
         let _ = net_runner.join();
     } else {
-        let _ = tui_runner.join();
+        let _ = ui_runner.join();
         // if tui, net runner shall stop when tui stops
         drop(net_runner);
     }

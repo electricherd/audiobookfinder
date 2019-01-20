@@ -32,7 +32,6 @@ struct InfoAlbum {
 struct Worker {
     /// identify them.
     id: Uuid,
-    hostname: String,
     max_threads: usize,
 }
 
@@ -43,12 +42,10 @@ impl Worker {
     /// # Just new
     /// To identify how to comment
     /// # Arguments
-    /// * 'hostname' - The hostname from remote/local
     /// * 'id' - the identification (each will create an own hash)
     /// * 'max_threads' - how many threads can the worker create
-    pub fn new(_hostname: String, uuid: Uuid, maxthreads: usize) -> Worker {
+    pub fn new(uuid: Uuid, maxthreads: usize) -> Worker {
         Worker {
-            hostname: _hostname,
             id: uuid,
             max_threads: maxthreads,
         }
@@ -94,9 +91,9 @@ type FileFn = Fn(&mut Collection, &DirEntry, &mut FilesStat) -> io::Result<()>;
 
 /// This part implements all functions
 impl Collection {
-    pub fn new(_hostname: String, uuid: &Uuid, numthreads: usize) -> Collection {
+    pub fn new(uuid: &Uuid, numthreads: usize) -> Collection {
         Collection {
-            who: Worker::new(_hostname, uuid.clone(), numthreads),
+            who: Worker::new(uuid.clone(), numthreads),
             collection: HashMap::new(),
             stats: Stats {
                 files: FilesStat {
