@@ -6,10 +6,12 @@ use actix_web::{
     http::{self, Method, StatusCode},
     server, ws, App, HttpRequest, HttpResponse, Json, Result,
 };
+use get_if_addrs;
+use hostname;
+use std::net::IpAddr;
 use std::sync::Arc;
 use std::sync::Mutex;
 use std::time::{Duration, Instant};
-use hostname;
 use uuid::Uuid;
 
 use config;
@@ -41,7 +43,6 @@ enum WebCommand {
     NewMdnsClient(String),
 }
 
-
 /// The formatters here for json output
 use std::fmt;
 impl fmt::Display for JSONResponse {
@@ -63,43 +64,84 @@ impl WebUI {
         let sys = actix::System::new("http-server");
         let connection_count = Arc::new(Mutex::new(0));
 
-        let web_server = server::HttpServer::new(move || {
-            App::with_state(WebServerState {
-                uuid: id.clone(),
-                nr_connections: connection_count.clone(),
+        let local_addresses = get_if_addrs::get_if_addrs().unwrap();
+
+        let web_server = local_addresses
+            .into_iter()
+            .filter(|ipaddr| {
+                let name = ipaddr.name.clone();
+                // only use loopback addresses no 2nd ethernet cards
+                if ipaddr.addr.is_loopback() {
+                    info!(
+                        "{} {:?} is a loopback device, good!",
+                        ipaddr.addr.ip().to_string(),
+                        name
+                    );
+                    true
+                } else {
+                    info!("{} is not a loopback device!", ipaddr.addr.ip().to_string());
+                    true
+                }
             })
-            .default_resource(|r| r.f(WebUI::single_page))
-            .resource("/app.js", |r| r.f(WebUI::js_app))
-            //.default_resource(|r| r.f(WebUI::dyn_devel_html)) // Todo: only for devel
-            //.resource("/app.js", |r| r.f(WebUI::dyn_devel_js)) // todo: only for devel
-            .resource("/ws", |r| r.method(http::Method::GET).f(WebUI::ws_index))
-            .resource("/jquery.min.js", |r| {
-                r.f(|_| {
-                    HttpResponse::build(StatusCode::OK)
-                        .content_type("text/html; charset=utf-8")
-                        .body(*config::webui::jquery::JS_JQUERY)
-                })
-            })
-            .resource("favicon.png", |r| {
-                r.f(|_| {
-                    HttpResponse::build(StatusCode::OK)
-                        .content_type("image/png")
-                        .body(*config::webui::FAVICON)
-                })
-            })
-            .resource("sheep.svg", |r| {
-                r.f(|_| {
-                    HttpResponse::build(StatusCode::OK)
-                        .content_type("image/svg+xml")
-                        .body(*config::webui::PIC_SHEEP)
-                })
-            })
-            .resource("/css/{name}", |r| r.f(WebUI::bootstrap_css))
-            .resource("/js/{name}", |r| r.f(WebUI::bootstrap_js))
-        })
-        .bind(format!("{}", config::net::WEBSOCKET_ADDR));
-        if let Ok(configured_server) = web_server {
-            configured_server.start();
+            .fold(
+                server::HttpServer::new(move || {
+                    App::with_state(WebServerState {
+                        uuid: id.clone(),
+                        nr_connections: connection_count.clone(),
+                    })
+                    .default_resource(|r| r.f(WebUI::single_page))
+                    .resource("/app.js", |r| r.f(WebUI::js_app))
+                    //.default_resource(|r| r.f(WebUI::dyn_devel_html)) // Todo: only for devel
+                    //.resource("/app.js", |r| r.f(WebUI::dyn_devel_js)) // todo: only for devel
+                    .resource("/ws", |r| r.method(http::Method::GET).f(WebUI::ws_index))
+                    .resource("/jquery.min.js", |r| {
+                        r.f(|_| {
+                            HttpResponse::build(StatusCode::OK)
+                                .content_type("text/html; charset=utf-8")
+                                .body(*config::webui::jquery::JS_JQUERY)
+                        })
+                    })
+                    .resource("favicon.png", |r| {
+                        r.f(|_| {
+                            HttpResponse::build(StatusCode::OK)
+                                .content_type("image/png")
+                                .body(*config::webui::FAVICON)
+                        })
+                    })
+                    .resource("sheep.svg", |r| {
+                        r.f(|_| {
+                            HttpResponse::build(StatusCode::OK)
+                                .content_type("image/svg+xml")
+                                .body(*config::webui::PIC_SHEEP)
+                        })
+                    })
+                    .resource("/css/{name}", |r| r.f(WebUI::bootstrap_css))
+                    .resource("/js/{name}", |r| r.f(WebUI::bootstrap_js))
+                }),
+                |web_server, ipaddr| {
+                    web_server
+                        .bind(match ipaddr.addr.ip() {
+                            IpAddr::V4(ipv4) => {
+                                format!("{}:{:?}", ipv4.to_string(), config::net::PORT_WEBSOCKET)
+                            }
+                            IpAddr::V6(ipv6) => {
+                                format!("{}:{:?}", ipv6.to_string(), config::net::PORT_WEBSOCKET)
+                            }
+                        })
+                        .map(|good_bind| {
+                            info!("{} worked!", ipaddr.addr.ip().to_string());
+                            good_bind
+                        })
+                        .map_err(|bad_bind| {
+                            error!("{} failed!!", ipaddr.addr.ip().to_string());
+                            bad_bind
+                        })
+                        .unwrap()
+                },
+            );
+
+        if true {
+            web_server.start();
             sys.run();
             Ok(WebUI {
                 uuid: id,
@@ -143,9 +185,11 @@ impl WebUI {
                 "bootstrap-reboot.css" => Some(*config::webui::bootstrap::CSS_REBOOT),
                 "bootstrap-reboot.css.map" => Some(*config::webui::bootstrap::CSS_REBOOT_MAP),
                 "bootstrap-reboot.min.css" => Some(*config::webui::bootstrap::CSS_REBOOT_MIN),
-                "bootstrap-reboot.min.css.map" => Some(*config::webui::bootstrap::CSS_REBOOT_MIN_MAP),
+                "bootstrap-reboot.min.css.map" => {
+                    Some(*config::webui::bootstrap::CSS_REBOOT_MIN_MAP)
+                }
                 _ => {
-                    println!("CSS: not found {}", css);
+                    error!("CSS: not found {}", css);
                     None
                 }
             };
@@ -169,15 +213,15 @@ impl WebUI {
         if let Some(js) = req.match_info().get("name") {
             let output = match js {
                 "bootstrap.js" => Some(*config::webui::bootstrap::JS),
-                "bootstrap.js" => Some(*config::webui::bootstrap::JS_MAP),
+                "bootstrap.js.map" => Some(*config::webui::bootstrap::JS_MAP),
                 "bootstrap.min.js" => Some(*config::webui::bootstrap::JS_MIN),
-                "bootstrap.min.js" => Some(*config::webui::bootstrap::JS_MIN_MAP),
+                "bootstrap.min.js.map" => Some(*config::webui::bootstrap::JS_MIN_MAP),
                 "bootstrap.bundle.js" => Some(*config::webui::bootstrap::JS_BUNDLE),
-                "bootstrap.bundle.js" => Some(*config::webui::bootstrap::JS_BUNDLE_MAP),
+                "bootstrap.bundle.js.map" => Some(*config::webui::bootstrap::JS_BUNDLE_MAP),
                 "bootstrap.bundle.min.js" => Some(*config::webui::bootstrap::JS_BUNDLE_MIN),
-                "bootstrap.bundle.min.js" => Some(*config::webui::bootstrap::JS_BUNDLE_MIN_MAP),
+                "bootstrap.bundle.min.js.map" => Some(*config::webui::bootstrap::JS_BUNDLE_MIN_MAP),
                 _ => {
-                    println!("JS: not found {}", js);
+                    error!("JS: not found {}", js);
                     None
                 }
             };
@@ -212,28 +256,36 @@ impl WebUI {
 
     fn replace_static_content(html_in: &str, id: &Uuid) -> String {
         // short inline struct
-        struct ReplaceStatic<'a>{
-            r : &'a str,
-            c : String
+        struct ReplaceStatic<'a> {
+            r: &'a str,
+            c: String,
         }
 
         let uuid = id.to_hyphenated().to_string();
         let hostname = hostname::get_hostname().unwrap_or("undefined".to_string());
 
-        let changers : [ReplaceStatic;4] = [
-            ReplaceStatic{r: config::net::HTML_REPLACE_STATIC_URL_SOURCE, c : config::net::HTML_URL_SOURCE.to_string()},
-            ReplaceStatic{r: config::webui::HTML_REPLACE_WEBSOCKET, c : config::net::WEBSOCKET_ADDR.to_string()},
-            ReplaceStatic{r: config::webui::HTML_REPLACE_UUID, c : uuid},
-            ReplaceStatic{r: config::webui::HTML_REPLACE_HOSTNAME, c : hostname},
+        let changers: [ReplaceStatic; 4] = [
+            ReplaceStatic {
+                r: config::net::HTML_REPLACE_STATIC_URL_SOURCE,
+                c: config::net::HTML_URL_SOURCE.to_string(),
+            },
+            ReplaceStatic {
+                r: config::webui::HTML_REPLACE_WEBSOCKET,
+                c: config::net::WEBSOCKET_ADDR.to_string(),
+            },
+            ReplaceStatic {
+                r: config::webui::HTML_REPLACE_UUID,
+                c: uuid,
+            },
+            ReplaceStatic {
+                r: config::webui::HTML_REPLACE_HOSTNAME,
+                c: hostname,
+            },
         ];
         let mut replace_this = html_in.to_string();
 
         for replacer in &changers {
-            replace_this = str::replace(
-                &replace_this,
-                &replacer.r,
-                &replacer.c,
-            );
+            replace_this = str::replace(&replace_this, &replacer.r, &replacer.c);
         }
         replace_this
     }
@@ -308,7 +360,7 @@ impl MyWebSocket {
             // check client heartbeats
             if Instant::now().duration_since(act.hb) > CLIENT_TIMEOUT {
                 // heartbeat timed out
-                println!("Websocket Client heartbeat failed, disconnecting!");
+                error!("Websocket Client heartbeat failed, disconnecting!");
 
                 // stop actor
                 ctx.stop();

@@ -22,6 +22,7 @@ extern crate cursive;
 extern crate actix;
 extern crate actix_web;
 extern crate hostname;
+extern crate get_if_addrs;
 extern crate webbrowser;
 
 #[macro_use]

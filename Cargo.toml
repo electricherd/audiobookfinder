@@ -27,42 +27,44 @@ path = "src/main.rs"
 
 [dependencies]
 clap = "2.32"         # for the command line parsing
-dirs = "1.0"
-lazy_static = "1.2"
+dirs = "1.0"          # to browse dirs fast in taglib
+lazy_static = "1.2"   # awesome lib for lazy data structures
 
 dns-sd  = "0.1"     # need avahi-compat-client-dev lib
 hostname = "0.1"    # for host recognition
 # mdns-discover =  { git = "https://github.com/NervosFoundation/rust-mdns-discover", branch = "master", version="*" }
-mdns = "0.3" # try
+mdns = "0.3"        # to search other mdns clients
 
-env_logger = "0.6"  # alongside log
-flexi_logger = "0.10" # a more flexible logger
-log = "0.4"
-syslog = "4"      # another logger for system
+env_logger = "0.6"     # alongside log for logging
+flexi_logger = "0.10"  # a more flexible logger
+log = "0.4"            # basic log feature
+syslog = "4"           # another logger for system log
 
-futures = "0.1"
+futures = "0.1"        # futures, used in state machine yet (and in many other crates)
 
 tree_magic = "0.2"  # for fast file tree operations
 taglib = { git = "https://github.com/ebassi/taglib-rust", branch = "master", version="1.0" } # grrrrrrrrr, don't use crates.io version
 
-rayon = "1"       # for multi-threading
-uuid = {version = "0.7", features = ["v4","serde"]}
+rayon = "1"       # for multi-threading, very good
+uuid = {version = "0.7", features = ["v4","serde"]}  # uuid for each app
 
-actix = "0.7"
-actix-web = "0.7"  # for mini webserver and websocket
-webbrowser = "0.4"  # for opening webpage on machine
+actix = "0.7"         # basic for webserver
+actix-web = "0.7"     # for mini webserver and websocket
+webbrowser = "0.4"    # for opening webpage on machine
+get_if_addrs = "0.5"  # for range of localhosts
 
-state_machine_future = "0.2"
+state_machine_future = "0.2"  # state machine for client server communication for data exchange
 
-serde = "1.0"
-serde_derive = "1.0"
-bincode = "1.0"
+serde = "1.0"         # serialize anything, awesome for communication items
+serde_derive = "1.0"  # macro usage from serde
+bincode = "1.0"       # another binary en/decoder as serde
 
-ring = "0.13"  # crypto, used for random generation
-thrussh = "0.20"           # ssh server client crate for communication
-thrussh-keys = "0.11"      # ssh server client crate for communication
-tokio-io = "0.1"    # has to be same as thrussh uses
+ring = "0.13"          # crypto, used for random generation
+thrussh = "0.20"       # ssh server client crate for communication
+thrussh-keys = "0.11"  # ssh server client crate for communication
+tokio-io = "0.1"       # has to be same as thrussh uses
 
+# cursive is the tui
 [dependencies.cursive]
 version = "0.10"
 default-features = false
