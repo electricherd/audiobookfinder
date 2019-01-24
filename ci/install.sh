@@ -33,8 +33,11 @@ main() {
            && sudo apt-get install libsodium-dev -y \
            && sudo apt-get install libtag1-dev libtagc0-dev -y
            ;;
+           # both the same ... but bionic will be different
            xenial)
            sudo apt-get install -qq libavahi-compat-libdnssd-dev -y \
+           && sudo add-apt-repository ppa:james-page/0mq -y \
+           && sudo apt-get update -qq \
            && sudo apt-get install libsodium-dev -y \
            && sudo apt-get install libtag1-dev libtagc0-dev -y
            ;;

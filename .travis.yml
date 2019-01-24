@@ -47,7 +47,7 @@ before_install:
 
 install:
   # pip for python needed for doc deployment
-  - sudo pip install ghp-import
+  - sudo -H pip install ghp-import
   # from japaric (https://github.com/japaric/trust)
   - bash ci/install.sh
   - source ~/.cargo/env || true
@@ -74,7 +74,7 @@ deploy:
     - target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.sha1
   on:
     condition: $TRAVIS_RUST_VERSION = nightly
-    tags: true
+    # tags: true
     #repo: electricherd/audiobookfinder
   provider: releases
   skip_cleanup: true
