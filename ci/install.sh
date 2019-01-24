@@ -33,7 +33,7 @@ main() {
            && sudo apt-get install libsodium-dev -y \
            && sudo apt-get install libtag1-dev libtagc0-dev -y
            ;;
-           # both the same ... but bionic will be different
+           # xenial has libsodium-dev already
            xenial)
            sudo apt-get install -qq libavahi-compat-libdnssd-dev -y \
            && sudo apt-get install libsodium-dev -y \
@@ -57,7 +57,7 @@ main() {
 #         && sudo add-apt-repository ppa:segf4ult/zeromq -y \
 #         && sudo apt-get update -qq \
 #         && sudo apt-get install libsodium-dev -y
-        docker build -t electricherd/adbfimage:0.1.13 ci/docker/armv7-unknown-linux-gnueabihf
+        #docker build -t electricherd/adbfimage:0.1.15 ci/docker/armv7-unknown-linux-gnueabihf
       ;;
       arm-unknown-linux-gnueabi)
        sudo apt-get install -qq libavahi-compat-libdnssd-dev -y
