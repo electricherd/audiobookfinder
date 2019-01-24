@@ -25,11 +25,20 @@ main() {
     # is jessie libnss-mdns-dev
     case $TARGET in
       x86_64-unknown-linux-gnu)
-         sudo apt-get install -qq libavahi-compat-libdnssd-dev -y \
-         && sudo add-apt-repository ppa:james-page/0mq -y \
-         && sudo apt-get update -qq \
-         && sudo apt-get install libsodium-dev -y \
-         && sudo apt-get install libtag1-dev libtagc0-dev -y
+         case $UBUNTU_VER in
+           trusty)
+           sudo apt-get install -qq libavahi-compat-libdnssd-dev -y \
+           && sudo add-apt-repository ppa:james-page/0mq -y \
+           && sudo apt-get update -qq \
+           && sudo apt-get install libsodium-dev -y \
+           && sudo apt-get install libtag1-dev libtagc0-dev -y
+           ;;
+           xenial)
+           sudo apt-get install -qq libavahi-compat-libdnssd-dev -y \
+           && sudo apt-get install libsodium-dev -y \
+           && sudo apt-get install libtag1-dev libtagc0-dev -y
+           ;;
+         esac
          #docker build -t electricherd/adbfimage:0.1.13 ci/docker/x86_64-unknown-linux-gnu
       ;;
       i686-unknown-linux-gnu)

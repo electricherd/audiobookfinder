@@ -1,8 +1,17 @@
 # travis CI support (https://travis-ci.org)
-dist: trusty
+
 language: rust
 services: docker
 sudo: required
+
+matrix:
+  include:
+    - os : linux
+      dist: trusty
+      env: UBUNTU_VER=trusty
+    - os : linux
+      dist: xenial
+      env: UBUNTU_VER=xenial      
 
 addons:
   apt:
@@ -16,9 +25,7 @@ rust:
   - nightly
   #- stable
 notification:
-    slack:
-      on_success: always
-    email:
+     email:
        on_success: always
        on_failure: change
 matrix:
@@ -55,16 +62,16 @@ after_script:
 
 before_deploy:
   - sh ci/before_deploy.sh
-  - cp target/release/$CRATE_NAME target/release/$CRATE_NAME-$TARGET
-  - sha1sum target/release/$CRATE_NAME-$TARGET > target/release/$CRATE_NAME-$TARGET.sha1
+  - cp target/release/$CRATE_NAME target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET
+  - sha1sum target/release/$CRATE_NAME-$TARGET > target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.sha1
 
 deploy:
   # look at
   api_key: $gitHubToken
   file_glob: true
   file:
-    - $CRATE_NAME-$TRAVIS_TAG-$TARGET.*
-    - target/release/$CRATE_NAME-$TARGET.sha1
+    - $CRATE_NAME-$TRAVIS_TAG-$UBUNTU_VER-$TARGET.*
+    - target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.sha1
   on:
     condition: $TRAVIS_RUST_VERSION = nightly
     tags: true
