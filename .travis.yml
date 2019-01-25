@@ -28,8 +28,8 @@ env:
     - CRATE_NAME=audiobookfinder
 
 rust:
-  - nightly
-  #- stable
+  #- nightly
+  - stable
 notification:
      email:
        on_success: always
@@ -53,7 +53,7 @@ script:
   - PKG_CONFIG_ALLOW_CROSS=1 cargo build --target $TARGET --release
   - PKG_CONFIG_ALLOW_CROSS=1 cargo test
   - PKG_CONFIG_ALLOW_CROSS=1 cargo run --target $TARGET -- testaudio
-  #- bash ci/script.sh
+  - bash ci/script.sh
 after_script:
   - set +e
 
@@ -70,9 +70,9 @@ deploy:
     - $CRATE_NAME-$TRAVIS_TAG-$UBUNTU_VER-$TARGET.*
     - target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.sha1
   on:
-    condition: $TRAVIS_RUST_VERSION = nightly
+    condition: $TRAVIS_RUST_VERSION = stable
     #tags: true
-    #repo: electricherd/audiobookfinder
+    repo: electricherd/audiobookfinder
   provider: releases
   skip_cleanup: true
 
