@@ -53,12 +53,10 @@ script:
   - PKG_CONFIG_ALLOW_CROSS=1 cargo build --target $TARGET --release
   - PKG_CONFIG_ALLOW_CROSS=1 cargo test
   - PKG_CONFIG_ALLOW_CROSS=1 cargo run --target $TARGET -- testaudio
-  - bash ci/script.sh
 after_script:
   - set +e
 
 before_deploy:
-  - sh ci/before_deploy.sh
   - cp target/release/$CRATE_NAME target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET
   - sha1sum target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET > target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.sha1
 
