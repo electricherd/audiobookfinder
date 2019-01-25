@@ -22,7 +22,7 @@ main() {
     cp target/$TARGET/release/$CRATE_NAME $stage/
 
     cd $stage
-    tar czf $src/$CRATE_NAME-$TRAVIS_TAG-$TARGET.tar.gz *
+    tar czf $src/$CRATE_NAME-$TRAVIS_TAG-$UBUNTU_VER-$TARGET.tar.gz *
     cd $src
 
     rm -rf $stage
