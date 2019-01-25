@@ -71,7 +71,7 @@ deploy:
     - target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.sha1
   on:
     condition: $TRAVIS_RUST_VERSION = nightly
-    # tags: true
+    tags: true
     #repo: electricherd/audiobookfinder
   provider: releases
   skip_cleanup: true
