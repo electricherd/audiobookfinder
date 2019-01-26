@@ -74,8 +74,8 @@ deploy:
     - target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z
     - target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z.sha1
   provider: releases
-  target_commitish: $TRAVIS_COMMIT
-  tag_name: $TRAVIS_TAG
+  edge:
+    branch: releases-improvements
   skip_cleanup: true
   on:
     condition: $TRAVIS_RUST_VERSION = stable
