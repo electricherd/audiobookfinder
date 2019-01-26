@@ -64,7 +64,7 @@ before_deploy:
   - 7z a -r target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z ./target/release/$CRATE_NAME
   - sha1sum target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z > target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z.sha1
   - export TRAVIS_TAG=${TRAVIS_TAG:-$(git for-each-ref --count=1 --sort=-taggerdate --format '%(tag)' refs/tags)}
-  - export GIT_TAG=$TRAVIS_TAG
+  - git tag $TRAVIS_TAG
 
 deploy:
   # look at
@@ -79,6 +79,8 @@ deploy:
     #tags: true
     repo: electricherd/audiobookfinder
   provider: releases
+  edge:
+    branch: releases-improvements
   skip_cleanup: true
 
 branches:
