@@ -51,13 +51,13 @@ install:
 
 script:
   - PKG_CONFIG_ALLOW_CROSS=1 cargo build --target $TARGET --release
-  - PKG_CONFIG_ALLOW_CROSS=1 cargo test
-  - PKG_CONFIG_ALLOW_CROSS=1 cargo run --target $TARGET -- testaudio
+  #- PKG_CONFIG_ALLOW_CROSS=1 cargo test
+  #- PKG_CONFIG_ALLOW_CROSS=1 cargo run --target $TARGET -- testaudio
 after_script:
   - set +e
 
 before_deploy:
-  - cp target/release/$TARGET/$CRATE_NAME target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET
+  - cp target/$TARGET/release/$CRATE_NAME target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET
   - sha1sum target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET > target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.sha1
 
 deploy:
