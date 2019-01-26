@@ -57,7 +57,7 @@ after_script:
   - set +e
 
 before_deploy:
-  - cp target/release/$CRATE_NAME target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET
+  - cp target/release/$TARGET/$CRATE_NAME target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET
   - sha1sum target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET > target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.sha1
 
 deploy:
