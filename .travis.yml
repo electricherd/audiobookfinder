@@ -78,8 +78,9 @@ deploy:
     branch: releases-improvements
   skip_cleanup: true
   on:
-    condition: $TRAVIS_RUST_VERSION = stable
+    #condition: $TRAVIS_RUST_VERSION = stable
     #tags: true
+    condition: -z $(git tag --points-at $TRAVIS_COMMIT)    
     repo: electricherd/audiobookfinder
 
 branches:
