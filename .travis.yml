@@ -63,7 +63,7 @@ before_deploy:
   - strip -s target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET -o target/release/$CRATE_NAME
   - 7z a -r target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z ./target/release/$CRATE_NAME
   - sha1sum target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z > target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z.sha1
-  - git tag ${$(git for-each-ref --count=1 --sort=-taggerdate --format '%(tag)' refs/tags)}
+  - git tag $(git for-each-ref --count=1 --sort=-taggerdate --format '%(tag)' refs/tags)
 
 deploy:
   # look at
