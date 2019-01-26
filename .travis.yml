@@ -6,9 +6,9 @@ sudo: required
 
 matrix:
   include:
-#    - os : linux
-#      dist: trusty
-#      env: UBUNTU_VER=LTS_14.04 TARGET=x86_64-unknown-linux-gnu
+    - os : linux
+      dist: trusty
+      env: UBUNTU_VER=LTS_14.04 TARGET=x86_64-unknown-linux-gnu
        #- env: TARGET=aarch64-unknown-linux-gnu
        #- env: TARGET=arm-unknown-linux-gnueabi (libsodium problem)
        #- env: TARGET=armv7-unknown-linux-gnueabihf
@@ -53,8 +53,8 @@ install:
 
 script:
   - PKG_CONFIG_ALLOW_CROSS=1 cargo build --target $TARGET --release
-  #- PKG_CONFIG_ALLOW_CROSS=1 cargo test
-  #- PKG_CONFIG_ALLOW_CROSS=1 cargo run --target $TARGET -- testaudio
+  - PKG_CONFIG_ALLOW_CROSS=1 cargo test
+  - PKG_CONFIG_ALLOW_CROSS=1 cargo run --target $TARGET -- testaudio
 after_script:
   - set +e
 
@@ -63,7 +63,6 @@ before_deploy:
   - strip -s target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET -o target/release/$CRATE_NAME
   - 7z a -r target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z ./target/release/$CRATE_NAME
   - sha1sum target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z > target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z.sha1
-  - git tag $(git for-each-ref --count=1 --sort=-taggerdate --format '%(tag)' refs/tags)
 
 deploy:
   # look at
