@@ -8,14 +8,14 @@ matrix:
   include:
 #    - os : linux
 #      dist: trusty
-#      env: UBUNTU_VER=trusty TARGET=x86_64-unknown-linux-gnu
+#      env: UBUNTU_VER=LTS_14.04 TARGET=x86_64-unknown-linux-gnu
        #- env: TARGET=aarch64-unknown-linux-gnu
        #- env: TARGET=arm-unknown-linux-gnueabi (libsodium problem)
        #- env: TARGET=armv7-unknown-linux-gnueabihf
        #- env: TARGET=i686-unknown-linux-gnu
     - os : linux
       dist: xenial
-      env: UBUNTU_VER=xenial TARGET=x86_64-unknown-linux-gnu
+      env: UBUNTU_VER=LTS_16.04 TARGET=x86_64-unknown-linux-gnu
    #- env: TARGET=x86_64-apple-darwin
    #   os: osx
 
@@ -60,17 +60,19 @@ after_script:
 
 before_deploy:
   - cp target/$TARGET/release/$CRATE_NAME target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET
-  - strip -s target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET -o target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.stripped
-  - 7z a target/release/$CRATE_NAME-$TRAVIS_TAG-$UBUNTU_VER-$TARGET.7z target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.stripped
-  - sha1sum target/release/$CRATE_NAME-$TRAVIS_TAG-$UBUNTU_VER-$TARGET.7z > target/release/$CRATE_NAME-$TRAVIS_TAG-$UBUNTU_VER-$TARGET.7z.sha1
+  - strip -s target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET -o target/release/$CRATE_NAME
+  - 7z a -r target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z ./target/release/$CRATE_NAME
+  - sha1sum target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z > target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z.sha1
+  - export TRAVIS_TAG=${TRAVIS_TAG:-$(git for-each-ref --count=1 --sort=-taggerdate --format '%(tag)' refs/tags)}
 
 deploy:
   # look at
   api_key: $gitHubToken
+  overwrite: true
   file_glob: true
   file:
-    - target/release/$CRATE_NAME-$TRAVIS_TAG-$UBUNTU_VER-$TARGET.7z
-    - target/release/$CRATE_NAME-$TRAVIS_TAG-$UBUNTU_VER-$TARGET.7z.sha1
+    - target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z
+    - target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z.sha1
   on:
     condition: $TRAVIS_RUST_VERSION = stable
     #tags: true

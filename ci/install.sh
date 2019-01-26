@@ -26,7 +26,7 @@ main() {
     case $TARGET in
       x86_64-unknown-linux-gnu)
          case $UBUNTU_VER in
-           trusty)
+           LTS_14.04)
            sudo apt-get install -qq libavahi-compat-libdnssd-dev -y \
            && sudo add-apt-repository ppa:james-page/0mq -y \
            && sudo apt-get update -qq \
@@ -34,7 +34,7 @@ main() {
            && sudo apt-get install libtag1-dev libtagc0-dev -y
            ;;
            # xenial has libsodium-dev already
-           xenial)
+           LTS_16.04)
            sudo apt-get install -qq libavahi-compat-libdnssd-dev -y \
            && sudo apt-get install libsodium-dev -y \
            && sudo apt-get install libtag1-dev libtagc0-dev -y
