@@ -75,15 +75,14 @@ deploy:
   provider: releases
   skip_cleanup: true
   on:
+    repo: electricherd/audiobookfinder    
     #condition: $TRAVIS_RUST_VERSION = stable
     tags: true
-    repo: electricherd/audiobookfinder
-
-branches:
-  only:
-    # release tags
-    - /^v\d+\.\d+\.\d+.*$/
-    - master
+    branches:
+      only:
+        # release tags
+        #- /^v\d+\.\d+\.\d+.*$/
+        - master
 
 after_success: |
   bash ci/document.sh
