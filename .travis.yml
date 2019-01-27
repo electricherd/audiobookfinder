@@ -4,36 +4,6 @@ language: rust
 services: docker
 sudo: required
 
-matrix:
-  include:
-    - os : linux
-      dist: trusty
-      env: UBUNTU_VER=LTS_14.04 TARGET=x86_64-unknown-linux-gnu
-      rust:
-      - nightly
-      - stable
-       #- env: TARGET=aarch64-unknown-linux-gnu
-       #- env: TARGET=arm-unknown-linux-gnueabi (libsodium problem)
-       #- env: TARGET=armv7-unknown-linux-gnueabihf
-       #- env: TARGET=i686-unknown-linux-gnu
-    - os : linux
-      dist: xenial
-      env: UBUNTU_VER=LTS_16.04 TARGET=x86_64-unknown-linux-gnu
-      rust:
-      - nightly
-      - stable
-   #- os: osx
-   #  env: TARGET=x86_64-apple-darwin
-  allow_failures:
-    - rust: nightly
-
-addons:
-  apt:
-    update: true
-    packages:
-      - p7zip-full  # 7z compression
-      - upx-ucl     # executable binary compression
-    
 env:
   global:
     - CRATE_NAME=audiobookfinder
@@ -42,6 +12,30 @@ notification:
      email:
        on_success: always
        on_failure: change
+
+rust:
+  - nightly
+  - stable
+
+os:
+  linux:
+    - dist: trusty
+      env: UBUNTU_VER=LTS_14.04 TARGET=x86_64-unknown-linux-gnu
+       #- env: TARGET=aarch64-unknown-linux-gnu
+       #- env: TARGET=arm-unknown-linux-gnueabi (libsodium problem)
+       #- env: TARGET=armv7-unknown-linux-gnueabihf
+       #- env: TARGET=i686-unknown-linux-gnu
+    - dist: xenial
+      env: UBUNTU_VER=LTS_16.04 TARGET=x86_64-unknown-linux-gnu
+   #- os: osx
+   #  env: TARGET=x86_64-apple-darwin
+
+addons:
+  apt:
+    update: true
+    packages:
+      - p7zip-full  # 7z compression
+      - upx-ucl     # executable binary compression
 
 # disable cache when needed
 cache: cargo
