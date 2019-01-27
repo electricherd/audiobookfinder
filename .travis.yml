@@ -60,9 +60,13 @@ install:
   - cargo install xargo --force
 
 script:
+  # compile
   - xargo build --target $TARGET --release
+  # run automated tests aka unit tests
   - cargo test
-  - xargo run --target $TARGET -- testaudio
+  # run compiled program with testaudio
+  - ./target/$TARGET/release/$CRATE_NAME -- testaudio
+
 after_script:
   - set +e
 
