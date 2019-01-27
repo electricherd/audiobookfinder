@@ -6,9 +6,9 @@ sudo: required
 
 matrix:
   include:
-#    - os : linux
-#      dist: trusty
-#      env: UBUNTU_VER=LTS_14.04 TARGET=x86_64-unknown-linux-gnu
+    - os : linux
+      dist: trusty
+      env: UBUNTU_VER=LTS_14.04 TARGET=x86_64-unknown-linux-gnu
        #- env: TARGET=aarch64-unknown-linux-gnu
        #- env: TARGET=arm-unknown-linux-gnueabi (libsodium problem)
        #- env: TARGET=armv7-unknown-linux-gnueabihf
@@ -31,7 +31,7 @@ env:
     - CRATE_NAME=audiobookfinder
 
 rust:
-  #- nightly
+  - nightly
   - stable
 notification:
      email:
@@ -43,7 +43,6 @@ cache: cargo
 
 before_install:
   - set -e
-  # - rustup self update
 
 install:
   # pip for python needed for doc deployment
@@ -55,9 +54,9 @@ install:
   - cargo install xargo
 
 script:
-  - PKG_CONFIG_ALLOW_CROSS=1 xargo build --target $TARGET --release
-  #- PKG_CONFIG_ALLOW_CROSS=1 xargo test
-  #- PKG_CONFIG_ALLOW_CROSS=1 xargo run --target $TARGET -- testaudio
+  - xargo build --target $TARGET --release
+  - xargo test
+  - xargo run --target $TARGET -- testaudio
 after_script:
   - set +e
 
@@ -67,8 +66,10 @@ before_deploy:
   - strip -s target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET \
           -o target/release/$CRATE_NAME
   # upx yet disabled since causes segmentation faults
-  #- strip -s target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET -o target/release/$CRATE_NAME.stripped
-  #- upx --ultra-brute target/release/$CRATE_NAME.stripped -o target/release/$CRATE_NAME
+  #- strip -s target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET \
+  #        -o target/release/$CRATE_NAME.stripped
+  #- upx --ultra-brute target/release/$CRATE_NAME.stripped \
+  #       -o target/release/$CRATE_NAME
   - 7z a -r target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z \
        ./target/release/$CRATE_NAME \
        ./README-release.md \

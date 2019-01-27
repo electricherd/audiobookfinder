@@ -55,48 +55,32 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
 * rust macros (some day)
 
 ### Changes
+* cleaned up changes list, switched to [sublime text](https://www.sublimetext.com) instead of [atom](https://atom.io/) as editor
 * trying xargo instead of cargo to compile (possible problems with std in cross compiling, and optimizations), but only works with nightly.
 * cleaned up deployment, added a release readme, licence to deploy as well
 * repaired deployment of binaries, including stripped and packed binaries (upx optimization doesn't work somehow)
 * included (should work fully offline later, all MIT licensed) 3rdparty css, js-scripts ([jquery](https://jquery.com),[bootstrap](https://getbootstrap.com/)) and all pages hard-included in to webserver (no loading of files, yet for development still possible), added state for server, connected websocket, designed a favicon plus logo
 * added basic webui support: http-server with websockets ([actix](https://actix.rs)), a single page application, the page and websockets are already there.
-* change uuid strings back to uuids, that old decision was due to not have uuid crate dependency everywhere, but that was a bad decision
-* decomposed a part of thrussh communication to embed a state chart somehow (still question how to combine the state chart with the other future)
 * added architecture graphics using [draw.io](https://draw.io), which is awesome. Also connectable by [github support](https://about.draw.io/github-support/) directly via [this](https://www.draw.io/?mode=github) ([howTo](https://github.com/jgraph/drawio-github)).
-* lazy static used to not load server key every time a client connects
 * state machine not yet used (need to think more about "futures" architecture and understand futures and how to combine)
 * the client ssh connector (com_client) is behind a state machine (to have reconnect and similar easily)
-* thrussh mechanism did always work, no problem, just wrong traces, and irritating ipv6, localhost addresses. Added auth message, with identification, will add simple zero-knowledge mechanism.
-* updated crates, also formatter changes (alphabetical order)
-* adapted all to more lucid imports (in stable Rust now)
-* finally try ssh connection to addresses found (own ip/server found, but still a [thrussh](https://www.google.de/url?q=https://pijul.org/thrussh/&sa=U&ved=0ahUKEwiBmqnl2I7aAhVD0xQKHb2DCV4QFggUMAA&usg=AOvVaw0hRK-lIPzabrl2u5VQj4fj)  connecting issues, not clear why)
-* corrected mdns thread to add found ip addresses, not before
-* more documentation on usage, also including information from `Cargo.toml` data directly
 * replaced [id3](https://github.com/jameshurst/rust-id3) with [taglib](https://github.com/ebassi/taglib-rust/) (more external libs, but many more available media tags). Unfortunately it took me quite some time to find some strange difference (didn't work) between [crates.io](https://crates.io/crates/taglib) and original [github.com](https://github.com/ebassi/taglib-rust/) version, so I had to use the git pull rather than the convenient crate.io dependency usage in `Cargo.toml`.
 * I suspended the usage of [trust](https://github.com/japaric/trust) which uses [cross](https://github.com/japaric/cross), since the develop cross compiling docker images are based on ubuntu 12.04 (deb jessie), and the libsodium, libavahi uses ubuntu ppa from newer versions. I might even go to xenial (deb stretch), then both libs are included by default. But I would have to create my own dockerfile for that, and not just extend the well prepared dockerfiles from cross. :unamused:
-* first travis release build, only x64 unfortunately is correct (with libsodium13 because of trusty and ppa, good luck :expressionless:) [releases](https://github.com/electricherd/audiobookfinder/releases). It's more difficult than I thought, but it's clear now, std is still a problem, suspending work on that for a time.
 * [documentation](https://electricherd.github.io/audiobookfinder/audiobookfinder/index.html) deployed, awesome: Rust + github + travis +... (needs javascript enabled)
 * applied single test file for travis run: took Bachs Toccata And Fugue In D Minor by Paul Pitman (licence PD)  [orangefreesounds](www.orangefreesounds.com/toccata-and-fugue-in-d-minor/) in rememberring [Monthy Python's grand rugby match](https://www.youtube.com/watch?v=HKv6o7YqHnE).
 * travis CI working
 * more documentation locally as html: `cargo doc --no-deps --open`
 * fixed ui with BoxView and correct id finding (looks like bug is in Cursive)
-* refactored lookup method in net (needs more comments now)
 * file logging in (use [glogg](http://glogg.bonnefon.org/))
 * updated all external crates
 * logging mechanism introduced (`logit.rs`). It was needed because of tui console output was not readable (either syslog or console)
  * run e.g. with `RUST_LOG=adbflib::net=debug RUST_BACKTRACE=full cargo run -- -n ~/Audiobooks`
 * ssh client with example key works, key now external
 * found emojis :grin:
-* included Rust doctest, since it is mostly a library, works well
-* using a config mod
-* new mDNS crate for searching (which is very cpu consuming, but the new one is just a very recent fork, but hoping)
-* common.rs for common helper, such as a thread-pool
 
 ### ToDo
 * looking into crates like [rust_sodium](https://crates.io/crates/rust_sodium), which might simplify cross compiling
 * further client thrussh improvements, add secure identification by using zero-knowledge
-* change interface of ctrl messages to possibly decouple ctrl dependency ... (redo tui messages, ctrl messages (maybe into extra mod)
-* not think of travis CI
 * understand trussh communication, creating key, authorize
 * test more different targets using [this](https://github.com/japaric/trust)
 for client and server, the example looks promising
@@ -127,16 +111,15 @@ But it works I can see myself with a mDNS scanner, so I can also find other audi
 
 ### Yet in plan
 * want to get rid of mDNS and sd_dns (due to cross compiling problems, etc.) . Maybe this [multicasting](https://bluejekyll.github.io/blog/rust/2018/03/18/multicasting-in-rust.html) and this [rust_dns](https://bluejekyll.github.io/blog/rust/2018/03/18/multicasting-in-rust.html) crate helps
-* add (and later replace cursive TUI) a webui using websockets (I will go with [actix](https://actix.rs), it has websockets and I need a simple http server)
 * create a key yourself!! And store, which is going to be done if not found at startup
 * communication is now easy with ssh but how to authenticate as a valid adbf? Look at ssh details, and zero-knowledge or something similar: hiding key or secrecy knowledge in code without being to obvious (first should be a simple string, don't bother too much)
 * rework the one stub for worker thread to have many worker threads in net to do something with found addresses (use thrussh simple example)
 * snap linux packaging / online compiler like [Travis](https://docs.travis-ci.com/user/getting-started/) for various target compilation service
 * further lifetimes optimizations
 * exchange of data over net (probably de-/serialization using [serde](https://docs.serde.rs/serde/))
-* [ATOM](https://atom.io/) is my choice for development, on my Eee Pc [sublime](https://www.sublimetext.com), because of small footprint and performance
+* [atom](https://atom.io/) was my choice for development, on my Eee Pc [sublime](https://www.sublimetext.com), because of small footprint and performance
   * [sublime text](https://www.sublimetext.com) is good and fast, setup was ok, racer etc.
-  * [ATOM](https://atom.io/), looks good, no refactoring though, many plug-ins for rust, has README.md syntax
+  * [atom](https://atom.io/), looks good, no refactoring though, many plug-ins for rust, has README.md syntax
   * [IntelliJ IDEA](https://intellij-rust.github.io/install.html) [download with snaps](https://blog.jetbrains.com/idea/2017/11/install-intellij-idea-with-snaps/), and then Rust plug-in: easy, refactoring, spell-check, nice (but editor ... column select??, close tab??), but looks professional
 * internationalization (which is not really supported yet by Rust)
 * a good and fast data collection
