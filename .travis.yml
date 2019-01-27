@@ -56,7 +56,8 @@ install:
   - bash ci/install.sh
   - source ~/.cargo/env || true
   # install xargo before / later inside ci/install.sh
-  - cargo install xargo
+  # force should be replaced by a check but travis is mysterious
+  - cargo install xargo --force
 
 script:
   - xargo build --target $TARGET --release
