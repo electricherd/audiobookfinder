@@ -4,15 +4,14 @@ language: rust
 services: docker
 sudo: required
 
-rust:
-  - nightly
-  - stable
-
 matrix:
   include:
     - os : linux
       dist: trusty
       env: UBUNTU_VER=LTS_14.04 TARGET=x86_64-unknown-linux-gnu
+      rust:
+      - nightly
+      - stable
        #- env: TARGET=aarch64-unknown-linux-gnu
        #- env: TARGET=arm-unknown-linux-gnueabi (libsodium problem)
        #- env: TARGET=armv7-unknown-linux-gnueabihf
@@ -20,6 +19,9 @@ matrix:
     - os : linux
       dist: xenial
       env: UBUNTU_VER=LTS_16.04 TARGET=x86_64-unknown-linux-gnu
+      rust:
+      - nightly
+      - stable
    #- os: osx
    #  env: TARGET=x86_64-apple-darwin
   allow_failures:
