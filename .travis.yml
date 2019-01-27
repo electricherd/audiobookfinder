@@ -13,22 +13,28 @@ notification:
        on_success: always
        on_failure: change
 
-rust:
-  - nightly
-  - stable
-
-os:
-  linux:
-    - dist: trusty
+matrix:
+  include:
+    - os : linux
+      dist: trusty
       env: UBUNTU_VER=LTS_14.04 TARGET=x86_64-unknown-linux-gnu
-       #- env: TARGET=aarch64-unknown-linux-gnu
-       #- env: TARGET=arm-unknown-linux-gnueabi (libsodium problem)
-       #- env: TARGET=armv7-unknown-linux-gnueabihf
-       #- env: TARGET=i686-unknown-linux-gnu
-    - dist: xenial
+      rust: stable
+    - os : linux
+      dist: trusty
+      env: UBUNTU_VER=LTS_14.04 TARGET=x86_64-unknown-linux-gnu
+      rust: nightly
+    - os : linux
+      dist: xenial
       env: UBUNTU_VER=LTS_16.04 TARGET=x86_64-unknown-linux-gnu
-   #- os: osx
-   #  env: TARGET=x86_64-apple-darwin
+      rust: stable
+    - os : linux
+      dist: xenial
+      env: UBUNTU_VER=LTS_16.04 TARGET=x86_64-unknown-linux-gnu
+      rust: nightly
+  #- os: osx
+  #  env: TARGET=x86_64-apple-darwin
+  allow_failures:
+    - rust: nightly
 
 addons:
   apt:
