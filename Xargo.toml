@@ -1,4 +1,4 @@
 # this is used when compiling via xargo instead of cargo
 [dependencies.std]
 default-features = false
-features = ["force_alloc_system", "panic_unwind"]
+features = ["panic_unwind"]

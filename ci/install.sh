@@ -94,6 +94,12 @@ main() {
             ;;
     esac
 
+    if [ $TRAVIS_RUST_VERSION = nightly ]; then
+       # needed for xargo on nightly
+       #rustup component add rust-src
+    fi
+
+
     # This fetches latest stable release
     local tag=$(git ls-remote --tags --refs --exit-code https://github.com/japaric/cross \
                        | cut -d/ -f3 \
