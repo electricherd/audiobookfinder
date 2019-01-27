@@ -46,6 +46,7 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
 * before multiple c-library dependency: easy cross compile (and test) for raspberry (v1 and v2, v3)... ok the tui update needs adjustment
 * logging (own module for that), good
 * client/server authorization/management in a safe way (some small crypto with [thrussh](https://pijul.org/thrussh/)), looking at [Pierre-Étienne Meunier - Building SSH servers in minutes](https://www.youtube.com/watch?v=TKQoPQcKKTw).
+* cross compiling in general, mix of local (with and without docker) and remote compilation (travis with [xargo](https://github.com/japaric/xargo), [cross](https://github.com/japaric/cross/))
 * CI with [travis](https://travis-ci.org/electricherd/audiobookfinder/) works, cross compiling is still difficult with [trust](https://github.com/japaric/trust), [cross](https://github.com/japaric/cross/), [docker](https://www.docker.com/), need to watch closely to [steed](https://github.com/japaric/steed) for some problem solving.
 * travis automatically built and automatically deployed own public [documentation](https://electricherd.github.io/audiobookfinder/audiobookfinder/index.html)
 * making a library ([adbflib](https://electricherd.github.io/audiobookfinder/adbflib/index.html) as the main part of the program)
@@ -54,6 +55,9 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
 * rust macros (some day)
 
 ### Changes
+* trying xargo instead of cargo to compile (possible problems with std in cross compiling, and optimizations), but only works with nightly.
+* cleaned up deployment, added a release readme, licence to deploy as well
+* repaired deployment of binaries, including stripped and packed binaries (upx optimization doesn't work somehow)
 * included (should work fully offline later, all MIT licensed) 3rdparty css, js-scripts ([jquery](https://jquery.com),[bootstrap](https://getbootstrap.com/)) and all pages hard-included in to webserver (no loading of files, yet for development still possible), added state for server, connected websocket, designed a favicon plus logo
 * added basic webui support: http-server with websockets ([actix](https://actix.rs)), a single page application, the page and websockets are already there.
 * change uuid strings back to uuids, that old decision was due to not have uuid crate dependency everywhere, but that was a bad decision
@@ -89,6 +93,7 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
 * common.rs for common helper, such as a thread-pool
 
 ### ToDo
+* looking into crates like [rust_sodium](https://crates.io/crates/rust_sodium), which might simplify cross compiling
 * further client thrussh improvements, add secure identification by using zero-knowledge
 * change interface of ctrl messages to possibly decouple ctrl dependency ... (redo tui messages, ctrl messages (maybe into extra mod)
 * not think of travis CI
@@ -112,6 +117,7 @@ But it works I can see myself with a mDNS scanner, so I can also find other audi
 (still early version of drawing, and directly [editable](https://www.draw.io/?mode=github))
 
 ### Issues
+* cross compiling for windows is almost impossible yet, though travis now can support, even in a local VM it is very difficult. OpenSSL, Libsodium are possible but since mDNS or bonjour is used, this looks frustratingly impossible
 * logging from other modules too detailed/too much
 * how to decide if an mDNS device is duplicated (more than 1 ipAdress representation, which is correct?, and do they come not within the same record)
 * no net is a problem
@@ -120,6 +126,7 @@ But it works I can see myself with a mDNS scanner, so I can also find other audi
 
 
 ### Yet in plan
+* want to get rid of mDNS and sd_dns (due to cross compiling problems, etc.) . Maybe this [multicasting](https://bluejekyll.github.io/blog/rust/2018/03/18/multicasting-in-rust.html) and this [rust_dns](https://bluejekyll.github.io/blog/rust/2018/03/18/multicasting-in-rust.html) crate helps
 * add (and later replace cursive TUI) a webui using websockets (I will go with [actix](https://actix.rs), it has websockets and I need a simple http server)
 * create a key yourself!! And store, which is going to be done if not found at startup
 * communication is now easy with ssh but how to authenticate as a valid adbf? Look at ssh details, and zero-knowledge or something similar: hiding key or secrecy knowledge in code without being to obvious (first should be a simple string, don't bother too much)

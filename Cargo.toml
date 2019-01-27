@@ -32,7 +32,6 @@ lazy_static = "1.2"   # awesome lib for lazy data structures
 
 dns-sd  = "0.1"     # need avahi-compat-client-dev lib
 hostname = "0.1"    # for host recognition
-# mdns-discover =  { git = "https://github.com/NervosFoundation/rust-mdns-discover", branch = "master", version="*" }
 mdns = "0.3"        # to search other mdns clients
 
 env_logger = "0.6"     # alongside log for logging
@@ -43,9 +42,9 @@ syslog = "4"           # another logger for system log
 futures = "0.1"        # futures, used in state machine yet (and in many other crates)
 
 tree_magic = "0.2"  # for fast file tree operations
-taglib = { git = "https://github.com/ebassi/taglib-rust", branch = "master", version="1.0" } # grrrrrrrrr, don't use crates.io version
+taglib = "1.0"  # taglib for id3tags
 
-rayon = "1"       # for multi-threading, very good
+rayon = "1"       # for multi-threading, very goo
 uuid = {version = "0.7", features = ["v4","serde"]}  # uuid for each app
 
 actix = "0.7"         # basic for webserver
@@ -71,10 +70,14 @@ default-features = false
 
 [features]
 default = ["cursive/termion-backend"]
+system-alloc = []
 
 [profile.release]
+panic = "abort"
 lto = true
-panic = 'abort'
+codegen-units = 1
+incremental = false
+opt-level = "z"
 
 [target.armv7-unknown-linux-gnueabihf]
 linker = "arm-linux-gnueabihf-gcc"

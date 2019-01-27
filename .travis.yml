@@ -23,7 +23,8 @@ addons:
   apt:
     update: true
     packages:
-      - p7zip-full
+      - p7zip-full  # 7z compression
+      - upx-ucl     # executable binary compression
     
 env:
   global:
@@ -52,17 +53,26 @@ install:
   - source ~/.cargo/env || true
 
 script:
-  - PKG_CONFIG_ALLOW_CROSS=1 cargo build --target $TARGET --release
-  - PKG_CONFIG_ALLOW_CROSS=1 cargo test
-  - PKG_CONFIG_ALLOW_CROSS=1 cargo run --target $TARGET -- testaudio
+  - PKG_CONFIG_ALLOW_CROSS=1 xargo build --target $TARGET --release
+  #- PKG_CONFIG_ALLOW_CROSS=1 xargo test
+  #- PKG_CONFIG_ALLOW_CROSS=1 xargo run --target $TARGET -- testaudio
 after_script:
   - set +e
 
 before_deploy:
-  - cp target/$TARGET/release/$CRATE_NAME target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET
-  - strip -s target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET -o target/release/$CRATE_NAME
-  - 7z a -r target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z ./target/release/$CRATE_NAME
-  - sha1sum target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z > target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z.sha1
+  - cp target/$TARGET/release/$CRATE_NAME \
+       target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET
+  - strip -s target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET \
+          -o target/release/$CRATE_NAME
+  # upx yet disabled since causes segmentation faults
+  #- strip -s target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET -o target/release/$CRATE_NAME.stripped
+  #- upx --ultra-brute target/release/$CRATE_NAME.stripped -o target/release/$CRATE_NAME
+  - 7z a -r target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z \
+       ./target/release/$CRATE_NAME \
+       README-release.md \
+       LICENSE
+  - sha1sum target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z  > \
+       target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z.sha1
 
 deploy:
   # look at
@@ -76,7 +86,7 @@ deploy:
   skip_cleanup: true
   on:
     repo: electricherd/audiobookfinder    
-    #condition: $TRAVIS_RUST_VERSION = stable
+    condition: $TRAVIS_RUST_VERSION = stable
     tags: true
     branches:
       only:

@@ -1,3 +1,6 @@
+# yet disabled to use xargo directly
+# and not yet within cross!
+#
 # this is the Cross file for
 # cross's docker images.
 # The images are being created
@@ -9,9 +12,9 @@
 # (trust uses cross) see
 # see https://github.com/japaric/cross
 #
-[build]
-xargo = true
-[target.x86_64-unknown-linux-gnu]
-image = "electricherd/adbfimage:0.1.15"
-[target.armv7-unknown-linux-gnueabihf]
-image = "electricherd/adbfimage:0.1.15"
+#[build]
+#xargo = true
+#[target.x86_64-unknown-linux-gnu]
+#image = "electricherd/adbfimage:0.1.15"
+#[target.armv7-unknown-linux-gnueabihf]
+#image = "electricherd/adbfimage:0.1.15"
