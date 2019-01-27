@@ -105,9 +105,7 @@ impl Ctrl {
     pub fn run_webui(&mut self) {
         let uuid_copy = self.uuid;
         let net_support = self.with_net;
-        if true {
-            // todo: remove on devel
-            //if webbrowser::open(&["http://", config::net::WEBSOCKET_ADDR].concat()).is_ok() {
+        if webbrowser::open(&["http://", config::net::WEBSOCKET_ADDR].concat()).is_ok() {
             let _webui_runner = thread::spawn(move || {
                 let _ = WebUI::new(uuid_copy, net_support);
             });
