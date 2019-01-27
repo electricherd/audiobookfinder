@@ -97,7 +97,7 @@ main() {
     if [ $TRAVIS_RUST_VERSION = nightly ]; then
        echo "needed for xargo: rustup component add rust-src"
        # needed for xargo on nightly
-       #rustup component add rust-src
+       rustup component add rust-src
     fi
 
 
