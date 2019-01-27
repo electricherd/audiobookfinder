@@ -4,6 +4,10 @@ language: rust
 services: docker
 sudo: required
 
+rust:
+  - nightly
+  - stable
+
 matrix:
   include:
     - os : linux
@@ -16,8 +20,10 @@ matrix:
     - os : linux
       dist: xenial
       env: UBUNTU_VER=LTS_16.04 TARGET=x86_64-unknown-linux-gnu
-   #- env: TARGET=x86_64-apple-darwin
-   #   os: osx
+   #- os: osx
+   #  env: TARGET=x86_64-apple-darwin
+  allow_failures:
+    - rust: nightly
 
 addons:
   apt:
@@ -30,9 +36,6 @@ env:
   global:
     - CRATE_NAME=audiobookfinder
 
-rust:
-  - nightly
-  - stable
 notification:
      email:
        on_success: always
