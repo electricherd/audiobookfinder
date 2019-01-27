@@ -61,7 +61,7 @@ install:
 
 script:
   - xargo build --target $TARGET --release
-  - xargo test
+  - cargo test
   - xargo run --target $TARGET -- testaudio
 after_script:
   - set +e
