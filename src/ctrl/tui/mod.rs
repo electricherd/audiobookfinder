@@ -10,7 +10,9 @@ use cursive::{
 use std::{iter::Iterator, sync::mpsc, thread, time::Duration};
 
 use super::super::{
-    common::ThreadPool, config, ctrl::{Alive, ReceiveDialog, Status, SystemMsg, UiMsg},
+    common::ThreadPool,
+    config,
+    ctrl::{Alive, ReceiveDialog, Status, SystemMsg, UiMsg},
 };
 
 pub struct Tui {
@@ -87,7 +89,7 @@ impl Tui {
         };
 
         // test this, to update every with 20fps / this should be done when something changes ..... grrrr
-        tui.handle.set_fps(40);
+        //tui.handle.set_fps(40);
         // quit by 'q' key
         tui.handle.add_global_callback('q', |s| s.quit());
         Ok(tui)
@@ -129,20 +131,17 @@ impl Tui {
                     match on_off {
                         Status::ON => {
                             self.toggle_alive(signal.clone(), AliveSym::GoOn);
-                            let (already_running, toggle, timeout_id): (
-                                bool,
-                                &mut bool,
-                                usize,
-                            ) = match signal {
-                                Alive::BusyPath(nr) => (
-                                    self.alive.pathes[nr].runs,
-                                    &mut self.alive.pathes[nr].runs,
-                                    nr + 1,
-                                ),
-                                Alive::HostSearch => {
-                                    (self.alive.host.runs, &mut self.alive.host.runs, 0)
-                                }
-                            };
+                            let (already_running, toggle, timeout_id): (bool, &mut bool, usize) =
+                                match signal {
+                                    Alive::BusyPath(nr) => (
+                                        self.alive.pathes[nr].runs,
+                                        &mut self.alive.pathes[nr].runs,
+                                        nr + 1,
+                                    ),
+                                    Alive::HostSearch => {
+                                        (self.alive.host.runs, &mut self.alive.host.runs, 0)
+                                    }
+                                };
                             if !already_running {
                                 *toggle = true;
                                 // if timer not started, start
@@ -296,7 +295,8 @@ impl Tui {
                                         .with_id(ID_HOST_NUMBER),
                                 ),
                         ),
-                ).title("Host list"),
+                )
+                .title("Host list"),
             );
         }
 

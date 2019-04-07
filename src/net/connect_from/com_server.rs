@@ -4,7 +4,9 @@ use bincode;
 use futures;
 use std;
 use thrussh::{
-    self, server::{self, Auth, Session}, ChannelId,
+    self,
+    server::{self, Auth, Session},
+    ChannelId,
 };
 use thrussh_keys::{self, key};
 use uuid::Uuid;
@@ -13,12 +15,12 @@ use super::super::data::DataSession;
 
 #[derive(Clone)]
 pub struct ComServer {
-    pub id: Uuid
+    pub id: Uuid,
 }
 
 impl server::Server for ComServer {
     type Handler = Self;
-    fn new(&self) -> Self {
+    fn new(&mut self) -> Self {
         self.clone()
     }
 }
