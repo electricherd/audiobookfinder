@@ -55,6 +55,7 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
 * rust macros (some day)
 
 ### Changes
+* Adding and later moving from [travis](https://travis-ci.org/) to [AppVeyor](https://www.appveyor.com/) which doesn't lack bionic 18.04 builds and possibility for Windows builds (AppVeyor was primarily used for Windows builds, Travis for Linux in Rust, so documentation for Linux and Rust builds in AppVeyor is quite bad ... testing)
 * cleaned up changes list, switched to [sublime text](https://www.sublimetext.com) instead of [atom](https://atom.io/) as editor
 * trying xargo instead of cargo to compile (possible problems with std in cross compiling, and optimizations), but only works with nightly.
 * cleaned up deployment, added a release readme, licence to deploy as well

@@ -1,0 +1,42 @@
+version: "{build}"
+
+image:
+  - Ubuntu1804
+
+platform: 
+  - x64
+
+environment:
+  matrix:
+    - TARGET: x86_64-unknown-linux-gnu
+
+# build configuration, i.e. Debug, Release, etc.
+configuration:
+  - Debug
+  - Release
+
+# scripts that are called at very beginning, before repo cloning
+init:
+  - sh: sudo apt-get update
+  - sh: sudo apt-get upgrade
+  - sh: sudo apt-get --yes install build-essential
+  - sh: sudo apt-get --yes install libavahi-compat-libdnssd-dev
+  - sh: sudo apt-get --yes install libsodium-dev
+  - sh: sudo apt-get --yes install libtag1-dev libtagc0-dev
+
+# scripts that run after cloning repository
+install:
+  - sh: curl https://sh.rustup.rs -sSf > ./rustup.sh 
+  - sh: sh ./rustup.sh --default-toolchain stable
+  - sh: rustup update
+  - sh: rustup toolchain install nightly
+  - sh: rustup target install i686-unknown-linux-gnu
+
+
+build_script:
+  - sh: cargo build
+
+test_script:
+  - cargo build --release --target %TARGET% --locked
+  - cargo run --release --target %TARGET% --locked -- --dump-testament
+  - cargo test --release --target %TARGET%
