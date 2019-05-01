@@ -71,9 +71,7 @@ before_deploy:
 
 deploy:
  - provider: GitHub
-    artifact: 
-      - app
-      - sha1
+    artifact: app
     draft: false
     prerelease: false
     on:
