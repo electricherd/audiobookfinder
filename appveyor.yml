@@ -57,7 +57,7 @@ artifacts:
   - path: target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z
     name: myapp
 
-before_deploy:
+after_build:
   - sh: cp target/$TARGET/release/$CRATE_NAME target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET
   - sh: strip -s target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET -o target/release/$CRATE_NAME
   # upx yet disabled since causes segmentation faults
