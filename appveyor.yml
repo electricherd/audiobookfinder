@@ -35,6 +35,12 @@ install:
   - sh: source $HOME/.cargo/env
 # it's a clean install so not needed: rustup update
   - sh: rustup toolchain install nightly
+  - sh: echo $TARGET
+  - sh: echo $(TARGET)
+  - sh: echo $env:TARGET
+  - sh: echo %TARGET%
+  - sh: echo "%TARGET%"
+  - sh: echo '%TARGET%'
   - sh: rustup target install $env:TARGET
 
 
