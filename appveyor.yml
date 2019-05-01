@@ -26,29 +26,23 @@ init:
   - sh: sudo apt-get --yes install libavahi-compat-libdnssd-dev
   - sh: sudo apt-get --yes install libsodium-dev
   - sh: sudo apt-get --yes install libtag1-dev libtagc0-dev
-
-# scripts that run after cloning repository
-install:
   - sh: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > ./rustup.sh
   - sh: sh ./rustup.sh -y 
 # for debugging: ls -al
   - sh: source $HOME/.cargo/env
 # it's a clean install so not needed: rustup update
   - sh: rustup toolchain install nightly
-  - sh: echo $TARGET
-  - sh: echo $(TARGET)
-  - sh: echo $env:TARGET
-  - sh: echo %TARGET%
-  - sh: echo "%TARGET%"
-  - sh: echo '%TARGET%'
-  - sh: rustup target install $env:TARGET
+
+# scripts that run after cloning repository
+install:
+  - sh: rustup target install $TARGET
 
 
 build_script:
   - sh: cargo build
 
 test_script:
-  - cargo build --release --target $env:TARGET
-  - cargo run --release --target $env:TARGET
-  - cargo test --release --target $env:TARGET
-  - ./target/$env:TARGET/release/$env:CRATE_NAME -- testaudio
+  - cargo build --release --target $TARGET
+  - cargo run --release --target $TARGET
+  - cargo test --release --target $TARGET
+  - ./target/$TARGET/release/$CRATE_NAME -- testaudio
