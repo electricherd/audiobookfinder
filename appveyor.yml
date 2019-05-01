@@ -3,7 +3,7 @@ version: "{build}"
 image:
   - Ubuntu1804
 
-platform: 
+platform:
   - x64
 
 environment:
@@ -18,7 +18,7 @@ configuration:
 # scripts that are called at very beginning, before repo cloning
 init:
   - sh: sudo apt-get update
-  - sh: sudo apt-get --yes upgrade 
+  - sh: sudo apt-get --yes upgrade
   - sh: sudo apt-get --yes install build-essential
   - sh: sudo apt-get --yes install libavahi-compat-libdnssd-dev
   - sh: sudo apt-get --yes install libsodium-dev
@@ -26,7 +26,7 @@ init:
 
 # scripts that run after cloning repository
 install:
-  - sh: curl https://sh.rustup.rs -sSf > ./rustup.sh 
+  - sh: curl https://sh.rustup.rs -sSf > ./rustup.sh
   - sh: sh ./rustup.sh --default-toolchain stable
   - sh: rustup update
   - sh: rustup toolchain install nightly
