@@ -7,7 +7,8 @@ platform:
   - x64
 
 environment:
-  CRATE_NAME: audiobookfinder
+  global:
+    CRATE_NAME: audiobookfinder
   matrix:
     - TARGET: x86_64-unknown-linux-gnu
 
@@ -34,14 +35,14 @@ install:
   - sh: source $HOME/.cargo/env
 # it's a clean install so not needed: rustup update
   - sh: rustup toolchain install nightly
-  - sh: rustup target install $(TARGET)
+  - sh: 'rustup target install %TARGET%'
 
 
 build_script:
   - sh: cargo build
 
 test_script:
-  - cargo build --release --target $(TARGET)
-  - cargo run --release --target $(TARGET)
-  - cargo test --release --target $(TARGET)
-  - ./target/$(TARGET)/release/$(CRATE_NAME) -- testaudio
+  - 'cargo build --release --target %TARGET%'
+  - 'cargo run --release --target %TARGET%'
+  - 'cargo test --release --target %TARGET%'
+  - './target/%TARGET%/release/%CRATE_NAME% -- testaudio'
