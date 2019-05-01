@@ -47,8 +47,8 @@ taglib = "1.0"  # taglib for id3tags
 rayon = "1.0"       # for multi-threading, very good
 uuid = {version = "0.7", features = ["v4","serde"]}  # uuid for each app
 
-actix = "0.7"         # basic for webserver
-actix-web = "0.7"     # for mini webserver and websocket
+actix = "0.8.1"         # basic for webserver
+actix-web = "0.7.19"     # for mini webserver and websocket
 webbrowser = "0.5"    # for opening webpage on machine
 get_if_addrs = "0.5"  # for range of localhosts
 
@@ -58,7 +58,7 @@ serde = "1.0"         # serialize anything, awesome for communication items
 serde_derive = "1.0"  # macro usage from serde
 bincode = "1.1"       # another binary en/decoder as serde
 
-ring = "0.13"          # crypto, used for random generation
+ring = "0.13.5"        # crypto, used for random generation
 thrussh = "0.21"       # ssh server client crate for communication
 thrussh-keys = "0.11"  # ssh server client crate for communication
 tokio-io = "0.1"       # has to be same as thrussh uses

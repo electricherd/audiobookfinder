@@ -1,9 +1,10 @@
 //! This is a webui about to replace the TUI, to be nice, better accessable, and
 //! new technology using websockets
-use actix::{Actor, ActorContext, AsyncContext, StreamHandler};
+
 use actix_web::fs; // Todo: during development
 use actix_web::{
-    http::{self, Method, StatusCode},
+    actix::{Actor, ActorContext, AsyncContext, StreamHandler},
+    http::{self, StatusCode},
     server, ws, App, HttpRequest, HttpResponse, Json, Result,
 };
 use get_if_addrs;
