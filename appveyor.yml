@@ -50,6 +50,10 @@ test_script:
   - cargo test --release --target $TARGET
   - ./target/$TARGET/release/$CRATE_NAME -- testaudio
 
+artifacts:
+  - path: target\release\$CRATE_NAME-$UBUNTU_VER-$TARGET.7z
+    name: myapp
+
 before_deploy:
   - cp target/$TARGET/release/$CRATE_NAME target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET
   - strip -s target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET -o target/release/$CRATE_NAME
@@ -63,7 +67,7 @@ before_deploy:
 
 deploy:
  - provider: GitHub
-    artifact: target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z
+    artifact: myapp
     draft: false
     prerelease: false
     on:
