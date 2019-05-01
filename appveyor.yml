@@ -27,8 +27,9 @@ init:
 
 # scripts that run after cloning repository
 install:
-  - sh: curl https://sh.rustup.rs -sSf > ./rustup.sh
-  - sh: sh ./rustup.sh --default-toolchain stable
+  - sh: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > ./rustup.sh
+  - sh: sh ./rustup.sh -y 
+  # --default-toolchain stable
   - sh: rustup update
   - sh: rustup toolchain install nightly
   - sh: rustup target install i686-unknown-linux-gnu
