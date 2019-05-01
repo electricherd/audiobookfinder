@@ -40,15 +40,15 @@ install:
 # for debugging: ls -al
   - sh: source $HOME/.cargo/env
 # it's a clean install so not needed: rustup update
-  - sh: rustup toolchain install nightly
+#  - sh: rustup toolchain install nightly
   - sh: rustup target install $TARGET
 
 
 build_script:
-  - sh: cargo build
+#  - cargo build
+  - cargo build --release --target $TARGET  
 
 test_script:
-  - cargo build --release --target $TARGET
 #  - cargo run --release --target $TARGET
 #  - cargo test --release --target $TARGET
 #  - ./target/$TARGET/release/$CRATE_NAME -- testaudio
@@ -71,6 +71,8 @@ before_deploy:
 deploy:
   provider: GitHub
   artifact: 'myapp'
+  auth_token:
+    secure: aT3Xjbg4GSAJtYjhk7SrC1RInLV28rI6e64he6JClx2W09nToXvPyHr/zXc0tqPj
   draft: false
   prerelease: false
   on:
