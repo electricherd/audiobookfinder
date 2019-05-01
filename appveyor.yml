@@ -9,6 +9,7 @@ platform:
 environment:
   global:
     CRATE_NAME: audiobookfinder
+    UBUNTU_VER: LTS_18.04
   matrix:
     - TARGET: x86_64-unknown-linux-gnu
 
@@ -26,6 +27,8 @@ init:
   - sh: sudo apt-get --yes install libavahi-compat-libdnssd-dev
   - sh: sudo apt-get --yes install libsodium-dev
   - sh: sudo apt-get --yes install libtag1-dev libtagc0-dev
+#  for deployment
+  - sh: sudo apt-get --yes install p7zip-full upx-ucl
 
 # scripts that run after cloning repository
 install:
@@ -46,3 +49,33 @@ test_script:
   - cargo run --release --target $TARGET
   - cargo test --release --target $TARGET
   - ./target/$TARGET/release/$CRATE_NAME -- testaudio
+
+artifacts:
+  - path: target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z
+    name: app
+
+  - path: target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z.sha1
+    name: sha1
+
+
+before_deploy:
+  - cp target/$TARGET/release/$CRATE_NAME target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET
+  - strip -s target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET -o target/release/$CRATE_NAME
+  # upx yet disabled since causes segmentation faults
+  #- strip -s target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET \
+  #        -o target/release/$CRATE_NAME.stripped
+  #- upx --ultra-brute target/release/$CRATE_NAME.stripped \
+  #       -o target/release/$CRATE_NAME
+  - 7z a -r target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z ./target/release/$CRATE_NAME ./README-release.md ./LICENSE
+  - sha1sum target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z > target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z.sha1
+
+deploy:
+ - provider: GitHub
+    artifact: 
+      - app
+      - sha1
+    draft: false
+    prerelease: false
+    on:
+      branch: master                # release from master branch only
+      APPVEYOR_REPO_TAG: false       # deploy on tag push only  
