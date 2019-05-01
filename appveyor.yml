@@ -51,7 +51,7 @@ test_script:
   - ./target/$TARGET/release/$CRATE_NAME -- testaudio
 
 artifacts:
-  - path: target\release\$CRATE_NAME-$UBUNTU_VER-$TARGET.7z
+  - path: target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z
     name: myapp
 
 before_deploy:
@@ -66,10 +66,10 @@ before_deploy:
   - sha1sum target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z > target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z.sha1
 
 deploy:
- - provider: GitHub
-    artifact: myapp
-    draft: false
-    prerelease: false
-    on:
-      branch: master                # release from master branch only
-      APPVEYOR_REPO_TAG: false       # deploy on tag push only  
+  provider: GitHub
+  artifact: 'myapp'
+  draft: false
+  prerelease: false
+  on:
+    branch: master                # release from master branch only
+    APPVEYOR_REPO_TAG: false       # deploy on tag push only  
