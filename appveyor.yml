@@ -12,13 +12,14 @@ environment:
 
 # build configuration, i.e. Debug, Release, etc.
 configuration:
-  - Debug
+#  - Debug
   - Release
 
 # scripts that are called at very beginning, before repo cloning
+# ACCEPT_EULA for some windows packages .. whatever
 init:
   - sh: sudo apt-get update
-  - sh: sudo apt-get --yes upgrade
+# upgrade later when we know it works - sh: sudo ACCEPT_EULA=Y apt-get --yes
   - sh: sudo apt-get --yes install build-essential
   - sh: sudo apt-get --yes install libavahi-compat-libdnssd-dev
   - sh: sudo apt-get --yes install libsodium-dev
