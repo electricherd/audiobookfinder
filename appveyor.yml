@@ -7,8 +7,9 @@ platform:
   - x64
 
 environment:
+  crate_name: audiobookfinder
   matrix:
-    - TARGET: x86_64-unknown-linux-gnu
+    - target: x86_64-unknown-linux-gnu
 
 # build configuration, i.e. Debug, Release, etc.
 configuration:
@@ -29,18 +30,18 @@ init:
 install:
   - sh: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > ./rustup.sh
   - sh: sh ./rustup.sh -y 
-  # --default-toolchain stable
-  - sh: ls -al
+# for debugging: ls -al
   - sh: source $HOME/.cargo/env
-  - sh: rustup update
+# it's a clean install so not needed: rustup update
   - sh: rustup toolchain install nightly
-  - sh: rustup target install i686-unknown-linux-gnu
+  - sh: rustup target install %target%
 
 
 build_script:
   - sh: cargo build
 
 test_script:
-  - cargo build --release --target %TARGET% --locked
-  - cargo run --release --target %TARGET% --locked -- --dump-testament
-  - cargo test --release --target %TARGET%
+  - cargo build --release --target %target%
+  - cargo run --release --target %target% 
+  - cargo test --release --target %target%
+  - ./target/%target%/release/%crate_name% -- testaudio
