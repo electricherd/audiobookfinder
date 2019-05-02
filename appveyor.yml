@@ -15,7 +15,7 @@ environment:
 
 # build configuration, i.e. Debug, Release, etc.
 configuration:
-#  - Debug
+  - Debug
   - Release
 
 cache:
@@ -25,7 +25,8 @@ cache:
 # ACCEPT_EULA for some windows packages .. whatever
 init:
   - sh: sudo apt-get update
-# upgrade later when we know it works - sh: sudo ACCEPT_EULA=Y apt-get --yes
+  # uncomment for quick build
+  - sh: sudo ACCEPT_EULA=Y apt-get upgrade --yes
   - sh: sudo apt-get --yes install build-essential
   - sh: sudo apt-get --yes install libavahi-compat-libdnssd-dev
   - sh: sudo apt-get --yes install libsodium-dev
@@ -40,18 +41,19 @@ install:
 # for debugging: ls -al
   - sh: source $HOME/.cargo/env
 # it's a clean install so not needed: rustup update
-#  - sh: rustup toolchain install nightly
+  - sh: rustup toolchain install nightly
   - sh: rustup target install $TARGET
 
 
 build_script:
-#  - cargo build
+  # uncomment for quick build  
+  - cargo build
   - cargo build --release --target $TARGET  
 
 test_script:
-#  - cargo run --release --target $TARGET
-#  - cargo test --release --target $TARGET
-#  - ./target/$TARGET/release/$CRATE_NAME -- testaudio
+  - cargo run --release --target $TARGET
+  - cargo test --release --target $TARGET
+  - ./target/$TARGET/release/$CRATE_NAME -- testaudio
 
 artifacts:
   - path: target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z
@@ -78,7 +80,7 @@ deploy:
     -'myapp'
     -'sha1checksum'
   auth_token:
-    secure: $gitHubToken
+    secure: aT3Xjbg4GSAJtYjhk7SrC1RInLV28rI6e64he6JClx2W09nToXvPyHr/zXc0tqPj
   draft: false
   prerelease: false
   on:
