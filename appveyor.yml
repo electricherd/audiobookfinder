@@ -78,7 +78,7 @@ deploy:
     -'myapp'
     -'sha1checksum'
   auth_token:
-    secure: aT3Xjbg4GSAJtYjhk7SrC1RInLV28rI6e64he6JClx2W09nToXvPyHr/zXc0tqPj
+    secure: $gitHubToken
   draft: false
   prerelease: false
   on:
