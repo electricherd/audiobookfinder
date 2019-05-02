@@ -3,20 +3,19 @@ version: "{build}"
 image:
   - Ubuntu1804
 
-platform:
-  - x64
-
 environment:
   global:
     CRATE_NAME: audiobookfinder
     UBUNTU_VER: LTS_18.04
   matrix:
-    - TARGET: x86_64-unknown-linux-gnu
+    - platform: x64
+      configuration: Release
+      TARGET: x86_64-unknown-linux-gnu
+    - platform: x64
+      configuration: Debug    
+      TARGET: x86_64-unknown-linux-gnu
 
 # build configuration, i.e. Debug, Release, etc.
-configuration:
-  - Debug
-  - Release
 
 cache:
   - '.cargo'
@@ -25,8 +24,8 @@ cache:
 # ACCEPT_EULA for some windows packages .. whatever
 init:
   - sh: sudo apt-get update
-  # uncomment for quick build
-  - sh: sudo DEBIAN_FRONTEND=noninteractive ACCEPT_EULA=Y apt-get upgrade -yq
+# comment next line for quick build
+#  - sh: sudo DEBIAN_FRONTEND=noninteractive ACCEPT_EULA=Y apt-get upgrade -yq
   - sh: sudo apt-get --yes install build-essential
   - sh: sudo apt-get --yes install libavahi-compat-libdnssd-dev
   - sh: sudo apt-get --yes install libsodium-dev
@@ -41,23 +40,25 @@ install:
 # for debugging: ls -al
   - sh: source $HOME/.cargo/env
 # it's a clean install so not needed: rustup update
-  - sh: rustup toolchain install nightly
+# comment next line for quick build
+#  - sh: rustup toolchain install nightly
   - sh: rustup target install $TARGET
 
 
 build_script:
-  # uncomment for quick build  
-  - cargo build
+# comment next line for quick build
+#  - cargo build
   - cargo build --release --target $TARGET  
 
 test_script:
-  - cargo run --release --target $TARGET
-  - cargo test --release --target $TARGET
-  - ./target/$TARGET/release/$CRATE_NAME -- testaudio
+# comment next lines for quick build  
+#  - cargo run --release --target $TARGET -- testaudio
+#  - cargo test --release --target $TARGET
+#  - ./target/$TARGET/release/$CRATE_NAME -- testaudio
 
 artifacts:
   - path: target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z
-    name: myapp
+    name: 7zippedFiles
 
   - path: target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z.sha1
     name: sha1checksum
@@ -77,12 +78,14 @@ after_build:
 deploy:
   provider: GitHub
   artifact: 
-    -'myapp'
+    -'7zippedFiles'
     -'sha1checksum'
   auth_token:
+    # yes this is encrypted/signed by appveyor (from the github token)
     secure: aT3Xjbg4GSAJtYjhk7SrC1RInLV28rI6e64he6JClx2W09nToXvPyHr/zXc0tqPj
   draft: false
   prerelease: false
   on:
     branch: master                # release from master branch only
-    APPVEYOR_REPO_TAG: false       # deploy on tag push only  
+    APPVEYOR_REPO_TAG: false       # deploy on tag push only
+    platform: x64
