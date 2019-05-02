@@ -11,9 +11,15 @@ environment:
     - platform: x64
       configuration: Release
       TARGET: x86_64-unknown-linux-gnu
+      CHANNEL: stable      
     - platform: x64
-      configuration: Debug    
+      configuration: Debug
       TARGET: x86_64-unknown-linux-gnu
+      CHANNEL: stable      
+    - platform: x64
+      configuration: Release
+      TARGET: i686-pc-windows-msvc
+      CHANNEL: stable      
 
 # build configuration, i.e. Debug, Release, etc.
 
@@ -43,6 +49,11 @@ install:
 # comment next line for quick build
 #  - sh: rustup toolchain install nightly
   - sh: rustup target install $TARGET
+  - ps: curl -sSf -o rustup-init.exe https://win.rustup.rs
+  - ps: rustup-init.exe --default-host %TARGET% --default-toolchain %CHANNEL% -y
+  - ps: set PATH=%PATH%;C:\Users\appveyor\.cargo\bin
+  - ps: rustc -Vv
+  - ps: cargo -V  
 
 
 build_script:
