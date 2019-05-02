@@ -57,6 +57,10 @@ artifacts:
   - path: target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z
     name: myapp
 
+  - path: target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z.sha1
+    name: sha1checksum
+
+
 after_build:
   - sh: cp target/$TARGET/release/$CRATE_NAME target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET
   - sh: strip -s target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET -o target/release/$CRATE_NAME
@@ -70,7 +74,9 @@ after_build:
 
 deploy:
   provider: GitHub
-  artifact: 'myapp'
+  artifact: 
+    -'myapp'
+    -'sha1checksum'
   auth_token:
     secure: aT3Xjbg4GSAJtYjhk7SrC1RInLV28rI6e64he6JClx2W09nToXvPyHr/zXc0tqPj
   draft: false
