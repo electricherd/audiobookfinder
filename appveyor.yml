@@ -26,7 +26,7 @@ cache:
 init:
   - sh: sudo apt-get update
   # uncomment for quick build
-  - sh: sudo ACCEPT_EULA=Y apt-get upgrade --yes
+  - sh: sudo DEBIAN_FRONTEND=noninteractive ACCEPT_EULA=Y apt-get upgrade -yq
   - sh: sudo apt-get --yes install build-essential
   - sh: sudo apt-get --yes install libavahi-compat-libdnssd-dev
   - sh: sudo apt-get --yes install libsodium-dev
