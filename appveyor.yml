@@ -1,23 +1,22 @@
 version: "{build}"
 
-image:
-  - Ubuntu1804
-  - Visual Studio 2017
-
 environment:
   global:
     CRATE_NAME: audiobookfinder
     UBUNTU_VER: LTS_18.04
   matrix:
     - platform: x64
+      image: Ubuntu1804
       configuration: Release
       TARGET: x86_64-unknown-linux-gnu
       CHANNEL: stable      
     - platform: x64
+      image: Ubuntu1804    
       configuration: Debug
       TARGET: x86_64-unknown-linux-gnu
       CHANNEL: stable      
     - platform: x64
+      image: Visual Studio 2017
       configuration: Release
       TARGET: i686-pc-windows-msvc
       CHANNEL: stable      
@@ -50,6 +49,7 @@ install:
 # comment next line for quick build
 #  - sh: rustup toolchain install nightly
   - sh: rustup target install $TARGET
+  # ps (powershell should only be triggered with windows build)
   - ps: curl -sSf -o rustup-init.exe https://win.rustup.rs
   - ps: rustup-init.exe --default-host %TARGET% --default-toolchain %CHANNEL% -y
   - ps: set PATH=%PATH%;C:\Users\appveyor\.cargo\bin
@@ -70,7 +70,7 @@ test_script:
 
 artifacts:
   - path: target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z
-    name: 7zippedFiles
+    name: zippedFiles
 
   - path: target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z.sha1
     name: sha1checksum
@@ -90,7 +90,7 @@ after_build:
 deploy:
   provider: GitHub
   artifact: 
-    -'7zippedFiles'
+    -'zippedFiles'
     -'sha1checksum'
   auth_token:
     # yes this is encrypted/signed by appveyor (from the github token)
