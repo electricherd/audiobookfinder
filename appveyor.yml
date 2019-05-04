@@ -58,7 +58,7 @@ install:
   - cmd: rustup-init.exe --default-host %TARGET% --default-toolchain %CHANNEL% -y
   - cmd: set PATH=%PATH%;C:\Users\appveyor\.cargo\bin
   - cmd: rustc -Vv
-  - cmd: rustup component add rustc --toolchain $TARGET
+  - cmd: rustup component add rustc --toolchain %TARGET%
   - cmd: cargo -V  
 
 
