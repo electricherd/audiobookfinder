@@ -50,11 +50,11 @@ install:
 #  - sh: rustup toolchain install nightly
   - sh: rustup target install $TARGET
   # ps (powershell should only be triggered with windows build)
-  - ps: curl -sSf -o rustup-init.exe https://win.rustup.rs
-  - ps: rustup-init.exe --default-host %TARGET% --default-toolchain %CHANNEL% -y
-  - ps: set PATH=%PATH%;C:\Users\appveyor\.cargo\bin
-  - ps: rustc -Vv
-  - ps: cargo -V  
+  - cmd: curl -sSf -o rustup-init.exe https://win.rustup.rs
+  - cmd: rustup-init.exe --default-host %TARGET% --default-toolchain %CHANNEL% -y
+  - cmd: set PATH=%PATH%;C:\Users\appveyor\.cargo\bin
+  - cmd: rustc -Vv
+  - cmd: cargo -V  
 
 
 build_script:
