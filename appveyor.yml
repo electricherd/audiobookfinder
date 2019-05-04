@@ -51,13 +51,14 @@ install:
 # it's a clean install so not needed: rustup update
 # comment next line for quick build
 #  - sh: rustup toolchain install nightly
-  - sh: rustup component add rustc --toolchain $TARGET
   - sh: rustup target install $TARGET
+  - sh: rustup component add rustc --toolchain $TARGET
   # ps (powershell should only be triggered with windows build)
   - cmd: curl -sSf -o rustup-init.exe https://win.rustup.rs
   - cmd: rustup-init.exe --default-host %TARGET% --default-toolchain %CHANNEL% -y
   - cmd: set PATH=%PATH%;C:\Users\appveyor\.cargo\bin
   - cmd: rustc -Vv
+  - cmd: rustup target install %TARGET%
   - cmd: rustup component add rustc --toolchain %TARGET%
   - cmd: cargo -V  
 
