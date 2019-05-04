@@ -5,20 +5,23 @@ environment:
     CRATE_NAME: audiobookfinder
     UBUNTU_VER: LTS_18.04
   matrix:
-    - platform: x64
+    - TARGET: x86_64-unknown-linux-gnu
+      platform: x64
       image: Ubuntu1804
+      ARCH: amd64
       configuration: Release
-      TARGET: x86_64-unknown-linux-gnu
       CHANNEL: stable      
-    - platform: x64
+    - TARGET: x86_64-unknown-linux-gnu
+      platform: x64
       image: Ubuntu1804    
+      ARCH: amd64      
       configuration: Debug
-      TARGET: x86_64-unknown-linux-gnu
       CHANNEL: stable      
-    - platform: x64
+    - TARGET: x86_64-pc-windows-msvc
+      platform: x64
       image: Visual Studio 2017
+      ARCH: amd64      
       configuration: Release
-      TARGET: i686-pc-windows-msvc
       CHANNEL: stable      
 
 # build configuration, i.e. Debug, Release, etc.
