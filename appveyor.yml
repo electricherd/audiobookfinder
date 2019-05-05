@@ -8,6 +8,7 @@ environment:
   global:
     CRATE_NAME: audiobookfinder
     UBUNTU_VER: LTS_18.04
+    LIBSODIUM_VER: 1.0.17
   matrix:
 #    - ARCH: arm
 #    - ARCH: arm64
@@ -72,7 +73,12 @@ install:
   - cmd: rustc -Vv
   - cmd: rustup target install %TARGET%  
   - cmd: cargo -V  
-
+  # trying NuGet and powershell for lib installation
+  - ps: Install-Package taglib -Version 2.1.0
+  - ps: Install-Package libsodium -Version %LIBSODIUM_VER%
+   # old way test download https://libsodium.gitbook.io/doc/installation  
+  - ps: appveyor-retry appveyor DownloadFile https://download.libsodium.org/libsodium/releases/libsodium-%LIBSODIUM_VER%-stable-msvc.zip -FileName libsodium.7z 
+  - ps: 7z x -y libsodium.7z -oC:\build_libs\libsodium | Out-Null
 
 build_script:
 # comment next line for quick build
