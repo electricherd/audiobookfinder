@@ -26,7 +26,7 @@ environment:
       TAGLIB_WIN_VER: 2.1.0
       # needed
       SODIUM_STATIC: 1
-      SODIUM_LIB_DIR: %ProgramFiles(x86)%\Microsoft SDKs\NuGetPackages
+      SODIUM_LIB_DIR: "%ProgramFiles(x86)%\Microsoft SDKs\NuGetPackages"
 
 
 matrix:
