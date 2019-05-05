@@ -8,7 +8,6 @@ environment:
   global:
     CRATE_NAME: audiobookfinder
     UBUNTU_VER: LTS_18.04
-    LIBSODIUM_VER: 1.0.17
   matrix:
 #    - ARCH: arm
 #    - ARCH: arm64
@@ -22,6 +21,12 @@ environment:
       configuration: Release
       CHANNEL: stable
       platform: x64
+      # versions for libs
+      LIBSODIUM_WIN_VER: 1.0.17
+      TAGLIB_WIN_VER: 2.1.0
+      # needed
+      SODIUM_STATIC: 1
+      SODIUM_LIB_DIR: %ProgramFiles(x86)%\Microsoft SDKs\NuGetPackages
 
 
 matrix:
@@ -62,16 +67,16 @@ install:
 # comment next line for quick build
 #  - sh: rustup toolchain install nightly
   - sh: rustup target install $TARGET
-  # - sh: rustup component add rustc --toolchain $TARGET
   #
   # cmd (powershell should only be triggered with windows build)
   #
   # trying NuGet and powershell for lib installation
   - cmd: appveyor DownloadFile https://dist.nuget.org/win-x86-commandline/latest/nuget.exe
-  - cmd: nuget install taglib -Version 2.1.0
-  - cmd: nuget install libsodium -Version %LIBSODIUM_VER%
+  - cmd: nuget install taglib -Version %TAGLIB_WIN_VER%
+  - cmd: nuget install libsodium -Version %LIBSODIUM_WIN_VER%
+  - cmd: nuget locals all -list
    # old way test download https://libsodium.gitbook.io/doc/installation  
-  #- cmd: appveyor-retry appveyor DownloadFile https://download.libsodium.org/libsodium/releases/libsodium-%LIBSODIUM_VER%-stable-msvc.zip -FileName libsodium.7z 
+  #- cmd: appveyor-retry appveyor DownloadFile https://download.libsodium.org/libsodium/releases/libsodium-%LIBSODIUM_WIN_VER%-stable-msvc.zip -FileName libsodium.7z 
   #- cmd: 7z x -y libsodium.7z -oC:\build_libs\libsodium
   - cmd: curl -sSf -o rustup-init.exe https://win.rustup.rs
   - cmd: rustup-init.exe --default-host %TARGET% --default-toolchain %CHANNEL% -y
