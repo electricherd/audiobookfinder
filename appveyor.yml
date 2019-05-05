@@ -13,16 +13,12 @@ environment:
 #    - ARCH: arm64
     - TARGET: x86_64-unknown-linux-gnu
       ARCH: amd64
-      configuration: 
-        - Release
-#        - Debug
+      configuration: Release
       CHANNEL: stable
       platform: x64
     - TARGET: x86_64-pc-windows-msvc
       ARCH: amd64
-      configuration: 
-        - Release
- #       - Debug
+      configuration: Release
       CHANNEL: stable
       platform: x64
 
