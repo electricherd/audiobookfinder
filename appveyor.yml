@@ -65,7 +65,6 @@ install:
   - cmd: set PATH=%PATH%;C:\Users\appveyor\.cargo\bin
   - cmd: rustc -Vv
   - cmd: rustup target install %TARGET%
-  - cmd: rustup component add rustc --toolchain %TARGET%
   - cmd: cargo -V  
 
 
