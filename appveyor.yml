@@ -60,7 +60,7 @@ install:
   - sh: rustup target install $TARGET
   - sh: rustup component add rustc --toolchain $TARGET
   # ps (powershell should only be triggered with windows build)
-  - ps: curl -sSf -o rustup-init.exe https://win.rustup.rs
+  - ps: appveyor-retry appveyor DownloadFile https://win.rustup.rs/ -FileName rustup-init.exe
   - ps: rustup-init.exe --default-host %TARGET% --default-toolchain %CHANNEL% -y
   - ps: set PATH=%PATH%;C:\Users\appveyor\.cargo\bin
   - ps: rustc -Vv
