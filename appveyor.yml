@@ -6,21 +6,21 @@ environment:
     UBUNTU_VER: LTS_18.04
   matrix:
     - TARGET: x86_64-unknown-linux-gnu
-      platform: x64
-      image: Ubuntu1804
-      ARCH: amd64
+ #     platform: x64
+ #     image: Ubuntu1804
+ #     ARCH: amd64
       configuration: Release
       CHANNEL: stable      
     - TARGET: x86_64-unknown-linux-gnu
-      platform: x64
-      image: Ubuntu1804    
-      ARCH: amd64      
+#      platform: x64
+#      image: Ubuntu1804    
+#      ARCH: amd64      
       configuration: Debug
       CHANNEL: stable      
     - TARGET: x86_64-pc-windows-msvc
-      platform: x64
-      image: Visual Studio 2017
-      ARCH: amd64      
+#      platform: x64
+#      image: Visual Studio 2017
+#      ARCH: amd64      
       configuration: Release
       CHANNEL: stable      
 
@@ -55,7 +55,7 @@ install:
   - sh: rustup component add rustc --toolchain $TARGET
   # ps (powershell should only be triggered with windows build)
   - cmd: curl -sSf -o rustup-init.exe https://win.rustup.rs
-  - cmd: rustup-init.exe --default-host %TARGET% --default-toolchain %CHANNEL% -y
+  - cmd: rustup-init.exe --default-host %TARGET%
   - cmd: set PATH=%PATH%;C:\Users\appveyor\.cargo\bin
   - cmd: rustc -Vv
   - cmd: rustup target install %TARGET%
