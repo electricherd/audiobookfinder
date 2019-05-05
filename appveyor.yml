@@ -48,15 +48,6 @@ init:
   - sh: sudo apt-get --yes install libtag1-dev libtagc0-dev
 #  for deployment
   - sh: sudo apt-get --yes install p7zip-full upx-ucl
-  # trying NuGet and powershell for lib installation
-  - cmd: IF NOT EXIST %APPVEYOR_BUILD_FOLDER%\..\build MKDIR -p %APPVEYOR_BUILD_FOLDER%\..\build
-  - cmd: cd %APPVEYOR_BUILD_FOLDER%\..\build
-  - cmd: appveyor DownloadFile https://dist.nuget.org/win-x86-commandline/latest/nuget.exe
-  - cmd: nuget install taglib -Version 2.1.0
-  - cmd: nuget install libsodium -Version %LIBSODIUM_VER%
-   # old way test download https://libsodium.gitbook.io/doc/installation  
-  #- cmd: appveyor-retry appveyor DownloadFile https://download.libsodium.org/libsodium/releases/libsodium-%LIBSODIUM_VER%-stable-msvc.zip -FileName libsodium.7z 
-  #- cmd: 7z x -y libsodium.7z -oC:\build_libs\libsodium
 
 # scripts that run after cloning repository
 install:
@@ -75,6 +66,13 @@ install:
   #
   # cmd (powershell should only be triggered with windows build)
   #
+  # trying NuGet and powershell for lib installation
+  - cmd: appveyor DownloadFile https://dist.nuget.org/win-x86-commandline/latest/nuget.exe
+  - cmd: nuget install taglib -Version 2.1.0
+  - cmd: nuget install libsodium -Version %LIBSODIUM_VER%
+   # old way test download https://libsodium.gitbook.io/doc/installation  
+  #- cmd: appveyor-retry appveyor DownloadFile https://download.libsodium.org/libsodium/releases/libsodium-%LIBSODIUM_VER%-stable-msvc.zip -FileName libsodium.7z 
+  #- cmd: 7z x -y libsodium.7z -oC:\build_libs\libsodium
   - cmd: curl -sSf -o rustup-init.exe https://win.rustup.rs
   - cmd: rustup-init.exe --default-host %TARGET% --default-toolchain %CHANNEL% -y
   - cmd: set PATH=%PATH%;C:\Users\appveyor\.cargo\bin
