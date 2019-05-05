@@ -62,7 +62,7 @@ install:
 # comment next line for quick build
 #  - sh: rustup toolchain install nightly
   - sh: rustup target install $TARGET
-  - sh: rustup component add rustc --toolchain $TARGET
+  # - sh: rustup component add rustc --toolchain $TARGET
   #
   # cmd (powershell should only be triggered with windows build)
   #
