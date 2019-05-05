@@ -49,6 +49,8 @@ init:
 #  for deployment
   - sh: sudo apt-get --yes install p7zip-full upx-ucl
   # trying NuGet and powershell for lib installation
+  - cmd: IF NOT EXIST %APPVEYOR_BUILD_FOLDER%\..\build MKDIR -p %APPVEYOR_BUILD_FOLDER%\..\build
+  - cmd: cd %APPVEYOR_BUILD_FOLDER%\..\build
   - cmd: appveyor DownloadFile https://dist.nuget.org/win-x86-commandline/latest/nuget.exe
   - cmd: nuget install taglib -Version 2.1.0
   - cmd: nuget install libsodium -Version %LIBSODIUM_VER%
