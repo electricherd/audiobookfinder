@@ -24,10 +24,6 @@ environment:
       # versions for libs
       LIBSODIUM_WIN_VER: 1.0.17
       TAGLIB_WIN_VER: 2.1.0
-      # needed
-      SODIUM_STATIC: 1
-      SODIUM_LIB_DIR: "%ProgramFiles(x86)%\Microsoft SDKs\NuGetPackages"
-
 
 matrix:
   exclude:
@@ -74,6 +70,8 @@ install:
   - cmd: appveyor DownloadFile https://dist.nuget.org/win-x86-commandline/latest/nuget.exe
   - cmd: nuget install taglib -Version %TAGLIB_WIN_VER%
   - cmd: nuget install libsodium -Version %LIBSODIUM_WIN_VER%
+  - cmd: set SODIUM_LIB_DIR=%ProgramFiles(x86)%\Microsoft SDKs\NuGetPackages\libsodium\runtimes\win-x64\native
+  - cmd: set SODIUM_STATIC=1
   - cmd: nuget locals all -list
    # old way test download https://libsodium.gitbook.io/doc/installation  
   #- cmd: appveyor-retry appveyor DownloadFile https://download.libsodium.org/libsodium/releases/libsodium-%LIBSODIUM_WIN_VER%-stable-msvc.zip -FileName libsodium.7z 
