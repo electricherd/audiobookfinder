@@ -1,28 +1,38 @@
 version: "{build}"
 
+image:
+- Visual Studio 2017
+- Ubuntu1804
+
 environment:
   global:
     CRATE_NAME: audiobookfinder
     UBUNTU_VER: LTS_18.04
   matrix:
+#    - ARCH: arm
+#    - ARCH: arm64
     - TARGET: x86_64-unknown-linux-gnu
- #     platform: x64
- #     image: Ubuntu1804
- #     ARCH: amd64
-      configuration: Release
-      CHANNEL: stable      
-    - TARGET: x86_64-unknown-linux-gnu
-#      platform: x64
-#      image: Ubuntu1804    
-#      ARCH: amd64      
-      configuration: Debug
-      CHANNEL: stable      
+      ARCH: amd64
+      configuration: 
+        - Release
+#        - Debug
+      CHANNEL: stable
+      platform: x64
     - TARGET: x86_64-pc-windows-msvc
-#      platform: x64
-#      image: Visual Studio 2017
-#      ARCH: amd64      
-      configuration: Release
-      CHANNEL: stable      
+      ARCH: amd64
+      configuration: 
+        - Release
+ #       - Debug
+      CHANNEL: stable
+      platform: x64
+
+
+matrix:
+  exclude:
+    - image: Visual Studio 2017
+      TARGET: x86_64-unknown-linux-gnu
+    - image: Ubuntu1804
+      TARGET: x86_64-pc-windows-msvc
 
 # build configuration, i.e. Debug, Release, etc.
 
@@ -54,13 +64,13 @@ install:
   - sh: rustup target install $TARGET
   - sh: rustup component add rustc --toolchain $TARGET
   # ps (powershell should only be triggered with windows build)
-  - cmd: curl -sSf -o rustup-init.exe https://win.rustup.rs
-  - cmd: rustup-init.exe --default-host %TARGET%
-  - cmd: set PATH=%PATH%;C:\Users\appveyor\.cargo\bin
-  - cmd: rustc -Vv
-  - cmd: rustup target install %TARGET%
-  - cmd: rustup component add rustc --toolchain %TARGET%
-  - cmd: cargo -V  
+  - ps: curl -sSf -o rustup-init.exe https://win.rustup.rs
+  - ps: rustup-init.exe --default-host %TARGET% --default-toolchain %CHANNEL% -y
+  - ps: set PATH=%PATH%;C:\Users\appveyor\.cargo\bin
+  - ps: rustc -Vv
+  - ps: rustup target install %TARGET%
+  - ps: rustup component add rustc --toolchain %TARGET%
+  - ps: cargo -V  
 
 
 build_script:
