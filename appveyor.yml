@@ -50,6 +50,9 @@ init:
 
 # scripts that run after cloning repository
 install:
+  #
+  # shell: Linux
+  #
   - sh: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > ./rustup.sh
   - sh: sh ./rustup.sh -y 
 # for debugging: ls -al
@@ -59,25 +62,29 @@ install:
 #  - sh: rustup toolchain install nightly
   - sh: rustup target install $TARGET
   - sh: rustup component add rustc --toolchain $TARGET
+  #
   # cmd (powershell should only be triggered with windows build)
+  #
   - cmd: curl -sSf -o rustup-init.exe https://win.rustup.rs
   - cmd: rustup-init.exe --default-host %TARGET% --default-toolchain %CHANNEL% -y
   - cmd: set PATH=%PATH%;C:\Users\appveyor\.cargo\bin
+  - cmd: del rustup-init.exe
   - cmd: rustc -Vv
-  - cmd: rustup target install %TARGET%
+  - cmd: rustup target install %TARGET%  
   - cmd: cargo -V  
 
 
 build_script:
 # comment next line for quick build
 #  - cargo build
-  - cargo build --release --target $TARGET  
+  - sh: cargo build --release --target $TARGET  
+  - cmd: cargo build --release --target %TARGET%
 
 test_script:
 # comment next lines for quick build  
-#  - cargo run --release --target $TARGET -- testaudio
-#  - cargo test --release --target $TARGET
-#  - ./target/$TARGET/release/$CRATE_NAME -- testaudio
+#  - sh: cargo run --release --target $TARGET -- testaudio
+#  - sh: cargo test --release --target $TARGET
+  - sh: ./target/$TARGET/release/$CRATE_NAME -- testaudio  
 
 artifacts:
   - path: target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z
@@ -111,4 +118,4 @@ deploy:
   on:
     branch: master                # release from master branch only
     APPVEYOR_REPO_TAG: true       # deploy on tag push only
-    platform: x64
+    target: x86_64-unknown-linux-gnu
