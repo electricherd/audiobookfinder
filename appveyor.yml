@@ -59,14 +59,14 @@ install:
 #  - sh: rustup toolchain install nightly
   - sh: rustup target install $TARGET
   - sh: rustup component add rustc --toolchain $TARGET
-  # ps (powershell should only be triggered with windows build)
-  - ps: appveyor-retry appveyor DownloadFile https://win.rustup.rs/ -FileName rustup-init.exe
-  - ps: rustup-init.exe --default-host %TARGET% --default-toolchain %CHANNEL% -y
-  - ps: set PATH=%PATH%;C:\Users\appveyor\.cargo\bin
-  - ps: rustc -Vv
-  - ps: rustup target install %TARGET%
-  - ps: rustup component add rustc --toolchain %TARGET%
-  - ps: cargo -V  
+  # cmd (powershell should only be triggered with windows build)
+  - cmd: curl -sSf -o rustup-init.exe https://win.rustup.rs
+  - cmd: rustup-init.exe --default-host %TARGET% --default-toolchain %CHANNEL% -y
+  - cmd: set PATH=%PATH%;C:\Users\appveyor\.cargo\bin
+  - cmd: rustc -Vv
+  - cmd: rustup target install %TARGET%
+  - cmd: rustup component add rustc --toolchain %TARGET%
+  - cmd: cargo -V  
 
 
 build_script:
