@@ -12,7 +12,7 @@ homepage = "https://github.com/electricherd/audiobookfinder"
 description = "A program to collect information from audio books, gathered from multiple clients."
 
 [badges]
-#circle-ci = { repository = "...", branch = "master" }
+appveyor = { repository = "audiobookfinder", branch = "master", service = "github" }
 travis-ci = { repository = "electricherd/audiobookfinder", branch = "master" }
 maintenance = { status = "actively-developed" }
 
