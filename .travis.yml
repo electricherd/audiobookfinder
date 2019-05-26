@@ -88,7 +88,7 @@ deploy:
   file_glob: true
   file:
     - target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z
-    - target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z.sha1
+    - target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z.sha256
   provider: releases
   skip_cleanup: true
   on:
