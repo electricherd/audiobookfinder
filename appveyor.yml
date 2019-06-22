@@ -101,7 +101,7 @@ artifacts:
     name: zippedFiles
 
   - path: target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z.sha256
-    name: sha1checksum
+    name: shachecksum
 
 
 after_build:
@@ -113,13 +113,13 @@ after_build:
   #- upx --ultra-brute target/release/$CRATE_NAME.stripped \
   #       -o target/release/$CRATE_NAME
   - sh: 7z a -r target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z ./target/release/$CRATE_NAME ./README-release.md ./LICENSE
-  - sh: sha1sum -a 256 target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z > target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z.sha256
+  - sh: sha256sum target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z > target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z.sha256
 
 deploy:
   provider: GitHub
   artifact: 
     -'zippedFiles'
-    -'sha1checksum'
+    -'shachecksum'
   auth_token:
     # yes this is encrypted/signed by appveyor (from the github token)
     secure: aT3Xjbg4GSAJtYjhk7SrC1RInLV28rI6e64he6JClx2W09nToXvPyHr/zXc0tqPj

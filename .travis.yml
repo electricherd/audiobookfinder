@@ -79,7 +79,7 @@ before_deploy:
   #- upx --ultra-brute target/release/$CRATE_NAME.stripped \
   #       -o target/release/$CRATE_NAME
   - 7z a -r target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z ./target/release/$CRATE_NAME ./README-release.md ./LICENSE
-  - sha1sum -a 256 target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z > target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z.sha256
+  - sha256sum target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z > target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z.sha256
 
 deploy:
   # look at
