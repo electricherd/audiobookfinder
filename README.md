@@ -13,10 +13,11 @@ As a C++ developer, I know some of the C++11/14/17 enhancements and some don't c
 2. [Changes](#changes)
 3. [ToDo](#todo)
 4. [Architecture](#architecture)
-5. [Goals](#goals)
-6. [Dependencies](#dependencies)
-7. [Issues](#issues)
-8. [Yet in plan](#yet-in-plan)
+5. [CI Continuous Integration](#CI)
+6. [Goals](#goals)
+7. [Dependencies](#dependencies)
+8. [Issues](#issues)
+9. [Yet in plan](#yet-in-plan)
 
 ## My first program in Rust
 Actually I plan to do something useful. The program collects all information about (yet) audio books on different devices/clients, stores it and then does something with it, like showing stats, finding duplicates, aggregating everything at one place. The task of collecting audio book data (id tag) can be exchanged with any other task, this basically leads to a local network agent approach with zero-config. [Architecture](#architecture) to understand a bit beforehand is found here.
@@ -70,6 +71,13 @@ for client and server, the example looks promising
 ### Architecture
 ![Diagram](diag_architecture_general.svg)
 (still early version of drawing, and directly [editable](https://www.draw.io/?mode=github))
+
+### CI
+The Continuous Integration is done on 2 services, Travis and AppVeyor but will probably once completely moved to AppVeyor because Travis recently only had old LTS 16.04 images, and no possible Windows compilation (they are working on it), so there is:
+* [Audiobookfinder Build Linux 18.04LTS](https://ci.appveyor.com/project/electricherd/audiobookfinder/) on AppVeyor
+* [Audiobookfinder Build Linux 14.04 and 16.04LTS](https://travis-ci.org/electricherd/audiobookfinder) on Travis
+
+Let's see where also cross compiling for embedded will lead ... (a stub and not working Windows compile is already in AppVeyor)
 
 ### Goals
 The primary goal is to learn Rust and to cover various aspects of the language, of which some of I already used inside the program, such as:
