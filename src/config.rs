@@ -49,7 +49,7 @@ pub mod webui {
     pub mod jquery {
         lazy_static! {
             pub static ref JS_JQUERY: &'static str =
-                include_str!("ctrl/webui/3rdparty/jquery-3.3.1/jquery.min.js");
+                include_str!("ctrl/webui/3rdparty/jquery/jquery-3.4.1.min.js");
         }
     }
     // 3rd party bootstrap hard-wired: css 317kb + js 107kb + fonts 216kb
@@ -60,57 +60,57 @@ pub mod webui {
             //
             // bootstrap
             pub static ref JS: &'static str =
-                include_str!("ctrl/webui/3rdparty/bootstrap-4.0.0/js/bootstrap.js");
+                include_str!("ctrl/webui/3rdparty/bootstrap-4.3.1/js/bootstrap.js");
             pub static ref JS_MAP: &'static str =
-                include_str!("ctrl/webui/3rdparty/bootstrap-4.0.0/js/bootstrap.js.map");
+                include_str!("ctrl/webui/3rdparty/bootstrap-4.3.1/js/bootstrap.js.map");
             // bootstrap min
             pub static ref JS_MIN: &'static str =
-                include_str!("ctrl/webui/3rdparty/bootstrap-4.0.0/js/bootstrap.min.js");
+                include_str!("ctrl/webui/3rdparty/bootstrap-4.3.1/js/bootstrap.min.js");
             pub static ref JS_MIN_MAP: &'static str =
-                include_str!("ctrl/webui/3rdparty/bootstrap-4.0.0/js/bootstrap.min.js.map");
+                include_str!("ctrl/webui/3rdparty/bootstrap-4.3.1/js/bootstrap.min.js.map");
             // bootstrap bundle
             pub static ref JS_BUNDLE: &'static str =
-                include_str!("ctrl/webui/3rdparty/bootstrap-4.0.0/js/bootstrap.bundle.js");
+                include_str!("ctrl/webui/3rdparty/bootstrap-4.3.1/js/bootstrap.bundle.js");
             pub static ref JS_BUNDLE_MAP: &'static str =
-                include_str!("ctrl/webui/3rdparty/bootstrap-4.0.0/js/bootstrap.bundle.js.map");
+                include_str!("ctrl/webui/3rdparty/bootstrap-4.3.1/js/bootstrap.bundle.js.map");
             // bootstrap bundle min
             pub static ref JS_BUNDLE_MIN: &'static str =
-                include_str!("ctrl/webui/3rdparty/bootstrap-4.0.0/js/bootstrap.bundle.min.js");
+                include_str!("ctrl/webui/3rdparty/bootstrap-4.3.1/js/bootstrap.bundle.min.js");
             pub static ref JS_BUNDLE_MIN_MAP: &'static str =
-                include_str!("ctrl/webui/3rdparty/bootstrap-4.0.0/js/bootstrap.bundle.min.js.map");
+                include_str!("ctrl/webui/3rdparty/bootstrap-4.3.1/js/bootstrap.bundle.min.js.map");
             //
             // css
             //
             // bootstrap
             pub static ref CSS: &'static str =
-                include_str!("ctrl/webui/3rdparty/bootstrap-4.0.0/css/bootstrap.css");
+                include_str!("ctrl/webui/3rdparty/bootstrap-4.3.1/css/bootstrap.css");
             pub static ref CSS_MAP: &'static str =
-                include_str!("ctrl/webui/3rdparty/bootstrap-4.0.0/css/bootstrap.css.map");
+                include_str!("ctrl/webui/3rdparty/bootstrap-4.3.1/css/bootstrap.css.map");
             // boostrap min
             pub static ref CSS_MIN: &'static str =
-                include_str!("ctrl/webui/3rdparty/bootstrap-4.0.0/css/bootstrap.min.css");
+                include_str!("ctrl/webui/3rdparty/bootstrap-4.3.1/css/bootstrap.min.css");
             pub static ref CSS_MIN_MAP: &'static str =
-                include_str!("ctrl/webui/3rdparty/bootstrap-4.0.0/css/bootstrap.min.css.map");
+                include_str!("ctrl/webui/3rdparty/bootstrap-4.3.1/css/bootstrap.min.css.map");
             // bootstrap grid
             pub static ref CSS_GRID: &'static str =
-                include_str!("ctrl/webui/3rdparty/bootstrap-4.0.0/css/bootstrap-grid.css");
+                include_str!("ctrl/webui/3rdparty/bootstrap-4.3.1/css/bootstrap-grid.css");
             pub static ref CSS_GRID_MAP: &'static str =
-                include_str!("ctrl/webui/3rdparty/bootstrap-4.0.0/css/bootstrap-grid.css.map");
+                include_str!("ctrl/webui/3rdparty/bootstrap-4.3.1/css/bootstrap-grid.css.map");
             // bootstrap grid min
             pub static ref CSS_GRID_MIN: &'static str =
-                include_str!("ctrl/webui/3rdparty/bootstrap-4.0.0/css/bootstrap-grid.min.css");
+                include_str!("ctrl/webui/3rdparty/bootstrap-4.3.1/css/bootstrap-grid.min.css");
             pub static ref CSS_GRID_MIN_MAP: &'static str =
-                include_str!("ctrl/webui/3rdparty/bootstrap-4.0.0/css/bootstrap-grid.min.css.map");
+                include_str!("ctrl/webui/3rdparty/bootstrap-4.3.1/css/bootstrap-grid.min.css.map");
             // bootstrap reboot
             pub static ref CSS_REBOOT: &'static str =
-                include_str!("ctrl/webui/3rdparty/bootstrap-4.0.0/css/bootstrap-reboot.css");
+                include_str!("ctrl/webui/3rdparty/bootstrap-4.3.1/css/bootstrap-reboot.css");
             pub static ref CSS_REBOOT_MAP: &'static str =
-                include_str!("ctrl/webui/3rdparty/bootstrap-4.0.0/css/bootstrap-reboot.css.map");
+                include_str!("ctrl/webui/3rdparty/bootstrap-4.3.1/css/bootstrap-reboot.css.map");
             // bootstrap reboot min
             pub static ref CSS_REBOOT_MIN: &'static str =
-                include_str!("ctrl/webui/3rdparty/bootstrap-4.0.0/css/bootstrap-reboot.min.css");
+                include_str!("ctrl/webui/3rdparty/bootstrap-4.3.1/css/bootstrap-reboot.min.css");
             pub static ref CSS_REBOOT_MIN_MAP: &'static str =
-                include_str!("ctrl/webui/3rdparty/bootstrap-4.0.0/css/bootstrap-reboot.min.css.map");
+                include_str!("ctrl/webui/3rdparty/bootstrap-4.3.1/css/bootstrap-reboot.min.css.map");
         }
     }
     // own pages
