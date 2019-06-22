@@ -12,5 +12,8 @@ On Ubuntu intall via apt-get install:
 
 If `error while loading shared libraries: libsodium.so.18` occurs, on Ubuntu18 (bionic) it is possible to trick libsodium.so.18 to use installed libsodium.so (resp. libsodium.so.23), via `sudo ln /usr/lib/x86_64-linux-gnu/libsodium.so /usr/lib/x86_64-linux-gnu/libsodium.so.18` - not elegant but yet works!
 
+## Create a key
+`ssh-keygen -f ~/.adbf/client_key.priv -N 'adbf' -t ed25519`
+
 ## Running the binary
 Just run the binary file `./audiobookfinder --help` to see options.

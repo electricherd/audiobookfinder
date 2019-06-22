@@ -1,17 +1,23 @@
+#![cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 //! This is a webui about to replace the TUI, to be nice, better accessable, and
-//! new technology using websockets
+//! new technology using websockets (since actix changed a lot actix_web, many
+//! implementation should probably be reworked)
 
-use actix_web::fs; // Todo: during development
+use actix::prelude::StreamHandler;
+use actix::{Actor, ActorContext, AsyncContext};
+use actix_files as fs;
 use actix_web::{
-    actix::{Actor, ActorContext, AsyncContext, StreamHandler},
-    http::{self, StatusCode},
-    server, ws, App, HttpRequest, HttpResponse, Json, Result,
+    http::StatusCode,
+    web::{self, HttpRequest, HttpResponse, Json},
+    App, Error, HttpServer,
 };
+use actix_web_actors::ws;
+
 use get_if_addrs;
 use hostname;
+
 use std::net::IpAddr;
-use std::sync::Arc;
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 use uuid::Uuid;
 
@@ -60,6 +66,12 @@ impl fmt::Display for WebCommand {
     }
 }
 
+/// dynamic development files
+//#[get("/app.js")]
+//fn app_js() -> Result<fs::NamedFile> {
+//Ok(fs::NamedFile::open("src/ctrl/webui/js/app.js")?)
+//}
+
 impl WebUI {
     pub fn new(id: Uuid, serve: bool) -> Result<Self, ()> {
         let sys = actix::System::new("http-server");
@@ -67,6 +79,13 @@ impl WebUI {
 
         let local_addresses = get_if_addrs::get_if_addrs().unwrap();
 
+        let initial_state = web::Data::new(Mutex::new(WebServerState {
+            uuid: id.clone(),
+            nr_connections: connection_count.clone(),
+        }));
+
+        // take all local addresses and start if necessary
+        // one server with multiple binds
         let web_server = local_addresses
             .into_iter()
             .filter(|ipaddr| {
@@ -85,39 +104,36 @@ impl WebUI {
                 }
             })
             .fold(
-                server::HttpServer::new(move || {
-                    App::with_state(WebServerState {
-                        uuid: id.clone(),
-                        nr_connections: connection_count.clone(),
-                    })
-                    .default_resource(|r| r.f(WebUI::single_page))
-                    .resource("/app.js", |r| r.f(WebUI::js_app))
-                    //.default_resource(|r| r.f(WebUI::dyn_devel_html)) // Todo: only for devel
-                    //.resource("/app.js", |r| r.f(WebUI::dyn_devel_js)) // todo: only for devel
-                    .resource("/ws", |r| r.method(http::Method::GET).f(WebUI::ws_index))
-                    .resource("/jquery.min.js", |r| {
-                        r.f(|_| {
-                            HttpResponse::build(StatusCode::OK)
+                HttpServer::new(move || {
+                    App::new()
+                        // each server has an initial state (e.g. 0 connections)
+                        .register_data(initial_state.clone())
+                        .service(web::resource("/app.js").to(WebUI::js_app))
+                        .default_service(web::resource("").to(WebUI::single_page))
+                        //.default_service(web::resource("").to(WebUI::dyn_devel_html)) // Todo: only for devel
+                        //.service(web::resource("/app.js").to(WebUI::dyn_devel_js)) // todo: only for devel
+                        .service(web::resource("/jquery.min.js").to(|| {
+                            HttpResponse::Ok()
                                 .content_type("text/html; charset=utf-8")
                                 .body(*config::webui::jquery::JS_JQUERY)
-                        })
-                    })
-                    .resource("favicon.png", |r| {
-                        r.f(|_| {
-                            HttpResponse::build(StatusCode::OK)
+                        }))
+                        .service(web::resource("favicon.png").to(|| {
+                            HttpResponse::Ok()
                                 .content_type("image/png")
                                 .body(*config::webui::FAVICON)
-                        })
-                    })
-                    .resource("sheep.svg", |r| {
-                        r.f(|_| {
-                            HttpResponse::build(StatusCode::OK)
+                        }))
+                        .service(web::resource("sheep.svg").to(|| {
+                            HttpResponse::Ok()
                                 .content_type("image/svg+xml")
                                 .body(*config::webui::PIC_SHEEP)
-                        })
-                    })
-                    .resource("/css/{name}", |r| r.f(WebUI::bootstrap_css))
-                    .resource("/js/{name}", |r| r.f(WebUI::bootstrap_js))
+                        }))
+                        .service(
+                            web::resource("/css/{name}").route(web::get().to(WebUI::bootstrap_css)),
+                        )
+                        .service(
+                            web::resource("/js/{name}").route(web::get().to(WebUI::bootstrap_js)),
+                        )
+                        .service(web::resource("/ws").route(web::get().to(WebUI::ws_index)))
                 }),
                 |web_server, ipaddr| {
                     web_server
@@ -141,9 +157,9 @@ impl WebUI {
                 },
             );
 
-        if true {
-            web_server.start();
-            sys.run();
+        // finally start everything
+        web_server.start();
+        if sys.run().is_ok() {
             Ok(WebUI {
                 uuid: id,
                 serve_others: serve,
@@ -153,17 +169,30 @@ impl WebUI {
         }
     }
 
-    fn dyn_devel_js(_req: &HttpRequest<WebServerState>) -> Result<fs::NamedFile> {
-        Ok(fs::NamedFile::open("src/ctrl/webui/js/app.js")?)
-    }
-    fn dyn_devel_html(_req: &HttpRequest<WebServerState>) -> Result<fs::NamedFile> {
+    #[allow(dead_code)]
+    fn dyn_devel_html(
+        _state: web::Data<Mutex<WebServerState>>,
+        _req: HttpRequest,
+    ) -> Result<fs::NamedFile, Error> {
         Ok(fs::NamedFile::open("src/ctrl/webui/html/single_page.html")?)
     }
 
-    fn single_page(req: &HttpRequest<WebServerState>) -> Result<HttpResponse> {
+    #[allow(dead_code)]
+    fn dyn_devel_js(
+        _state: web::Data<Mutex<WebServerState>>,
+        _req: HttpRequest,
+    ) -> Result<fs::NamedFile, Error> {
+        Ok(fs::NamedFile::open("src/ctrl/webui/js/app.js")?)
+    }
+
+    fn single_page(
+        state: web::Data<Mutex<WebServerState>>,
+        _req: HttpRequest,
+    ) -> Result<HttpResponse, Error> {
         // change state
-        let id = req.state().uuid;
-        *(req.state().nr_connections.lock().unwrap()) += 1;
+        let mut data = state.lock().unwrap();
+        let id = data.uuid;
+        *(data.nr_connections.lock().unwrap()) += 1;
 
         let uuid_page = Self::replace_static_content(*config::webui::HTML_PAGE, &id);
 
@@ -172,37 +201,34 @@ impl WebUI {
             .body(uuid_page))
     }
 
-    fn bootstrap_css(req: &HttpRequest<WebServerState>) -> Result<HttpResponse> {
-        if let Some(css) = req.match_info().get("name") {
-            let output = match css {
-                "bootstrap.css" => Some(*config::webui::bootstrap::CSS),
-                "bootstrap.css.map" => Some(*config::webui::bootstrap::CSS_MAP),
-                "bootstrap.min.css" => Some(*config::webui::bootstrap::CSS_MIN),
-                "bootstrap.min.css.map" => Some(*config::webui::bootstrap::CSS_MIN_MAP),
-                "bootstrap-grid.css" => Some(*config::webui::bootstrap::CSS_GRID),
-                "bootstrap-grid.css.map" => Some(*config::webui::bootstrap::CSS_GRID_MAP),
-                "bootstrap-grid.min.css" => Some(*config::webui::bootstrap::CSS_GRID_MIN),
-                "bootstrap-grid.min.css.map" => Some(*config::webui::bootstrap::CSS_GRID_MIN_MAP),
-                "bootstrap-reboot.css" => Some(*config::webui::bootstrap::CSS_REBOOT),
-                "bootstrap-reboot.css.map" => Some(*config::webui::bootstrap::CSS_REBOOT_MAP),
-                "bootstrap-reboot.min.css" => Some(*config::webui::bootstrap::CSS_REBOOT_MIN),
-                "bootstrap-reboot.min.css.map" => {
-                    Some(*config::webui::bootstrap::CSS_REBOOT_MIN_MAP)
-                }
-                _ => {
-                    error!("CSS: not found {}", css);
-                    None
-                }
-            };
-            if let Some(content) = output {
-                Ok(HttpResponse::build(StatusCode::OK)
-                    .content_type("text/css; charset=utf-8")
-                    .body(content))
-            } else {
-                Ok(HttpResponse::build(StatusCode::NOT_FOUND)
-                    .content_type("text/css; charset=utf-8")
-                    .body(""))
+    fn bootstrap_css(
+        _state: web::Data<Mutex<WebServerState>>,
+        _req: HttpRequest,
+        path: web::Path<(String,)>,
+    ) -> Result<HttpResponse, Error> {
+        let css = &*path.0;
+        let output = match css {
+            "bootstrap.css" => Some(*config::webui::bootstrap::CSS),
+            "bootstrap.css.map" => Some(*config::webui::bootstrap::CSS_MAP),
+            "bootstrap.min.css" => Some(*config::webui::bootstrap::CSS_MIN),
+            "bootstrap.min.css.map" => Some(*config::webui::bootstrap::CSS_MIN_MAP),
+            "bootstrap-grid.css" => Some(*config::webui::bootstrap::CSS_GRID),
+            "bootstrap-grid.css.map" => Some(*config::webui::bootstrap::CSS_GRID_MAP),
+            "bootstrap-grid.min.css" => Some(*config::webui::bootstrap::CSS_GRID_MIN),
+            "bootstrap-grid.min.css.map" => Some(*config::webui::bootstrap::CSS_GRID_MIN_MAP),
+            "bootstrap-reboot.css" => Some(*config::webui::bootstrap::CSS_REBOOT),
+            "bootstrap-reboot.css.map" => Some(*config::webui::bootstrap::CSS_REBOOT_MAP),
+            "bootstrap-reboot.min.css" => Some(*config::webui::bootstrap::CSS_REBOOT_MIN),
+            "bootstrap-reboot.min.css.map" => Some(*config::webui::bootstrap::CSS_REBOOT_MIN_MAP),
+            _ => {
+                error!("CSS: not found {}", css);
+                None
             }
+        };
+        if let Some(content) = output {
+            Ok(HttpResponse::build(StatusCode::OK)
+                .content_type("text/css; charset=utf-8")
+                .body(content))
         } else {
             Ok(HttpResponse::build(StatusCode::NOT_FOUND)
                 .content_type("text/css; charset=utf-8")
@@ -210,31 +236,30 @@ impl WebUI {
         }
     }
 
-    fn bootstrap_js(req: &HttpRequest<WebServerState>) -> Result<HttpResponse> {
-        if let Some(js) = req.match_info().get("name") {
-            let output = match js {
-                "bootstrap.js" => Some(*config::webui::bootstrap::JS),
-                "bootstrap.js.map" => Some(*config::webui::bootstrap::JS_MAP),
-                "bootstrap.min.js" => Some(*config::webui::bootstrap::JS_MIN),
-                "bootstrap.min.js.map" => Some(*config::webui::bootstrap::JS_MIN_MAP),
-                "bootstrap.bundle.js" => Some(*config::webui::bootstrap::JS_BUNDLE),
-                "bootstrap.bundle.js.map" => Some(*config::webui::bootstrap::JS_BUNDLE_MAP),
-                "bootstrap.bundle.min.js" => Some(*config::webui::bootstrap::JS_BUNDLE_MIN),
-                "bootstrap.bundle.min.js.map" => Some(*config::webui::bootstrap::JS_BUNDLE_MIN_MAP),
-                _ => {
-                    error!("JS: not found {}", js);
-                    None
-                }
-            };
-            if let Some(content) = output {
-                Ok(HttpResponse::build(StatusCode::OK)
-                    .content_type("application/javascript; charset=utf-8")
-                    .body(content))
-            } else {
-                Ok(HttpResponse::build(StatusCode::NOT_FOUND)
-                    .content_type("application/javascript; charset=utf-8")
-                    .body(""))
+    fn bootstrap_js(
+        _state: web::Data<Mutex<WebServerState>>,
+        _req: HttpRequest,
+        path: web::Path<(String,)>,
+    ) -> Result<HttpResponse, Error> {
+        let js = &*path.0;
+        let output = match js {
+            "bootstrap.js" => Some(*config::webui::bootstrap::JS),
+            "bootstrap.js.map" => Some(*config::webui::bootstrap::JS_MAP),
+            "bootstrap.min.js" => Some(*config::webui::bootstrap::JS_MIN),
+            "bootstrap.min.js.map" => Some(*config::webui::bootstrap::JS_MIN_MAP),
+            "bootstrap.bundle.js" => Some(*config::webui::bootstrap::JS_BUNDLE),
+            "bootstrap.bundle.js.map" => Some(*config::webui::bootstrap::JS_BUNDLE_MAP),
+            "bootstrap.bundle.min.js" => Some(*config::webui::bootstrap::JS_BUNDLE_MIN),
+            "bootstrap.bundle.min.js.map" => Some(*config::webui::bootstrap::JS_BUNDLE_MIN_MAP),
+            _ => {
+                error!("JS: not found {}", js);
+                None
             }
+        };
+        if let Some(content) = output {
+            Ok(HttpResponse::build(StatusCode::OK)
+                .content_type("application/javascript; charset=utf-8")
+                .body(content))
         } else {
             Ok(HttpResponse::build(StatusCode::NOT_FOUND)
                 .content_type("application/javascript; charset=utf-8")
@@ -242,8 +267,12 @@ impl WebUI {
         }
     }
 
-    fn js_app(req: &HttpRequest<WebServerState>) -> Result<HttpResponse> {
-        let id = req.state().uuid;
+    fn js_app(
+        state: web::Data<Mutex<WebServerState>>,
+        _req: HttpRequest,
+    ) -> Result<HttpResponse, Error> {
+        let data = state.lock().unwrap();
+        let id = data.uuid;
 
         let output = Self::replace_static_content(*config::webui::JS_APP, &id);
         Ok(HttpResponse::build(StatusCode::OK)
@@ -251,8 +280,12 @@ impl WebUI {
             .body(output))
     }
 
-    fn ws_index(r: &HttpRequest<WebServerState>) -> Result<HttpResponse> {
-        ws::start(r, MyWebSocket::new())
+    fn ws_index(
+        _state: web::Data<Mutex<WebServerState>>,
+        req: HttpRequest,
+        stream: web::Payload,
+    ) -> Result<HttpResponse, Error> {
+        ws::start(MyWebSocket::new(), &req, stream)
     }
 
     fn replace_static_content(html_in: &str, id: &Uuid) -> String {
@@ -301,7 +334,7 @@ struct MyWebSocket {
 }
 
 impl Actor for MyWebSocket {
-    type Context = ws::WebsocketContext<Self, WebServerState>;
+    type Context = ws::WebsocketContext<Self>;
 
     /// Method is called on actor start. We start the heartbeat process here.
     fn started(&mut self, ctx: &mut Self::Context) {
@@ -344,6 +377,7 @@ impl StreamHandler<ws::Message, ws::ProtocolError> for MyWebSocket {
             ws::Message::Close(_) => {
                 ctx.stop();
             }
+            ws::Message::Nop => (),
         }
     }
 }

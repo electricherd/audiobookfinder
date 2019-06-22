@@ -5,8 +5,6 @@
 /// The network related configurations
 #[allow(non_camel_case_types)]
 pub mod net {
-    use std::net::{IpAddr, Ipv4Addr}; // later SocketAddr
-
     /// MDNS service address space
     pub static MDNS_SERVICE_NAME: &str = "_http._tcp"; // "_tcp.local"
 
