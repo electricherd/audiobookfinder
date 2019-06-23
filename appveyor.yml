@@ -116,6 +116,9 @@ after_build:
   - sh: sha256sum target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z > target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z.sha256
 
 deploy:
+  # due to mutually exclusive branch and tagged (https://www.appveyor.com/docs/branches/)
+  # 2 provider sections would be needed to have tagged and branch release, would be needed
+  # but branch is not important since until now, only master is used
   provider: GitHub
   artifact: 
     -'zippedFiles'
@@ -126,6 +129,5 @@ deploy:
   draft: false
   prerelease: false
   on:
-    branch: master                # release from master branch only
     APPVEYOR_REPO_TAG: true       # deploy on tag push only
     target: x86_64-unknown-linux-gnu
