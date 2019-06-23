@@ -11,12 +11,12 @@ environment:
   matrix:
 #    - ARCH: arm
 #    - ARCH: arm64
-    - TARGET: x86_64-unknown-linux-gnu
+    - target: x86_64-unknown-linux-gnu
       ARCH: amd64
       configuration: Release
       CHANNEL: stable
       platform: x64
-    - TARGET: x86_64-pc-windows-msvc
+    - target: x86_64-pc-windows-msvc
       ARCH: amd64
       configuration: Release
       CHANNEL: stable
@@ -28,9 +28,9 @@ environment:
 matrix:
   exclude:
     - image: Visual Studio 2017
-      TARGET: x86_64-unknown-linux-gnu
+      target: x86_64-unknown-linux-gnu
     - image: Ubuntu1804
-      TARGET: x86_64-pc-windows-msvc
+      target: x86_64-pc-windows-msvc
 
 # build configuration, i.e. Debug, Release, etc.
 
@@ -62,7 +62,7 @@ install:
 # it's a clean install so not needed: rustup update
 # comment next line for quick build
 #  - sh: rustup toolchain install nightly
-  - sh: rustup target install $TARGET
+  - sh: rustup target install $target
   #
   # cmd (powershell should only be triggered with windows build)
   #
@@ -77,43 +77,43 @@ install:
   #- cmd: appveyor-retry appveyor DownloadFile https://download.libsodium.org/libsodium/releases/libsodium-%LIBSODIUM_WIN_VER%-stable-msvc.zip -FileName libsodium.7z 
   #- cmd: 7z x -y libsodium.7z -oC:\build_libs\libsodium
   - cmd: curl -sSf -o rustup-init.exe https://win.rustup.rs
-  - cmd: rustup-init.exe --default-host %TARGET% --default-toolchain %CHANNEL% -y
+  - cmd: rustup-init.exe --default-host %target% --default-toolchain %CHANNEL% -y
   - cmd: set PATH=%PATH%;C:\Users\appveyor\.cargo\bin
   - cmd: del rustup-init.exe
   - cmd: rustc -Vv
-  - cmd: rustup target install %TARGET%  
+  - cmd: rustup target install %target%  
   - cmd: cargo -V  
 
 build_script:
 # comment next line for quick build
 #  - cargo build
-  - sh: cargo build --release --target $TARGET  
-  - cmd: cargo build --release --target %TARGET%
+  - sh: cargo build --release --target $target  
+  - cmd: cargo build --release --target %target%
 
 test_script:
 # comment next lines for quick build  
-#  - sh: cargo run --release --target $TARGET -- testaudio
-#  - sh: cargo test --release --target $TARGET
-  - sh: ./target/$TARGET/release/$CRATE_NAME -- testaudio  
+#  - sh: cargo run --release --target $target -- testaudio
+#  - sh: cargo test --release --target $target
+  - sh: ./target/$target/release/$CRATE_NAME -- testaudio  
 
 artifacts:
-  - path: target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z
+  - path: target/release/$CRATE_NAME-$UBUNTU_VER-$target.7z
     name: zippedFiles
 
-  - path: target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z.sha256
+  - path: target/release/$CRATE_NAME-$UBUNTU_VER-$target.7z.sha256
     name: shachecksum
 
 
 after_build:
-  - sh: cp target/$TARGET/release/$CRATE_NAME target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET
-  - sh: strip -s target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET -o target/release/$CRATE_NAME
+  - sh: cp target/$target/release/$CRATE_NAME target/release/$CRATE_NAME-$UBUNTU_VER-$target
+  - sh: strip -s target/release/$CRATE_NAME-$UBUNTU_VER-$target -o target/release/$CRATE_NAME
   # upx yet disabled since causes segmentation faults
   #- strip -s target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET \
   #        -o target/release/$CRATE_NAME.stripped
   #- upx --ultra-brute target/release/$CRATE_NAME.stripped \
   #       -o target/release/$CRATE_NAME
-  - sh: 7z a -r target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z ./target/release/$CRATE_NAME ./README-release.md ./LICENSE
-  - sh: sha256sum target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z > target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z.sha256
+  - sh: 7z a -r target/release/$CRATE_NAME-$UBUNTU_VER-$target.7z ./target/release/$CRATE_NAME ./README-release.md ./LICENSE
+  - sh: sha256sum target/release/$CRATE_NAME-$UBUNTU_VER-$target.7z > target/release/$CRATE_NAME-$UBUNTU_VER-$target.7z.sha256
 
 deploy:
   # due to mutually exclusive branch and tagged (https://www.appveyor.com/docs/branches/)
