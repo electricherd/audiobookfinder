@@ -9,16 +9,15 @@ environment:
     CRATE_NAME: audiobookfinder
     UBUNTU_VER: LTS_18.04
   matrix:
-#    - ARCH: arm
-#    - ARCH: arm64
+# don't use "configuration" variable in this file!!!
     - target: x86_64-unknown-linux-gnu
       ARCH: amd64
-      configuration: Release
+      type: Release
       CHANNEL: stable
       platform: x64
     - target: x86_64-pc-windows-msvc
       ARCH: amd64
-      configuration: Release
+      type: Release
       CHANNEL: stable
       platform: x64
       # versions for libs
@@ -129,5 +128,5 @@ deploy:
   draft: false
   prerelease: false
   on:
-    APPVEYOR_REPO_TAG: true       # deploy on tag push only
+    appveyor_repo_tag: true       # deploy on tag push only
     target: x86_64-unknown-linux-gnu
