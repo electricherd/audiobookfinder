@@ -74,8 +74,8 @@ for client and server, the example looks promising
 
 ### CI
 The Continuous Integration is done on 2 services, Travis and AppVeyor but will probably once completely moved to AppVeyor because Travis recently only had old LTS 16.04 images, and no possible Windows compilation (they are working on it), so there is:
-* [Audiobookfinder Build Linux 18.04LTS](https://ci.appveyor.com/project/electricherd/audiobookfinder/) on AppVeyor
-* [Audiobookfinder Build Linux 14.04 and 16.04LTS](https://travis-ci.org/electricherd/audiobookfinder) on Travis
+* [Audiobookfinder Build Linux 18.04LTS](https://ci.appveyor.com/project/electricherd/audiobookfinder/) on AppVeyor ![appveyor](https://ci.appveyor.com/api/projects/status/electricherd/audiobookfinder?svg=true)
+* [Audiobookfinder Build Linux 14.04 and 16.04LTS](https://travis-ci.org/electricherd/audiobookfinder) on Travis ![travis](https://api.travis-ci.org/electricherd/audiobookfinder.svg?branch=master)
 
 Let's see where also cross compiling for embedded will lead ... (a stub and not working Windows compile is already in AppVeyor)
 
