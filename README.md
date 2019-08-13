@@ -2,7 +2,14 @@
 An example program to learn [Rust](https://www.rust-lang.org/) and meet its concepts by: find audio books on different machines.
 
 ### Why Rust?
-Rust is an awesome but difficult to learn programming language using different approaches and concepts to solve the current main software development issues for system programming, such as parallelism (what else to do with this multi-core, we are not getting much faster any more), safety and security (let the computer/compiler do what it can do better than a programmer, more quality but also IOT ... I want safe products at home which cannot be turned into zombie devices by buffer overflow), and more high-level approaches which lets you implement more functionality in less code.
+Rust is an awesome but difficult to learn programming language using different approaches and concepts to solve the current main software development issues for system programming:
+ * Parallelism: what else to do with multi-core cpu, we are not getting much faster any more
+ * Secure Programming Concepts: let the computer/compiler do what it can do better than a programmer: safe threading, error-concepts, forbid everything non-safe by default
+ * Quality: high level language concepts, easy to embed and include high quality external packages, which lets you implement more functionality in less code
+ * Embedded: easy cross compiling, interfaces to C, becoming better to be stripped down to core system functions for the sake of minimum code footprint
+ * Testing and Documentation: some build-in concepts
+
+Especially for IoT: I want secure and thereby safe products at home which cannot be turned into zombie devices by buffer overflow and injection, always think of what can go wrong, and let the compiler tell you when you do a common mistake.
 
 As a C++ developer, I know some of the C++11/14/17 enhancements and some don't convince me at all, just look here about the "costs" you have and what it looks like in Simon Brand's ["How Rust gets polymorphism right"](https://www.youtube.com/watch?v=VSlBhAOLtFA).
 
@@ -20,7 +27,10 @@ As a C++ developer, I know some of the C++11/14/17 enhancements and some don't c
 9. [Yet in plan](#yet-in-plan)
 
 ## My first program in Rust
-Actually I plan to do something useful. The program collects all information about (yet) audio books on different devices/clients, stores it and then does something with it, like showing stats, finding duplicates, aggregating everything at one place. The task of collecting audio book data (id tag) can be exchanged with any other task, this basically leads to a local network agent approach with zero-config. [Architecture](#architecture) to understand a bit beforehand is found here.
+I planned to do something useful for myself. The program collects information about audio books on different devices/clients, stores it and then processes it, e.g. showing stats, finding duplicates, aggregating everything at one place by a button click.
+The task of collecting audio book data can be exchanged with any other task, this basically leads to a local network agent approach with zero-config.
+
+There is an [Architectural Design in UML](#architecture) to understand a bit beforehand, and see some goals which have not been accomplished.
 
 So far only the state charts and their connection is not done but the general communication/lookup works, collecting some data as well.
 
@@ -84,14 +94,14 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
 - [ ] borrowing: the borrow checker, I am getting more comfortable with it, but not completely there
 - [ ] shared-data over different threads (not yet lifetime optimized)
 - [x] multi-threading, a lot of threads and communication is inside, also  ([Rayon](https://github.com/rayon-rs/rayon))
-- [ ] learning [futures](https://en.wikipedia.org/wiki/Futures_and_promises)
+- [x] learning [futures](https://en.wikipedia.org/wiki/Futures_and_promises)
 - [x] an optional graphical interface that even runs on console only machines (the [Cursive](https://github.com/gyscos/Cursive) TUI), but probably better...
 - [ ] webui, modern and nice with [actix](https://actix.rs/), [bootstrap](https://getbootstrap.com/), and [jquery](https://jquery.com) - but this is only alpha yet
 - [x] [architecture](#architecture) (modules), did some rework with file structure but it is not yet perfect in Rust, really. Now the code is better hidden inside a library... this gives some more opportunities
 - [x] high-level functionality of different crates / including/using different crates (I don't want to reinvent the wheel, and yes, that is very nice)
 - [x] in-code documentation with html generation, really nice!
 - [x] easy command-line (always was looking for that, nice: [clap](https://github.com/kbknapp/clap-rs))
-- [x]  channel/thread communication (creating worker threads easily, there are plenty implemented yet, no concurrency problems!!) - I often kind of implemented own [futures](https://tokio.rs/docs/getting-started/futures/) in a pure way ... need to replace them with [futures pattern](https://en.wikipedia.org/wiki/Futures_and_promises) from Tokio or the planned build-in async IO in Rust
+- [x]  channel/thread communication (creating worker threads easily, there are plenty implemented yet, no concurrency problems!!) - I implemented own [futures](https://tokio.rs/docs/getting-started/futures/) in a pure inefficient way ... I need to replace them with [futures pattern](https://en.wikipedia.org/wiki/Futures_and_promises) from Tokio or the planned build-in async IO in Rust
 - [x] high level networking (mDNS): theoretically working, but 1st package depends on avahi ([register](https://github.com/plietar/rust-mdns)), [2nd](https://github.com/dylanmckay/mdns) even [fork](https://github.com/NervosFoundation/rust-mdns-discover) causes heavy CPU-load ...
 - [ ] use the test feature of Rust (one mod only yet), also with example test being tested! - it's in but very few and in the *to-be-removed* modules cursive aka tui
 - [ ] traits (first a simple drop with print message), but then more, need to be more comfortable with debug for formatting - not really defined an own trait but needed to write little trait implementations
@@ -117,6 +127,7 @@ But it works I can see myself with a mDNS scanner, so I can also find other audi
 
 
 ### Issues
+* AppVeyor deployment is stuck, it builds but the deployment by git tags is not well documented, and different to Travis.
 * versioning of AppVeyor and Git tag, plus own versioning
 * cross compiling for windows is almost impossible yet, though travis now can support, even in a local VM it is very difficult. OpenSSL, Libsodium are possible but since mDNS or bonjour is used, this looks frustratingly impossible
 * logging from other modules too detailed/too much

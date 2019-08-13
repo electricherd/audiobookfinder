@@ -4,7 +4,7 @@ For documentation look at [audiobookfinder](https://github.com/electricherd/audi
 License file is also supplied.
 
 ## Prequisites
-On Ubuntu intall via apt-get install:
+On Ubuntu install via apt-get install:
 * `libavahi-client-dev` or `libavahi-compat-libdnssd-dev`
 * `libsodium`
 * `libtag1`
