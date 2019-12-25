@@ -17,22 +17,22 @@ jobs:
   include:
     - os : linux
       dist: trusty
-      name: linux_14_04_stable
+      name: job_build_linux_14_04_stable
       env: UBUNTU_VER=LTS_14.04 TARGET=x86_64-unknown-linux-gnu
       rust: stable
     - os : linux
       dist: trusty
-      name: linux_14_04_nightly
+      name: job_build_linux_14_04_nightly
       env: UBUNTU_VER=LTS_14.04 TARGET=x86_64-unknown-linux-gnu
       rust: nightly
     - os : linux
       dist: xenial
-      name: linux_16_04_stable
+      name: job_build_linux_16_04_stable
       env: UBUNTU_VER=LTS_16.04 TARGET=x86_64-unknown-linux-gnu
       rust: stable
     - os : linux
       dist: xenial
-      name: linux_16_04_nightly      
+      name: job_build_linux_16_04_nightly      
       env: UBUNTU_VER=LTS_16.04 TARGET=x86_64-unknown-linux-gnu
       rust: nightly
   #- os: osx
@@ -117,4 +117,4 @@ after_success: |
 # don't build on appveyor configuration changes
 ignore:
   - appveyor.yml
-#  - README.md
+  - README.md

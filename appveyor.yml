@@ -135,4 +135,4 @@ deploy:
 skip_commits:
   files:
     - .travis.yml
-#    - README.md
+    - README.md
