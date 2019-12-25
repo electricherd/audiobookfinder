@@ -24,12 +24,15 @@ environment:
       LIBSODIUM_WIN_VER: 1.0.17
       TAGLIB_WIN_VER: 2.1.0
 
+
 matrix:
   exclude:
     - image: Visual Studio 2017
       target: x86_64-unknown-linux-gnu
     - image: Ubuntu1804
       target: x86_64-pc-windows-msvc
+  allow_failures:
+    - target: x86_64-pc-windows-msvc
 
 # build configuration, i.e. Debug, Release, etc.
 
