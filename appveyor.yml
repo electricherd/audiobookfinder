@@ -130,3 +130,9 @@ deploy:
   on:
     APPVEYOR_REPO_TAG: true       # deploy on tag push only
     target: x86_64-unknown-linux-gnu
+
+# don't build on travis configuration changes
+skip_commits:
+  files:
+    - .travis.yml
+#    - README.md

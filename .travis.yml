@@ -13,22 +13,26 @@ notification:
        on_success: always
        on_failure: change
 
-matrix:
+jobs:
   include:
     - os : linux
       dist: trusty
+      name: linux_14_04_stable
       env: UBUNTU_VER=LTS_14.04 TARGET=x86_64-unknown-linux-gnu
       rust: stable
     - os : linux
       dist: trusty
+      name: linux_14_04_nightly
       env: UBUNTU_VER=LTS_14.04 TARGET=x86_64-unknown-linux-gnu
       rust: nightly
     - os : linux
       dist: xenial
+      name: linux_16_04_stable
       env: UBUNTU_VER=LTS_16.04 TARGET=x86_64-unknown-linux-gnu
       rust: stable
     - os : linux
       dist: xenial
+      name: linux_16_04_nightly      
       env: UBUNTU_VER=LTS_16.04 TARGET=x86_64-unknown-linux-gnu
       rust: nightly
   #- os: osx
@@ -109,3 +113,8 @@ deploy:
 
 after_success: |
   bash ci/document.sh
+
+# don't build on appveyor configuration changes
+ignore:
+  - appveyor.yml
+#  - README.md
