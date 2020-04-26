@@ -35,7 +35,7 @@ impl Logit {
                     Ok(mut writer) => {
                         writer
                             .err("Logit init and test!")
-                            .expect("could not write error message");;
+                            .expect("could not write error message");
                     }
                 }
             }

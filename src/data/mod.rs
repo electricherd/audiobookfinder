@@ -87,7 +87,7 @@ struct Audio {
     max_songs: usize,
 }
 
-type FileFn = Fn(&mut Collection, &DirEntry, &mut FilesStat) -> io::Result<()>;
+type FileFn = dyn Fn(&mut Collection, &DirEntry, &mut FilesStat) -> io::Result<()>;
 
 /// This part implements all functions
 impl Collection {
@@ -112,7 +112,7 @@ impl Collection {
     }
 
     /// The function that runs from the starting point
-    pub fn visit_dirs(&mut self, dir: &Path, cb: &FileFn) -> io::Result<(FilesStat)> {
+    pub fn visit_dirs(&mut self, dir: &Path, cb: &FileFn) -> io::Result<FilesStat> {
         let mut file_stats = FilesStat {
             analyzed: 0,
             faulty: 0,

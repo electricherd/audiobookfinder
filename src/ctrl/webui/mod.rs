@@ -16,8 +16,10 @@ use actix_web_actors::ws;
 use get_if_addrs;
 use hostname;
 
+use std::ffi::OsString;
 use std::net::IpAddr;
 use std::sync::{Arc, Mutex};
+use std::string::String;
 use std::time::{Duration, Instant};
 use uuid::Uuid;
 
@@ -296,7 +298,8 @@ impl WebUI {
         }
 
         let uuid = id.to_hyphenated().to_string();
-        let hostname = hostname::get_hostname().unwrap_or("undefined".to_string());
+        let hostname = hostname::get().unwrap_or(OsString::from("undefined"))
+                                                         .into_string().unwrap_or(String::from("undefined"));
 
         let changers: [ReplaceStatic; 4] = [
             ReplaceStatic {
