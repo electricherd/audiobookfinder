@@ -15,6 +15,8 @@ use adbflib::{
     logit,
     net::Net,
 };
+
+use async_std::task;
 use rayon::prelude::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator};
 use std::{
     path::Path, // path, clear
@@ -198,7 +200,7 @@ fn main() {
                 tx_net_mut_arc.lock().unwrap().clone(),
             ) {
                 if network.start_com_server().is_ok() {
-                    network.lookup();
+                    task::block_on(network.lookup());
                 }
             }
         }

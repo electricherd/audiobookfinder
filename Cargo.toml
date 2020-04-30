@@ -1,4 +1,5 @@
 [package]
+edition = "2018"
 name = "audiobookfinder"
 version = "0.1.18"
 authors = ["Sven Kroemeke <skroemeke@gmail.com>"]
@@ -26,13 +27,15 @@ name = "audiobookfinder"
 path = "src/main.rs"
 
 [dependencies]
+async-std = "1.5" # rust std async executor
+
 clap = "2.33"         # for the command line parsing
 dirs = "2.0"          # to browse dirs fast in taglib
 lazy_static = "1.4"   # awesome lib for lazy data structures
 
 dns-sd  = "0.1"     # need avahi-compat-client-dev lib
 hostname = "^0.3"    # for host recognition
-mdns = "0.3"        # to search other mdns clients
+mdns = "1.1"        # to search other mdns clients
 
 env_logger = "0.7"     # alongside log for logging
 flexi_logger = "0.14"  # a more flexible logger
@@ -40,6 +43,7 @@ log = "0.4"            # basic log feature
 syslog = "5.0"           # another logger for system log
 
 futures = "0.1"     ####   # futures, used in state machine yet (and in many other crates)
+futures-util = "0.3.4"
 
 tree_magic = "0.2"  # for fast file tree operations
 taglib = "1.0"  # taglib for id3tags

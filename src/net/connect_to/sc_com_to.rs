@@ -13,11 +13,10 @@ use state_machine_future::RentToOwn;
 #[derive(StateMachineFuture)]
 pub enum SCClient {
     #[state_machine_future(start, transitions(Runner))]
-    CreateAccordingIP {  },
+    CreateAccordingIP {},
 
     #[state_machine_future(transitions(Finished, Runner))]
-    Runner {
-    },
+    Runner {},
 
     #[state_machine_future(ready)]
     Finished(()),
@@ -30,10 +29,9 @@ impl PollSCClient for SCClient {
     fn poll_create_according_ip<'a>(
         create_according_ip: &'a mut RentToOwn<'a, CreateAccordingIP>,
     ) -> Poll<AfterCreateAccordingIP, ()> {
-        let input = create_according_ip.take();
+        let _input = create_according_ip.take();
         info!("connecting to client ...");
-        let created_client = Runner {
-        };
+        let created_client = Runner {};
         transition!(created_client)
     }
 

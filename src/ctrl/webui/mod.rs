@@ -23,7 +23,7 @@ use std::string::String;
 use std::time::{Duration, Instant};
 use uuid::Uuid;
 
-use config;
+use super::super::config;
 
 /// How often heartbeat pings are sent
 const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);

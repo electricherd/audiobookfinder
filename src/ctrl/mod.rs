@@ -11,7 +11,7 @@ use uuid::Uuid;
 
 use self::tui::Tui;
 use self::webui::WebUI;
-use config;
+use super::config;
 
 #[derive(Clone)]
 pub enum Alive {

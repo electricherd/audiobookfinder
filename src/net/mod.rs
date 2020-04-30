@@ -7,6 +7,7 @@ mod data;
 mod key_keeper;
 
 use avahi_dns_sd::{self, DNSService};
+use futures_util::{pin_mut, stream::StreamExt, TryFutureExt};
 use io_mdns::{self, RecordKind};
 use std::{
     self,
@@ -45,8 +46,6 @@ impl Net {
         tui: bool,
         sender: mpsc::Sender<ctrl::SystemMsg>,
     ) -> Result<Net, avahi_dns_sd::DNSError> {
-        //let responder = mdns::dResponse::spawn();
-
         // the drop of self.dns_handle will unregister
         // so I need to keep it like here :-(
         let dns_service = DNSService::register(
@@ -87,7 +86,7 @@ impl Net {
     /// It looks for possible mDNS clients and spawns
     // threads to connect to them.
     // It uses timeouts, checkups.
-    pub fn lookup(&mut self) {
+    pub async fn lookup(&mut self) {
         // we are sending IpAddress ToThread
 
         let (sender_ssh_client, receiver_client) = mpsc::channel::<ToThread<IpAddr>>();
@@ -108,13 +107,7 @@ impl Net {
         let _get_ip_thread = thread::spawn(move || {
             //
             //
-            Self::spawn_connect_new_clients_threads(
-                receiver_client,
-                borrow_arc,
-                ctrl_sender,
-                uuid,
-                has_tui,
-            );
+            Self::connect_new_clients(receiver_client, borrow_arc, ctrl_sender, uuid, has_tui);
         });
 
         // use a timeout to stop search after a time
@@ -139,7 +132,6 @@ impl Net {
         // statistics
         let mut count_valid = 0;
         let mut count_no_cast = 0;
-        let mut count_no_response = 0;
 
         // prepare everything for mdns thread
         let (mdns_send_ip, mdns_receive_ip) = mpsc::channel::<ToThread<io_mdns::Record>>();
@@ -165,22 +157,21 @@ impl Net {
             );
         });
 
-        let mdns_discover_thread = thread::spawn(move || {
-            count_no_response = Self::mdns_discover(mdns_send_ip, timeout_nice_receiver);
+        let mdns_response = Self::async_mdns_discover(mdns_send_ip, timeout_nice_receiver);
+        let run_futures = mdns_response.and_then(|count_response| async move {
             if !has_tui {
                 let output_string = format!(
                     "no response from : {no_resp:>width$}\n\
                      not castable     : {no_cast:>width$}\n",
-                    no_resp = count_no_response,
+                    no_resp = count_response,
                     no_cast = count_no_cast,
                     width = 3
                 );
                 info!("{}", output_string);
             }
+            Ok(())
         });
-
-        // yes, finally we wait for this thread
-        let _ = mdns_discover_thread.join();
+        run_futures.await;
 
         // other thread should not wait for new messages after all
         sender_ssh_client_stop.send(ToThread::Stop).unwrap();
@@ -200,13 +191,13 @@ impl Net {
         (out_string, addr)
     }
 
-    fn mdns_discover(
+    async fn async_mdns_discover(
         mdns_send_ip: std::sync::mpsc::Sender<ToThread<io_mdns::Record>>,
         timeout_nice_receiver: std::sync::mpsc::Receiver<()>,
-    ) -> usize {
+    ) -> Result<usize, io_mdns::Error> {
         // mdns_send_ip  std::sync::mpsc::Sender<net::ToThread<(usize, io_mdns::Record)>>
         //timeout_nice_receiver  std::sync::mpsc::Receiver<()>
-        let mut count_no_response = 0;
+        let mut count_no_response: usize = 0;
 
         // must be combined
         let full_name = [
@@ -216,41 +207,42 @@ impl Net {
         .join(".");
         info!("Searching for {:?}!", full_name);
 
-        if let Ok(all_discoveries) = io_mdns::discover::all(full_name) {
-            info!("MDNS search: starting");
-            // this is the long search loop
-            // looking rather inefficient, because cpu goes crazy
-            // don't think this is my fault
-            for (_index, response) in all_discoveries.enumerate() {
-                // if message came or sender gone continue and leave loop
-                // don't just kill all of this
-                match timeout_nice_receiver.try_recv() {
-                    Ok(_) | Err(mpsc::TryRecvError::Disconnected) => {
-                        warn!(
-                            "MDNS search: timeout received (should have been {:?} sec)",
-                            config::net::MDNS_TIMEOUT_SEC
-                        );
-                        break; // leave loop
-                    }
-                    Err(mpsc::TryRecvError::Empty) => {
-                        // do nothing
-                    }
-                }
+        let stream = io_mdns::discover::all(full_name, Duration::from_secs(15))?.listen();
 
-                // just look response
-                match response {
-                    Ok(good_response) => {
-                        for record in good_response.records() {
+        info!("MDNS search: starting");
+        pin_mut!(stream);
+
+        // the long but with intermediate results version of:
+        //        while let await_return_response = stream.next().await
+        loop {
+            match stream.next().await {
+                Some(return_resonse) => {
+                    if let Ok(response) = return_resonse {
+                        match timeout_nice_receiver.try_recv() {
+                            Ok(_) | Err(mpsc::TryRecvError::Disconnected) => {
+                                warn!(
+                                    "MDNS search: timeout received (should have been {:?} sec)",
+                                    config::net::MDNS_TIMEOUT_SEC
+                                );
+                                break; // leave loop
+                            }
+                            Err(mpsc::TryRecvError::Empty) => {
+                                // do nothing
+                            }
+                        }
+                        for record in response.records() {
                             mdns_send_ip.send(ToThread::Data(record.clone())).unwrap();
                         }
-                    }
-                    Err(_) => {
+                    } else {
                         count_no_response += 1;
                     }
                 }
-            } //end for loop
-        } // for loop
-        count_no_response
+                _ => {
+                    count_no_response += 1;
+                }
+            }
+        }
+        Ok(count_no_response)
     }
 
     fn take_mdns_input(
@@ -301,7 +293,7 @@ impl Net {
         }
     }
 
-    fn spawn_connect_new_clients_threads(
+    fn connect_new_clients(
         receiver_client: std::sync::mpsc::Receiver<ToThread<IpAddr>>,
         borrow_arc: std::sync::Arc<std::sync::Mutex<std::vec::Vec<IpAddr>>>,
         ctrl_sender: std::sync::mpsc::Sender<ctrl::SystemMsg>,

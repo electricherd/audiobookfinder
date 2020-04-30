@@ -48,6 +48,8 @@ extern crate dns_sd as avahi_dns_sd;
 extern crate mdns as io_mdns;
 // com_client.rs com_server.rs
 extern crate futures;
+extern crate futures_util;
+
 extern crate ring;
 extern crate thrussh;
 extern crate thrussh_keys;
