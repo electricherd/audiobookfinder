@@ -104,30 +104,35 @@ impl Net {
         // collection of addresses
         let borrow_arc = self.addresses_found.clone();
 
-        let _get_ip_thread = thread::spawn(move || {
-            //
-            //
-            Self::connect_new_clients(receiver_client, borrow_arc, ctrl_sender, uuid, has_tui);
-        });
+        let _get_ip_thread = thread::Builder::new()
+            .name("get_ip_thread".to_string())
+            .spawn(move || {
+                //
+                //
+                Self::connect_new_clients(receiver_client, borrow_arc, ctrl_sender, uuid, has_tui);
+            });
 
         // use a timeout to stop search after a time
         // the nice one should work stop gracefully,
         let (timeout_nice_sender, timeout_nice_receiver) = mpsc::channel();
         let (timeout_nice_renewer, timeout_nice_recover) = mpsc::channel();
-        let _timeout_graceful_thread = thread::spawn(move || loop {
-            thread::sleep(Duration::from_secs(config::net::MDNS_TIMEOUT_SEC as u64));
-            // if has been recovered until here ... continue loop
-            match timeout_nice_recover.try_recv() {
-                Ok(_) | Err(mpsc::TryRecvError::Disconnected) => {
-                    debug!("graceful time out sent....");
-                    timeout_nice_sender.send(()).unwrap();
-                    break; // leave loop and _timeout_graceful_thread
+
+        let _timeout_graceful_thread = thread::Builder::new()
+            .name("timeout_graceful_thread".to_string())
+            .spawn(move || loop {
+                thread::sleep(Duration::from_secs(config::net::MDNS_TIMEOUT_SEC as u64));
+                // if has been recovered until here ... continue loop
+                match timeout_nice_recover.try_recv() {
+                    Ok(_) | Err(mpsc::TryRecvError::Disconnected) => {
+                        debug!("graceful time out sent....");
+                        timeout_nice_sender.send(()).unwrap();
+                        break; // leave loop and _timeout_graceful_thread
+                    }
+                    Err(mpsc::TryRecvError::Empty) => {
+                        debug!("graceful time out suspended");
+                    }
                 }
-                Err(mpsc::TryRecvError::Empty) => {
-                    debug!("graceful time out suspended");
-                }
-            }
-        });
+            });
 
         // statistics
         let mut count_valid = 0;
@@ -144,18 +149,20 @@ impl Net {
         // mdns_discover.
         // If client good send sender_ssh_client to
         // _get_ip_thread
-        let _take_mdns_input_thread = thread::spawn(move || {
-            Self::take_mdns_input(
-                mdns_receive_ip,
-                sender_ssh_client,
-                timeout_nice_renewer,
-                ctrl_sender2,
-                has_tui,
-                // change these
-                &mut count_no_cast,
-                &mut count_valid,
-            );
-        });
+        let _take_mdns_input_thread = thread::Builder::new()
+            .name("take_mdns_input_thread".to_string())
+            .spawn(move || {
+                Self::take_mdns_input(
+                    mdns_receive_ip,
+                    sender_ssh_client,
+                    timeout_nice_renewer,
+                    ctrl_sender2,
+                    has_tui,
+                    // change these
+                    &mut count_no_cast,
+                    &mut count_valid,
+                );
+            });
 
         let mdns_response = Self::async_mdns_discover(mdns_send_ip, timeout_nice_receiver);
         let run_futures = mdns_response.and_then(|count_response| async move {
@@ -339,10 +346,15 @@ impl Net {
                                 let uuid = uuid.clone();
 
                                 // create ssh client in new thread
-                                let _connect_ip_client_thread = thread::spawn(move || {
-                                    let connector = ConnectToOther::new(&uuid, &address);
-                                    connector.run();
-                                });
+                                let _connect_ip_client_thread = thread::Builder::new()
+                                    .name(
+                                        ["connect_ip_client_thread_", &address.to_string()]
+                                            .concat(),
+                                    )
+                                    .spawn(move || {
+                                        let connector = ConnectToOther::new(&uuid, &address);
+                                        connector.run();
+                                    });
                             }
                         } else {
                             error!("Could not lock ip address list!");

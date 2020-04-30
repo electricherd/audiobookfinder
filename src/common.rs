@@ -29,6 +29,9 @@ impl ThreadPool {
     {
         assert!(idx < self.threads.len());
         drop(&self.threads[idx]);
-        self.threads[idx] = thread::spawn(move || f());
+        self.threads[idx] = thread::Builder::new()
+            .name(["worker_thread#", &idx.to_string()].concat())
+            .spawn(move || f())
+            .unwrap();
     }
 }

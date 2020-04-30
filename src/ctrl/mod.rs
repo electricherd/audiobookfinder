@@ -106,9 +106,11 @@ impl Ctrl {
         let uuid_copy = self.uuid;
         let net_support = self.with_net;
         if webbrowser::open(&["http://", config::net::WEBSOCKET_ADDR].concat()).is_ok() {
-            let _webui_runner = thread::spawn(move || {
-                let _ = WebUI::new(uuid_copy, net_support);
-            });
+            let _webui_runner = thread::Builder::new()
+                .name("web_ui_thread".to_string())
+                .spawn(move || {
+                    let _ = WebUI::new(uuid_copy, net_support);
+                });
         } else {
             // Todo: debug
         }

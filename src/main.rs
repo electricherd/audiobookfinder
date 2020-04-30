@@ -134,44 +134,47 @@ fn main() {
     let (send_tui_worked, receiver_tui_worked) = mpsc::channel::<bool>();
 
     // start the tui thread
-    let ui_runner = thread::spawn(move || {
-        // has_ui checked here, and not thread, because we need the handle even
-        // if we don't use it
-        if has_ui {
-            // start animation .... timer and so on
-            if has_tui {
-                if let Ok(starter) = tx_net_alive_mut.lock() {
-                    starter
-                        .send(SystemMsg::StartAnimation(Alive::HostSearch, Status::ON))
-                        .unwrap();
-                }
-            }
-            let controller = Ctrl::new_tui(client_id, &tui_pathes, rx, tx.clone(), has_net);
-            match controller {
-                Ok(mut controller) => {
-                    if has_webui {
-                        controller.run_webui()
+    let ui_runner = thread::Builder::new()
+        .name("ui_runner_thread".to_string())
+        .spawn(move || {
+            // has_ui checked here, and not thread, because we need the handle even
+            // if we don't use it
+            if has_ui {
+                // start animation .... timer and so on
+                if has_tui {
+                    if let Ok(starter) = tx_net_alive_mut.lock() {
+                        starter
+                            .send(SystemMsg::StartAnimation(Alive::HostSearch, Status::ON))
+                            .unwrap();
                     }
-                    if has_tui {
-                        // signal ok
-                        send_tui_worked.send(true).unwrap();
-                        drop(send_tui_worked);
+                }
+                let controller = Ctrl::new_tui(client_id, &tui_pathes, rx, tx.clone(), has_net);
+                match controller {
+                    Ok(mut controller) => {
+                        if has_webui {
+                            controller.run_webui()
+                        }
+                        if has_tui {
+                            // signal ok
+                            send_tui_worked.send(true).unwrap();
+                            drop(send_tui_worked);
 
-                        // do finally the necessary
-                        controller.run_tui();
+                            // do finally the necessary
+                            controller.run_tui();
+                        }
                     }
-                }
-                Err(error_text) => {
-                    println!("{:?}", error_text);
-                    // no tui could be created
-                    if has_tui {
-                        send_tui_worked.send(false).unwrap();
-                        drop(send_tui_worked);
+                    Err(error_text) => {
+                        println!("{:?}", error_text);
+                        // no tui could be created
+                        if has_tui {
+                            send_tui_worked.send(false).unwrap();
+                            drop(send_tui_worked);
+                        }
                     }
                 }
             }
-        }
-    });
+        })
+        .unwrap();
 
     // blocks that one signal (but that should be very short time)
     if has_tui {
@@ -190,21 +193,24 @@ fn main() {
 
     // start the net runner thread
     let tx_net_mut_arc = Arc::new(tx_net_mut);
-    let net_runner = thread::spawn(move || {
-        if has_net {
-            if let Ok(mut network) = Net::new(
-                client_id,
-                has_tui,
-                // need to simplify and clarify this here ......
-                // but this lock unwrap is safe
-                tx_net_mut_arc.lock().unwrap().clone(),
-            ) {
-                if network.start_com_server().is_ok() {
-                    task::block_on(network.lookup());
+    let net_runner = thread::Builder::new()
+        .name("net_runner_thread".to_string())
+        .spawn(move || {
+            if has_net {
+                if let Ok(mut network) = Net::new(
+                    client_id,
+                    has_tui,
+                    // need to simplify and clarify this here ......
+                    // but this lock unwrap is safe
+                    tx_net_mut_arc.lock().unwrap().clone(),
+                ) {
+                    if network.start_com_server().is_ok() {
+                        task::block_on(network.lookup());
+                    }
                 }
             }
-        }
-    });
+        })
+        .unwrap();
 
     // initialize the data collection for all
     let init_collection = Collection::new(&client_id, max_threads);
