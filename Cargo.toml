@@ -38,7 +38,7 @@ hostname = "^0.3"    # for host recognition
 mdns = "1.1"        # to search other mdns clients
 
 env_logger = "0.7"     # alongside log for logging
-flexi_logger = "0.14"  # a more flexible logger
+flexi_logger = "0.15"  # a more flexible logger
 log = "0.4"            # basic log feature
 syslog = "5.0"           # another logger for system log
 
