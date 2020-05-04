@@ -39,6 +39,8 @@ So far only the state charts and their connection is not done but the general co
 It is an inline [CI](https://travis-ci.org/electricherd/audiobookfinder/) generated documentation which can be found [here](https://electricherd.github.io/audiobookfinder/audiobookfinder/index.html)! Rust does a nice job here as well!
 
 ### Changes
+* bumped to Rust 2018 features async/await in net module using futures in few occasion, but will continue with that
+* version changes of different used crates
 * changed this README, to add version changes to *Changes*, re-ordered, and made [Goals](#goals) as a check list, bumped version to v
 * updated various dependency packages from Rust libraries [actix](https://actix.rs/) (there was a dependency lock for a longer time) to [bootstrap](https://getbootstrap.com/), and [jquery](https://jquery.com).
 * added small key generation documentation in `README-release.md`
@@ -68,15 +70,23 @@ It is an inline [CI](https://travis-ci.org/electricherd/audiobookfinder/) genera
 * found emojis :grin:
 
 ### ToDo
+* will change from old [state_machine_future](https://docs.rs/state_machine_future/) to [smlang](https://crates.io/crates/smlang) state machine  
+    + old: is too complicated to use 
+    + old: no new releases and old future usage
+    + new: hopefully easier, more standard compatible
+    + new: updated recently
+* change/replace all net functionality to [libp2p](https://crates.parity.io/libp2p/index.html)
+    + thrussh ssh server/client communication
+    + mDNS from [mDNS](https://crates.parity.io/libp2p/mdns/index.html) 
 * with new feature of [alternative cargo registries](https://blog.rust-lang.org/2019/04/11/Rust-1.34.0.html), ready-made libraries and crates, like [parity](https://crates.parity.io/) with [libp2p](https://crates.parity.io/libp2p/index.html), in a first step [mDNS](https://crates.parity.io/libp2p/mdns/index.html) gets interesting
-* looking into crates like [rust_sodium](https://crates.io/crates/rust_sodium), which might simplify cross compiling
-* further client thrussh improvements, add secure identification by using zero-knowledge
-* understand trussh communication, creating key, authorize
-* test more different targets using [this](https://github.com/japaric/trust)
-for client and server, the example looks promising
+* ~~looking into crates like [rust_sodium](https://crates.io/crates/rust_sodium), which might simplify cross compiling~~ replace with libp2p
+* ~~further client thrussh improvements, add secure identification by using zero-knowledge~~ replace with libp2p
+* ~~understand trussh communication, creating key, authorize~~ replace with libp2p
+* ~~test more different targets using 
+for client and server~~ hopes on libp2p
 * nicer timer (thread pool is good but still with sleep)
 * make cross compiling as easy as possible
-* get rid of Avahi
+* ~~get rid of Avahi~~ hopefully libp2p covers it
 
 ### Architecture
 ![Diagram](diag_architecture_general.svg)
