@@ -2,18 +2,17 @@
 pub mod com_server;
 
 use self::com_server::ComServer;
+use super::super::config;
+use libp2p::PeerId;
 use ring;
 use std::{sync::Arc, thread, time::Duration};
 use thrussh;
 use thrussh_keys::key;
-use uuid::Uuid;
-
-use super::super::config;
 
 pub struct ConnectFromOutside {}
 
 impl ConnectFromOutside {
-    pub fn create_thread(uuid: Uuid) -> Result<thread::JoinHandle<()>, ()> {
+    pub fn create_thread(peer_id: PeerId) -> Result<thread::JoinHandle<()>, ()> {
         Ok(thread::Builder::new()
             .name("SSH Comserver thread".to_string())
             .spawn(move || {
@@ -26,7 +25,7 @@ impl ConnectFromOutside {
                 config.keys.push(key::KeyPair::generate_ed25519().unwrap());
                 let config = Arc::new(config);
 
-                let replication_server = ComServer { id: uuid };
+                let replication_server = ComServer { peer_id: peer_id };
                 let address_string = ["0.0.0.0", ":", &config::net::PORT_SSH.to_string()].concat();
 
                 thrussh::server::run(config, &address_string, replication_server);

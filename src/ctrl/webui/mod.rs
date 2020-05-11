@@ -2,7 +2,8 @@
 //! This is a webui about to replace the TUI, to be nice, better accessable, and
 //! new technology using websockets (since actix changed a lot actix_web, many
 //! implementation should probably be reworked)
-
+use super::super::config;
+use super::PeerRepresentation;
 use actix::prelude::StreamHandler;
 use actix::{Actor, ActorContext, AsyncContext};
 use actix_files as fs;
@@ -12,18 +13,16 @@ use actix_web::{
     App, Error, HttpServer,
 };
 use actix_web_actors::ws;
-
 use get_if_addrs;
 use hostname;
-
-use std::ffi::OsString;
-use std::net::IpAddr;
-use std::sync::{Arc, Mutex};
-use std::string::String;
-use std::time::{Duration, Instant};
-use uuid::Uuid;
-
-use super::super::config;
+use std::{
+    ffi::OsString,
+    net::IpAddr,
+    string::String,
+    sync::{Arc, Mutex},
+    time::{Duration, Instant},
+    vec::Vec,
+};
 
 /// How often heartbeat pings are sent
 const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
@@ -31,12 +30,12 @@ const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
 const CLIENT_TIMEOUT: Duration = Duration::from_secs(10);
 
 pub struct WebServerState {
-    uuid: Uuid,
+    id: PeerRepresentation,
     nr_connections: Arc<Mutex<usize>>,
 }
 
 pub struct WebUI {
-    uuid: Uuid,
+    id: PeerRepresentation,
     serve_others: bool,
 }
 
@@ -75,14 +74,14 @@ impl fmt::Display for WebCommand {
 //}
 
 impl WebUI {
-    pub fn new(id: Uuid, serve: bool) -> Result<Self, ()> {
+    pub fn new(id: PeerRepresentation, serve: bool) -> Result<Self, ()> {
         let sys = actix::System::new("http-server");
         let connection_count = Arc::new(Mutex::new(0));
 
         let local_addresses = get_if_addrs::get_if_addrs().unwrap();
 
         let initial_state = web::Data::new(Mutex::new(WebServerState {
-            uuid: id.clone(),
+            id: id.clone(),
             nr_connections: connection_count.clone(),
         }));
 
@@ -163,7 +162,7 @@ impl WebUI {
         web_server.start();
         if sys.run().is_ok() {
             Ok(WebUI {
-                uuid: id,
+                id: id,
                 serve_others: serve,
             })
         } else {
@@ -193,14 +192,14 @@ impl WebUI {
     ) -> Result<HttpResponse, Error> {
         // change state
         let mut data = state.lock().unwrap();
-        let id = data.uuid;
+        let id = data.id;
         *(data.nr_connections.lock().unwrap()) += 1;
 
-        let uuid_page = Self::replace_static_content(*config::webui::HTML_PAGE, &id);
+        let id_page = Self::replace_static_content(*config::webui::HTML_PAGE, &id);
 
         Ok(HttpResponse::build(StatusCode::OK)
             .content_type("text/html; charset=utf-8")
-            .body(uuid_page))
+            .body(id_page))
     }
 
     fn bootstrap_css(
@@ -274,7 +273,7 @@ impl WebUI {
         _req: HttpRequest,
     ) -> Result<HttpResponse, Error> {
         let data = state.lock().unwrap();
-        let id = data.uuid;
+        let id = data.id;
 
         let output = Self::replace_static_content(*config::webui::JS_APP, &id);
         Ok(HttpResponse::build(StatusCode::OK)
@@ -290,16 +289,18 @@ impl WebUI {
         ws::start(MyWebSocket::new(), &req, stream)
     }
 
-    fn replace_static_content(html_in: &str, id: &Uuid) -> String {
+    fn replace_static_content(html_in: &str, id: &PeerRepresentation) -> String {
         // short inline struct
         struct ReplaceStatic<'a> {
             r: &'a str,
             c: String,
         }
 
-        let uuid = id.to_hyphenated().to_string();
-        let hostname = hostname::get().unwrap_or(OsString::from("undefined"))
-                                                         .into_string().unwrap_or(String::from("undefined"));
+        let id_string = std::format!("{:x?}", id);
+        let hostname = hostname::get()
+            .unwrap_or(OsString::from("undefined"))
+            .into_string()
+            .unwrap_or(String::from("undefined"));
 
         let changers: [ReplaceStatic; 4] = [
             ReplaceStatic {
@@ -312,7 +313,7 @@ impl WebUI {
             },
             ReplaceStatic {
                 r: config::webui::HTML_REPLACE_UUID,
-                c: uuid,
+                c: id_string,
             },
             ReplaceStatic {
                 r: config::webui::HTML_REPLACE_HOSTNAME,

@@ -5,7 +5,6 @@
 //! It acts as a wrapper around adbflib, which holds major parts of the implemention.
 extern crate clap;
 extern crate rayon;
-extern crate uuid;
 
 extern crate adbflib;
 
@@ -13,7 +12,7 @@ use adbflib::{
     ctrl::{Alive, Ctrl, ReceiveDialog, Status, SystemMsg},
     data::{self, Collection},
     logit,
-    net::Net,
+    net::{key_keeper, Net},
 };
 
 use async_std::task;
@@ -23,7 +22,6 @@ use std::{
     sync::{mpsc, Arc, Mutex},
     thread,
 };
-use uuid::Uuid;
 
 static INPUT_FOLDERS: &str = "folders";
 static APP_TITLE: &str = concat!("The audiobook finder (", env!("CARGO_PKG_NAME"), ")");
@@ -126,12 +124,15 @@ fn main() {
     // copy to vec<&str>
     let tui_pathes = all_pathes.iter().map(|s| s.to_string()).collect();
 
-    // get an unique id for this client
-    let client_id = Uuid::new_v4();
-
     // the signal to tell further processes, that tui creation worked
     // and the messages actually go somewhere, otherwise it will assume: no tui
     let (send_tui_worked, receiver_tui_worked) = mpsc::channel::<bool>();
+
+    // get an unique id for this client
+    let client_id = key_keeper::get_p2p_server_id();
+    let client_id1 = client_id.clone();
+    let client_id2 = client_id.clone();
+    let client_id3 = client_id.clone();
 
     // start the tui thread
     let ui_runner = thread::Builder::new()
@@ -148,7 +149,7 @@ fn main() {
                             .unwrap();
                     }
                 }
-                let controller = Ctrl::new_tui(client_id, &tui_pathes, rx, tx.clone(), has_net);
+                let controller = Ctrl::new_tui(client_id1, &tui_pathes, rx, tx.clone(), has_net);
                 match controller {
                     Ok(mut controller) => {
                         if has_webui {
@@ -198,7 +199,7 @@ fn main() {
         .spawn(move || {
             if has_net {
                 if let Ok(mut network) = Net::new(
-                    client_id,
+                    client_id2,
                     has_tui,
                     // need to simplify and clarify this here ......
                     // but this lock unwrap is safe
@@ -213,7 +214,7 @@ fn main() {
         .unwrap();
 
     // initialize the data collection for all
-    let init_collection = Collection::new(&client_id, max_threads);
+    let init_collection = Collection::new(&client_id3, max_threads);
     let collection_protected = Arc::new(Mutex::new(init_collection));
 
     // start the search threads, each path its own
