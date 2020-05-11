@@ -1,7 +1,9 @@
 //! The ssh communication server, decisions will be made here, of how to interact with
 //! the clients, is basically still taken from trussh example (with corrections)
+use super::super::data::DataSession;
 use bincode;
 use futures;
+use libp2p::PeerId;
 use std;
 use thrussh::{
     self,
@@ -9,13 +11,10 @@ use thrussh::{
     ChannelId,
 };
 use thrussh_keys::{self, key};
-use uuid::Uuid;
-
-use super::super::data::DataSession;
 
 #[derive(Clone)]
 pub struct ComServer {
-    pub id: Uuid,
+    pub peer_id: PeerId,
 }
 
 impl server::Server for ComServer {
@@ -54,20 +53,20 @@ impl thrussh::server::Handler for ComServer {
         match session_data {
             Ok(deserialized) => match deserialized {
                 DataSession::Auth { ref auth } => {
-                    let client_id = auth.get_id();
+                    let client_id_string = format!("{:?}", auth.get_id());
                     let client_version = auth.get_version();
                     info!(
                         "Srv[{:?}]: auth from channel {:?}: with id {:?} and version {:?}",
-                        self.id.to_hyphenated().to_string(),
+                        self.peer_id.to_string(),
                         channel,
-                        client_id.to_hyphenated().to_string(),
+                        client_id_string,
                         client_version
                     );
                 }
                 DataSession::Data { .. } => {
                     info!(
                         "Srv[{:?}]: data from channel {:?}: {:?}",
-                        self.id.to_hyphenated().to_string(),
+                        self.peer_id.to_string(),
                         channel,
                         std::str::from_utf8(data)
                     );
@@ -76,7 +75,7 @@ impl thrussh::server::Handler for ComServer {
             Err(_) => {
                 info!(
                     "Srv[{:?}]: not valid session data on channel {:?}: {:?}",
-                    self.id.to_hyphenated().to_string(),
+                    self.peer_id.to_string(),
                     channel,
                     std::str::from_utf8(data)
                 );

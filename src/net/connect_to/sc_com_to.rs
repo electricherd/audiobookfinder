@@ -36,7 +36,7 @@ impl PollSCClient for SCClient {
     }
 
     fn poll_runner<'a>(runner: &'a mut RentToOwn<'a, Runner>) -> Poll<AfterRunner, ()> {
-        let input = runner.take();
+        let _input = runner.take();
         info!("connecting to client and state chart...");
         transition!(Finished(()))
     }

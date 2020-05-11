@@ -58,7 +58,7 @@ It is an inline [CI](https://travis-ci.org/electricherd/audiobookfinder/) genera
 * replaced [id3](https://github.com/jameshurst/rust-id3) with [taglib](https://github.com/ebassi/taglib-rust/) (more external libs, but many more available media tags). Unfortunately it took me quite some time to find some strange difference (didn't work) between [crates.io](https://crates.io/crates/taglib) and original [github.com](https://github.com/ebassi/taglib-rust/) version, so I had to use the git pull rather than the convenient crate.io dependency usage in `Cargo.toml`.
 * I suspended the usage of [trust](https://github.com/japaric/trust) which uses [cross](https://github.com/japaric/cross), since the develop cross compiling docker images are based on ubuntu 12.04 (deb jessie), and the libsodium, libavahi uses ubuntu ppa from newer versions. I might even go to xenial (deb stretch), then both libs are included by default. But I would have to create my own dockerfile for that, and not just extend the well prepared dockerfiles from cross. :unamused:
 * [documentation](https://electricherd.github.io/audiobookfinder/audiobookfinder/index.html) deployed, awesome: Rust + github + travis +... (needs javascript enabled)
-* applied single test file for travis run: took Bachs Toccata And Fugue In D Minor by Paul Pitman (licence PD)  [orangefreesounds](www.orangefreesounds.com/toccata-and-fugue-in-d-minor/) in rememberring [Monthy Python's grand rugby match](https://www.youtube.com/watch?v=HKv6o7YqHnE).
+* applied single test file for travis run: took Bach's Toccata And Fugue In D Minor by Paul Pitman (licence PD)  [orangefreesounds](www.orangefreesounds.com/toccata-and-fugue-in-d-minor/) in rememberring [Monthy Python's grand rugby match](https://www.youtube.com/watch?v=HKv6o7YqHnE).
 * travis CI working
 * more documentation locally as html: `cargo doc --no-deps --open`
 * fixed ui with BoxView and correct id finding (looks like bug is in Cursive)
@@ -70,6 +70,8 @@ It is an inline [CI](https://travis-ci.org/electricherd/audiobookfinder/) genera
 * found emojis :grin:
 
 ### ToDo
+* libp2p changes
+    + uuid not needed any more: identification is done via a hash from public key
 * will change from old [state_machine_future](https://docs.rs/state_machine_future/) to [smlang](https://crates.io/crates/smlang) state machine  
     + old: is too complicated to use 
     + old: no new releases and old future usage

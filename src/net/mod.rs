@@ -4,11 +4,15 @@
 mod connect_from;
 mod connect_to;
 mod data;
-mod key_keeper;
 
+pub mod key_keeper;
+
+use self::{connect_from::ConnectFromOutside, connect_to::ConnectToOther};
+use super::{config, ctrl};
 use avahi_dns_sd::{self, DNSService};
 use futures_util::{pin_mut, stream::StreamExt, TryFutureExt};
 use io_mdns::{self, RecordKind};
+use libp2p::PeerId;
 use std::{
     self,
     net::IpAddr,
@@ -16,10 +20,6 @@ use std::{
     thread,
     time::Duration,
 };
-use uuid::Uuid;
-
-use self::{connect_from::ConnectFromOutside, connect_to::ConnectToOther};
-use super::{config, ctrl};
 
 #[derive(Clone)]
 enum ToThread<T: Send + Clone> {
@@ -29,7 +29,7 @@ enum ToThread<T: Send + Clone> {
 
 /// The Net component keeps controll about everything from net.
 pub struct Net {
-    my_id: Uuid,
+    peer_id: PeerId,
     addresses_found: Arc<Mutex<Vec<IpAddr>>>,
     tui_sender: mpsc::Sender<ctrl::SystemMsg>,
     has_tui: bool,
@@ -42,7 +42,7 @@ pub struct Net {
 
 impl Net {
     pub fn new(
-        name: Uuid,
+        peer_id: PeerId,
         tui: bool,
         sender: mpsc::Sender<ctrl::SystemMsg>,
     ) -> Result<Net, avahi_dns_sd::DNSError> {
@@ -57,7 +57,7 @@ impl Net {
             &["path=/"],
         )?;
         let net = Net {
-            my_id: name,
+            peer_id: peer_id,
             addresses_found: Arc::new(Mutex::new(Vec::new())),
             tui_sender: sender,
             has_tui: tui,
@@ -69,15 +69,10 @@ impl Net {
 
     pub fn start_com_server(&mut self) -> Result<(), ()> {
         // delegate this somewhere else
-        if key_keeper::is_good() {
-            if let Ok(good_thread) = ConnectFromOutside::create_thread(self.my_id.clone()) {
-                self.ssh_handle = good_thread;
-                Ok(())
-            } else {
-                Err(())
-            }
+        if let Ok(good_thread) = ConnectFromOutside::create_thread(self.peer_id.clone()) {
+            self.ssh_handle = good_thread;
+            Ok(())
         } else {
-            // ToDo: error
             Err(())
         }
     }
@@ -95,7 +90,7 @@ impl Net {
         // maybe to attach some more data
         //let borrow_arc = &self.addresses_found.clone();
         let has_tui = self.has_tui;
-        let uuid = self.my_id.clone();
+        let peer_id = self.peer_id.clone();
 
         // to controller messages (mostly tui now)
         let ctrl_sender = self.tui_sender.clone();
@@ -109,7 +104,13 @@ impl Net {
             .spawn(move || {
                 //
                 //
-                Self::connect_new_clients(receiver_client, borrow_arc, ctrl_sender, uuid, has_tui);
+                Self::connect_new_clients(
+                    receiver_client,
+                    borrow_arc,
+                    ctrl_sender,
+                    peer_id,
+                    has_tui,
+                );
             });
 
         // use a timeout to stop search after a time
@@ -304,10 +305,11 @@ impl Net {
         receiver_client: std::sync::mpsc::Receiver<ToThread<IpAddr>>,
         borrow_arc: std::sync::Arc<std::sync::Mutex<std::vec::Vec<IpAddr>>>,
         ctrl_sender: std::sync::mpsc::Sender<ctrl::SystemMsg>,
-        uuid: Uuid,
+        peer_id: PeerId,
         has_tui: bool,
     ) {
         loop {
+            let peer_id_clone = peer_id.clone();
             // wait for message
             if let Ok(recv_mesg) = receiver_client.recv() {
                 match recv_mesg {
@@ -342,9 +344,6 @@ impl Net {
                                         ))
                                         .unwrap();
                                 }
-                                // 2nd embedded and in loop-thread so copy copied again
-                                let uuid = uuid.clone();
-
                                 // create ssh client in new thread
                                 let _connect_ip_client_thread = thread::Builder::new()
                                     .name(
@@ -352,7 +351,8 @@ impl Net {
                                             .concat(),
                                     )
                                     .spawn(move || {
-                                        let connector = ConnectToOther::new(&uuid, &address);
+                                        let connector =
+                                            ConnectToOther::new(&peer_id_clone, &address);
                                         connector.run();
                                     });
                             }

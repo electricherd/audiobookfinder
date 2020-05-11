@@ -1,25 +1,23 @@
 //! The ssh client yet of what it will be capable of
 //! and taken from trussh example (with corrections).
 
-use bincode;
-use futures::{self, Future};
-use std::{net::IpAddr, sync::Arc};
-use thrussh;
-use thrussh_keys;
-use tokio_io;
-use uuid::Uuid;
-
 use super::super::{
     config,
     connect_to::sc_com_to::{SCClient, SCClientFuture},
     data::{DataAuth, DataSession},
     key_keeper,
 };
+use bincode;
+use futures::{self, Future};
+use libp2p::PeerId;
+use std::{net::IpAddr, sync::Arc};
+use thrussh;
+use thrussh_keys;
+use tokio_io;
 
 #[derive(Clone)]
 pub struct ComClient {
-    uuid: Uuid,
-    key: Arc<thrussh_keys::key::KeyPair>,
+    peer_id: PeerId,
 }
 
 impl thrussh::client::Handler for ComClient {
@@ -69,23 +67,20 @@ impl thrussh::client::Handler for ComClient {
 }
 
 impl ComClient {
-    pub fn new(uuid: Uuid) -> ComClient {
-        ComClient {
-            uuid: uuid,
-            key: Arc::new(key_keeper::get_server_key().unwrap()),
-        }
+    pub fn new(peer_id: PeerId) -> ComClient {
+        ComClient { peer_id: peer_id }
     }
 
     pub fn run(self, configuration: Arc<thrussh::client::Config>, ip_addr: &IpAddr) {
-        let id = self.uuid.clone();
+        let id = self.peer_id.clone();
 
         // just use a copy to arc
-        let key = self.key.clone();
+        let key = Arc::clone(&*key_keeper::SERVER_KEY_SSH);
         //
         // start the state machine
         //
         // toDo: safe this here with an assert or so
-        let sc_future: SCClientFuture = SCClient::start();
+        let _sc_future: SCClientFuture = SCClient::start();
 
         let _ = thrussh::client::connect_future(
             (*ip_addr, config::net::PORT_SSH),
@@ -124,7 +119,7 @@ impl ComClient {
     }
 
     fn continue_session<R, H>(
-        id: Uuid,
+        peer_id: PeerId,
         connection: thrussh::client::Connection<R, H>,
     ) -> impl Future<Item = (), Error = thrussh::HandlerError<<H as thrussh::client::Handler>::Error>>
     where
@@ -138,7 +133,7 @@ impl ComClient {
                 info!("Session could be opened, sending out!");
 
                 // send data
-                let datagram = Self::get_data(&id);
+                let datagram = Self::get_data(&peer_id);
 
                 Self::send(channelid, datagram, session)
             })
@@ -170,10 +165,10 @@ impl ComClient {
             })
     }
 
-    fn get_data(id: &Uuid) -> DataSession {
+    fn get_data(peer_id: &PeerId) -> DataSession {
         // depending on what you want, so far only auth
         DataSession::Auth {
-            auth: DataAuth::new((*id).clone()),
+            auth: DataAuth::new((*peer_id).clone()),
         }
     }
 }

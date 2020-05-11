@@ -1,15 +1,16 @@
 //! The oldest module, the data module stores all the data needed to collect.
-use std::{cmp,                                     //max
-          collections::hash_map::{Entry, HashMap}, // my main item uses a hash map
-          fs::{self, DirEntry, Permissions},       // directory
-          io,                                      // reading files
-          os::linux::fs::MetadataExt,              //use std::os::windows::fs::MetadataExt;
-          path::{Path, PathBuf}};                  // path, clear
+use super::config;
+use libp2p::PeerId;
+use std::{
+    cmp,                                     //max
+    collections::hash_map::{Entry, HashMap}, // my main item uses a hash map
+    fs::{self, DirEntry, Permissions},       // directory
+    io,                                      // reading files
+    os::linux::fs::MetadataExt,              //use std::os::windows::fs::MetadataExt;
+    path::{Path, PathBuf},
+}; // path, clear
 use taglib;
 use tree_magic;
-use uuid::Uuid;
-
-use super::config;
 
 #[allow(dead_code)]
 /// # File info
@@ -31,7 +32,7 @@ struct InfoAlbum {
 #[allow(dead_code)]
 struct Worker {
     /// identify them.
-    id: Uuid,
+    peer_id: PeerId,
     max_threads: usize,
 }
 
@@ -44,9 +45,9 @@ impl Worker {
     /// # Arguments
     /// * 'id' - the identification (each will create an own hash)
     /// * 'max_threads' - how many threads can the worker create
-    pub fn new(uuid: Uuid, maxthreads: usize) -> Worker {
+    pub fn new(peer_id: PeerId, maxthreads: usize) -> Worker {
         Worker {
-            id: uuid,
+            peer_id: peer_id,
             max_threads: maxthreads,
         }
     }
@@ -91,9 +92,9 @@ type FileFn = dyn Fn(&mut Collection, &DirEntry, &mut FilesStat) -> io::Result<(
 
 /// This part implements all functions
 impl Collection {
-    pub fn new(uuid: &Uuid, numthreads: usize) -> Collection {
+    pub fn new(peer_id: &PeerId, numthreads: usize) -> Collection {
         Collection {
-            who: Worker::new(uuid.clone(), numthreads),
+            who: Worker::new(peer_id.clone(), numthreads),
             collection: HashMap::new(),
             stats: Stats {
                 files: FilesStat {
@@ -249,7 +250,7 @@ impl Collection {
              searched files       : {files_searched:>width$}\n\
              irrelevant files     : {files_irrelevant:>width$}\n\
              faulty files         : {files_faulty:>width$}\n",
-            id = self.who.id.to_hyphenated().to_string().to_uppercase(),
+            id = self.who.peer_id.to_string().to_uppercase(),
             nr_pathes = self.stats.threads,
             albums_found = self.stats.audio.albums,
             max_p_album = self.stats.audio.max_songs,
@@ -268,8 +269,7 @@ impl Drop for Collection {
     fn drop(&mut self) {
         println!(
             "Dropping/destroying collection from {}",
-            self.who.id.to_hyphenated().to_string().to_uppercase()
-        )
-;
+            self.who.peer_id.to_string().to_uppercase()
+        );
     }
 }

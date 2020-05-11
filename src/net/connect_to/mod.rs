@@ -1,10 +1,9 @@
 //! The client puts a state chart upfront, to make
 
+use self::com_client::ComClient;
+use libp2p::PeerId;
 use std::{net::IpAddr, sync::Arc, time::Duration};
 use thrussh;
-use uuid::Uuid;
-
-use self::com_client::ComClient;
 
 mod com_client;
 pub mod sc_com_to;
@@ -15,8 +14,8 @@ pub struct ConnectToOther {
 }
 
 impl ConnectToOther {
-    pub fn new(uuid: &Uuid, address: &IpAddr) -> ConnectToOther {
-        let client = ComClient::new(uuid.clone());
+    pub fn new(peer_id: &PeerId, address: &IpAddr) -> ConnectToOther {
+        let client = ComClient::new(peer_id.clone());
         ConnectToOther {
             connector: client,
             address: address.clone(),

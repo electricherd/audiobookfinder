@@ -5,13 +5,14 @@
 pub mod tui; // todo: pub is not recommended, I use it for doctest
 mod webui;
 
-use std::sync::mpsc;
-use std::thread;
-use uuid::Uuid;
-
 use self::tui::Tui;
 use self::webui::WebUI;
 use super::config;
+use libp2p::PeerId;
+use std::sync::mpsc;
+use std::thread;
+
+type PeerRepresentation = [u8; 16];
 
 #[derive(Clone)]
 pub enum Alive {
@@ -49,7 +50,7 @@ pub struct NetStats {
 pub struct Ctrl {
     rx: mpsc::Receiver<SystemMsg>,
     ui: Tui,
-    uuid: Uuid,
+    peer_id: PeerId,
     with_net: bool,
 }
 
@@ -63,18 +64,18 @@ impl Ctrl {
     /// * 'sender'   - The sender that sends from ctrl
     /// * 'with_net' - If ctrl should consider net messages
     pub fn new_tui(
-        uuid: Uuid,
+        new_id: PeerId,
         paths: &Vec<String>,
         receiver: mpsc::Receiver<SystemMsg>,
         sender: mpsc::Sender<SystemMsg>,
         with_net: bool,
     ) -> Result<Ctrl, String> {
-        let c_ui = Tui::new(uuid.to_string(), sender.clone(), &paths, with_net)?;
+        let c_ui = Tui::new(new_id.to_string(), sender.clone(), &paths, with_net)?;
 
         Ok(Ctrl {
             rx: receiver,
             ui: c_ui,
-            uuid: uuid,
+            peer_id: new_id,
             with_net: with_net,
         })
     }
@@ -103,13 +104,15 @@ impl Ctrl {
 
     /// Run the controller
     pub fn run_webui(&mut self) {
-        let uuid_copy = self.uuid;
         let net_support = self.with_net;
+        // todo: damn, please make this nice if you can
+        let mut peer_representation: PeerRepresentation = [0 as u8; 16];
+        peer_representation.copy_from_slice(&self.peer_id.as_bytes()[..16]);
         if webbrowser::open(&["http://", config::net::WEBSOCKET_ADDR].concat()).is_ok() {
             let _webui_runner = thread::Builder::new()
                 .name("web_ui_thread".to_string())
                 .spawn(move || {
-                    let _ = WebUI::new(uuid_copy, net_support);
+                    let _ = WebUI::new(peer_representation, net_support);
                 });
         } else {
             // Todo: debug

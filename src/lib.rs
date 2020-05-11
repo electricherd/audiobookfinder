@@ -37,7 +37,6 @@ extern crate taglib;
 #[macro_use]
 extern crate serde_derive;
 extern crate tree_magic; // mime types
-extern crate uuid;
 pub mod data;
 
 // net
