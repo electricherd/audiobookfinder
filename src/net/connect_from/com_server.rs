@@ -85,19 +85,3 @@ impl thrussh::server::Handler for ComServer {
         futures::finished((self, session))
     }
 }
-
-impl ComServer {
-    pub fn create_key_file(_name: &str) -> Result<(), thrussh_keys::Error> {
-        match key::KeyPair::generate_ed25519() {
-            Some(key::KeyPair::Ed25519(..)) => {
-                //println!("{:?}",edkey);
-            }
-            Some(key::KeyPair::RSA { .. }) => {
-                // to be done
-            }
-            None => {}
-        }
-        //
-        Ok(())
-    }
-}
