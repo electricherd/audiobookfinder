@@ -71,12 +71,8 @@ It is an inline [CI](https://travis-ci.org/electricherd/audiobookfinder/) genera
 
 ### ToDo
 * libp2p changes
-    + uuid not needed any more: identification is done via a hash from public key
-* will change from old [state_machine_future](https://docs.rs/state_machine_future/) to [smlang](https://crates.io/crates/smlang) state machine  
-    + old: is too complicated to use 
-    + old: no new releases and old future usage
-    + new: hopefully easier, more standard compatible
-    + new: updated recently
+    + uuid not needed any more: identification is done via a hash from public key, so called peer id
+    + change from old [state_machine_future](https://docs.rs/state_machine_future/) to [smlang](https://crates.io/crates/smlang) state machine
 * change/replace all net functionality to [libp2p](https://crates.parity.io/libp2p/index.html)
     + thrussh ssh server/client communication
     + mDNS from [mDNS](https://crates.parity.io/libp2p/mdns/index.html) 

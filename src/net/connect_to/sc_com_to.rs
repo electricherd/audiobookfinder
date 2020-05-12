@@ -7,37 +7,17 @@
 //! (which is documented excellently in https://github.com/fitzgen/state_machine_future), though
 //! version is only 0.1.6 as of now, but what does it really mean?.
 
-use futures::Poll;
-use state_machine_future::RentToOwn;
+use smlang::statemachine;
 
-#[derive(StateMachineFuture)]
-pub enum SCClient {
-    #[state_machine_future(start, transitions(Runner))]
-    CreateAccordingIP {},
-
-    #[state_machine_future(transitions(Finished, Runner))]
-    Runner {},
-
-    #[state_machine_future(ready)]
-    Finished(()),
-
-    #[state_machine_future(error)]
-    Error(()),
+statemachine! {
+    *StartState + Event1 / create_according_ip = Running,
+    Running + Event2 = StartState,
 }
 
-impl PollSCClient for SCClient {
-    fn poll_create_according_ip<'a>(
-        create_according_ip: &'a mut RentToOwn<'a, CreateAccordingIP>,
-    ) -> Poll<AfterCreateAccordingIP, ()> {
-        let _input = create_according_ip.take();
-        info!("connecting to client ...");
-        let created_client = Runner {};
-        transition!(created_client)
-    }
+pub struct SCClient {}
 
-    fn poll_runner<'a>(runner: &'a mut RentToOwn<'a, Runner>) -> Poll<AfterRunner, ()> {
-        let _input = runner.take();
-        info!("connecting to client and state chart...");
-        transition!(Finished(()))
+impl StateMachineContext for SCClient {
+    fn create_according_ip(&mut self) {
+        info!("connecting to client ...");
     }
 }

@@ -58,7 +58,7 @@ actix-web-actors = "1.0"
 webbrowser = "0.5"    # for opening webpage on machine
 get_if_addrs = "0.5"  # for range of localhosts
 
-state_machine_future = "0.2"  # state machine for client server communication for data exchange
+smlang = "0.3.3"      # state machine for client server communication for data exchange
 
 serde = "1.0"         # serialize anything, awesome for communication items
 serde_derive = "1.0"  # macro usage from serde
