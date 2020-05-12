@@ -3,7 +3,7 @@
 
 use super::super::{
     config,
-    connect_to::sc_com_to::{SCClient, SCClientFuture},
+    connect_to::sc_com_to::{self, SCClient},
     data::{DataAuth, DataSession},
     key_keeper,
 };
@@ -80,7 +80,7 @@ impl ComClient {
         // start the state machine
         //
         // toDo: safe this here with an assert or so
-        let _sc_future: SCClientFuture = SCClient::start();
+        let mut _sm = sc_com_to::StateMachine::new(SCClient {});
 
         let _ = thrussh::client::connect_future(
             (*ip_addr, config::net::PORT_SSH),

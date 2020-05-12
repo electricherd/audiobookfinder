@@ -43,9 +43,8 @@ fn main() {
             &[
                 &DESCRIPTION,
                 "\n\
-                 It reads data\
-                 from possibly multiple given path(s). Via local network it searches for other \
-                 instances of the program, and will later exchange data securely.\n\
+                 It reads data from possibly multiple given path(s). Via local network it searches \
+                 for other instances of the program, and will later exchange data securely.\n\
                  All information gathered will be used to find duplicates, versions of \
                  different quality, different tags for same content (spelling, \
                  incompleteness).\n\
@@ -197,19 +196,22 @@ fn main() {
     let net_runner = thread::Builder::new()
         .name("net_runner_thread".to_string())
         .spawn(move || {
-            if has_net {
-                if let Ok(mut network) = Net::new(
-                    client_id2,
-                    has_tui,
-                    // need to simplify and clarify this here ......
-                    // but this lock unwrap is safe
-                    tx_net_mut_arc.lock().unwrap().clone(),
-                ) {
-                    if network.start_com_server().is_ok() {
-                        task::block_on(network.lookup());
+            let net_runner_future = async move {
+                if has_net {
+                    if let Ok(mut network) = Net::new(
+                        client_id2,
+                        has_tui,
+                        // need to simplify and clarify this here ......
+                        // but this lock unwrap is safe
+                        tx_net_mut_arc.lock().unwrap().clone(),
+                    ) {
+                        if network.start_com_server().is_ok() {
+                            task::block_on(network.lookup());
+                        }
                     }
                 }
-            }
+            };
+            task::block_on(net_runner_future);
         })
         .unwrap();
 

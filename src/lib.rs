@@ -27,8 +27,6 @@ extern crate get_if_addrs;
 extern crate hostname;
 extern crate webbrowser;
 
-#[macro_use]
-extern crate state_machine_future;
 pub mod ctrl;
 
 // data
@@ -52,7 +50,7 @@ extern crate futures_util;
 extern crate ring;
 extern crate thrussh;
 extern crate thrussh_keys;
-extern crate tokio_io;
+
 #[macro_use]
 extern crate lazy_static;
 
