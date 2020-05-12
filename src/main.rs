@@ -14,7 +14,6 @@ use adbflib::{
     logit,
     net::{key_keeper, Net},
 };
-
 use async_std::task;
 use rayon::prelude::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator};
 use std::{
@@ -22,6 +21,7 @@ use std::{
     sync::{mpsc, Arc, Mutex},
     thread,
 };
+use tokio::runtime;
 
 static INPUT_FOLDERS: &str = "folders";
 static APP_TITLE: &str = concat!("The audiobook finder (", env!("CARGO_PKG_NAME"), ")");
@@ -193,9 +193,11 @@ fn main() {
 
     // start the net runner thread
     let tx_net_mut_arc = Arc::new(tx_net_mut);
+
     let net_runner = thread::Builder::new()
         .name("net_runner_thread".to_string())
         .spawn(move || {
+            let mut tokio_rt = runtime::Runtime::new().unwrap();
             let net_runner_future = async move {
                 if has_net {
                     if let Ok(mut network) = Net::new(
@@ -211,7 +213,7 @@ fn main() {
                     }
                 }
             };
-            task::block_on(net_runner_future);
+            tokio_rt.block_on(net_runner_future);
         })
         .unwrap();
 

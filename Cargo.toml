@@ -69,6 +69,7 @@ ring = "0.16"          # crypto, used for random generation
 thrussh = "0.21"       # ssh server client crate for communication
 thrussh-keys = "0.11"  # ssh server client crate for communication
 tokio-io = "0.1"       # has to be same as thrussh uses
+tokio = "0.2"          # intermediate to fix panic until thrussh with tokio is removed
 
 # cursive is the tui
 [dependencies.cursive]
