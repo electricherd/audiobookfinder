@@ -8,6 +8,7 @@ use ring;
 use std::{sync::Arc, thread, time::Duration};
 use thrussh;
 use thrussh_keys::key;
+use tokio::{self, runtime};
 
 pub struct ConnectFromOutside {}
 
@@ -28,7 +29,10 @@ impl ConnectFromOutside {
                 let replication_server = ComServer { peer_id: peer_id };
                 let address_string = ["0.0.0.0", ":", &config::net::PORT_SSH.to_string()].concat();
 
-                thrussh::server::run(config, &address_string, replication_server);
+                let mut tokio_rt = runtime::Runtime::new().unwrap();
+                tokio_rt.block_on(async move {
+                    thrussh::server::run(config, &address_string, replication_server)
+                });
 
                 warn!("SSH ComServer stopped!!");
             })

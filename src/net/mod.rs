@@ -9,13 +9,15 @@ pub mod key_keeper;
 
 use self::{connect_from::ConnectFromOutside, connect_to::ConnectToOther};
 use super::{config, ctrl};
-use avahi_dns_sd::{self, DNSService};
 use futures_util::{pin_mut, stream::StreamExt, TryFutureExt};
-use io_mdns::{self, RecordKind};
-use libp2p::PeerId;
+use libp2p::{
+    mdns::{service::MdnsPacket, MdnsService},
+    PeerId,
+};
+use std::borrow::Borrow;
 use std::{
     self,
-    net::IpAddr,
+    net::SocketAddr,
     sync::{mpsc, Arc, Mutex},
     thread,
     time::Duration,
@@ -30,14 +32,10 @@ enum ToThread<T: Send + Clone> {
 /// The Net component keeps controll about everything from net.
 pub struct Net {
     peer_id: PeerId,
-    addresses_found: Arc<Mutex<Vec<IpAddr>>>,
+    addresses_found: Arc<Mutex<Vec<SocketAddr>>>,
     tui_sender: mpsc::Sender<ctrl::SystemMsg>,
     has_tui: bool,
     ssh_handle: thread::JoinHandle<()>,
-    // deallocate and everything will be done in drop of Net,
-    // so I can:
-    #[allow(dead_code)]
-    dns_handle: DNSService,
 }
 
 impl Net {
@@ -45,24 +43,15 @@ impl Net {
         peer_id: PeerId,
         tui: bool,
         sender: mpsc::Sender<ctrl::SystemMsg>,
-    ) -> Result<Net, avahi_dns_sd::DNSError> {
+    ) -> Result<Net, std::io::Error> {
         // the drop of self.dns_handle will unregister
         // so I need to keep it like here :-(
-        let dns_service = DNSService::register(
-            Some(config::net::MDNS_REGISTER_NAME),
-            config::net::MDNS_SERVICE_NAME,
-            None,
-            None,
-            config::net::PORT_MDNS,
-            &["path=/"],
-        )?;
         let net = Net {
             peer_id: peer_id,
             addresses_found: Arc::new(Mutex::new(Vec::new())),
             tui_sender: sender,
             has_tui: tui,
             ssh_handle: thread::spawn(|| {}), // empty join handle
-            dns_handle: dns_service,
         };
         Ok(net)
     }
@@ -82,9 +71,9 @@ impl Net {
     // threads to connect to them.
     // It uses timeouts, checkups.
     pub async fn lookup(&mut self) {
-        // we are sending IpAddress ToThread
+        // we are sending SocketAddr ToThread
 
-        let (sender_ssh_client, receiver_client) = mpsc::channel::<ToThread<IpAddr>>();
+        let (sender_ssh_client, receiver_client) = mpsc::channel::<ToThread<SocketAddr>>();
         let sender_ssh_client_stop = sender_ssh_client.clone();
         // I might not need that one here
         // maybe to attach some more data
@@ -104,6 +93,7 @@ impl Net {
             .spawn(move || {
                 //
                 //
+                info!("Creating new threads to connecting clients started");
                 Self::connect_new_clients(
                     receiver_client,
                     borrow_arc,
@@ -113,50 +103,27 @@ impl Net {
                 );
             });
 
-        // use a timeout to stop search after a time
-        // the nice one should work stop gracefully,
-        let (timeout_nice_sender, timeout_nice_receiver) = mpsc::channel();
-        let (timeout_nice_renewer, timeout_nice_recover) = mpsc::channel();
-
-        let _timeout_graceful_thread = thread::Builder::new()
-            .name("timeout_graceful_thread".to_string())
-            .spawn(move || loop {
-                thread::sleep(Duration::from_secs(config::net::MDNS_TIMEOUT_SEC as u64));
-                // if has been recovered until here ... continue loop
-                match timeout_nice_recover.try_recv() {
-                    Ok(_) | Err(mpsc::TryRecvError::Disconnected) => {
-                        debug!("graceful time out sent....");
-                        timeout_nice_sender.send(()).unwrap();
-                        break; // leave loop and _timeout_graceful_thread
-                    }
-                    Err(mpsc::TryRecvError::Empty) => {
-                        debug!("graceful time out suspended");
-                    }
-                }
-            });
-
         // statistics
         let mut count_valid = 0;
         let mut count_no_cast = 0;
 
         // prepare everything for mdns thread
-        let (mdns_send_ip, mdns_receive_ip) = mpsc::channel::<ToThread<io_mdns::Record>>();
+        let (mdns_send_ip, mdns_receive_ip) = mpsc::channel::<ToThread<SocketAddr>>();
 
         let mdns_send_stop = mdns_send_ip.clone();
 
         // take input from mdns_discoper_thread
-        // (new ssh client discovered, or renew timeout).
-        // but also sends if time out a timeout back to
-        // mdns_discover.
+        // (new ssh client discovered).
+        //
         // If client good send sender_ssh_client to
         // _get_ip_thread
         let _take_mdns_input_thread = thread::Builder::new()
             .name("take_mdns_input_thread".to_string())
             .spawn(move || {
+                info!("Processing mdns input threads created!");
                 Self::take_mdns_input(
                     mdns_receive_ip,
                     sender_ssh_client,
-                    timeout_nice_renewer,
                     ctrl_sender2,
                     has_tui,
                     // change these
@@ -165,98 +132,78 @@ impl Net {
                 );
             });
 
-        let mdns_response = Self::async_mdns_discover(mdns_send_ip, timeout_nice_receiver);
-        let run_futures = mdns_response.and_then(|count_response| async move {
-            if !has_tui {
-                let output_string = format!(
-                    "no response from : {no_resp:>width$}\n\
+        Self::async_mdns_discover(mdns_send_ip)
+            .and_then(|count_response| async move {
+                if !has_tui {
+                    let output_string = format!(
+                        "no response from : {no_resp:>width$}\n\
                      not castable     : {no_cast:>width$}\n",
-                    no_resp = count_response,
-                    no_cast = count_no_cast,
-                    width = 3
-                );
-                info!("{}", output_string);
-            }
-            Ok(())
-        });
-        run_futures.await;
+                        no_resp = count_response,
+                        no_cast = count_no_cast,
+                        width = 3
+                    );
+                    info!("{}", output_string);
+                }
+                Ok(())
+            })
+            .await
+            .unwrap();
 
         // other thread should not wait for new messages after all
         sender_ssh_client_stop.send(ToThread::Stop).unwrap();
         mdns_send_stop.send(ToThread::Stop).unwrap();
     }
 
-    fn return_address(rk: &RecordKind) -> (Option<String>, Option<IpAddr>) {
-        let (out_string, addr): (Option<String>, Option<IpAddr>) = match *rk {
-            RecordKind::A(addr) => (Some(addr.to_string()), Some(addr.into())),
-            RecordKind::AAAA(addr) => (Some(addr.to_string()), Some(addr.into())),
-            RecordKind::CNAME(ref out) => (Some(format!("{}", out.clone())), None),
-            RecordKind::MX { ref exchange, .. } => (Some(exchange.clone()), None),
-            RecordKind::TXT(ref vec_out) => (Some(vec_out.join(",")), None),
-            RecordKind::PTR(ref out) => (Some(out.clone()), None),
-            _ => (None, None),
-        };
-        (out_string, addr)
-    }
-
     async fn async_mdns_discover(
-        mdns_send_ip: std::sync::mpsc::Sender<ToThread<io_mdns::Record>>,
-        timeout_nice_receiver: std::sync::mpsc::Receiver<()>,
-    ) -> Result<usize, io_mdns::Error> {
-        // mdns_send_ip  std::sync::mpsc::Sender<net::ToThread<(usize, io_mdns::Record)>>
-        //timeout_nice_receiver  std::sync::mpsc::Receiver<()>
+        mdns_send_ip: std::sync::mpsc::Sender<ToThread<SocketAddr>>,
+    ) -> Result<usize, std::io::Error> {
         let mut count_no_response: usize = 0;
 
-        // must be combined
-        let full_name = [
-            config::net::MDNS_REGISTER_NAME,
-            config::net::MDNS_SERVICE_NAME,
-        ]
-        .join(".");
-        info!("Searching for {:?}!", full_name);
+        let mut service = MdnsService::new()?;
+        info!("Started Mdns Service!");
 
-        let stream = io_mdns::discover::all(full_name, Duration::from_secs(15))?.listen();
-
-        info!("MDNS search: starting");
-        pin_mut!(stream);
-
-        // the long but with intermediate results version of:
-        //        while let await_return_response = stream.next().await
-        loop {
-            match stream.next().await {
-                Some(return_resonse) => {
-                    if let Ok(response) = return_resonse {
-                        match timeout_nice_receiver.try_recv() {
-                            Ok(_) | Err(mpsc::TryRecvError::Disconnected) => {
-                                warn!(
-                                    "MDNS search: timeout received (should have been {:?} sec)",
-                                    config::net::MDNS_TIMEOUT_SEC
-                                );
-                                break; // leave loop
+        async move {
+            info!("Starting Mdns Looping!");
+            loop {
+                info!("taking package ...");
+                let (srv, packet) = service.next().await;
+                match packet {
+                    MdnsPacket::Query(query) => {
+                        // We detected a libp2p mDNS query on the network. In a real application, you
+                        // probably want to answer this query by doing `query.respond(...)`.
+                        info!("Detected query from {:?}", query.remote_addr());
+                    }
+                    MdnsPacket::Response(response) => {
+                        // We detected a libp2p mDNS response on the network. Responses are for
+                        // everyone and not just for the requester, which makes it possible to
+                        // passively listen.
+                        for peer in response.discovered_peers() {
+                            info!("Discovered peer {:?}", peer.id());
+                            // These are the self-reported addresses of the peer we just discovered.
+                            for addr in peer.addresses() {
+                                println!(" Address = {:?}", addr);
                             }
-                            Err(mpsc::TryRecvError::Empty) => {
-                                // do nothing
-                            }
+                            // mdns_send_ip  std::sync::mpsc::Sender<net::ToThread<SocketAddr>>
+                            count_no_response += 1;
                         }
-                        for record in response.records() {
-                            mdns_send_ip.send(ToThread::Data(record.clone())).unwrap();
-                        }
-                    } else {
-                        count_no_response += 1;
+                    }
+                    MdnsPacket::ServiceDiscovery(query) => {
+                        // The last possibility is a service detection query from DNS-SD.
+                        // Just like `Query`, in a real application you probably want to call
+                        // `query.respond`.
+                        info!("Detected service query from {:?}", query.remote_addr());
                     }
                 }
-                _ => {
-                    count_no_response += 1;
-                }
+                service = srv
             }
         }
+        .await;
         Ok(count_no_response)
     }
 
     fn take_mdns_input(
-        mdns_receive_ip: std::sync::mpsc::Receiver<ToThread<io_mdns::Record>>,
-        sender_ssh_client: std::sync::mpsc::Sender<ToThread<IpAddr>>,
-        timeout_nice_renewer: std::sync::mpsc::Sender<()>,
+        mdns_receive_ip: std::sync::mpsc::Receiver<ToThread<SocketAddr>>,
+        sender_ssh_client: std::sync::mpsc::Sender<ToThread<SocketAddr>>,
         ctrl_sender: std::sync::mpsc::Sender<ctrl::SystemMsg>,
         has_tui: bool,
         count_no_cast: &mut usize,
@@ -267,16 +214,10 @@ impl Net {
                 Ok(good) => {
                     match good {
                         ToThread::Data(recv_mesg) => {
-                            let (_, addr): (Option<String>, Option<IpAddr>) =
-                                Self::return_address(&recv_mesg.kind);
-                            if let Some(valid_addr) = addr {
-                                *count_valid += 1;
-                                sender_ssh_client
-                                    .send(ToThread::Data(valid_addr.clone()))
-                                    .unwrap();
-                                // renew time out
-                                timeout_nice_renewer.send(()).unwrap();
-                            }
+                            *count_valid += 1;
+                            sender_ssh_client
+                                .send(ToThread::Data(recv_mesg.clone()))
+                                .unwrap();
                         }
                         ToThread::Stop => {
                             break; //break loop
@@ -302,8 +243,8 @@ impl Net {
     }
 
     fn connect_new_clients(
-        receiver_client: std::sync::mpsc::Receiver<ToThread<IpAddr>>,
-        borrow_arc: std::sync::Arc<std::sync::Mutex<std::vec::Vec<IpAddr>>>,
+        receiver_client: std::sync::mpsc::Receiver<ToThread<SocketAddr>>,
+        borrow_arc: std::sync::Arc<std::sync::Mutex<std::vec::Vec<SocketAddr>>>,
         ctrl_sender: std::sync::mpsc::Sender<ctrl::SystemMsg>,
         peer_id: PeerId,
         has_tui: bool,

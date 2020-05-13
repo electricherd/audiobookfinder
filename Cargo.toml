@@ -33,9 +33,7 @@ clap = "2.33"         # for the command line parsing
 dirs = "2.0"          # to browse dirs fast in taglib
 lazy_static = "1.4"   # awesome lib for lazy data structures
 
-dns-sd  = "0.1"     # need avahi-compat-client-dev lib
 hostname = "^0.3"    # for host recognition
-mdns = "1.1"        # to search other mdns clients
 
 env_logger = "0.7"     # alongside log for logging
 flexi_logger = "0.15"  # a more flexible logger
