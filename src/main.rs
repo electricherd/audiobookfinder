@@ -198,6 +198,7 @@ fn main() {
         .name("net_runner_thread".to_string())
         .spawn(move || {
             let mut tokio_rt = runtime::Runtime::new().unwrap();
+            println!("Tokio Runtime!!");
             let net_runner_future = async move {
                 if has_net {
                     if let Ok(mut network) = Net::new(
@@ -209,11 +210,13 @@ fn main() {
                     ) {
                         if network.start_com_server().is_ok() {
                             task::block_on(network.lookup());
+                            println!("Tokio lookup Future!!");
                         }
                     }
                 }
             };
             tokio_rt.block_on(net_runner_future);
+            println!("Tokio Runtime done!!");
         })
         .unwrap();
 

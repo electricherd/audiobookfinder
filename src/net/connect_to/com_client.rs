@@ -10,7 +10,7 @@ use super::super::{
 use bincode;
 use futures::{self, Future};
 use libp2p::PeerId;
-use std::{net::IpAddr, sync::Arc};
+use std::{net::SocketAddr, sync::Arc};
 use thrussh;
 use thrussh_keys;
 use tokio_io;
@@ -71,7 +71,7 @@ impl ComClient {
         ComClient { peer_id: peer_id }
     }
 
-    pub fn run(self, configuration: Arc<thrussh::client::Config>, ip_addr: &IpAddr) {
+    pub fn run(self, configuration: Arc<thrussh::client::Config>, addr: &SocketAddr) {
         let id = self.peer_id.clone();
 
         // just use a copy to arc
@@ -82,32 +82,26 @@ impl ComClient {
         // toDo: safe this here with an assert or so
         let mut _sm = sc_com_to::StateMachine::new(SCClient {});
 
-        let _ = thrussh::client::connect_future(
-            (*ip_addr, config::net::PORT_SSH),
-            configuration,
-            None,
-            self,
-            |connection| {
-                // tokio I assume starts within
-                info!("Key file, password ok!");
+        let _ = thrussh::client::connect_future(*addr, configuration, None, self, |connection| {
+            // tokio I assume starts within
+            info!("Key file, password ok!");
 
-                connection
-                    .authenticate_key(&config::net::SSH_CLIENT_USERNAME, key)
-                    .or_else(|e| {
-                        error!("Authentification didn't work!");
-                        Err(e)
-                    })
-                    .and_then(|valid_session| Self::continue_session(id, valid_session))
-                    .or_else(|e| {
-                        error!("Session could not be created!");
-                        Err(e)
-                    })
-            },
-        )
+            connection
+                .authenticate_key(&config::net::SSH_CLIENT_USERNAME, key)
+                .or_else(|e| {
+                    error!("Authentification didn't work!");
+                    Err(e)
+                })
+                .and_then(|valid_session| Self::continue_session(id, valid_session))
+                .or_else(|e| {
+                    error!("Session could not be created!");
+                    Err(e)
+                })
+        })
         .or_else(|_e| {
             error!(
                 "Connection with {:?}:{:?} could not be established!",
-                ip_addr,
+                addr,
                 config::net::PORT_SSH
             );
             Err(thrussh_keys::Error::IO(std::io::Error::new(
