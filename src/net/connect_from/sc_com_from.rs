@@ -26,8 +26,8 @@ impl StateMachineContext for SCServer {
     fn start_on_receive(&mut self, start_data: &StartEventData) -> WaitForAnswerData {
         info!("connecting to client ...");
         WaitForAnswerData {
-            client: client,
-            config: config,
+            client,
+            config,
             address: input.address,
         }
     }

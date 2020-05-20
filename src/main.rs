@@ -3,10 +3,9 @@
 //! find duplicates (later trying to solve the problem, also including their permissions, different names, but same albums, etc),
 //! get all stats about it).
 //! It acts as a wrapper around adbflib, which holds major parts of the implemention.
+extern crate adbflib;
 extern crate clap;
 extern crate rayon;
-
-extern crate adbflib;
 
 use adbflib::{
     ctrl::{Alive, Ctrl, ReceiveDialog, Status, SystemMsg},
@@ -14,14 +13,17 @@ use adbflib::{
     logit,
     net::{key_keeper, Net},
 };
-use async_std::task;
+use async_std::{
+    sync::{Arc, Mutex},
+    task,
+};
+use futures::try_join;
 use rayon::prelude::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator};
 use std::{
+    io::{self, Error, ErrorKind},
     path::Path, // path, clear
-    sync::{mpsc, Arc, Mutex},
-    thread,
+    sync::mpsc::{channel, Sender},
 };
-use tokio::runtime;
 
 static INPUT_FOLDERS: &str = "folders";
 static APP_TITLE: &str = concat!("The audiobook finder (", env!("CARGO_PKG_NAME"), ")");
@@ -34,7 +36,7 @@ const AUTHORS: &'static str = env!("CARGO_PKG_AUTHORS");
 const HOMEPAGE: &'static str = env!("CARGO_PKG_HOMEPAGE");
 const DESCRIPTION: &'static str = env!("CARGO_PKG_DESCRIPTION");
 
-fn main() {
+fn main() -> io::Result<()> {
     let parse_args = clap::App::new(APP_TITLE)
         .version(VERSION)
         .author(AUTHORS)
@@ -92,6 +94,8 @@ fn main() {
                 .required(false),
         )
         .get_matches();
+    //
+    let max_threads = rayon::current_num_threads();
 
     // tricky thing, but I really like that
     let all_pathes = if let Some(correct_input) = parse_args.values_of(INPUT_FOLDERS) {
@@ -100,209 +104,216 @@ fn main() {
         vec!["."]
     };
 
-    let max_threads = rayon::current_num_threads();
-
-    // check if tui and net search is needed
+    //
+    // check argments if tui and net search is needed
+    //
     let has_arg = |x: &str| parse_args.is_present(x);
 
-    // has to be mutable because in case of error this might be changed
-    let mut has_tui = has_arg(ARG_TUI);
+    let has_tui = has_arg(ARG_TUI);
     let has_webui = has_arg(ARG_WEBUI);
+    let has_net = has_arg(ARG_NET);
 
     // either one will have a ui, representing data and error messages
     let has_ui = has_tui || has_webui;
-    let has_net = has_arg(ARG_NET);
 
+    //
     // prepare the message system
-    let (tx, rx) = mpsc::channel::<SystemMsg>();
+    //
+    let (tx, rx) = channel::<SystemMsg>();
 
-    let tx_sys_mut = Mutex::new(tx.clone());
-    let tx_net_mut = Mutex::new(tx.clone());
-    let tx_net_alive_mut = Mutex::new(tx.clone());
+    // these will be taken directly
+    let tx_net = tx.clone();
+    let tx_net_alive = tx.clone();
 
-    // copy to vec<&str>
+    // for now this will stay wrapped
+    let tx_sys = Arc::new(Mutex::new(tx.clone()));
+
+    //
+    // pathes: copy to vec<&str>
+    //
     let tui_pathes = all_pathes.iter().map(|s| s.to_string()).collect();
-
-    // the signal to tell further processes, that tui creation worked
-    // and the messages actually go somewhere, otherwise it will assume: no tui
-    let (send_tui_worked, receiver_tui_worked) = mpsc::channel::<bool>();
-
-    // get an unique id for this client
-    let client_id = key_keeper::get_p2p_server_id();
-    let client_id1 = client_id.clone();
-    let client_id2 = client_id.clone();
-    let client_id3 = client_id.clone();
-
-    // start the tui thread
-    let ui_runner = thread::Builder::new()
-        .name("ui_runner_thread".to_string())
-        .spawn(move || {
-            // has_ui checked here, and not thread, because we need the handle even
-            // if we don't use it
-            if has_ui {
-                // start animation .... timer and so on
-                if has_tui {
-                    if let Ok(starter) = tx_net_alive_mut.lock() {
-                        starter
-                            .send(SystemMsg::StartAnimation(Alive::HostSearch, Status::ON))
-                            .unwrap();
-                    }
-                }
-                let controller = Ctrl::new_tui(client_id1, &tui_pathes, rx, tx.clone(), has_net);
-                match controller {
-                    Ok(mut controller) => {
-                        if has_webui {
-                            controller.run_webui()
-                        }
-                        if has_tui {
-                            // signal ok
-                            send_tui_worked.send(true).unwrap();
-                            drop(send_tui_worked);
-
-                            // do finally the necessary
-                            controller.run_tui();
-                        }
-                    }
-                    Err(error_text) => {
-                        println!("{:?}", error_text);
-                        // no tui could be created
-                        if has_tui {
-                            send_tui_worked.send(false).unwrap();
-                            drop(send_tui_worked);
-                        }
-                    }
-                }
-            }
-        })
-        .unwrap();
-
-    // blocks that one signal (but that should be very short time)
-    if has_tui {
-        if let Ok(tui_check_receiver) = receiver_tui_worked.recv() {
-            has_tui = tui_check_receiver;
-        } else {
-            println!("Something bad has happenend!!!");
-            has_tui = false;
-        }
-    }
-    // make it immutable from now on
-    let has_ui = has_tui || has_webui;
 
     // start the logging
     logit::Logit::init(logit::Log::File);
 
-    // start the net runner thread
-    let tx_net_mut_arc = Arc::new(tx_net_mut);
+    // start the main operators
+    //
+    task::block_on(async move {
+        // all optional components are wrapped into a future which can result in an empty future,
+        // but collector future will not be empty
+        // 1 - UI         ui_future   (optional)
+        // 2 - Net        net_future  (optional)
+        // 3 - Collector  collector_future
 
-    let net_runner = thread::Builder::new()
-        .name("net_runner_thread".to_string())
-        .spawn(move || {
-            let mut tokio_rt = runtime::Runtime::new().unwrap();
-            println!("Tokio Runtime!!");
-            let net_runner_future = async move {
-                if has_net {
-                    if let Ok(mut network) = Net::new(
-                        client_id2,
+        let ui_future = async move {
+            if has_ui {
+                match Ctrl::new(
+                    key_keeper::get_p2p_server_id(),
+                    &tui_pathes,
+                    rx,
+                    tx.clone(),
+                    has_net,
+                ) {
+                    Ok(mut controller) => {
+                        if has_webui {
+                            controller.run_webui().await?;
+                        }
+                        if has_tui {
+                            // do finally the necessary
+                            controller.run_tui();
+                            // and send startup animation
+                            // todo: maybe a timer spawn task? but then if a tui gets
+                            //       terminated to fast, send will panic!!
+                            tx_net_alive
+                                .send(SystemMsg::StartAnimation(Alive::HostSearch, Status::ON))
+                                .unwrap();
+                        }
+                        Ok::<(), Error>(())
+                    }
+                    Err(error_text) => {
+                        println!("{:?}", error_text);
+                        Err(Error::new(ErrorKind::Other, error_text))
+                    }
+                }
+            } else {
+                println!("no ui was created!");
+                Ok::<(), Error>(())
+            }
+        };
+
+        // 2 - Net Future
+        let net_future = async move {
+            // This thread will not end itself
+            // - can be terminated by ui message
+            // - collector finished (depending on definition)
+            if has_net {
+                println!("Net Started!!");
+                let net_system_messages = tx_net;
+                let mut network = Net::new(
+                    key_keeper::get_p2p_server_id(),
+                    has_tui,
+                    net_system_messages,
+                );
+                network.lookup().await;
+                println!("Net finished!!");
+                Ok::<(), Error>(())
+            } else {
+                println!("no net!");
+                Ok::<(), Error>(())
+            }
+        };
+
+        // start the parallel search threads with rayon, each path its own
+        let collector_future = async move {
+            // initialize the data collection for all
+            let init_collection = Collection::new(&key_keeper::get_p2p_server_id(), max_threads);
+            let collection_protected = Arc::new(Mutex::new(init_collection));
+
+            all_pathes.par_iter().enumerate().for_each(|(index, elem)| {
+                let collection_data_in_iterator = collection_protected.clone();
+                let system_messages_in_iterator = tx_sys.clone();
+                task::block_on(async move {
+                    search_in_path(
+                        has_ui,
                         has_tui,
-                        // need to simplify and clarify this here ......
-                        // but this lock unwrap is safe
-                        tx_net_mut_arc.lock().unwrap().clone(),
-                    ) {
-                        if network.start_com_server().is_ok() {
-                            task::block_on(network.lookup());
-                            println!("Tokio lookup Future!!");
-                        }
-                    }
-                }
-            };
-            tokio_rt.block_on(net_runner_future);
-            println!("Tokio Runtime done!!");
-        })
-        .unwrap();
-
-    // initialize the data collection for all
-    let init_collection = Collection::new(&client_id3, max_threads);
-    let collection_protected = Arc::new(Mutex::new(init_collection));
-
-    // start the search threads, each path its own
-    all_pathes.par_iter().enumerate().for_each(|(index, elem)| {
-        if !has_ui {
-            println!("[{:?}] looking into path {:?}", index, elem);
-        } else {
-            // start animation .... timer and so on
-            if has_tui {
-                if let Ok(starter) = tx_sys_mut.lock() {
-                    starter
-                        .send(SystemMsg::StartAnimation(
-                            Alive::BusyPath(index),
-                            Status::ON,
-                        ))
-                        .unwrap();
-                }
+                        collection_data_in_iterator,
+                        system_messages_in_iterator,
+                        index,
+                        elem,
+                    )
+                    .await;
+                });
+            });
+            if !has_ui {
+                collection_protected.lock().await.print_stats();
+                // todo: send terminate to net runner depending if it should continue or not
             }
-        }
-        let live_here = collection_protected.clone();
-        let locked_collection = live_here.lock();
-        if let Ok(mut pure_collection) = locked_collection {
-            match pure_collection.visit_dirs(Path::new(elem), &data::Collection::visit_files) {
-                Ok(local_stats) => {
-                    if has_ui {
-                        // stop animation
-                        if has_tui {
-                            if let Ok(stopper) = tx_sys_mut.lock() {
-                                stopper
-                                    .send(SystemMsg::StartAnimation(
-                                        Alive::BusyPath(index),
-                                        Status::OFF,
-                                    ))
-                                    .unwrap();
-                            }
-                        }
-                    } else {
-                        let text = format!(
-                            "\n\
-                             analyzed: {an:>width$}, faulty: {fa:>width$}\n\
-                             searched: {se:>width$}, other: {ot:>width$}",
-                            an = local_stats.analyzed,
-                            fa = local_stats.faulty,
-                            se = local_stats.searched,
-                            ot = local_stats.other,
-                            width = 3
-                        );
-                        println!("[{:?}] done {}", index, text);
-                    }
-                }
-                Err(_e) => {
-                    let text = format!("An error has occurred in search path [{}]!!", index);
-                    if has_ui {
-                        if has_tui {
-                            let debug_message_id = ReceiveDialog::Debug;
-                            let text = text.to_string();
-                            let debug_text = tx_sys_mut.lock();
-                            if let Ok(debug_text) = debug_text {
-                                debug_text
-                                    .send(SystemMsg::Update(debug_message_id, text))
-                                    .unwrap();
-                            }
-                        }
-                    } else {
-                        println!("{:?}", text);
-                    }
-                }
-            }
-        }
-    });
+            Ok::<(), Error>(())
+        };
 
+        // Compose all futures that possible threads inside are running
+        try_join!(ui_future, net_future, collector_future)
+    })
+    .and_then(|(_, _, _)| {
+        // shrink the 3 ok results to one
+        println!("done here");
+        Ok(())
+    })
+}
+
+async fn search_in_path(
+    has_ui: bool,
+    has_tui: bool,
+    collection_protected: Arc<Mutex<Collection>>,
+    mutex_system_msg: Arc<Mutex<Sender<SystemMsg>>>,
+    index: usize,
+    elem: &str,
+) {
     if !has_ui {
-        if let Ok(result_collection) = collection_protected.lock() {
-            result_collection.print_stats();
-        }
-        let _ = net_runner.join();
+        println!("[{:?}] looking into path {:?}", index, elem);
     } else {
-        let _ = ui_runner.join();
-        // if tui, net runner shall stop when tui stops
-        drop(net_runner);
+        // start animation .... timer and so on
+        if has_tui {
+            mutex_system_msg
+                .lock()
+                .await
+                .send(SystemMsg::StartAnimation(
+                    Alive::BusyPath(index),
+                    Status::ON,
+                ))
+                .unwrap_or_else(|_| {
+                    println!("... find a more graceful program termination, or consume it")
+                });
+        }
     }
 
-    println!("Finished!");
+    let locked_collection = &mut *collection_protected.lock().await;
+    match locked_collection.visit_dirs(Path::new(elem), &data::Collection::visit_files) {
+        Ok(local_stats) => {
+            if has_ui {
+                // stop animation
+                if has_tui {
+                    mutex_system_msg
+                        .lock()
+                        .await
+                        .send(SystemMsg::StartAnimation(
+                            Alive::BusyPath(index),
+                            Status::OFF,
+                        ))
+                        .unwrap_or_else(|_| {
+                            println!("... find a more graceful program termination, or consume it")
+                        });
+                }
+            } else {
+                let text = format!(
+                    "\n\
+                             analyzed: {an:>width$}, faulty: {fa:>width$}\n\
+                             searched: {se:>width$}, other: {ot:>width$}",
+                    an = local_stats.analyzed,
+                    fa = local_stats.faulty,
+                    se = local_stats.searched,
+                    ot = local_stats.other,
+                    width = 3
+                );
+                println!("[{:?}] done {}", index, text);
+            }
+        }
+        Err(_e) => {
+            let text = format!("An error has occurred in search path [{}]!!", index);
+            if has_ui {
+                if has_tui {
+                    let debug_message_id = ReceiveDialog::Debug;
+                    let text = text.to_string();
+                    mutex_system_msg
+                        .lock()
+                        .await
+                        .send(SystemMsg::Update(debug_message_id, text))
+                        .unwrap();
+                }
+            } else {
+                println!("{:?}", text);
+            }
+        }
+    }
+    ()
 }

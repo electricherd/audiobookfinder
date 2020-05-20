@@ -3,22 +3,22 @@
 use self::com_client::ComClient;
 use libp2p::PeerId;
 use std::{net::SocketAddr, sync::Arc, time::Duration};
-use thrussh;
 
 mod com_client;
 pub mod sc_com_to;
 
 pub struct ConnectToOther {
     connector: ComClient,
-    address: SocketAddr,
+    address: PeerId,
 }
 
 impl ConnectToOther {
-    pub fn new(peer_id: &PeerId, address: &SocketAddr) -> ConnectToOther {
-        let client = ComClient::new(peer_id.clone());
+    pub fn new(address: &PeerId) -> ConnectToOther {
+        let copy_address = address.clone();
+        let client = ComClient::new(copy_address.clone());
         ConnectToOther {
             connector: client,
-            address: address.clone(),
+            address: copy_address,
         }
     }
     pub fn run(self) {

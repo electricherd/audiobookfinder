@@ -6,6 +6,8 @@
 // ALL
 pub mod common;
 pub mod config;
+pub mod ctrl;
+pub mod logit;
 
 //logger
 #[macro_use]
@@ -13,7 +15,7 @@ extern crate log;
 extern crate env_logger;
 extern crate flexi_logger;
 extern crate syslog;
-pub mod logit;
+pub mod data;
 
 // ctrl
 // ctrl/tui
@@ -27,15 +29,12 @@ extern crate get_if_addrs;
 extern crate hostname;
 extern crate webbrowser;
 
-pub mod ctrl;
-
 // data
 extern crate serde;
 extern crate taglib;
 #[macro_use]
 extern crate serde_derive;
 extern crate tree_magic; // mime types
-pub mod data;
 
 // net
 extern crate bincode;
@@ -45,7 +44,6 @@ extern crate dirs;
 extern crate futures;
 extern crate futures_util;
 
-extern crate ring;
 extern crate thrussh;
 extern crate thrussh_keys;
 

@@ -1,24 +1,28 @@
 //! The TUI parts, greatly using [Cursive](https://gyscos.github.io/Cursive/cursive/index.html)
 //! showing table, the paths being searched, an alive for that, also the mDNS search performed
 //! and later status of the connection to the found clients.
+use super::super::{
+    common::ThreadPool,
+    config,
+    ctrl::{Alive, ReceiveDialog, Status, SystemMsg, UiMsg},
+};
 use cursive::{
     align,
     traits::*, //{Identifiable,select};
     views::{BoxView, Dialog, Layer, LinearLayout, ListView, Panel, TextView},
     Cursive,
 };
-use std::{iter::Iterator, sync::mpsc, thread, time::Duration};
-
-use super::super::{
-    common::ThreadPool,
-    config,
-    ctrl::{Alive, ReceiveDialog, Status, SystemMsg, UiMsg},
+use std::{
+    iter::Iterator,
+    sync::mpsc::{channel, Receiver, Sender},
+    thread,
+    time::Duration,
 };
 
 pub struct Tui {
-    pub ui_receiver: mpsc::Receiver<UiMsg>,
-    pub ui_sender: mpsc::Sender<UiMsg>,
-    pub system_sender: mpsc::Sender<SystemMsg>,
+    pub ui_receiver: Receiver<UiMsg>,
+    pub ui_sender: Sender<UiMsg>,
+    pub system_sender: Sender<SystemMsg>,
 
     handle: Cursive,
     alive: AliveDisplayData,
@@ -32,7 +36,7 @@ struct AliveState {
 
 struct AliveDisplayData {
     host: AliveState,
-    pathes: Vec<AliveState>,
+    paths: Vec<AliveState>,
     timers: ThreadPool,
 }
 
@@ -44,7 +48,7 @@ enum AliveSym {
 }
 
 static RECT: usize = 40;
-static SEPERATOR: &str = "..";
+static SEPARATOR: &str = "..";
 static STR_ALIVE: [char; 6] = ['.', '|', '/', '-', '\\', '*']; // first char is start, last char is stop
 
 static DEBUG_TEXT_ID: &str = "debug_info";
@@ -59,14 +63,14 @@ static ID_HOST_ALIVE: &str = "id_host_alive";
 impl Tui {
     pub fn new(
         title: String,
-        system: mpsc::Sender<SystemMsg>,
+        system: Sender<SystemMsg>,
         pathes: &Vec<String>,
         with_net: bool,
     ) -> Result<Tui, String> {
         let later_handle = Self::build_tui(title, pathes, with_net)?;
 
         // now build the actual TUI object
-        let (tui_sender, tui_receiver) = mpsc::channel::<UiMsg>();
+        let (tui_sender, tui_receiver) = channel::<UiMsg>();
         let mut tui = Tui {
             handle: later_handle,
             ui_sender: tui_sender,
@@ -77,7 +81,7 @@ impl Tui {
                     draw_char: 0,
                     runs: false,
                 },
-                pathes: vec![
+                paths: vec![
                     AliveState {
                         draw_char: 0,
                         runs: false,
@@ -134,8 +138,8 @@ impl Tui {
                             let (already_running, toggle, timeout_id): (bool, &mut bool, usize) =
                                 match signal {
                                     Alive::BusyPath(nr) => (
-                                        self.alive.pathes[nr].runs,
-                                        &mut self.alive.pathes[nr].runs,
+                                        self.alive.paths[nr].runs,
+                                        &mut self.alive.paths[nr].runs,
                                         nr + 1,
                                     ),
                                     Alive::HostSearch => {
@@ -156,7 +160,7 @@ impl Tui {
                         Status::OFF => {
                             self.toggle_alive(signal.clone(), AliveSym::Stop);
                             let toggle: &mut bool = match signal {
-                                Alive::BusyPath(nr) => &mut self.alive.pathes[nr].runs,
+                                Alive::BusyPath(nr) => &mut self.alive.paths[nr].runs,
                                 Alive::HostSearch => &mut self.alive.host.runs,
                             };
                             *toggle = false;
@@ -165,7 +169,7 @@ impl Tui {
                 }
                 UiMsg::TimeOut(which) => {
                     let (continue_timeout, timeout_id) = match which {
-                        Alive::BusyPath(nr) => (self.alive.pathes[nr].runs, nr + 1),
+                        Alive::BusyPath(nr) => (self.alive.paths[nr].runs, nr + 1),
                         Alive::HostSearch => (self.alive.host.runs, 0),
                     };
                     if continue_timeout {
@@ -211,14 +215,14 @@ impl Tui {
             } else if real_len < max_len / 2 {
                 out.push(el.chars().skip(real_len - max_len).collect::<String>());
             } else {
-                let diff = max_len - SEPERATOR.chars().count();
+                let diff = max_len - SEPARATOR.chars().count();
                 let real_middle = diff / 2;
                 let offset = if real_middle * 2 < diff { 1 } else { 0 };
 
                 let first_part = el.chars().take(real_middle + offset).collect::<String>();
                 let last_part = el.chars().skip(real_len - real_middle).collect::<String>();
 
-                out.push(format!("{}{}{}", first_part, SEPERATOR, last_part));
+                out.push(format!("{}{}{}", first_part, SEPARATOR, last_part));
             }
         }
         out
@@ -229,7 +233,7 @@ impl Tui {
             Alive::HostSearch => (ID_HOST_ALIVE.to_string(), &mut self.alive.host.draw_char),
             Alive::BusyPath(nr) => (
                 format!("{}{}", PATHS_PREFIX_ID, nr),
-                &mut self.alive.pathes[nr].draw_char,
+                &mut self.alive.paths[nr].draw_char,
             ),
         };
         let mut output = self.handle.find_id::<TextView>(&view_name);
@@ -400,11 +404,7 @@ mod tests {
             "Герман Гессе родился в семье немецких".into(),
             "Его мать Мария Гундерт (1842—1902) была".into(),
         ];
-        let expected_output: Vec<String> = vec![
-            "Герман ..мецких".into(),
-            "Его мат..) была".into(),
-        ];
+        let expected_output: Vec<String> = vec!["Герман ..мецких".into(), "Его мат..) была".into()];
         assert!(equal_with_boundary(&input_vec, &expected_output, boundary));
     }
-
 }
