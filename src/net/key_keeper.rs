@@ -1,6 +1,7 @@
 //! A component to use key
 
 use super::super::config;
+use async_std::sync::Arc;
 use dirs;
 use libp2p::identity::PublicKey::Ed25519;
 use libp2p::{
@@ -8,7 +9,6 @@ use libp2p::{
     identity::ed25519::{self, PublicKey},
     PeerId,
 };
-use std::{self, sync::Arc};
 use thrussh;
 use thrussh_keys;
 

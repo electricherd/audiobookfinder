@@ -8,9 +8,10 @@ mod webui;
 use self::tui::Tui;
 use self::webui::WebUI;
 use super::config;
+use async_std::task;
 use libp2p::PeerId;
-use std::sync::mpsc;
-use std::thread;
+use std::io::{self, Error, ErrorKind};
+use std::sync::mpsc::{Receiver, Sender};
 
 type PeerRepresentation = [u8; 16];
 
@@ -48,7 +49,7 @@ pub struct NetStats {
 }
 
 pub struct Ctrl {
-    rx: mpsc::Receiver<SystemMsg>,
+    rx: Receiver<SystemMsg>,
     ui: Tui,
     peer_id: PeerId,
     with_net: bool,
@@ -63,20 +64,20 @@ impl Ctrl {
     /// * 'receiver' - The receiver that takes incoming ctrl messages
     /// * 'sender'   - The sender that sends from ctrl
     /// * 'with_net' - If ctrl should consider net messages
-    pub fn new_tui(
+    pub fn new(
         new_id: PeerId,
         paths: &Vec<String>,
-        receiver: mpsc::Receiver<SystemMsg>,
-        sender: mpsc::Sender<SystemMsg>,
+        receiver: Receiver<SystemMsg>,
+        sender: Sender<SystemMsg>,
         with_net: bool,
-    ) -> Result<Ctrl, String> {
+    ) -> Result<Self, String> {
         let c_ui = Tui::new(new_id.to_string(), sender.clone(), &paths, with_net)?;
 
         Ok(Ctrl {
             rx: receiver,
             ui: c_ui,
             peer_id: new_id,
-            with_net: with_net,
+            with_net,
         })
     }
     /// Run the controller
@@ -103,19 +104,17 @@ impl Ctrl {
     }
 
     /// Run the controller
-    pub fn run_webui(&mut self) {
+    pub async fn run_webui(&mut self) -> io::Result<()> {
         let net_support = self.with_net;
         // todo: damn, please make this nice if you can
         let mut peer_representation: PeerRepresentation = [0 as u8; 16];
         peer_representation.copy_from_slice(&self.peer_id.as_bytes()[..16]);
-        if webbrowser::open(&["http://", config::net::WEBSOCKET_ADDR].concat()).is_ok() {
-            let _webui_runner = thread::Builder::new()
-                .name("web_ui_thread".to_string())
-                .spawn(move || {
-                    let _ = WebUI::new(peer_representation, net_support);
-                });
-        } else {
-            // Todo: debug
+        if webbrowser::open(&["http://", config::net::WEBSOCKET_ADDR].concat()).is_err() {
+            info!("Could not open browser!");
         }
+        task::spawn(async move {
+            WebUI::new(peer_representation, net_support).unwrap();
+        });
+        Ok(())
     }
 } // impl Controller
