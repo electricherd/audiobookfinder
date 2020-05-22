@@ -3,10 +3,10 @@ An example program to learn [Rust](https://www.rust-lang.org/) and meet its conc
 
 ### Why Rust?
 Rust is an awesome but difficult to learn programming language using different approaches and concepts to solve the current main software development issues for system programming:
- * Parallelism: what else to do with multi-core cpu, we are not getting much faster any more
  * Secure Programming Concepts: let the computer/compiler do what it can do better than a programmer: safe threading, error-concepts, forbid everything non-safe by default
  * Quality: high level language concepts, easy to embed and include high quality external packages, which lets you implement more functionality in less code
  * Embedded: easy cross compiling, interfaces to C, becoming better to be stripped down to core system functions for the sake of minimum code footprint
+ * Parallelism and Concurrency: what else to do with multi-core cpu, we are not getting much faster any more, and often cpus are idling due to blocking code. With async / await and futures Rust offers with its security features a nice way of dealing with it. 
  * Testing and Documentation: some build-in concepts
 
 Especially for IoT: I want secure and thereby safe products at home which cannot be turned into zombie devices by buffer overflow and injection, always think of what can go wrong, and let the compiler tell you when you do a common mistake.
@@ -39,6 +39,7 @@ So far only the state charts and their connection is not done but the general co
 It is an inline [CI](https://travis-ci.org/electricherd/audiobookfinder/) generated documentation which can be found [here](https://electricherd.github.io/audiobookfinder/audiobookfinder/index.html)! Rust does a nice job here as well!
 
 ### Changes
+* migrated most native threads to async green threads, as also most dependant external crates use more general futures approach
 * bumped to Rust 2018 features async/await in net module using futures in few occasion, but will continue with that
 * version changes of different used crates
 * changed this README, to add version changes to *Changes*, re-ordered, and made [Goals](#goals) as a check list, bumped version to v
@@ -61,9 +62,7 @@ It is an inline [CI](https://travis-ci.org/electricherd/audiobookfinder/) genera
 * applied single test file for travis run: took Bach's Toccata And Fugue In D Minor by Paul Pitman (licence PD)  [orangefreesounds](www.orangefreesounds.com/toccata-and-fugue-in-d-minor/) in rememberring [Monthy Python's grand rugby match](https://www.youtube.com/watch?v=HKv6o7YqHnE).
 * travis CI working
 * more documentation locally as html: `cargo doc --no-deps --open`
-* fixed ui with BoxView and correct id finding (looks like bug is in Cursive)
 * file logging in (use [glogg](http://glogg.bonnefon.org/))
-* updated all external crates
 * logging mechanism introduced (`logit.rs`). It was needed because of tui console output was not readable (either syslog or console)
  * run e.g. with `RUST_LOG=adbflib::net=debug RUST_BACKTRACE=full cargo run -- -n ~/Audiobooks`
 * ssh client with example key works, key now external
