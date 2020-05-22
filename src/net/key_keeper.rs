@@ -9,6 +9,7 @@ use libp2p::{
     identity::ed25519::{self, PublicKey},
     PeerId,
 };
+use std::io::{self, Error, ErrorKind};
 use thrussh;
 use thrussh_keys;
 
@@ -82,45 +83,45 @@ lazy_static! {
         let priv_key_path = config::net::SSH_CLIENT_SEC_KEY_PATH;
 
         // home is type changed, so always new ...
-        let key_reading_from_file_system = dirs::home_dir().and_then( |home| {
-            home.to_str().and_then( |m_home| {
-                let filename = [&m_home, priv_key_path].concat();
-                match std::fs::read(&filename) {
-                    Ok(mut buffer) => {
-                        // todo: normally e.g. with ssh that file should
-                        // be parsed, but for simplicity only hard 64 bytes
-                        if buffer.len() == 64 {
-                            if let Ok(right_formatted_key) = ed25519::Keypair::decode(&mut buffer[..64]) {
-                                Some(right_formatted_key)
+        // todo: looks awful but this will stay as something to look up for result
+        //       option handling (even the rustfmt formatter is on strike)!
+        let key_reading_from_file_system =
+            dirs::home_dir()
+            .ok_or_else(|| Error::new(ErrorKind::Other, "Home dir not set!"))
+            .and_then( |home| {
+                home.to_str()
+                .ok_or_else(|| Error::new(ErrorKind::Other, "Path to key file has illegal symbols!"))
+                .and_then(|m_home| {
+                    let filename = [&m_home, priv_key_path].concat();
+                    match std::fs::read(&filename) {
+                        Ok(mut buffer) => {
+                            // todo: normally e.g. with ssh that file should
+                            // be parsed, but for simplicity only hard 64 bytes
+                            if buffer.len() == 64 {
+                                if let Ok(right_formatted_key) =
+                                        ed25519::Keypair::decode(&mut buffer[..64]) {
+                                    Result::Ok(right_formatted_key)
+                                } else {
+                                    Err(Error::new(ErrorKind::Other, "Key file correct format!"))
+                                }
                             } else {
-                                error!("Key file correct format!");
-                                None
+                                Err(Error::new(ErrorKind::Other, "Key file not 64 byte length!"))
                             }
-                        } else {
-                            error!("Key file not 64 byte length!");
-                            None
+                        },
+                        Err(error) => {
+                            let error_text = format!("Key file could not be read: {:?} ",
+                                                      error.to_string());
+                            Err(Error::new(ErrorKind::Other, error_text))
                         }
-                    },
-                    Err(_) => {
-                        // todo: distinguish between io file errors
-                        error!("Key file could not be read!");
-                        None
                     }
                 }
-            }).or_else( || {
-                error!("Path to key file has illegal symbols!");
-                None
-            }
             )
-        }).or_else(|| {
-            error!("Home dir not set!");
-            None
         });
 
-        if let Some(good_key) = key_reading_from_file_system {
-            good_key
-        } else {
+        key_reading_from_file_system.unwrap_or_else(|error| {
+            info!("{:?}",error.to_string());
+            info!("Creating an own key since no good one existed!");
             ed25519::Keypair::generate()
-        }
+        })
     };
 }

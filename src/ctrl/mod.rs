@@ -112,9 +112,10 @@ impl Ctrl {
         if webbrowser::open(&["http://", config::net::WEBSOCKET_ADDR].concat()).is_err() {
             info!("Could not open browser!");
         }
-        task::spawn(async move {
-            WebUI::new(peer_representation, net_support).unwrap();
-        });
-        Ok(())
+        //task::spawn(async move { WebUI::new(peer_representation, net_support) }).await
+        WebUI::new(peer_representation, net_support).and_then(|_webui| {
+            // _webui is good and see what we can do
+            Ok(())
+        })
     }
 } // impl Controller
