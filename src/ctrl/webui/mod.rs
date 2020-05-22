@@ -17,6 +17,7 @@ use get_if_addrs;
 use hostname;
 use std::{
     ffi::OsString,
+    io,
     net::IpAddr,
     string::String,
     sync::{Arc, Mutex},
@@ -74,7 +75,7 @@ impl fmt::Display for WebCommand {
 //}
 
 impl WebUI {
-    pub fn new(id: PeerRepresentation, serve: bool) -> Result<Self, ()> {
+    pub fn new(id: PeerRepresentation, serve: bool) -> io::Result<Self> {
         let sys = actix::System::new("http-server");
         let connection_count = Arc::new(Mutex::new(0));
 
@@ -160,14 +161,12 @@ impl WebUI {
 
         // finally start everything
         web_server.start();
-        if sys.run().is_ok() {
+        sys.run().and_then(|_| {
             Ok(WebUI {
-                id: id,
+                id,
                 serve_others: serve,
             })
-        } else {
-            Err(())
-        }
+        })
     }
 
     #[allow(dead_code)]
