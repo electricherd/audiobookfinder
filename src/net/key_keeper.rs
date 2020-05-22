@@ -122,6 +122,7 @@ lazy_static! {
             info!("{:?}",error.to_string());
             info!("Creating an own key since no good one existed!");
             ed25519::Keypair::generate()
+            // todo: store it then or when finishing by signing it
         })
     };
 }
