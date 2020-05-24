@@ -13,16 +13,14 @@ use async_std::{
     sync::{Arc, Mutex},
     task,
 };
-use futures_util::{pin_mut, stream::StreamExt, TryFutureExt};
+use futures_util::{pin_mut, TryFutureExt};
 use libp2p::{
     mdns::{service::MdnsPacket, MdnsService},
     PeerId,
 };
-use std::borrow::Borrow;
 use std::{
     self,
     sync::mpsc::{channel, Sender},
-    time::Duration,
 };
 
 #[derive(Clone)]
