@@ -8,9 +8,8 @@ mod webui;
 use self::tui::Tui;
 use self::webui::WebUI;
 use super::config;
-use async_std::task;
 use libp2p::PeerId;
-use std::io::{self, Error, ErrorKind};
+use std::io;
 use std::sync::mpsc::{Receiver, Sender};
 
 type PeerRepresentation = [u8; 16];
