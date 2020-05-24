@@ -106,7 +106,7 @@ impl WebUI {
                 }
             })
             .fold(
-                HttpServer::new(move || {
+                Ok(HttpServer::new(move || {
                     App::new()
                         // each server has an initial state (e.g. 0 connections)
                         .register_data(initial_state.clone())
@@ -136,35 +136,34 @@ impl WebUI {
                             web::resource("/js/{name}").route(web::get().to(WebUI::bootstrap_js)),
                         )
                         .service(web::resource("/ws").route(web::get().to(WebUI::ws_index)))
-                }),
-                |web_server, ipaddr| {
-                    web_server
-                        .bind(match ipaddr.addr.ip() {
+                })),
+                |web_server_binding_chain: Result<HttpServer<_, _, _, _>, io::Error>, ipaddr| {
+                    web_server_binding_chain.and_then(|webserver| {
+                        let bind_format = match ipaddr.addr.ip() {
                             IpAddr::V4(ipv4) => {
                                 format!("{}:{:?}", ipv4.to_string(), config::net::PORT_WEBSOCKET)
                             }
                             IpAddr::V6(ipv6) => {
                                 format!("{}:{:?}", ipv6.to_string(), config::net::PORT_WEBSOCKET)
                             }
-                        })
-                        .map(|good_bind| {
-                            info!("{} worked!", ipaddr.addr.ip().to_string());
-                            good_bind
-                        })
-                        .map_err(|bad_bind| {
-                            error!("{} failed!!", ipaddr.addr.ip().to_string());
-                            bad_bind
-                        })
-                        .unwrap()
+                        };
+                        let try_bind = webserver.bind(bind_format.clone()).map_err(|error| {
+                            error!("On IP ({:?}): {:?}", bind_format, error);
+                            error
+                        })?;
+                        Ok(try_bind)
+                    })
                 },
             );
 
-        // finally start everything
-        web_server.start();
-        sys.run().and_then(|_| {
-            Ok(WebUI {
-                id,
-                serve_others: serve,
+        // finally start everything, failure was funnily not already captured by ? above???
+        web_server.and_then(|web_server_correct| {
+            web_server_correct.start();
+            sys.run().and_then(|_| {
+                Ok(WebUI {
+                    id,
+                    serve_others: serve,
+                })
             })
         })
     }
