@@ -56,13 +56,13 @@ actix-web-actors = "1.0"
 webbrowser = "0.5"    # for opening webpage on machine
 get_if_addrs = "0.5"  # for range of localhosts
 
-smlang = "0.3.3"      # state machine for client server communication for data exchange
+smlang = "0.3"      # state machine for client server communication for data exchange
 
 serde = "1.0"         # serialize anything, awesome for communication items
 serde_derive = "1.0"  # macro usage from serde
 bincode = "1.2"       # another binary en/decoder as serde
 
-libp2p = "0.18.1"      # network stack for secure p2p with mdns and general communication
+libp2p = "0.19"      # network stack for secure p2p with mdns and general communication
 thrussh = "0.21"       # ssh server client crate for communication
 thrussh-keys = "0.11"  # ssh server client crate for communication
 tokio-io = "0.1"       # has to be same as thrussh uses
