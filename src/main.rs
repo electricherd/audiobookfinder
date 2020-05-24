@@ -22,7 +22,10 @@ use rayon::prelude::{IndexedParallelIterator, IntoParallelRefIterator, ParallelI
 use std::{
     io::{self, Error, ErrorKind},
     path::Path, // path, clear
-    sync::mpsc::{channel, Sender},
+    sync::{
+        self,
+        mpsc::{channel, Sender},
+    },
 };
 
 static INPUT_FOLDERS: &str = "folders";
@@ -207,25 +210,29 @@ fn main() -> io::Result<()> {
         let collector_future = async move {
             // initialize the data collection for all
             let init_collection = Collection::new(&key_keeper::get_p2p_server_id(), max_threads);
-            let collection_protected = Arc::new(Mutex::new(init_collection));
+            let collection_protected = sync::Arc::new(sync::Mutex::new(init_collection));
+
+            // todo: is this right? async lock to create a sync message mutex?
+            let synced_sys_messages = tx_sys.lock().await.clone();
+            let tx_sync_sys = sync::Arc::new(sync::Mutex::new(synced_sys_messages));
 
             all_pathes.par_iter().enumerate().for_each(|(index, elem)| {
                 let collection_data_in_iterator = collection_protected.clone();
-                let system_messages_in_iterator = tx_sys.clone();
-                task::block_on(async move {
-                    search_in_path(
-                        has_ui,
-                        has_tui,
-                        collection_data_in_iterator,
-                        system_messages_in_iterator,
-                        index,
-                        elem,
-                    )
-                    .await;
-                });
+                let system_messages_in_iterator = tx_sync_sys.clone();
+                search_in_single_path(
+                    has_ui,
+                    has_tui,
+                    collection_data_in_iterator,
+                    system_messages_in_iterator,
+                    index,
+                    elem,
+                );
             });
             if !has_ui {
-                collection_protected.lock().await.print_stats();
+                collection_protected
+                    .lock()
+                    .and_then(|locked_collection| Ok(locked_collection.print_stats()))
+                    .unwrap_or(())
                 // todo: send terminate to net runner depending if it should continue or not
             }
             Ok::<(), Error>(())
@@ -241,11 +248,11 @@ fn main() -> io::Result<()> {
     })
 }
 
-async fn search_in_path(
+fn search_in_single_path(
     has_ui: bool,
     has_tui: bool,
-    collection_protected: Arc<Mutex<Collection>>,
-    mutex_system_msg: Arc<Mutex<Sender<SystemMsg>>>,
+    collection_protected: sync::Arc<sync::Mutex<Collection>>,
+    mutex_system_msg: sync::Arc<sync::Mutex<Sender<SystemMsg>>>,
     index: usize,
     elem: &str,
 ) {
@@ -256,18 +263,22 @@ async fn search_in_path(
         if has_tui {
             mutex_system_msg
                 .lock()
-                .await
-                .send(SystemMsg::StartAnimation(
-                    Alive::BusyPath(index),
-                    Status::ON,
-                ))
+                .and_then(|locked_start_message| {
+                    locked_start_message
+                        .send(SystemMsg::StartAnimation(
+                            Alive::BusyPath(index),
+                            Status::ON,
+                        ))
+                        .unwrap();
+                    Ok(())
+                })
                 .unwrap_or_else(|_| {
                     println!("... find a more graceful program termination, or consume it")
                 });
         }
     }
 
-    let locked_collection = &mut *collection_protected.lock().await;
+    let locked_collection = &mut *collection_protected.lock().unwrap();
     match locked_collection.visit_dirs(Path::new(elem), &data::Collection::visit_files) {
         Ok(local_stats) => {
             if has_ui {
@@ -275,11 +286,15 @@ async fn search_in_path(
                 if has_tui {
                     mutex_system_msg
                         .lock()
-                        .await
-                        .send(SystemMsg::StartAnimation(
-                            Alive::BusyPath(index),
-                            Status::OFF,
-                        ))
+                        .and_then(|locked_stop_message| {
+                            locked_stop_message
+                                .send(SystemMsg::StartAnimation(
+                                    Alive::BusyPath(index),
+                                    Status::OFF,
+                                ))
+                                .unwrap();
+                            Ok(())
+                        })
                         .unwrap_or_else(|_| {
                             println!("... find a more graceful program termination, or consume it")
                         });
@@ -306,8 +321,12 @@ async fn search_in_path(
                     let text = text.to_string();
                     mutex_system_msg
                         .lock()
-                        .await
-                        .send(SystemMsg::Update(debug_message_id, text))
+                        .and_then(|locked_update_message| {
+                            locked_update_message
+                                .send(SystemMsg::Update(debug_message_id, text))
+                                .unwrap();
+                            Ok(())
+                        })
                         .unwrap();
                 }
             } else {
@@ -315,5 +334,4 @@ async fn search_in_path(
             }
         }
     }
-    ()
 }
