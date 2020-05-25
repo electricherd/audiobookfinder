@@ -44,9 +44,6 @@ extern crate dirs;
 extern crate futures;
 extern crate futures_util;
 
-extern crate thrussh;
-extern crate thrussh_keys;
-
 #[macro_use]
 extern crate lazy_static;
 

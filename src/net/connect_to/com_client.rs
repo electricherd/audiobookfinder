@@ -39,11 +39,11 @@ impl ComClient {
         ComClient { peer_id: peer_id }
     }
 
-    pub fn run(self, configuration: Arc<thrussh::client::Config>, addr: &PeerId) {
+    pub fn run(self, addr: &PeerId) {
         let id = self.peer_id.clone();
 
         // just use a copy to arc
-        let key = Arc::clone(&*key_keeper::SERVER_KEY_SSH);
+        //let key = Arc::clone(&*key_keeper::SERVER_KEY_SSH);
         //
         // start the state machine
         //
