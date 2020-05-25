@@ -134,7 +134,7 @@ fn main() -> io::Result<()> {
     //
     // pathes: copy to vec<&str>
     //
-    let tui_pathes = all_pathes.iter().map(|s| s.to_string()).collect();
+    let ui_pathes = all_pathes.iter().map(|s| s.to_string()).collect();
 
     // start the logging
     logit::Logit::init(logit::Log::File);
@@ -152,7 +152,7 @@ fn main() -> io::Result<()> {
             if has_ui {
                 match Ctrl::new(
                     key_keeper::get_p2p_server_id(),
-                    &tui_pathes,
+                    &ui_pathes,
                     rx,
                     tx.clone(),
                     has_net,
@@ -269,12 +269,10 @@ fn search_in_single_path(
                             Alive::BusyPath(index),
                             Status::ON,
                         ))
-                        .unwrap();
+                        .unwrap_or_else(|_| println!("... lost start animation"));
                     Ok(())
                 })
-                .unwrap_or_else(|_| {
-                    println!("... find a more graceful program termination, or consume it")
-                });
+                .unwrap_or_else(|_| println!("... that should not happen here at start"));
         }
     }
 
@@ -292,12 +290,10 @@ fn search_in_single_path(
                                     Alive::BusyPath(index),
                                     Status::OFF,
                                 ))
-                                .unwrap();
+                                .unwrap_or_else(|_| println!("... lost stop animation"));
                             Ok(())
                         })
-                        .unwrap_or_else(|_| {
-                            println!("... find a more graceful program termination, or consume it")
-                        });
+                        .unwrap_or_else(|_| println!("... that should not happen here at stop"));
                 }
             } else {
                 let text = format!(
