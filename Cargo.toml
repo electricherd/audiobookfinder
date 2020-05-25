@@ -70,7 +70,7 @@ tokio = "0.2"          # intermediate to fix panic until thrussh with tokio is r
 
 # cursive is the tui
 [dependencies.cursive]
-version = "0.13"
+version = "0.14"
 default-features = false
 
 [features]
