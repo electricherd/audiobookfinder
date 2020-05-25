@@ -9,7 +9,7 @@ use super::super::{
 use cursive::{
     align,
     traits::*, //{Identifiable,select};
-    views::{BoxView, Dialog, Layer, LinearLayout, ListView, Panel, TextView},
+    views::{Dialog, Layer, LinearLayout, ListView, Panel, ResizedView, TextView},
     Cursive,
 };
 use std::{
@@ -64,10 +64,10 @@ impl Tui {
     pub fn new(
         title: String,
         system: Sender<SystemMsg>,
-        pathes: &Vec<String>,
+        paths: &Vec<String>,
         with_net: bool,
     ) -> Result<Tui, String> {
-        let later_handle = Self::build_tui(title, pathes, with_net)?;
+        let later_handle = Self::build_tui(title, paths, with_net)?;
 
         // now build the actual TUI object
         let (tui_sender, tui_receiver) = channel::<UiMsg>();
@@ -86,9 +86,9 @@ impl Tui {
                         draw_char: 0,
                         runs: false,
                     };
-                    pathes.len()
+                    paths.len()
                 ],
-                timers: ThreadPool::new(pathes.len() + 1),
+                timers: ThreadPool::new(paths.len() + 1),
             },
         };
 
@@ -108,14 +108,15 @@ impl Tui {
             match message {
                 UiMsg::Update(recv_dialog, text) => match recv_dialog {
                     ReceiveDialog::ShowNewHost => {
-                        if let Some(mut host_list) = self.handle.find_id::<ListView>(VIEW_LIST_ID) {
+                        if let Some(mut host_list) = self.handle.find_name::<ListView>(VIEW_LIST_ID)
+                        {
                             host_list.add_child("", TextView::new(format!("{}", text)));
                         } else {
                             error!("View {} could not be found!", VIEW_LIST_ID);
                         }
                     }
                     ReceiveDialog::ShowStats { show } => {
-                        let output = self.handle.find_id::<TextView>(ID_HOST_INDEX);
+                        let output = self.handle.find_name::<TextView>(ID_HOST_INDEX);
                         if let Some(mut found) = output {
                             found.set_content(show.line.to_string());
                         } else {
@@ -123,7 +124,7 @@ impl Tui {
                         }
                     }
                     ReceiveDialog::Debug => {
-                        if let Some(mut found) = self.handle.find_id::<TextView>(DEBUG_TEXT_ID) {
+                        if let Some(mut found) = self.handle.find_name::<TextView>(DEBUG_TEXT_ID) {
                             found.set_content(text);
                         } else {
                             error!("Debug view {} could not be found!", DEBUG_TEXT_ID);
@@ -236,7 +237,7 @@ impl Tui {
                 &mut self.alive.paths[nr].draw_char,
             ),
         };
-        let mut output = self.handle.find_id::<TextView>(&view_name);
+        let mut output = self.handle.find_name::<TextView>(&view_name);
         if let Some(ref mut found) = output {
             let char_idx_to_put = match on {
                 AliveSym::GoOn => {
@@ -252,7 +253,7 @@ impl Tui {
         }
     }
 
-    fn build_tui(title: String, pathes: &Vec<String>, with_net: bool) -> Result<Cursive, String> {
+    fn build_tui(title: String, paths: &Vec<String>, with_net: bool) -> Result<Cursive, String> {
         let later_handle = Cursive::default();
 
         let screen_size = later_handle.screen_size();
@@ -262,7 +263,7 @@ impl Tui {
         if max_cols == 0 {
             return Err("Not able to build tui.".to_string());
         }
-        let rows = pathes.len() / max_cols + 1;
+        let rows = paths.len() / max_cols + 1;
 
         // 80% of rect size
         let max_table_width = RECT * 5 / 6;
@@ -274,7 +275,7 @@ impl Tui {
             vertical_layout.add_child(
                 Dialog::around(
                     LinearLayout::vertical()
-                        .child(BoxView::with_fixed_height(
+                        .child(ResizedView::with_fixed_height(
                             10,
                             ListView::new()
                                 .child("", TextView::new(""))
@@ -284,13 +285,13 @@ impl Tui {
                             LinearLayout::horizontal()
                                 .child(
                                     TextView::new(format!("{}", STR_ALIVE[0]))
-                                        .with_id(ID_HOST_ALIVE),
+                                        .with_name(ID_HOST_ALIVE),
                                 )
                                 .child(TextView::new(format!(" Looking at ")))
                                 .child(
                                     TextView::new(format!("{}", 0))
                                         .h_align(align::HAlign::Right)
-                                        .with_id(ID_HOST_INDEX),
+                                        .with_name(ID_HOST_INDEX),
                                 )
                                 .child(TextView::new(format!("/")))
                                 .child(
@@ -311,13 +312,13 @@ impl Tui {
             let cols = if j < rows - 1 {
                 max_cols
             } else {
-                pathes.len() % max_cols
+                paths.len() % max_cols
             };
 
             for i in 0..cols {
                 let my_number = j * max_cols + i; // j >= 1
 
-                let differentiate_path = Self::split_intelligently_ralign(pathes, max_table_width);
+                let differentiate_path = Self::split_intelligently_ralign(paths, max_table_width);
                 let path_name = format!("{}{}", PATHS_PREFIX_ID, my_number);
 
                 horizontal_layout.add_child(Panel::new(
@@ -338,7 +339,7 @@ impl Tui {
         // debug output here
         let debug_text = max_table_width;
         vertical_layout.add_child(Panel::new(
-            TextView::new(format!("debug_text: {}", debug_text)).with_id(DEBUG_TEXT_ID),
+            TextView::new(format!("debug_text: {}", debug_text)).with_name(DEBUG_TEXT_ID),
         ));
 
         // return the dialog
