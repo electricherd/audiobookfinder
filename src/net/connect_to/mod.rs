@@ -24,10 +24,10 @@ impl ConnectToOther {
     pub fn run(self) {
         // todo: this needs to be done once!!!!! not for every client connection
         // move this somewhere else
-        let mut config = thrussh::client::Config::default();
-        config.connection_timeout = Some(Duration::from_secs(600));
-        let config = Arc::new(config);
+        //let mut config = thrussh::client::Config::default();
+        //config.connection_timeout = Some(Duration::from_secs(600));
+        //let config = Arc::new(config);
 
-        self.connector.run(config, &self.address.clone());
+        self.connector.run(&self.address.clone());
     }
 }

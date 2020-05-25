@@ -63,10 +63,6 @@ serde_derive = "1.0"  # macro usage from serde
 bincode = "1.2"       # another binary en/decoder as serde
 
 libp2p = "0.19"      # network stack for secure p2p with mdns and general communication
-thrussh = "0.21"       # ssh server client crate for communication
-thrussh-keys = "0.11"  # ssh server client crate for communication
-tokio-io = "0.1"       # has to be same as thrussh uses
-tokio = "0.2"          # intermediate to fix panic until thrussh with tokio is removed
 
 # cursive is the tui
 [dependencies.cursive]
