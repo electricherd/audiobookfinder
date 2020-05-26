@@ -8,7 +8,7 @@ extern crate clap;
 extern crate rayon;
 
 use adbflib::{
-    ctrl::{Alive, Ctrl, ReceiveDialog, Status, SystemMsg},
+    ctrl::{Ctrl, NetAlive, ReceiveDialog, Status, SystemMsg},
     data::{self, Collection},
     logit,
     net::{key_keeper, Net},
@@ -126,15 +126,14 @@ fn main() -> io::Result<()> {
 
     // these will be taken directly
     let tx_net = tx.clone();
-    let tx_net_alive = tx.clone();
 
     // for now this will stay wrapped
-    let tx_sys = Arc::new(Mutex::new(tx.clone()));
+    let tx_from_collector_to_ui = Arc::new(Mutex::new(tx.clone()));
 
     //
     // pathes: copy to vec<&str>
     //
-    let ui_pathes = all_pathes.iter().map(|s| s.to_string()).collect();
+    let ui_paths = all_pathes.iter().map(|s| s.to_string()).collect();
 
     // start the logging
     logit::Logit::init(logit::Log::File);
@@ -152,7 +151,7 @@ fn main() -> io::Result<()> {
             if has_ui {
                 match Ctrl::new(
                     key_keeper::get_p2p_server_id(),
-                    &ui_pathes,
+                    &ui_paths,
                     rx,
                     tx.clone(),
                     has_net,
@@ -162,14 +161,15 @@ fn main() -> io::Result<()> {
                             controller.run_webui().await?;
                         }
                         if has_tui {
+                            // send start on tx,rx channel
+                            // tx_net_alive
+                            //     .send(SystemMsg::StartAnimation(Alive::HostSearch, Status::ON))
+                            //     .unwrap();
+
+                            println!("starting tui");
                             // do finally the necessary
+                            // this blocks this async future
                             controller.run_tui();
-                            // and send startup animation
-                            // todo: maybe a timer spawn task? but then if a tui gets
-                            //       terminated to fast, send will panic!!
-                            tx_net_alive
-                                .send(SystemMsg::StartAnimation(Alive::HostSearch, Status::ON))
-                                .unwrap();
                         }
                         Ok::<(), Error>(())
                     }
@@ -213,17 +213,17 @@ fn main() -> io::Result<()> {
             let collection_protected = sync::Arc::new(sync::Mutex::new(init_collection));
 
             // todo: is this right? async lock to create a sync message mutex?
-            let synced_sys_messages = tx_sys.lock().await.clone();
-            let tx_sync_sys = sync::Arc::new(sync::Mutex::new(synced_sys_messages));
+            let synced_to_ui_messages = tx_from_collector_to_ui.lock().await.clone();
+            let wrapped_to_ui_sender = sync::Arc::new(sync::Mutex::new(synced_to_ui_messages));
 
             all_pathes.par_iter().enumerate().for_each(|(index, elem)| {
                 let collection_data_in_iterator = collection_protected.clone();
-                let system_messages_in_iterator = tx_sync_sys.clone();
+                let to_ui_messages_in_iterator = wrapped_to_ui_sender.clone();
                 search_in_single_path(
                     has_ui,
                     has_tui,
                     collection_data_in_iterator,
-                    system_messages_in_iterator,
+                    to_ui_messages_in_iterator,
                     index,
                     elem,
                 );
@@ -252,48 +252,58 @@ fn search_in_single_path(
     has_ui: bool,
     has_tui: bool,
     collection_protected: sync::Arc<sync::Mutex<Collection>>,
-    mutex_system_msg: sync::Arc<sync::Mutex<Sender<SystemMsg>>>,
+    mutex_to_ui_msg: sync::Arc<sync::Mutex<Sender<SystemMsg>>>,
     index: usize,
     elem: &str,
 ) {
     if !has_ui {
         println!("[{:?}] looking into path {:?}", index, elem);
     } else {
-        // start animation .... timer and so on
+        // send start animation for that path
         if has_tui {
-            mutex_system_msg
+            mutex_to_ui_msg
                 .lock()
-                .and_then(|locked_start_message| {
-                    locked_start_message
+                .and_then(|locked_to_start_ui_message| {
+                    println!("send startAnimation for path {:?}", index);
+                    locked_to_start_ui_message
                         .send(SystemMsg::StartAnimation(
-                            Alive::BusyPath(index),
+                            NetAlive::BusyPath(index),
                             Status::ON,
                         ))
-                        .unwrap_or_else(|_| println!("... lost start animation"));
+                        .unwrap_or_else(|_| {
+                            println!("... lost start animation for index {:?}", index)
+                        });
                     Ok(())
                 })
                 .unwrap_or_else(|_| println!("... that should not happen here at start"));
         }
     }
-
     let locked_collection = &mut *collection_protected.lock().unwrap();
+
+    // do it: main task here is to visit and dive deep
+    //        into the subfolders of this folder
     match locked_collection.visit_dirs(Path::new(elem), &data::Collection::visit_files) {
         Ok(local_stats) => {
             if has_ui {
-                // stop animation
+                // send stop animation for that path
                 if has_tui {
-                    mutex_system_msg
+                    println!("send stopAnimation for path {:?}", index);
+                    mutex_to_ui_msg
                         .lock()
-                        .and_then(|locked_stop_message| {
-                            locked_stop_message
+                        .and_then(|locked_to_stop_ui_message| {
+                            locked_to_stop_ui_message
                                 .send(SystemMsg::StartAnimation(
-                                    Alive::BusyPath(index),
+                                    NetAlive::BusyPath(index),
                                     Status::OFF,
                                 ))
-                                .unwrap_or_else(|_| println!("... lost stop animation"));
+                                .unwrap_or_else(|_| {
+                                    println!("... lost stop animation for {:?}", index)
+                                });
                             Ok(())
                         })
-                        .unwrap_or_else(|_| println!("... that should not happen here at stop"));
+                        .unwrap_or_else(|_| {
+                            println!("... that should not happen here at stop");
+                        });
                 }
             } else {
                 let text = format!(
@@ -315,7 +325,7 @@ fn search_in_single_path(
                 if has_tui {
                     let debug_message_id = ReceiveDialog::Debug;
                     let text = text.to_string();
-                    mutex_system_msg
+                    mutex_to_ui_msg
                         .lock()
                         .and_then(|locked_update_message| {
                             locked_update_message

@@ -217,7 +217,7 @@ impl Net {
             info!("Stop animation!");
             ctrl_sender
                 .send(ctrl::SystemMsg::StartAnimation(
-                    ctrl::Alive::HostSearch,
+                    ctrl::NetAlive::HostSearch,
                     ctrl::Status::OFF,
                 ))
                 .unwrap();
