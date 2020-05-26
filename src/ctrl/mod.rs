@@ -13,9 +13,9 @@ use std::io;
 use std::sync::mpsc::{Receiver, Sender};
 
 type PeerRepresentation = [u8; 16];
-
+/// Alive Signal for net
 #[derive(Clone)]
-pub enum Alive {
+pub enum NetAlive {
     BusyPath(usize),
     HostSearch,
 }
@@ -33,13 +33,13 @@ pub enum ReceiveDialog {
 
 pub enum UiMsg {
     Update(ReceiveDialog, String),
-    Animate(Alive, Status),
-    TimeOut(Alive),
+    Animate(NetAlive, Status),
+    TimeOut(NetAlive),
 }
 
 pub enum SystemMsg {
     Update(ReceiveDialog, String),
-    StartAnimation(Alive, Status),
+    StartAnimation(NetAlive, Status),
 }
 
 pub struct NetStats {
@@ -48,9 +48,10 @@ pub struct NetStats {
 }
 
 pub struct Ctrl {
-    rx: Receiver<SystemMsg>,
-    ui: Tui,
     peer_id: PeerId,
+    paths: Vec<String>,
+    receiver: Receiver<SystemMsg>,
+    sender: Sender<SystemMsg>,
     with_net: bool,
 }
 
@@ -58,7 +59,7 @@ impl Ctrl {
     /// Create a new controller if everything fits.
     ///
     /// # Arguments
-    /// * 'uuid' - The uuid this client/server uses
+    /// * 'peer_id' - The peer_id this client/server uses
     /// * 'paths' - The paths that will be searched
     /// * 'receiver' - The receiver that takes incoming ctrl messages
     /// * 'sender'   - The sender that sends from ctrl
@@ -70,36 +71,42 @@ impl Ctrl {
         sender: Sender<SystemMsg>,
         with_net: bool,
     ) -> Result<Self, String> {
-        let c_ui = Tui::new(new_id.to_string(), sender.clone(), &paths, with_net)?;
-
         Ok(Ctrl {
-            rx: receiver,
-            ui: c_ui,
             peer_id: new_id,
+            paths: paths.clone(),
+            receiver,
+            sender,
             with_net,
         })
     }
     /// Run the controller
-    pub fn run_tui(&mut self) {
-        while self.ui.step() {
-            while let Some(message) = self.rx.try_iter().next() {
+    pub async fn run_tui(&mut self) -> Result<(), String> {
+        let mut tui = Tui::new(
+            self.peer_id.to_string(),
+            self.sender.clone(),
+            &self.paths,
+            self.with_net,
+        )?;
+
+        while tui.step() {
+            while let Some(forward_sys_message) = self.receiver.try_iter().next() {
                 // Handle messages arriving from the UI.
-                match message {
+                println!("incoming ....");
+                match forward_sys_message {
                     SystemMsg::Update(recv_dialog, text) => {
-                        self.ui
-                            .ui_sender
+                        println!("Update");
+                        tui.ui_sender
                             .send(UiMsg::Update(recv_dialog, text))
                             .unwrap();
                     }
                     SystemMsg::StartAnimation(signal, on_off) => {
-                        self.ui
-                            .ui_sender
-                            .send(UiMsg::Animate(signal, on_off))
-                            .unwrap();
+                        println!("Start Animation");
+                        tui.ui_sender.send(UiMsg::Animate(signal, on_off)).unwrap();
                     }
                 };
             }
         }
+        Ok(())
     }
 
     /// Run the controller
