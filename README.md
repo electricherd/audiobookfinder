@@ -39,6 +39,7 @@ So far only the state charts and their connection is not done but the general co
 It is an inline [CI](https://travis-ci.org/electricherd/audiobookfinder/) generated documentation which can be found [here](https://electricherd.github.io/audiobookfinder/audiobookfinder/index.html)! Rust does a nice job here as well!
 
 ### Changes
+* trying upx in CI builds again
 * migrated most native threads to async green threads, as also most dependant external crates use more general futures approach
 * bumped to Rust 2018 features async/await in net module using futures in few occasion, but will continue with that
 * version changes of different used crates
@@ -129,10 +130,6 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
 - [ ] learning and understanding rust macros (some day)
 
 ### Dependencies
-Unfortunately the program now uses mDNS-register with [dns-sd](https://github.com/plietar/rust-dns-sd) depends on Linux on [Avahi](https://www.avahi.org/)
-* `libavahi-client-dev` or `libavahi-compat-libdnssd-dev`. It also breaks first the easy cross compilation :confused: - I will see where this ends.
-But it works I can see myself with a mDNS scanner, so I can also find other audiobookfinder clients when I do it correctly
-* `libsodium`: Since I started to adapt to thrussh I also need libsodium (not available for old linux versions)
 * `libtag1-dev` and `libtagc0-dev` for libtag
 * `libssl-dev` as a clean setup might not have it
 

@@ -46,7 +46,6 @@ init:
 # comment next line for quick build
 #  - sh: sudo DEBIAN_FRONTEND=noninteractive ACCEPT_EULA=Y apt-get upgrade -yq
   - sh: sudo apt-get --yes install build-essential
-  - sh: sudo apt-get --yes install libavahi-compat-libdnssd-dev
   - sh: sudo apt-get --yes install libsodium-dev
   - sh: sudo apt-get --yes install libtag1-dev libtagc0-dev
 #  for deployment
@@ -108,12 +107,8 @@ artifacts:
 
 after_build:
   - sh: cp target/$target/release/$CRATE_NAME target/release/$CRATE_NAME-$UBUNTU_VER-$target
-  - sh: strip -s target/release/$CRATE_NAME-$UBUNTU_VER-$target -o target/release/$CRATE_NAME
-  # upx yet disabled since causes segmentation faults
-  #- strip -s target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET \
-  #        -o target/release/$CRATE_NAME.stripped
-  #- upx --ultra-brute target/release/$CRATE_NAME.stripped \
-  #       -o target/release/$CRATE_NAME
+  - sh: strip -s target/release/$CRATE_NAME-$UBUNTU_VER-$target -o target/release/$CRATE_NAME-$UBUNTU_VER-$target.stripped
+  - sh: upx --best target/release/$CRATE_NAME-$UBUNTU_VER-$target.stripped -o target/release/$CRATE_NAME
   - sh: 7z a -r target/release/$CRATE_NAME-$UBUNTU_VER-$target.7z ./target/release/$CRATE_NAME ./README-release.md ./LICENSE
   - sh: sha256sum target/release/$CRATE_NAME-$UBUNTU_VER-$target.7z > target/release/$CRATE_NAME-$UBUNTU_VER-$target.7z.sha256
 

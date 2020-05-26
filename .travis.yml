@@ -82,12 +82,10 @@ after_script:
 
 before_deploy:
   - cp target/$TARGET/release/$CRATE_NAME target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET
-  - strip -s target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET -o target/release/$CRATE_NAME
-  # upx yet disabled since causes segmentation faults
-  #- strip -s target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET \
-  #        -o target/release/$CRATE_NAME.stripped
-  #- upx --ultra-brute target/release/$CRATE_NAME.stripped \
-  #       -o target/release/$CRATE_NAME
+  - strip -s target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET \
+          -o target/release/$CRATE_NAME.stripped
+  - upx --best target/release/$CRATE_NAME.stripped \
+         -o target/release/$CRATE_NAME
   - 7z a -r target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z ./target/release/$CRATE_NAME ./README-release.md ./LICENSE
   - sha256sum target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z > target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z.sha256
 
