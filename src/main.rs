@@ -161,15 +161,13 @@ fn main() -> io::Result<()> {
                             controller.run_webui().await?;
                         }
                         if has_tui {
-                            // send start on tx,rx channel
-                            // tx_net_alive
-                            //     .send(SystemMsg::StartAnimation(Alive::HostSearch, Status::ON))
-                            //     .unwrap();
-
                             println!("starting tui");
                             // do finally the necessary
                             // this blocks this async future
-                            controller.run_tui();
+                            controller
+                                .run_tui()
+                                .await
+                                .map_err(|error_text| Error::new(ErrorKind::Other, error_text))?;
                         }
                         Ok::<(), Error>(())
                     }
