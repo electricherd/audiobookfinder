@@ -4,7 +4,7 @@
 use super::super::{
     common::ThreadPool,
     config,
-    ctrl::{Alive, ReceiveDialog, Status, SystemMsg, UiMsg},
+    ctrl::{NetAlive, ReceiveDialog, Status, SystemMsg, UiMsg},
 };
 use cursive::{
     align,
@@ -91,7 +91,6 @@ impl Tui {
                 timers: ThreadPool::new(paths.len() + 1),
             },
         };
-
         // test this, to update every with 20fps / this should be done when something changes ..... grrrr
         //tui.handle.set_fps(40);
         // quit by 'q' key
@@ -103,7 +102,6 @@ impl Tui {
         if !self.handle.is_running() {
             return false;
         }
-
         while let Some(message) = self.ui_receiver.try_iter().next() {
             match message {
                 UiMsg::Update(recv_dialog, text) => match recv_dialog {
@@ -138,12 +136,12 @@ impl Tui {
                             self.toggle_alive(signal.clone(), AliveSym::GoOn);
                             let (already_running, toggle, timeout_id): (bool, &mut bool, usize) =
                                 match signal {
-                                    Alive::BusyPath(nr) => (
+                                    NetAlive::BusyPath(nr) => (
                                         self.alive.paths[nr].runs,
                                         &mut self.alive.paths[nr].runs,
                                         nr + 1,
                                     ),
-                                    Alive::HostSearch => {
+                                    NetAlive::HostSearch => {
                                         (self.alive.host.runs, &mut self.alive.host.runs, 0)
                                     }
                                 };
@@ -161,8 +159,8 @@ impl Tui {
                         Status::OFF => {
                             self.toggle_alive(signal.clone(), AliveSym::Stop);
                             let toggle: &mut bool = match signal {
-                                Alive::BusyPath(nr) => &mut self.alive.paths[nr].runs,
-                                Alive::HostSearch => &mut self.alive.host.runs,
+                                NetAlive::BusyPath(nr) => &mut self.alive.paths[nr].runs,
+                                NetAlive::HostSearch => &mut self.alive.host.runs,
                             };
                             *toggle = false;
                         }
@@ -170,15 +168,19 @@ impl Tui {
                 }
                 UiMsg::TimeOut(which) => {
                     let (continue_timeout, timeout_id) = match which {
-                        Alive::BusyPath(nr) => (self.alive.paths[nr].runs, nr + 1),
-                        Alive::HostSearch => (self.alive.host.runs, 0),
+                        NetAlive::BusyPath(nr) => (self.alive.paths[nr].runs, nr + 1),
+                        NetAlive::HostSearch => (self.alive.host.runs, 0),
                     };
                     if continue_timeout {
                         self.toggle_alive(which.clone(), AliveSym::GoOn);
                         let sender_clone = self.ui_sender.clone();
                         self.alive.timers.renew(timeout_id, move || {
                             thread::sleep(Duration::from_millis(config::tui::ALIVE_REFRESH));
-                            sender_clone.send(UiMsg::TimeOut(which)).unwrap();
+                            sender_clone
+                                .send(UiMsg::TimeOut(which))
+                                .unwrap_or_else(|_| {
+                                    // nothing to be done, that timer is just at the end
+                                });
                         });
                     }
                 }
@@ -229,10 +231,10 @@ impl Tui {
         out
     }
 
-    fn toggle_alive(&mut self, signal: Alive, on: AliveSym) {
+    fn toggle_alive(&mut self, signal: NetAlive, on: AliveSym) {
         let (view_name, counter) = match signal {
-            Alive::HostSearch => (ID_HOST_ALIVE.to_string(), &mut self.alive.host.draw_char),
-            Alive::BusyPath(nr) => (
+            NetAlive::HostSearch => (ID_HOST_ALIVE.to_string(), &mut self.alive.host.draw_char),
+            NetAlive::BusyPath(nr) => (
                 format!("{}{}", PATHS_PREFIX_ID, nr),
                 &mut self.alive.paths[nr].draw_char,
             ),
@@ -279,7 +281,7 @@ impl Tui {
                             10,
                             ListView::new()
                                 .child("", TextView::new(""))
-                                .with_id(VIEW_LIST_ID),
+                                .with_name(VIEW_LIST_ID),
                         ))
                         .child(
                             LinearLayout::horizontal()
@@ -297,7 +299,7 @@ impl Tui {
                                 .child(
                                     TextView::new(format!("{}", 0))
                                         .h_align(align::HAlign::Left)
-                                        .with_id(ID_HOST_NUMBER),
+                                        .with_name(ID_HOST_NUMBER),
                                 ),
                         ),
                 )
