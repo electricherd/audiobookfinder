@@ -27,7 +27,7 @@ name = "audiobookfinder"
 path = "src/main.rs"
 
 [dependencies]
-async-std = "1.5" # rust std async executor
+async-std = "1.6"     # rust std async executor
 
 clap = "2.33"         # for the command line parsing
 dirs = "2.0"          # to browse dirs fast in taglib

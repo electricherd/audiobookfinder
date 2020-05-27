@@ -8,7 +8,7 @@ extern crate clap;
 extern crate rayon;
 
 use adbflib::{
-    ctrl::{Ctrl, NetAlive, ReceiveDialog, Status, SystemMsg},
+    ctrl::{CollectionPathAlive, Ctrl, NetMessages, Status, UiUpdateMsg},
     data::{self, Collection},
     logit,
     net::{key_keeper, Net},
@@ -122,7 +122,7 @@ fn main() -> io::Result<()> {
     //
     // prepare the message system
     //
-    let (tx, rx) = channel::<SystemMsg>();
+    let (tx, rx) = channel::<UiUpdateMsg>();
 
     // these will be taken directly
     let tx_net = tx.clone();
@@ -188,7 +188,7 @@ fn main() -> io::Result<()> {
             // - can be terminated by ui message
             // - collector finished (depending on definition)
             if has_net {
-                println!("Net Started!!");
+                println!("net started!!");
                 let net_system_messages = tx_net;
                 let mut network = Net::new(
                     key_keeper::get_p2p_server_id(),
@@ -196,7 +196,7 @@ fn main() -> io::Result<()> {
                     net_system_messages,
                 );
                 network.lookup().await;
-                println!("Net finished!!");
+                println!("net finished!!");
                 Ok::<(), Error>(())
             } else {
                 println!("no net!");
@@ -233,6 +233,7 @@ fn main() -> io::Result<()> {
                     .unwrap_or(())
                 // todo: send terminate to net runner depending if it should continue or not
             }
+            println!("collector finished!!");
             Ok::<(), Error>(())
         };
 
@@ -250,7 +251,7 @@ fn search_in_single_path(
     has_ui: bool,
     has_tui: bool,
     collection_protected: sync::Arc<sync::Mutex<Collection>>,
-    mutex_to_ui_msg: sync::Arc<sync::Mutex<Sender<SystemMsg>>>,
+    mutex_to_ui_msg: sync::Arc<sync::Mutex<Sender<UiUpdateMsg>>>,
     index: usize,
     elem: &str,
 ) {
@@ -264,8 +265,8 @@ fn search_in_single_path(
                 .and_then(|locked_to_start_ui_message| {
                     println!("send startAnimation for path {:?}", index);
                     locked_to_start_ui_message
-                        .send(SystemMsg::StartAnimation(
-                            NetAlive::BusyPath(index),
+                        .send(UiUpdateMsg::CollectionUpdate(
+                            CollectionPathAlive::BusyPath(index),
                             Status::ON,
                         ))
                         .unwrap_or_else(|_| {
@@ -290,8 +291,8 @@ fn search_in_single_path(
                         .lock()
                         .and_then(|locked_to_stop_ui_message| {
                             locked_to_stop_ui_message
-                                .send(SystemMsg::StartAnimation(
-                                    NetAlive::BusyPath(index),
+                                .send(UiUpdateMsg::CollectionUpdate(
+                                    CollectionPathAlive::BusyPath(index),
                                     Status::OFF,
                                 ))
                                 .unwrap_or_else(|_| {
@@ -321,13 +322,13 @@ fn search_in_single_path(
             let text = format!("An error has occurred in search path [{}]!!", index);
             if has_ui {
                 if has_tui {
-                    let debug_message_id = ReceiveDialog::Debug;
+                    let debug_message_id = NetMessages::Debug;
                     let text = text.to_string();
                     mutex_to_ui_msg
                         .lock()
                         .and_then(|locked_update_message| {
                             locked_update_message
-                                .send(SystemMsg::Update(debug_message_id, text))
+                                .send(UiUpdateMsg::NetUpdate(debug_message_id, text))
                                 .unwrap();
                             Ok(())
                         })

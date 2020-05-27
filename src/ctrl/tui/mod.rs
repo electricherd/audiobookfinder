@@ -4,7 +4,7 @@
 use super::super::{
     common::ThreadPool,
     config,
-    ctrl::{NetAlive, ReceiveDialog, Status, SystemMsg, UiMsg},
+    ctrl::{CollectionPathAlive, InternalUiMsg, NetMessages, Status, UiUpdateMsg},
 };
 use cursive::{
     align,
@@ -20,9 +20,7 @@ use std::{
 };
 
 pub struct Tui {
-    pub ui_receiver: Receiver<UiMsg>,
-    pub ui_sender: Sender<UiMsg>,
-    pub system_sender: Sender<SystemMsg>,
+    pub system_sender: Sender<UiUpdateMsg>,
 
     handle: Cursive,
     alive: AliveDisplayData,
@@ -63,18 +61,15 @@ static ID_HOST_ALIVE: &str = "id_host_alive";
 impl Tui {
     pub fn new(
         title: String,
-        system: Sender<SystemMsg>,
+        system: Sender<UiUpdateMsg>,
         paths: &Vec<String>,
         with_net: bool,
     ) -> Result<Tui, String> {
         let later_handle = Self::build_tui(title, paths, with_net)?;
 
         // now build the actual TUI object
-        let (tui_sender, tui_receiver) = channel::<UiMsg>();
         let mut tui = Tui {
             handle: later_handle,
-            ui_sender: tui_sender,
-            ui_receiver: tui_receiver,
             system_sender: system,
             alive: AliveDisplayData {
                 host: AliveState {
@@ -98,14 +93,19 @@ impl Tui {
         Ok(tui)
     }
 
-    pub fn step(&mut self) -> bool {
+    pub async fn step(
+        &mut self,
+        (tui_sender, tui_receiver): (Sender<InternalUiMsg>, Receiver<InternalUiMsg>),
+    ) -> Result<bool, ()> {
         if !self.handle.is_running() {
-            return false;
+            return Err(());
         }
-        while let Some(message) = self.ui_receiver.try_iter().next() {
+
+        info!("about to start tui internal message loop");
+        while let Some(message) = tui_receiver.try_iter().next() {
             match message {
-                UiMsg::Update(recv_dialog, text) => match recv_dialog {
-                    ReceiveDialog::ShowNewHost => {
+                InternalUiMsg::Update(recv_dialog, text) => match recv_dialog {
+                    NetMessages::ShowNewHost => {
                         if let Some(mut host_list) = self.handle.find_name::<ListView>(VIEW_LIST_ID)
                         {
                             host_list.add_child("", TextView::new(format!("{}", text)));
@@ -113,7 +113,7 @@ impl Tui {
                             error!("View {} could not be found!", VIEW_LIST_ID);
                         }
                     }
-                    ReceiveDialog::ShowStats { show } => {
+                    NetMessages::ShowStats { show } => {
                         let output = self.handle.find_name::<TextView>(ID_HOST_INDEX);
                         if let Some(mut found) = output {
                             found.set_content(show.line.to_string());
@@ -121,7 +121,7 @@ impl Tui {
                             error!("View {} could not be found!", ID_HOST_INDEX);
                         }
                     }
-                    ReceiveDialog::Debug => {
+                    NetMessages::Debug => {
                         if let Some(mut found) = self.handle.find_name::<TextView>(DEBUG_TEXT_ID) {
                             found.set_content(text);
                         } else {
@@ -129,19 +129,19 @@ impl Tui {
                         }
                     }
                 },
-                UiMsg::Animate(signal, on_off) => {
-                    let sender_clone = self.ui_sender.clone();
+                InternalUiMsg::Animate(signal, on_off) => {
+                    let sender_clone = tui_sender.clone();
                     match on_off {
                         Status::ON => {
                             self.toggle_alive(signal.clone(), AliveSym::GoOn);
                             let (already_running, toggle, timeout_id): (bool, &mut bool, usize) =
                                 match signal {
-                                    NetAlive::BusyPath(nr) => (
+                                    CollectionPathAlive::BusyPath(nr) => (
                                         self.alive.paths[nr].runs,
                                         &mut self.alive.paths[nr].runs,
                                         nr + 1,
                                     ),
-                                    NetAlive::HostSearch => {
+                                    CollectionPathAlive::HostSearch => {
                                         (self.alive.host.runs, &mut self.alive.host.runs, 0)
                                     }
                                 };
@@ -152,32 +152,34 @@ impl Tui {
                                     thread::sleep(Duration::from_millis(
                                         config::tui::ALIVE_REFRESH,
                                     ));
-                                    sender_clone.send(UiMsg::TimeOut(signal.clone())).unwrap();
+                                    sender_clone
+                                        .send(InternalUiMsg::TimeOut(signal.clone()))
+                                        .unwrap();
                                 });
                             }
                         }
                         Status::OFF => {
                             self.toggle_alive(signal.clone(), AliveSym::Stop);
                             let toggle: &mut bool = match signal {
-                                NetAlive::BusyPath(nr) => &mut self.alive.paths[nr].runs,
-                                NetAlive::HostSearch => &mut self.alive.host.runs,
+                                CollectionPathAlive::BusyPath(nr) => &mut self.alive.paths[nr].runs,
+                                CollectionPathAlive::HostSearch => &mut self.alive.host.runs,
                             };
                             *toggle = false;
                         }
                     }
                 }
-                UiMsg::TimeOut(which) => {
+                InternalUiMsg::TimeOut(which) => {
                     let (continue_timeout, timeout_id) = match which {
-                        NetAlive::BusyPath(nr) => (self.alive.paths[nr].runs, nr + 1),
-                        NetAlive::HostSearch => (self.alive.host.runs, 0),
+                        CollectionPathAlive::BusyPath(nr) => (self.alive.paths[nr].runs, nr + 1),
+                        CollectionPathAlive::HostSearch => (self.alive.host.runs, 0),
                     };
                     if continue_timeout {
                         self.toggle_alive(which.clone(), AliveSym::GoOn);
-                        let sender_clone = self.ui_sender.clone();
+                        let sender_clone = tui_sender.clone();
                         self.alive.timers.renew(timeout_id, move || {
                             thread::sleep(Duration::from_millis(config::tui::ALIVE_REFRESH));
                             sender_clone
-                                .send(UiMsg::TimeOut(which))
+                                .send(InternalUiMsg::TimeOut(which))
                                 .unwrap_or_else(|_| {
                                     // nothing to be done, that timer is just at the end
                                 });
@@ -186,9 +188,11 @@ impl Tui {
                 }
             }
         }
-        // step through the TUI
-        self.handle.step();
-        true
+        info!("cursive run started");
+        self.handle.run();
+        info!("cursive run terminated");
+        // it's done, so
+        Err(())
     }
 
     ///    # Example test
@@ -231,10 +235,12 @@ impl Tui {
         out
     }
 
-    fn toggle_alive(&mut self, signal: NetAlive, on: AliveSym) {
+    fn toggle_alive(&mut self, signal: CollectionPathAlive, on: AliveSym) {
         let (view_name, counter) = match signal {
-            NetAlive::HostSearch => (ID_HOST_ALIVE.to_string(), &mut self.alive.host.draw_char),
-            NetAlive::BusyPath(nr) => (
+            CollectionPathAlive::HostSearch => {
+                (ID_HOST_ALIVE.to_string(), &mut self.alive.host.draw_char)
+            }
+            CollectionPathAlive::BusyPath(nr) => (
                 format!("{}{}", PATHS_PREFIX_ID, nr),
                 &mut self.alive.paths[nr].draw_char,
             ),
@@ -327,7 +333,7 @@ impl Tui {
                     LinearLayout::horizontal()
                         .child(
                             // and link with an id
-                            TextView::new(format!("{}", STR_ALIVE[0])).with_id(path_name),
+                            TextView::new(format!("{}", STR_ALIVE[0])).with_name(path_name),
                         )
                         .child(
                             TextView::new(format!("{}", differentiate_path[my_number]))
