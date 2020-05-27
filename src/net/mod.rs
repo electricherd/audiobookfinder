@@ -33,12 +33,12 @@ enum ToThread<T: Send + Clone> {
 pub struct Net {
     peer_id: PeerId,
     clients_connected: Arc<Mutex<Vec<PeerId>>>,
-    tui_sender: Sender<ctrl::SystemMsg>,
+    tui_sender: Sender<ctrl::UiUpdateMsg>,
     has_tui: bool,
 }
 
 impl Net {
-    pub fn new(peer_id: PeerId, tui: bool, sender: Sender<ctrl::SystemMsg>) -> Self {
+    pub fn new(peer_id: PeerId, tui: bool, sender: Sender<ctrl::UiUpdateMsg>) -> Self {
         // the drop of self.dns_handle will unregister
         // so I need to keep it like here :-(
         Net {
@@ -186,7 +186,7 @@ impl Net {
     fn take_mdns_input(
         mdns_receive_ip: std::sync::mpsc::Receiver<ToThread<PeerId>>,
         sender_ssh_client: std::sync::mpsc::Sender<ToThread<PeerId>>,
-        ctrl_sender: std::sync::mpsc::Sender<ctrl::SystemMsg>,
+        ctrl_sender: std::sync::mpsc::Sender<ctrl::UiUpdateMsg>,
         has_tui: bool,
         count_no_cast: &mut usize,
         count_valid: &mut usize,
@@ -216,8 +216,8 @@ impl Net {
         if has_tui {
             info!("Stop animation!");
             ctrl_sender
-                .send(ctrl::SystemMsg::StartAnimation(
-                    ctrl::NetAlive::HostSearch,
+                .send(ctrl::UiUpdateMsg::CollectionUpdate(
+                    ctrl::CollectionPathAlive::HostSearch,
                     ctrl::Status::OFF,
                 ))
                 .unwrap();
@@ -227,7 +227,7 @@ impl Net {
     async fn connect_new_clients(
         receiver_client: std::sync::mpsc::Receiver<ToThread<PeerId>>,
         clients_connected: Arc<Mutex<Vec<PeerId>>>,
-        ctrl_sender: std::sync::mpsc::Sender<ctrl::SystemMsg>,
+        ctrl_sender: std::sync::mpsc::Sender<ctrl::UiUpdateMsg>,
         has_tui: bool,
     ) {
         loop {
@@ -253,14 +253,14 @@ impl Net {
                                 let count = ip_addresses.len();
                                 if has_tui {
                                     ctrl_sender
-                                        .send(ctrl::SystemMsg::Update(
-                                            ctrl::ReceiveDialog::ShowNewHost,
+                                        .send(ctrl::UiUpdateMsg::NetUpdate(
+                                            ctrl::NetMessages::ShowNewHost,
                                             incoming_id.to_string(),
                                         ))
                                         .unwrap();
                                     ctrl_sender
-                                        .send(ctrl::SystemMsg::Update(
-                                            ctrl::ReceiveDialog::ShowStats {
+                                        .send(ctrl::UiUpdateMsg::NetUpdate(
+                                            ctrl::NetMessages::ShowStats {
                                                 show: ctrl::NetStats {
                                                     line: count,
                                                     max: 0, //index,
