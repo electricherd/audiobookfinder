@@ -8,8 +8,8 @@ mod webui;
 use self::tui::Tui;
 use self::webui::WebUI;
 use super::config;
-use async_std::{sync, task};
-use futures::{future::FutureExt, pin_mut, select};
+use async_std::sync;
+use futures::{future::FutureExt, join, pin_mut, select};
 use libp2p::PeerId;
 use std::io;
 use std::sync::mpsc::{channel, Receiver, Sender};
@@ -42,6 +42,7 @@ pub enum InternalUiMsg {
 pub enum UiUpdateMsg {
     NetUpdate(NetMessages, String),
     CollectionUpdate(CollectionPathAlive, Status),
+    StopUI,
 }
 
 pub struct NetStats {
@@ -52,7 +53,6 @@ pub struct NetStats {
 pub struct Ctrl {
     peer_id: PeerId,
     paths: Vec<String>,
-    receiver: Receiver<UiUpdateMsg>,
     sender: Sender<UiUpdateMsg>,
     with_net: bool,
 }
@@ -69,85 +69,40 @@ impl Ctrl {
     pub fn new(
         new_id: PeerId,
         paths: &Vec<String>,
-        receiver: Receiver<UiUpdateMsg>,
         sender: Sender<UiUpdateMsg>,
         with_net: bool,
     ) -> Result<Self, String> {
         Ok(Ctrl {
             peer_id: new_id,
             paths: paths.clone(),
-            receiver,
             sender,
             with_net,
         })
     }
     /// Run the controller
-    pub async fn run_tui(&mut self) -> Result<(), String> {
+    pub async fn run_tui(&mut self, receiver: Receiver<UiUpdateMsg>) -> Result<(), String> {
         info!("tui about to run");
+
         let mut tui = Tui::new(
-            self.peer_id.to_string(),
+            self.peer_id.to_string().clone(),
             self.sender.clone(),
-            &self.paths,
-            self.with_net,
-        )?;
+            &self.paths.clone(),
+            self.with_net.clone(),
+        );
 
-        // this is the own channel just for tui
-        let (tui_sender, tui_receiver) = channel::<InternalUiMsg>();
-
-        let forward_sender_clone = tui_sender.clone();
-        let message_future = async move {
-            // waiting for async_std::sync::Receiver in stable
-            info!("entering message to tui forwarding");
-            loop {
-                // Handle messages arriving from the outside and forward to UI.
-                let received = self
-                    .receiver
-                    .recv()
-                    .and_then(|forward_sys_message| match forward_sys_message {
-                        UiUpdateMsg::NetUpdate(recv_dialog, text) => {
-                            info!("net update");
-                            forward_sender_clone
-                                .send(InternalUiMsg::Update(recv_dialog, text))
-                                .unwrap();
-                            Ok(true)
-                        }
-                        UiUpdateMsg::CollectionUpdate(signal, on_off) => {
-                            info!("collection update");
-                            forward_sender_clone
-                                .send(InternalUiMsg::Animate(signal, on_off))
-                                .unwrap();
-                            Ok(true)
-                        }
-                    })
-                    .unwrap_or_else(|_| {
-                        info!("breaking ui message forwarding");
-                        false
-                    });
-                if !received {
-                    break;
-                }
-            }
-            // yes this is unreachable maybe another way than join ... but it works
-            Ok::<bool, ()>(false)
-        };
-
-        let tui_future = tui.step((tui_sender.clone(), tui_receiver));
-
-        pin_mut!(message_future, tui_future);
-
-        info!("... starting tui futures now");
-        select! {
-            res = message_future.fuse() => {
-                    //drop(tui_sender); it will find the unreachable section ... wow
-                    info!("... stopping message forwarding here");
-                    Ok::<(), String>(())
-            },
-            res = tui_future.fuse() => {
-                info!("... stopping tui future here");
-                // stopmessage_future
-                Ok::<(), String>(())
-            }
+        if let Ok(mut working_tui) = tui {
+            info!("tui could be initialized");
+            working_tui
+                .run(
+                    receiver,
+                    self.sender.clone(),
+                    self.peer_id.to_string().clone(),
+                    self.paths.clone(),
+                    self.with_net.clone(),
+                )
+                .await;
         }
+        Ok(())
     }
 
     /// Run the controller

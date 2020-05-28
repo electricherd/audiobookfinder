@@ -152,7 +152,6 @@ fn main() -> io::Result<()> {
                 match Ctrl::new(
                     key_keeper::get_p2p_server_id(),
                     &ui_paths,
-                    rx,
                     tx.clone(),
                     has_net,
                 ) {
@@ -165,7 +164,7 @@ fn main() -> io::Result<()> {
                             // do finally the necessary
                             // this blocks this async future
                             controller
-                                .run_tui()
+                                .run_tui(rx)
                                 .await
                                 .map_err(|error_text| Error::new(ErrorKind::Other, error_text))?;
                         }
