@@ -6,12 +6,14 @@ use super::super::{
     config,
     ctrl::{CollectionPathAlive, InternalUiMsg, NetMessages, Status, UiUpdateMsg},
 };
+use async_std::task;
 use cursive::{
     align,
     traits::*, //{Identifiable,select};
     views::{Dialog, Layer, LinearLayout, ListView, Panel, ResizedView, TextView},
     Cursive,
 };
+use futures::{future::FutureExt, join, pin_mut, select, try_join};
 use std::{
     iter::Iterator,
     sync::mpsc::{channel, Receiver, Sender},
@@ -64,7 +66,7 @@ impl Tui {
         system: Sender<UiUpdateMsg>,
         paths: &Vec<String>,
         with_net: bool,
-    ) -> Result<Tui, String> {
+    ) -> Result<Self, String> {
         let later_handle = Self::build_tui(title, paths, with_net)?;
 
         // now build the actual TUI object
@@ -86,18 +88,91 @@ impl Tui {
                 timers: ThreadPool::new(paths.len() + 1),
             },
         };
-        // test this, to update every with 20fps / this should be done when something changes ..... grrrr
-        //tui.handle.set_fps(40);
         // quit by 'q' key
         tui.handle.add_global_callback('q', |s| s.quit());
         Ok(tui)
     }
 
-    pub async fn step(
+    pub async fn run(
+        &mut self,
+        receiver: Receiver<UiUpdateMsg>,
+        clone_sender: Sender<UiUpdateMsg>,
+        clone_peer_id: String,
+        clone_path: Vec<String>,
+        clone_net: bool,
+    ) {
+        // this is the own channel just for tui
+        let (tui_sender, tui_receiver) = channel::<InternalUiMsg>();
+
+        let forward_sender_clone = tui_sender.clone();
+        let message_future = Self::run_message_forwarding(receiver, forward_sender_clone);
+
+        let clone_tui_sender = tui_sender.clone();
+        let tui_future = self.run_cursive((clone_tui_sender, tui_receiver));
+
+        info!("... starting tui futures now");
+        //        try_join!(message_future, tui_future);
+        select! {
+            res = tui_future.fuse() => {
+                info!("... stopping tui future here");
+                // stop message_future
+                //Ok::<(), String>(())
+            },
+            res = message_future.fuse() => {
+                //drop(tui_sender); it will find the unreachable section ... wow
+                info!("... stopping message forwarding here");
+                //Ok::<(), String>(())
+            }
+        }
+    }
+
+    async fn run_message_forwarding(
+        from_external_receiver: Receiver<UiUpdateMsg>,
+        forward_sender: Sender<InternalUiMsg>,
+    ) -> Result<bool, ()> {
+        // waiting for async_std::sync::Receiver in stable
+        info!("entering message to tui forwarding");
+        loop {
+            // Handle messages arriving from the outside and forward to UI.
+            let received = from_external_receiver
+                .recv()
+                .and_then(|forward_sys_message| match forward_sys_message {
+                    UiUpdateMsg::NetUpdate(recv_dialog, text) => {
+                        info!("net update");
+                        forward_sender
+                            .send(InternalUiMsg::Update(recv_dialog, text))
+                            .unwrap();
+                        Ok(true)
+                    }
+                    UiUpdateMsg::CollectionUpdate(signal, on_off) => {
+                        info!("collection update");
+                        forward_sender
+                            .send(InternalUiMsg::Animate(signal, on_off))
+                            .unwrap();
+                        Ok(true)
+                    }
+                    UiUpdateMsg::StopUI => {
+                        // if error something or Ok(false) results in the same
+                        Ok(false)
+                    }
+                })
+                .unwrap_or_else(|_| {
+                    info!("breaking ui message forwarding");
+                    false
+                });
+            if !received {
+                break;
+            }
+        }
+        Ok::<bool, ()>(false)
+    }
+
+    async fn run_cursive(
         &mut self,
         (tui_sender, tui_receiver): (Sender<InternalUiMsg>, Receiver<InternalUiMsg>),
     ) -> Result<bool, ()> {
         if !self.handle.is_running() {
+            error!("Cursive has to be up NOW!!");
             return Err(());
         }
 
