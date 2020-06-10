@@ -142,17 +142,12 @@ fn main() -> io::Result<()> {
     // start the logging
     logit::Logit::init(logit::Log::File);
 
-    // start the main operators
-    //
-
-    // all optional components are wrapped into a future which can result in an empty future,
-    // but collector future will not be empty
-    // 1 - UI         ui_future   (optional)
-    // 2 - Net        net_future  (optional)
-    // 3 - Collector  collector_future
-
+    // all optional components are wrapped into threads
+    // 1 - UI         ui_thread   (optional)
+    // 2 - Net        net_thread  (optional)
+    // 3 - Collector  no thread yet (will use multiple rayon worker threads)
     let ui_thread = std::thread::Builder::new()
-        .name("UI thread".into())
+        .name("ui".into())
         .spawn(move || {
             if has_ui {
                 match Ctrl::new(
@@ -192,7 +187,7 @@ fn main() -> io::Result<()> {
 
     // 2 - Net Future
     let net_thread = std::thread::Builder::new()
-        .name("NET thread".into())
+        .name("net".into())
         .spawn(move || {
             task::block_on(async move {
                 // This thread will not end itself
@@ -228,7 +223,6 @@ fn main() -> io::Result<()> {
     // important
     // but yet this simple bracket to enclose this a little
     {
-        // shitty select! for 2 threads with timeout
         trace!("syncing with 2 other threads");
         // todo: return false is yet weak, it means timeout happened
         StartUp::send_and_block2(&ready_ui_receiver, &ready_net_receiver);
