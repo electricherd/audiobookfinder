@@ -2,7 +2,6 @@
 
 use self::com_client::ComClient;
 use libp2p::PeerId;
-use std::{sync::Arc, time::Duration};
 
 mod com_client;
 pub mod sc_com_to;
