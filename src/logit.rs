@@ -46,10 +46,12 @@ impl Logit {
                 // todo: fix this for binary and see for default!
                 //       from console good is now:
                 //       RUST_LOG=audiobookfinder=trace,adbflib=trace
-                flexi_logger::Logger::with_env_or_str("adbflib=debug, adbflib=warn")
+                // see:
+                // https://rust-lang-nursery.github.io/rust-cookbook/development_tools/debugging/config_log.html
+                flexi_logger::Logger::with_env_or_str("audiobookfinder=trace,adbflib=trace")
                     .log_to_file()
                     .directory(".")
-                    .format(flexi_logger::opt_format)
+                    .format(flexi_logger::with_thread) // colored_with_thread
                     .suppress_timestamp()
                     .suffix("log")
                     .start()
