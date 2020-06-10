@@ -9,7 +9,9 @@ use self::tui::Tui;
 use self::webui::WebUI;
 use super::config;
 
+use crate::common::startup::{self, StartUp, SyncStartUp};
 use crate::ctrl::UiUpdateMsg::NetUpdate;
+
 use async_std::{
     sync::{Arc, Mutex},
     task,
@@ -91,7 +93,11 @@ impl Ctrl {
         })
     }
     /// Run the controller
-    pub fn run_tui(&mut self, external_receiver: Receiver<UiUpdateMsg>) -> Result<(), String> {
+    pub fn run_tui(
+        &mut self,
+        ready_sender: Sender<SyncStartUp>,
+        external_receiver: Receiver<UiUpdateMsg>,
+    ) -> Result<(), String> {
         info!("tui about to run");
 
         let title = self.peer_id.to_string().clone();
@@ -103,6 +109,9 @@ impl Ctrl {
 
         let tui_sender = Arc::new(Mutex::new(tui_sender));
         let internal_tui_sender = tui_sender.clone();
+
+        // todo: see where
+        StartUp::block_on_sync(ready_sender, "ui");
 
         // loop external messages and forward to internal
         // ui messages
@@ -116,6 +125,7 @@ impl Ctrl {
         });
 
         let message_spawner = task::block_on(async move {
+            info!("spawning tui async thread");
             Self::run_message_forwarding(external_receiver, tui_sender.lock().await.clone()).await;
         });
         Ok(())
