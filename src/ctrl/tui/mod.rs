@@ -2,9 +2,8 @@
 //! showing table, the paths being searched, an alive for that, also the mDNS search performed
 //! and later status of the connection to the found clients.
 use super::super::{
-    common::ThreadPool,
     config,
-    ctrl::{CollectionPathAlive, InternalUiMsg, NetMessages, Status, UiUpdateMsg},
+    ctrl::{CollectionPathAlive, InternalUiMsg, NetMessages, Status},
 };
 use async_std::task;
 use cursive::{
@@ -13,17 +12,13 @@ use cursive::{
     views::{Dialog, Layer, LinearLayout, ListView, Panel, ResizedView, TextView},
     Cursive,
 };
-use futures::{future::FutureExt, join, pin_mut, select, try_join};
 use std::{
     iter::Iterator,
-    sync::mpsc::{channel, Receiver, Sender},
-    thread,
+    sync::mpsc::{Receiver, Sender},
     time::Duration,
 };
 
 pub struct Tui {
-    pub system_sender: Sender<UiUpdateMsg>,
-
     handle: Cursive,
     alive: AliveDisplayData,
 }
@@ -37,7 +32,6 @@ struct AliveState {
 struct AliveDisplayData {
     host: AliveState,
     paths: Vec<AliveState>,
-    timers: ThreadPool,
 }
 
 // following the advice for Rust clever enums
@@ -61,18 +55,12 @@ static ID_HOST_NUMBER: &str = "id_max";
 static ID_HOST_ALIVE: &str = "id_host_alive";
 
 impl Tui {
-    pub fn new(
-        title: String,
-        system: Sender<UiUpdateMsg>,
-        paths: &Vec<String>,
-        with_net: bool,
-    ) -> Result<Self, String> {
+    pub fn new(title: String, paths: &Vec<String>, with_net: bool) -> Result<Self, String> {
         let later_handle = Self::build_tui(title, paths, with_net)?;
 
         // now build the actual TUI object
         let mut tui = Tui {
             handle: later_handle,
-            system_sender: system,
             alive: AliveDisplayData {
                 host: AliveState {
                     draw_char: 0,
@@ -85,7 +73,6 @@ impl Tui {
                     };
                     paths.len()
                 ],
-                timers: ThreadPool::new(paths.len() + 1),
             },
         };
         // quit by 'q' key
@@ -95,91 +82,37 @@ impl Tui {
 
     pub async fn run(
         &mut self,
-        receiver: Receiver<UiUpdateMsg>,
-        clone_sender: Sender<UiUpdateMsg>,
-        clone_peer_id: String,
-        clone_path: Vec<String>,
-        clone_net: bool,
-    ) {
+        tui_receiver: Receiver<InternalUiMsg>,
+        tui_sender: Sender<InternalUiMsg>,
+    ) -> Result<(), String> {
         // this is the own channel just for tui
-        let (tui_sender, tui_receiver) = channel::<InternalUiMsg>();
-
-        let forward_sender_clone = tui_sender.clone();
-        let message_future = Self::run_message_forwarding(receiver, forward_sender_clone);
-
-        let clone_tui_sender = tui_sender.clone();
-        let tui_future = self.run_cursive((clone_tui_sender, tui_receiver));
-
-        info!("... starting tui futures now");
-        //        try_join!(message_future, tui_future);
-        select! {
-            res = tui_future.fuse() => {
-                info!("... stopping tui future here");
-                // stop message_future
-                //Ok::<(), String>(())
-            },
-            res = message_future.fuse() => {
-                //drop(tui_sender); it will find the unreachable section ... wow
-                info!("... stopping message forwarding here");
-                //Ok::<(), String>(())
-            }
-        }
-    }
-
-    async fn run_message_forwarding(
-        from_external_receiver: Receiver<UiUpdateMsg>,
-        forward_sender: Sender<InternalUiMsg>,
-    ) -> Result<bool, ()> {
-        // waiting for async_std::sync::Receiver in stable
-        info!("entering message to tui forwarding");
+        info!("run tui async ... yes");
         loop {
-            // Handle messages arriving from the outside and forward to UI.
-            let received = from_external_receiver
-                .recv()
-                .and_then(|forward_sys_message| match forward_sys_message {
-                    UiUpdateMsg::NetUpdate(recv_dialog, text) => {
-                        info!("net update");
-                        forward_sender
-                            .send(InternalUiMsg::Update(recv_dialog, text))
-                            .unwrap();
-                        Ok(true)
-                    }
-                    UiUpdateMsg::CollectionUpdate(signal, on_off) => {
-                        info!("collection update");
-                        forward_sender
-                            .send(InternalUiMsg::Animate(signal, on_off))
-                            .unwrap();
-                        Ok(true)
-                    }
-                    UiUpdateMsg::StopUI => {
-                        // if error something or Ok(false) results in the same
-                        Ok(false)
-                    }
-                })
-                .unwrap_or_else(|_| {
-                    info!("breaking ui message forwarding");
-                    false
-                });
-            if !received {
-                break;
-            }
+            self.run_cursive(&tui_sender, &tui_receiver).await;
         }
-        Ok::<bool, ()>(false)
+        Ok(())
     }
 
     async fn run_cursive(
         &mut self,
-        (tui_sender, tui_receiver): (Sender<InternalUiMsg>, Receiver<InternalUiMsg>),
+        tui_sender: &Sender<InternalUiMsg>,
+        tui_receiver: &Receiver<InternalUiMsg>,
     ) -> Result<bool, ()> {
         if !self.handle.is_running() {
-            error!("Cursive has to be up NOW!!");
+            error!("Cursive is not running!");
             return Err(());
         }
 
-        info!("about to start tui internal message loop");
+        //info!("cursive run started");
+        self.handle.step();
+        //info!("cursive run terminated");
+        // it's done, so
+        //Err(())
+
         while let Some(message) = tui_receiver.try_iter().next() {
+            info!("meessage received");
             match message {
-                InternalUiMsg::Update(recv_dialog, text) => match recv_dialog {
+                InternalUiMsg::Update((recv_dialog, text)) => match recv_dialog {
                     NetMessages::ShowNewHost => {
                         if let Some(mut host_list) = self.handle.find_name::<ListView>(VIEW_LIST_ID)
                         {
@@ -220,17 +153,15 @@ impl Tui {
                                         (self.alive.host.runs, &mut self.alive.host.runs, 0)
                                     }
                                 };
+                            info!("received path alive");
                             if !already_running {
                                 *toggle = true;
                                 // if timer not started, start
-                                self.alive.timers.renew(timeout_id, move || {
-                                    thread::sleep(Duration::from_millis(
-                                        config::tui::ALIVE_REFRESH,
-                                    ));
-                                    sender_clone
-                                        .send(InternalUiMsg::TimeOut(signal.clone()))
-                                        .unwrap();
-                                });
+                                task::sleep(Duration::from_millis(config::tui::ALIVE_REFRESH))
+                                    .await;
+                                sender_clone
+                                    .send(InternalUiMsg::TimeOut(signal.clone()))
+                                    .unwrap();
                             }
                         }
                         Status::OFF => {
@@ -251,23 +182,18 @@ impl Tui {
                     if continue_timeout {
                         self.toggle_alive(which.clone(), AliveSym::GoOn);
                         let sender_clone = tui_sender.clone();
-                        self.alive.timers.renew(timeout_id, move || {
-                            thread::sleep(Duration::from_millis(config::tui::ALIVE_REFRESH));
-                            sender_clone
-                                .send(InternalUiMsg::TimeOut(which))
-                                .unwrap_or_else(|_| {
-                                    // nothing to be done, that timer is just at the end
-                                });
-                        });
+                        info!("refresh path alive");
+                        task::sleep(Duration::from_millis(config::tui::ALIVE_REFRESH)).await;
+                        sender_clone
+                            .send(InternalUiMsg::TimeOut(which))
+                            .unwrap_or_else(|_| {
+                                // nothing to be done, that timer is just at the end
+                            });
                     }
                 }
             }
         }
-        info!("cursive run started");
-        self.handle.run();
-        info!("cursive run terminated");
-        // it's done, so
-        Err(())
+        Ok(true)
     }
 
     ///    # Example test
