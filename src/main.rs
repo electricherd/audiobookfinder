@@ -8,12 +8,14 @@ extern crate clap;
 extern crate rayon;
 
 use adbflib::{
+    common::startup::{self, StartUp, SyncStartUp},
     ctrl::{CollectionPathAlive, Ctrl, NetMessages, Status, UiUpdateMsg},
     data::{self, Collection},
     logit,
     net::{key_keeper, Net},
 };
 use async_std::task;
+use log::{error, info, trace, warn};
 use rayon::prelude::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator};
 use std::{
     io::{self, Error, ErrorKind},
@@ -25,16 +27,6 @@ use std::{
     },
     time::Duration,
 };
-
-// to synchronize start of threads
-enum Process {
-    Go,
-}
-enum SyncStartUp {
-    SendReceiver(Sender<Process>),
-    NoWait,
-}
-const THREAD_SYNC_TIMEOUT: Duration = Duration::from_millis(100);
 
 static INPUT_FOLDERS: &str = "folders";
 static APP_TITLE: &str = concat!("The audiobook finder (", env!("CARGO_PKG_NAME"), ")");
@@ -171,37 +163,26 @@ fn main() -> io::Result<()> {
                 ) {
                     Ok(mut controller) => {
                         // wait for synchronisation
-                        {
-                            let (ready_sync_sender_from_ui, ready_sync_receiver_from_ui) =
-                                channel::<Process>();
-                            ready_ui_send
-                                .send(SyncStartUp::SendReceiver(ready_sync_sender_from_ui))
-                                .expect("collection from ui receiver not yet there???");
-                            ready_sync_receiver_from_ui
-                                .recv_timeout(THREAD_SYNC_TIMEOUT)
-                                .expect("the ui channel was just sent?");
-                        }
-
                         if has_webui {
                             controller.run_webui()?;
                         }
                         if has_tui {
-                            println!("starting tui");
+                            info!("starting tui");
                             // do finally the necessary
                             // this blocks this async future
                             controller
-                                .run_tui(rx)
+                                .run_tui(ready_ui_send, rx)
                                 .map_err(|error_text| Error::new(ErrorKind::Other, error_text))?;
                         }
                         Ok::<(), Error>(())
                     }
                     Err(error_text) => {
-                        println!("{:?}", error_text);
+                        error!("{:?}", error_text);
                         Err(Error::new(ErrorKind::Other, error_text))
                     }
                 }
             } else {
-                println!("no ui was created!");
+                info!("no ui was created!");
                 ready_ui_send
                     .send(SyncStartUp::NoWait)
                     .expect("collection from ui receiver not yet there???");
@@ -218,7 +199,7 @@ fn main() -> io::Result<()> {
                 // - can be terminated by ui message
                 // - collector finished (depending on definition)
                 if has_net {
-                    println!("net started!!");
+                    info!("net started!!");
                     let net_system_messages = tx_net;
                     let mut network = Net::new(
                         key_keeper::get_p2p_server_id(),
@@ -226,22 +207,14 @@ fn main() -> io::Result<()> {
                         net_system_messages,
                     );
 
-                    // net synchronization
-                    {
-                        let (ready_sync_sender_from_net, ready_sync_receiver_from_net) =
-                            channel::<Process>();
-                        ready_net_send
-                            .send(SyncStartUp::SendReceiver(ready_sync_sender_from_net))
-                            .expect("collection from ui receiver not yet there???");
-                        ready_sync_receiver_from_net
-                            .recv_timeout(THREAD_SYNC_TIMEOUT)
-                            .expect("the net channel was just sent?");
-                    }
+                    // startup net synchronization
+                    StartUp::block_on_sync(ready_net_send, "net");
+
                     network.lookup().await;
-                    println!("net finished!!");
+                    info!("net finished!!");
                     Ok::<(), Error>(())
                 } else {
-                    println!("no net!");
+                    info!("no net!");
                     ready_net_send
                         .send(SyncStartUp::NoWait)
                         .expect("collection from net receiver not yet there???");
@@ -255,44 +228,11 @@ fn main() -> io::Result<()> {
     // important
     // but yet this simple bracket to enclose this a little
     {
-        // select! closure helper for returning answer
-        let send_back_return = |all: Vec<&SyncStartUp>| {
-            for el in all {
-                match el {
-                    SyncStartUp::SendReceiver(sender) => {
-                        sender
-                            .send(Process::Go)
-                            .expect("there has to be a receiver, the sender was sent here!");
-                    }
-                    SyncStartUp::NoWait => {}
-                }
-            }
-        };
-        let timeout_try_2_receiver =
-            |(a, b): (&Receiver<SyncStartUp>, &Receiver<SyncStartUp>)| -> bool {
-                if let Ok(try_receiver1) = a.try_recv() {
-                    b.recv_timeout(THREAD_SYNC_TIMEOUT)
-                        .and_then(|in_time_receiver2| {
-                            send_back_return(vec![&try_receiver1, &in_time_receiver2]);
-                            Ok(true)
-                        })
-                        .unwrap_or(false)
-                } else {
-                    false
-                }
-            };
-
         // shitty select! for 2 threads with timeout
-        loop {
-            if timeout_try_2_receiver((&ready_ui_receiver, &ready_net_receiver)) {
-                break;
-            } else {
-                if timeout_try_2_receiver((&ready_net_receiver, &ready_ui_receiver)) {
-                    break;
-                }
-            }
-        }
-        println!("collector can start");
+        trace!("syncing with 2 other threads");
+        // todo: return false is yet weak, it means timeout happened
+        StartUp::send_and_block2(&ready_ui_receiver, &ready_net_receiver);
+        trace!("sync with net and ui done ... collector can start");
 
         let synced_to_ui_messages = tx_from_collector_to_ui.clone();
 
@@ -319,7 +259,7 @@ fn main() -> io::Result<()> {
                 .unwrap_or(())
             // todo: send terminate to net runner depending if it should continue or not
         }
-        println!("collector finished!!");
+        info!("collector finished!!");
     }
 
     // todo: how to secure this??
@@ -344,19 +284,19 @@ fn search_in_single_path(
             mutex_to_ui_msg
                 .lock()
                 .and_then(|locked_to_start_ui_message| {
-                    println!("send startAnimation for path {:?}", index);
+                    trace!("send startAnimation for path {:?}", index);
                     locked_to_start_ui_message
                         .send(UiUpdateMsg::CollectionUpdate(
                             CollectionPathAlive::BusyPath(index),
                             Status::ON,
                         ))
                         .unwrap_or_else(|_| {
-                            println!("... lost start animation for index {:?}", index)
+                            error!("... lost start animation for index {:?}", index)
                         });
-                    println!("start busy animation");
+                    trace!("start busy animation");
                     Ok(())
                 })
-                .unwrap_or_else(|_| println!("... that should not happen here at start"));
+                .unwrap_or_else(|_| error!("... that should not happen here at start"));
         }
     }
     let locked_collection = &mut *collection_protected.lock().unwrap();
@@ -368,7 +308,7 @@ fn search_in_single_path(
             if has_ui {
                 // send stop animation for that path
                 if has_tui {
-                    println!("send stopAnimation for path {:?}", index);
+                    trace!("send stopAnimation for path {:?}", index);
                     mutex_to_ui_msg
                         .lock()
                         .and_then(|locked_to_stop_ui_message| {
@@ -378,13 +318,13 @@ fn search_in_single_path(
                                     Status::OFF,
                                 ))
                                 .unwrap_or_else(|_| {
-                                    println!("... lost stop animation for {:?}", index)
+                                    error!("... lost stop animation for {:?}", index)
                                 });
-                            println!("stop busy animation");
+                            trace!("stop busy animation");
                             Ok(())
                         })
                         .unwrap_or_else(|_| {
-                            println!("... that should not happen here at stop");
+                            error!("... that should not happen here at stop");
                         });
                 }
             } else {

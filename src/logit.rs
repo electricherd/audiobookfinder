@@ -43,6 +43,9 @@ impl Logit {
                 env_logger::init();
             }
             Log::File => {
+                // todo: fix this for binary and see for default!
+                //       from console good is now:
+                //       RUST_LOG=audiobookfinder=trace,adbflib=trace
                 flexi_logger::Logger::with_env_or_str("adbflib=debug, adbflib=warn")
                     .log_to_file()
                     .directory(".")
