@@ -13,7 +13,7 @@ use async_std::{
     sync::{Arc, Mutex},
     task,
 };
-use futures_util::{pin_mut, TryFutureExt};
+use futures_util::TryFutureExt;
 use libp2p::{
     mdns::{service::MdnsPacket, MdnsService},
     PeerId,
@@ -253,21 +253,21 @@ impl Net {
                                 let count = ip_addresses.len();
                                 if has_tui {
                                     ctrl_sender
-                                        .send(ctrl::UiUpdateMsg::NetUpdate(
+                                        .send(ctrl::UiUpdateMsg::NetUpdate((
                                             ctrl::NetMessages::ShowNewHost,
                                             incoming_id.to_string(),
-                                        ))
+                                        )))
                                         .unwrap();
                                     ctrl_sender
-                                        .send(ctrl::UiUpdateMsg::NetUpdate(
+                                        .send(ctrl::UiUpdateMsg::NetUpdate((
                                             ctrl::NetMessages::ShowStats {
                                                 show: ctrl::NetStats {
                                                     line: count,
                                                     max: 0, //index,
                                                 },
                                             },
-                                            "".to_string(),
-                                        ))
+                                            String::from(""),
+                                        )))
                                         .unwrap();
                                 }
                                 // create ssh client in new thread

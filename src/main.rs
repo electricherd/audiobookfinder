@@ -13,20 +13,28 @@ use adbflib::{
     logit,
     net::{key_keeper, Net},
 };
-use async_std::{
-    sync::{Arc, Mutex},
-    task,
-};
-use futures::try_join;
+use async_std::task;
 use rayon::prelude::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator};
 use std::{
     io::{self, Error, ErrorKind},
     path::Path, // path, clear
     sync::{
         self,
-        mpsc::{channel, Sender},
+        mpsc::{channel, Receiver, Sender},
+        Arc, Mutex,
     },
+    time::Duration,
 };
+
+// to synchronize start of threads
+enum Process {
+    Go,
+}
+enum SyncStartUp {
+    SendReceiver(Sender<Process>),
+    NoWait,
+}
+const THREAD_SYNC_TIMEOUT: Duration = Duration::from_millis(100);
 
 static INPUT_FOLDERS: &str = "folders";
 static APP_TITLE: &str = concat!("The audiobook finder (", env!("CARGO_PKG_NAME"), ")");
@@ -40,6 +48,10 @@ const HOMEPAGE: &'static str = env!("CARGO_PKG_HOMEPAGE");
 const DESCRIPTION: &'static str = env!("CARGO_PKG_DESCRIPTION");
 
 fn main() -> io::Result<()> {
+    // for synced start
+    let (ready_ui_send, ready_ui_receiver) = channel::<SyncStartUp>();
+    let (ready_net_send, ready_net_receiver) = channel::<SyncStartUp>();
+
     let parse_args = clap::App::new(APP_TITLE)
         .version(VERSION)
         .author(AUTHORS)
@@ -140,14 +152,16 @@ fn main() -> io::Result<()> {
 
     // start the main operators
     //
-    task::block_on(async move {
-        // all optional components are wrapped into a future which can result in an empty future,
-        // but collector future will not be empty
-        // 1 - UI         ui_future   (optional)
-        // 2 - Net        net_future  (optional)
-        // 3 - Collector  collector_future
 
-        let ui_future = async move {
+    // all optional components are wrapped into a future which can result in an empty future,
+    // but collector future will not be empty
+    // 1 - UI         ui_future   (optional)
+    // 2 - Net        net_future  (optional)
+    // 3 - Collector  collector_future
+
+    let ui_thread = std::thread::Builder::new()
+        .name("UI thread".into())
+        .spawn(move || {
             if has_ui {
                 match Ctrl::new(
                     key_keeper::get_p2p_server_id(),
@@ -156,8 +170,20 @@ fn main() -> io::Result<()> {
                     has_net,
                 ) {
                     Ok(mut controller) => {
+                        // wait for synchronisation
+                        {
+                            let (ready_sync_sender_from_ui, ready_sync_receiver_from_ui) =
+                                channel::<Process>();
+                            ready_ui_send
+                                .send(SyncStartUp::SendReceiver(ready_sync_sender_from_ui))
+                                .expect("collection from ui receiver not yet there???");
+                            ready_sync_receiver_from_ui
+                                .recv_timeout(THREAD_SYNC_TIMEOUT)
+                                .expect("the ui channel was just sent?");
+                        }
+
                         if has_webui {
-                            controller.run_webui().await?;
+                            controller.run_webui()?;
                         }
                         if has_tui {
                             println!("starting tui");
@@ -165,7 +191,6 @@ fn main() -> io::Result<()> {
                             // this blocks this async future
                             controller
                                 .run_tui(rx)
-                                .await
                                 .map_err(|error_text| Error::new(ErrorKind::Other, error_text))?;
                         }
                         Ok::<(), Error>(())
@@ -177,73 +202,130 @@ fn main() -> io::Result<()> {
                 }
             } else {
                 println!("no ui was created!");
+                ready_ui_send
+                    .send(SyncStartUp::NoWait)
+                    .expect("collection from ui receiver not yet there???");
                 Ok::<(), Error>(())
             }
-        };
+        });
 
-        // 2 - Net Future
-        let net_future = async move {
-            // This thread will not end itself
-            // - can be terminated by ui message
-            // - collector finished (depending on definition)
-            if has_net {
-                println!("net started!!");
-                let net_system_messages = tx_net;
-                let mut network = Net::new(
-                    key_keeper::get_p2p_server_id(),
-                    has_tui,
-                    net_system_messages,
-                );
-                network.lookup().await;
-                println!("net finished!!");
-                Ok::<(), Error>(())
-            } else {
-                println!("no net!");
-                Ok::<(), Error>(())
+    // 2 - Net Future
+    let net_thread = std::thread::Builder::new()
+        .name("NET thread".into())
+        .spawn(move || {
+            task::block_on(async move {
+                // This thread will not end itself
+                // - can be terminated by ui message
+                // - collector finished (depending on definition)
+                if has_net {
+                    println!("net started!!");
+                    let net_system_messages = tx_net;
+                    let mut network = Net::new(
+                        key_keeper::get_p2p_server_id(),
+                        has_tui,
+                        net_system_messages,
+                    );
+
+                    // net synchronization
+                    {
+                        let (ready_sync_sender_from_net, ready_sync_receiver_from_net) =
+                            channel::<Process>();
+                        ready_net_send
+                            .send(SyncStartUp::SendReceiver(ready_sync_sender_from_net))
+                            .expect("collection from ui receiver not yet there???");
+                        ready_sync_receiver_from_net
+                            .recv_timeout(THREAD_SYNC_TIMEOUT)
+                            .expect("the net channel was just sent?");
+                    }
+                    network.lookup().await;
+                    println!("net finished!!");
+                    Ok::<(), Error>(())
+                } else {
+                    println!("no net!");
+                    ready_net_send
+                        .send(SyncStartUp::NoWait)
+                        .expect("collection from net receiver not yet there???");
+                    Ok::<(), Error>(())
+                }
+            });
+        });
+
+    // the collector ... still a problem with threading and parse_args
+    // borrowing?? but since rayon is used, using a separate thread is not really
+    // important
+    // but yet this simple bracket to enclose this a little
+    {
+        // select! closure helper for returning answer
+        let send_back_return = |all: Vec<&SyncStartUp>| {
+            for el in all {
+                match el {
+                    SyncStartUp::SendReceiver(sender) => {
+                        sender
+                            .send(Process::Go)
+                            .expect("there has to be a receiver, the sender was sent here!");
+                    }
+                    SyncStartUp::NoWait => {}
+                }
             }
         };
+        let timeout_try_2_receiver =
+            |(a, b): (&Receiver<SyncStartUp>, &Receiver<SyncStartUp>)| -> bool {
+                if let Ok(try_receiver1) = a.try_recv() {
+                    b.recv_timeout(THREAD_SYNC_TIMEOUT)
+                        .and_then(|in_time_receiver2| {
+                            send_back_return(vec![&try_receiver1, &in_time_receiver2]);
+                            Ok(true)
+                        })
+                        .unwrap_or(false)
+                } else {
+                    false
+                }
+            };
+
+        // shitty select! for 2 threads with timeout
+        loop {
+            if timeout_try_2_receiver((&ready_ui_receiver, &ready_net_receiver)) {
+                break;
+            } else {
+                if timeout_try_2_receiver((&ready_net_receiver, &ready_ui_receiver)) {
+                    break;
+                }
+            }
+        }
+        println!("collector can start");
+
+        let synced_to_ui_messages = tx_from_collector_to_ui.clone();
 
         // start the parallel search threads with rayon, each path its own
-        let collector_future = async move {
-            // initialize the data collection for all
-            let init_collection = Collection::new(&key_keeper::get_p2p_server_id(), max_threads);
-            let collection_protected = sync::Arc::new(sync::Mutex::new(init_collection));
+        let init_collection = Collection::new(&key_keeper::get_p2p_server_id(), max_threads);
+        let collection_protected = sync::Arc::new(sync::Mutex::new(init_collection));
 
-            // todo: is this right? async lock to create a sync message mutex?
-            let synced_to_ui_messages = tx_from_collector_to_ui.lock().await.clone();
-            let wrapped_to_ui_sender = sync::Arc::new(sync::Mutex::new(synced_to_ui_messages));
+        all_pathes.par_iter().enumerate().for_each(|(index, elem)| {
+            let sender_loop = synced_to_ui_messages.clone();
+            let collection_data_in_iterator = collection_protected.clone();
+            search_in_single_path(
+                has_ui,
+                has_tui,
+                collection_data_in_iterator,
+                sender_loop,
+                index,
+                elem,
+            );
+        });
+        if !has_ui {
+            collection_protected
+                .lock()
+                .and_then(|locked_collection| Ok(locked_collection.print_stats()))
+                .unwrap_or(())
+            // todo: send terminate to net runner depending if it should continue or not
+        }
+        println!("collector finished!!");
+    }
 
-            all_pathes.par_iter().enumerate().for_each(|(index, elem)| {
-                let collection_data_in_iterator = collection_protected.clone();
-                let to_ui_messages_in_iterator = wrapped_to_ui_sender.clone();
-                search_in_single_path(
-                    has_ui,
-                    has_tui,
-                    collection_data_in_iterator,
-                    to_ui_messages_in_iterator,
-                    index,
-                    elem,
-                );
-            });
-            if !has_ui {
-                collection_protected
-                    .lock()
-                    .and_then(|locked_collection| Ok(locked_collection.print_stats()))
-                    .unwrap_or(())
-                // todo: send terminate to net runner depending if it should continue or not
-            }
-            println!("collector finished!!");
-            Ok::<(), Error>(())
-        };
-
-        // Compose all futures that possible threads inside are running
-        try_join!(ui_future, net_future, collector_future)
-    })
-    .and_then(|(_, _, _)| {
-        // shrink the 3 ok results to one
-        println!("done here");
-        Ok(())
-    })
+    // todo: how to secure this??
+    drop(net_thread);
+    drop(ui_thread);
+    Ok(())
 }
 
 fn search_in_single_path(
@@ -271,6 +353,7 @@ fn search_in_single_path(
                         .unwrap_or_else(|_| {
                             println!("... lost start animation for index {:?}", index)
                         });
+                    println!("start busy animation");
                     Ok(())
                 })
                 .unwrap_or_else(|_| println!("... that should not happen here at start"));
@@ -297,6 +380,7 @@ fn search_in_single_path(
                                 .unwrap_or_else(|_| {
                                     println!("... lost stop animation for {:?}", index)
                                 });
+                            println!("stop busy animation");
                             Ok(())
                         })
                         .unwrap_or_else(|_| {
@@ -322,12 +406,11 @@ fn search_in_single_path(
             if has_ui {
                 if has_tui {
                     let debug_message_id = NetMessages::Debug;
-                    let text = text.to_string();
                     mutex_to_ui_msg
                         .lock()
                         .and_then(|locked_update_message| {
                             locked_update_message
-                                .send(UiUpdateMsg::NetUpdate(debug_message_id, text))
+                                .send(UiUpdateMsg::NetUpdate((debug_message_id, text)))
                                 .unwrap();
                             Ok(())
                         })

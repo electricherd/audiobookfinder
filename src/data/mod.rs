@@ -177,7 +177,7 @@ impl Collection {
                     Ok(())
                 }
             }
-            Some("text") | Some("application") | Some("image") => Ok(()),
+            Some("text") | Some("application") | Some("image") | Some("video") => Ok(()),
             _ => {
                 error!("[{:?}]{:?}", prefix, cb.path());
                 col.stats.files.other += 1;
