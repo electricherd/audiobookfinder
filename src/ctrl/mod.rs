@@ -110,23 +110,23 @@ impl Ctrl {
         let tui_sender = Arc::new(Mutex::new(tui_sender));
         let internal_tui_sender = tui_sender.clone();
 
-        // todo: see where
-        StartUp::block_on_sync(ready_sender, "ui");
-
         // loop external messages and forward to internal
         // ui messages
-        let tui_spawner = task::block_on(async move {
-            let mut tui;
-            info!("spawning tui async thread");
-            let tui_sender = internal_tui_sender.lock().await.clone();
-            tui = Tui::new(title, &paths, with_net)?;
-            tui.run(tui_receiver, tui_sender).await;
-            Ok::<bool, String>(true)
-        });
 
-        let message_spawner = task::block_on(async move {
+        let mut tui;
+        info!("spawning tui async thread");
+        tui = Tui::new(title, &paths, with_net)?;
+        task::block_on(async move {
+            let tui_sender1 = internal_tui_sender.lock().await.clone();
+            let tui_sender2 = tui_sender1.clone();
+
+            // sync
+            StartUp::block_on_sync(ready_sender, "ui");
             info!("spawning tui async thread");
-            Self::run_message_forwarding(external_receiver, tui_sender.lock().await.clone()).await;
+            loop {
+                tui.run(&tui_receiver, &tui_sender1).await;
+                Self::run_message_forwarding(&external_receiver, &tui_sender2).await;
+            }
         });
         Ok(())
     }
@@ -148,28 +148,28 @@ impl Ctrl {
     }
 
     async fn run_message_forwarding(
-        from_external_receiver: Receiver<UiUpdateMsg>,
-        forward_sender: Sender<InternalUiMsg>,
+        from_external_receiver: &Receiver<UiUpdateMsg>,
+        forward_sender: &Sender<InternalUiMsg>,
     ) -> Result<bool, String> {
-        info!("entering message to tui forwarding");
-
         let mut status = true;
-        if let Ok(forward_sys_message) = from_external_receiver.recv() {
+
+        if let Ok(forward_sys_message) = from_external_receiver.try_recv() {
             match forward_sys_message {
                 UiUpdateMsg::NetUpdate((recv_dialog, text)) => {
-                    info!("net update");
+                    trace!("net update forwarding");
                     forward_sender
                         .send(InternalUiMsg::Update((recv_dialog, text)))
                         .unwrap();
                 }
                 UiUpdateMsg::CollectionUpdate(signal, on_off) => {
-                    info!("collection update");
+                    trace!("collection update forwarding");
                     forward_sender
                         .send(InternalUiMsg::Animate(signal, on_off))
                         .unwrap();
                 }
                 UiUpdateMsg::StopUI => {
                     // if error something or Ok(false) results in the same
+                    trace!("stop from forwarding");
                     status = false;
                 }
             }

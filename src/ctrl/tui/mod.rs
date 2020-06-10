@@ -82,14 +82,11 @@ impl Tui {
 
     pub async fn run(
         &mut self,
-        tui_receiver: Receiver<InternalUiMsg>,
-        tui_sender: Sender<InternalUiMsg>,
+        tui_receiver: &Receiver<InternalUiMsg>,
+        tui_sender: &Sender<InternalUiMsg>,
     ) -> Result<(), String> {
         // this is the own channel just for tui
-        info!("run tui async ... yes");
-        loop {
-            self.run_cursive(&tui_sender, &tui_receiver).await;
-        }
+        self.run_cursive(&tui_sender, &tui_receiver).await;
         Ok(())
     }
 
@@ -103,14 +100,8 @@ impl Tui {
             return Err(());
         }
 
-        //info!("cursive run started");
         self.handle.step();
-        //info!("cursive run terminated");
-        // it's done, so
-        //Err(())
-
-        while let Some(message) = tui_receiver.try_iter().next() {
-            info!("meessage received");
+        if let Ok(message) = tui_receiver.try_recv() {
             match message {
                 InternalUiMsg::Update((recv_dialog, text)) => match recv_dialog {
                     NetMessages::ShowNewHost => {
@@ -153,11 +144,11 @@ impl Tui {
                                         (self.alive.host.runs, &mut self.alive.host.runs, 0)
                                     }
                                 };
-                            info!("received path alive");
+                            trace!("received path alive");
                             if !already_running {
                                 *toggle = true;
                                 // if timer not started, start
-                                task::sleep(Duration::from_millis(config::tui::ALIVE_REFRESH))
+                                task::sleep(Duration::from_millis(config::tui::ALIVE_REFRESH_MSEC))
                                     .await;
                                 sender_clone
                                     .send(InternalUiMsg::TimeOut(signal.clone()))
@@ -182,8 +173,8 @@ impl Tui {
                     if continue_timeout {
                         self.toggle_alive(which.clone(), AliveSym::GoOn);
                         let sender_clone = tui_sender.clone();
-                        info!("refresh path alive");
-                        task::sleep(Duration::from_millis(config::tui::ALIVE_REFRESH)).await;
+                        task::sleep(Duration::from_millis(config::tui::ALIVE_REFRESH_MSEC)).await;
+                        trace!("refresh path alive");
                         sender_clone
                             .send(InternalUiMsg::TimeOut(which))
                             .unwrap_or_else(|_| {

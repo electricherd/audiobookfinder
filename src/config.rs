@@ -31,7 +31,7 @@ pub mod net {
 
 /// The TUI related configurations of a more general purpose
 pub mod tui {
-    pub static ALIVE_REFRESH: u64 = 80;
+    pub static ALIVE_REFRESH_MSEC: u64 = 200;
 }
 
 /// The webui related configurations
