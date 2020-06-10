@@ -7,8 +7,6 @@ use super::super::{
     data::{DataAuth, DataSession},
     key_keeper,
 };
-use async_std::sync::Arc;
-use bincode;
 use libp2p::PeerId;
 
 #[derive(Clone)]
