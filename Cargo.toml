@@ -36,7 +36,7 @@ lazy_static = "1.4"   # awesome lib for lazy data structures
 hostname = "^0.3"    # for host recognition
 
 env_logger = "0.7"     # alongside log for logging
-flexi_logger = "0.15"  # a more flexible logger
+flexi_logger = {version = "0.15", features = ["colors"] }  # a more flexible logger
 log = "0.4"            # basic log feature
 syslog = "5.0"           # another logger for system log
 
