@@ -123,6 +123,7 @@ artifacts:
 after_build:
   - sh: cp target/$target/release/$CRATE_NAME target/release/$CRATE_NAME-$UBUNTU_VER-$target
   - sh: strip -s target/release/$CRATE_NAME-$UBUNTU_VER-$target -o target/release/$CRATE_NAME-$UBUNTU_VER-$target.stripped
+  - sh: upx --version
   - sh: upx --best target/release/$CRATE_NAME-$UBUNTU_VER-$target.stripped -o target/release/$CRATE_NAME
   - sh: 7z a -r target/release/$CRATE_NAME-$UBUNTU_VER-$target.7z ./target/release/$CRATE_NAME ./README-release.md ./LICENSE
   - sh: sha256sum target/release/$CRATE_NAME-$UBUNTU_VER-$target.7z > target/release/$CRATE_NAME-$UBUNTU_VER-$target.7z.sha256
@@ -141,7 +142,9 @@ deploy:
   draft: false
   prerelease: false
   on:
-    branch: master
+    # branch: master
+    # something very wrong with tag "v0.1.19" it claims
+    # says: "GitHub" deployment for branch "master" has been skipped because current branch is "v0.1.19"
     APPVEYOR_REPO_TAG: true       # deploy on tag push only
 
 
