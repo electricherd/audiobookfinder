@@ -134,9 +134,6 @@ deploy:
 # but branch is not important since until now, only master is used
   provider: GitHub
   tag: $(APPVEYOR_REPO_TAG_NAME)
-  artifact: 
-    -'zippedFiles'
-    -'shachecksum'
   auth_token:
     # yes this is encrypted/signed by appveyor (from the github token)
     secure: r7fSlUlYmQ1WCJeuTZu8XnQ0n5QNvWb+eVX5lsowCbA9gLlq3DtIFiTSjXTXjs6V
