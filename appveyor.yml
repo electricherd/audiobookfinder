@@ -108,14 +108,13 @@ build_script:
 #  - cargo build
   - sh: cargo build --release --target $target  
   - cmd: cargo build --release --target %target%
-#after_build: (https://github.com/appveyor/ci/issues/2802)
+
+after_build:
   - sh: cp target/$target/release/$CRATE_NAME target/release/$CRATE_NAME-$UBUNTU_VER-$target
   - sh: strip -s target/release/$CRATE_NAME-$UBUNTU_VER-$target -o target/release/$CRATE_NAME-$UBUNTU_VER-$target.stripped
   - sh: ./upx --best target/release/$CRATE_NAME-$UBUNTU_VER-$target.stripped -o target/release/$CRATE_NAME
-  - sh: 7z a -r target/release/$CRATE_NAME-$UBUNTU_VER-$target.7z ./target/release/$CRATE_NAME ./README-release.md ./LICENSE
-  - sh: sha256sum target/release/$CRATE_NAME-$UBUNTU_VER-$target.7z > target/release/$CRATE_NAME-$UBUNTU_VER-$target.7z.sha256
-
-
+  - sh: 7z a -r $CRATE_NAME-$UBUNTU_VER-$target.7z ./target/release/$CRATE_NAME ./README-release.md ./LICENSE
+  - sh: sha256sum $CRATE_NAME-$UBUNTU_VER-$target.7z > target/release/$CRATE_NAME-$UBUNTU_VER-$target.7z.sha256
 
 test_script:
 # comment next lines for quick build  
@@ -124,10 +123,9 @@ test_script:
   - sh: ./target/$target/release/$CRATE_NAME -- testaudio  
 
 artifacts:
-  - path: target/release/$CRATE_NAME-$UBUNTU_VER-$target.7z
+  - path: $CRATE_NAME-$UBUNTU_VER-$target.7z
     name: zippedFiles
-
-  - path: target/release/$CRATE_NAME-$UBUNTU_VER-$target.7z.sha256
+  - path: $CRATE_NAME-$UBUNTU_VER-$target.7z.sha256
     name: shachecksum
 
 deploy:
