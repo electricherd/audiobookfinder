@@ -143,6 +143,7 @@ deploy:
     secure: r7fSlUlYmQ1WCJeuTZu8XnQ0n5QNvWb+eVX5lsowCbA9gLlq3DtIFiTSjXTXjs6V
   draft: false
   prerelease: false
+  force_update: true
   on:
     # branch: master
     # something very wrong with tag "v0.1.19" it claims

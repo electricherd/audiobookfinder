@@ -48,7 +48,7 @@ impl Logit {
                 //       RUST_LOG=audiobookfinder=trace,adbflib=trace
                 // see:
                 // https://rust-lang-nursery.github.io/rust-cookbook/development_tools/debugging/config_log.html
-                flexi_logger::Logger::with_env_or_str("audiobookfinder=trace,adbflib=trace")
+                flexi_logger::Logger::with_env_or_str("adbflib=debug, adbflib=warn")
                     .log_to_file()
                     .directory(".")
                     .format(flexi_logger::with_thread) // colored_with_thread
