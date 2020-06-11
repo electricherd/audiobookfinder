@@ -64,15 +64,15 @@ init:
   - sh: sudo apt-get --yes install libsodium-dev
   - sh: sudo apt-get --yes install libtag1-dev libtagc0-dev
 #  for deployment
-  - sh: sudo apt-get --yes install p7zip-full # upx-ucl
-  - sh: curl -L https://github.com/upx/upx/releases/download/v3.96/upx-3.96-amd64_linux.tar.xz > upx.xz
-  - sh: tar -xf ./upx.xz upx-3.96-amd64_linux/upx --strip-components=1 -C .
+  - sh: sudo apt-get --yes install p7zip-full # upx-ucl is now in install
 
 # scripts that run after cloning repository
 install:
   #
   # shell: Linux
   #
+  - sh: curl -L https://github.com/upx/upx/releases/download/v3.96/upx-3.96-amd64_linux.tar.xz > upx.xz
+  - sh: tar -xf ./upx.xz upx-3.96-amd64_linux/upx --strip-components=1 -C .
   - sh: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > ./rustup.sh
   - sh: sh ./rustup.sh -y 
 # for debugging: ls -al
