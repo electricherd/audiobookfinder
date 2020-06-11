@@ -73,9 +73,9 @@ after_script:
 before_deploy:
   - cp target/$TARGET/release/$CRATE_NAME target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET
   - strip -s target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET -o target/release/$CRATE_NAME.stripped
-#  - upx --best target/release/$CRATE_NAME.stripped -o target/release/$CRATE_NAME
-#  - 7z a -r target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z ./target/release/$CRATE_NAME ./README-release.md ./LICENSE
-  - 7z a -r target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z ./target/release/$CRATE_NAME.stripped ./README-release.md ./LICENSE-
+#  - strip -s target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET -o target/release/$CRATE_NAME
+  - upx -1 target/release/$CRATE_NAME.stripped -o target/release/$CRATE_NAME
+  - 7z a -r target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z ./target/release/$CRATE_NAME ./README-release.md ./LICENSE
   - sha256sum target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z > target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z.sha256
 
 deploy:
