@@ -40,6 +40,11 @@ matrix:
       target: x86_64-pc-windows-msvc
     - image: Ubuntu2004
       target: x86_64-pc-windows-msvc
+    - image: Ubuntu1804
+      UBUNTU_VER: LTS_20.04
+    - image: Ubuntu2004
+      UBUNTU_VER: LTS_18.04
+
 
   allow_failures:
     - target: x86_64-pc-windows-msvc
