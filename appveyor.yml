@@ -108,6 +108,14 @@ build_script:
 #  - cargo build
   - sh: cargo build --release --target $target  
   - cmd: cargo build --release --target %target%
+#after_build: (https://github.com/appveyor/ci/issues/2802)
+  - sh: cp target/$target/release/$CRATE_NAME target/release/$CRATE_NAME-$UBUNTU_VER-$target
+  - sh: strip -s target/release/$CRATE_NAME-$UBUNTU_VER-$target -o target/release/$CRATE_NAME-$UBUNTU_VER-$target.stripped
+  - sh: ./upx --best target/release/$CRATE_NAME-$UBUNTU_VER-$target.stripped -o target/release/$CRATE_NAME
+  - sh: 7z a -r target/release/$CRATE_NAME-$UBUNTU_VER-$target.7z ./target/release/$CRATE_NAME ./README-release.md ./LICENSE
+  - sh: sha256sum target/release/$CRATE_NAME-$UBUNTU_VER-$target.7z > target/release/$CRATE_NAME-$UBUNTU_VER-$target.7z.sha256
+
+
 
 test_script:
 # comment next lines for quick build  
@@ -122,18 +130,10 @@ artifacts:
   - path: target/release/$CRATE_NAME-$UBUNTU_VER-$target.7z.sha256
     name: shachecksum
 
-
-after_build:
-  - sh: cp target/$target/release/$CRATE_NAME target/release/$CRATE_NAME-$UBUNTU_VER-$target
-  - sh: strip -s target/release/$CRATE_NAME-$UBUNTU_VER-$target -o target/release/$CRATE_NAME-$UBUNTU_VER-$target.stripped
-  - sh: ./upx --best target/release/$CRATE_NAME-$UBUNTU_VER-$target.stripped -o target/release/$CRATE_NAME
-  - sh: 7z a -r target/release/$CRATE_NAME-$UBUNTU_VER-$target.7z ./target/release/$CRATE_NAME ./README-release.md ./LICENSE
-  - sh: sha256sum target/release/$CRATE_NAME-$UBUNTU_VER-$target.7z > target/release/$CRATE_NAME-$UBUNTU_VER-$target.7z.sha256
-
 deploy:
-  # due to mutually exclusive branch and tagged (https://www.appveyor.com/docs/branches/)
-  # 2 provider sections would be needed to have tagged and branch release, would be needed
-  # but branch is not important since until now, only master is used
+# due to mutually exclusive branch and tagged (https://www.appveyor.com/docs/branches/)
+# 2 provider sections would be needed to have tagged and branch release, would be needed
+# but branch is not important since until now, only master is used
   provider: GitHub
   artifact: 
     -'zippedFiles'
