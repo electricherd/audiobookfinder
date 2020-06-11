@@ -72,9 +72,11 @@ after_script:
 
 before_deploy:
   - cp target/$TARGET/release/$CRATE_NAME target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET
-  - strip -s target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET -o target/release/$CRATE_NAME.stripped
-#  - strip -s target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET -o target/release/$CRATE_NAME
-  - upx -1 target/release/$CRATE_NAME.stripped -o target/release/$CRATE_NAME
+#  - strip -s target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET -o target/release/$CRATE_NAME.stripped
+  - strip -s target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET -o target/release/$CRATE_NAME
+#  - upx -1 target/release/$CRATE_NAME.stripped -o target/release/$CRATE_NAME
+# upx probably has too low version for lts 16.04 (https://github.com/upx/upx/issues/212)
+  - upx --version
   - 7z a -r target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z ./target/release/$CRATE_NAME ./README-release.md ./LICENSE
   - sha256sum target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z > target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z.sha256
 
