@@ -1,7 +1,7 @@
 version: "{build}"
 
 image:
-- Visual Studio 2017
+# - Visual Studio 2017
 - Ubuntu1804
 - Ubuntu2004
 
@@ -22,32 +22,32 @@ environment:
       type: Release
       CHANNEL: stable
       platform: x64
-    - target: x86_64-pc-windows-msvc
-      ARCH: amd64
-      type: Release
-      CHANNEL: stable
-      platform: x64
-      # versions for libs
-      LIBSODIUM_WIN_VER: 1.0.17
-      TAGLIB_WIN_VER: 2.1.0
+#    - target: x86_64-pc-windows-msvc
+#      ARCH: amd64
+#      type: Release
+#      CHANNEL: stable
+#      platform: x64
+#      # versions for libs
+#      LIBSODIUM_WIN_VER: 1.0.17
+#      TAGLIB_WIN_VER: 2.1.0
 
 
 matrix:
   exclude:
-    - image: Visual Studio 2017
-      target: x86_64-unknown-linux-gnu
-    - image: Ubuntu1804
-      target: x86_64-pc-windows-msvc
-    - image: Ubuntu2004
-      target: x86_64-pc-windows-msvc
+#    - image: Visual Studio 2017
+#      target: x86_64-unknown-linux-gnu
+#    - image: Ubuntu1804
+#      target: x86_64-pc-windows-msvc
+#    - image: Ubuntu2004
+#      target: x86_64-pc-windows-msvc
     - image: Ubuntu1804
       UBUNTU_VER: LTS_20.04
     - image: Ubuntu2004
       UBUNTU_VER: LTS_18.04
 
 
-  allow_failures:
-    - target: x86_64-pc-windows-msvc
+#  allow_failures:
+#    - target: x86_64-pc-windows-msvc
 
 # build configuration, i.e. Debug, Release, etc.
 
@@ -73,6 +73,7 @@ install:
   #
   - sh: curl -L https://github.com/upx/upx/releases/download/v3.96/upx-3.96-amd64_linux.tar.xz > upx.xz
   - sh: tar -xf ./upx.xz upx-3.96-amd64_linux/upx --strip-components=1 -C .
+  - sh: ./upx --version
   - sh: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > ./rustup.sh
   - sh: sh ./rustup.sh -y 
 # for debugging: ls -al
@@ -125,7 +126,6 @@ artifacts:
 after_build:
   - sh: cp target/$target/release/$CRATE_NAME target/release/$CRATE_NAME-$UBUNTU_VER-$target
   - sh: strip -s target/release/$CRATE_NAME-$UBUNTU_VER-$target -o target/release/$CRATE_NAME-$UBUNTU_VER-$target.stripped
-  - sh: ./upx --version
   - sh: ./upx --best target/release/$CRATE_NAME-$UBUNTU_VER-$target.stripped -o target/release/$CRATE_NAME
   - sh: 7z a -r target/release/$CRATE_NAME-$UBUNTU_VER-$target.7z ./target/release/$CRATE_NAME ./README-release.md ./LICENSE
   - sh: sha256sum target/release/$CRATE_NAME-$UBUNTU_VER-$target.7z > target/release/$CRATE_NAME-$UBUNTU_VER-$target.7z.sha256
