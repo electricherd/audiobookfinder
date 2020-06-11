@@ -3,14 +3,21 @@ version: "{build}"
 image:
 - Visual Studio 2017
 - Ubuntu1804
+- Ubuntu2004
 
 environment:
   global:
     CRATE_NAME: audiobookfinder
-    UBUNTU_VER: LTS_18.04
   matrix:
 # don't use "configuration" variable in this file!!!
     - target: x86_64-unknown-linux-gnu
+      UBUNTU_VER: LTS_18.04
+      ARCH: amd64
+      type: Release
+      CHANNEL: stable
+      platform: x64
+    - target: x86_64-unknown-linux-gnu
+      UBUNTU_VER: LTS_20.04
       ARCH: amd64
       type: Release
       CHANNEL: stable
@@ -31,6 +38,9 @@ matrix:
       target: x86_64-unknown-linux-gnu
     - image: Ubuntu1804
       target: x86_64-pc-windows-msvc
+    - image: Ubuntu2004
+      target: x86_64-pc-windows-msvc
+
   allow_failures:
     - target: x86_64-pc-windows-msvc
 
