@@ -5,8 +5,8 @@ An example program to learn [Rust](https://www.rust-lang.org/) and meet its conc
 Rust is an awesome but difficult to learn programming language using different approaches and concepts to solve the current main software development issues for system programming:
  * Secure Programming Concepts: let the computer/compiler do what it can do better than a programmer: safe threading, error-concepts, forbid everything non-safe by default
  * Quality: high level language concepts, easy to embed and include high quality external packages, which lets you implement more functionality in less code
- * Embedded: easy cross compiling, interfaces to C, becoming better to be stripped down to core system functions for the sake of minimum code footprint
- * Parallelism and Concurrency: what else to do with multi-core cpu, we are not getting much faster any more, and often cpus are idling due to blocking code. With async / await and futures Rust offers with its security features a nice way of dealing with it. 
+ * Embedded: easy cross compiling, interfaces to C, becoming better to be stripped down to core system functions for the sake of minimum code footprint. Async/Await for non OS programs, `no_std` and the `async executors` (even own ones) will be important. 
+ * Parallelism and Concurrency: what else to do with multi-core cpu, we are not getting much faster any more, and often cpus are idling due to blocking code. With async / await and futures Rust offers with its security features a very good way of dealing with it. 
  * Testing and Documentation: some build-in concepts
 
 Especially for IoT: I want secure and thereby safe products at home which cannot be turned into zombie devices by buffer overflow and injection, always think of what can go wrong, and let the compiler tell you when you do a common mistake.
@@ -39,8 +39,11 @@ So far only the state charts and their connection is not done but the general co
 It is an inline [CI](https://travis-ci.org/electricherd/audiobookfinder/) generated documentation which can be found [here](https://electricherd.github.io/audiobookfinder/audiobookfinder/index.html)! Rust does a nice job here as well!
 
 ### Changes
+* fixed up many older problems, yet ready for libp2p migration for communication over net
+* cleaned up yet inactivated parts: former ssh connection, state machine replacement
+* introducing a nice way to sync threads on startup by creating a channel, send its sender to main thread and block own thread until sender is sent back to self controlled receiver. 
 * trying upx in CI builds again
-* migrated most native threads to async green threads, as also most dependant external crates use more general futures approach
+* migrated first too many native threads to async green threads, as also most dependant external crates use more general futures approach. It's yet a bit confusing and inconsistant but problem were rayon thread iterator and cursive as thread dependant. But I am about to like and understand async/await quite well, also the consequences for embedded development :grin:
 * bumped to Rust 2018 features async/await in net module using futures in few occasion, but will continue with that
 * version changes of different used crates
 * changed this README, to add version changes to *Changes*, re-ordered, and made [Goals](#goals) as a check list, bumped version to v
@@ -155,9 +158,9 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
 * further lifetimes optimizations
 * exchange of data over net (probably de-/serialization using [serde](https://docs.serde.rs/serde/)) - for sure
 * Editors:
+  * [IntelliJ IDEA](https://intellij-rust.github.io/install.html) [download with snaps](https://blog.jetbrains.com/idea/2017/11/install-intellij-idea-with-snaps/), and then Rust plug-in: easy, refactoring, spell-check, nice, first choice now, because of easy type look-up, and other good features 
   * [sublime text](https://www.sublimetext.com) is good and fast, setup was ok, using it now, works very well
   * [atom](https://atom.io/) was for a long time my choice for development, on my Eee Pc [sublime](https://www.sublimetext.com), because of small footprint and performance, but now that is too slow though I really like the Git feature of it, has README.md syntax
-  * [IntelliJ IDEA](https://intellij-rust.github.io/install.html) [download with snaps](https://blog.jetbrains.com/idea/2017/11/install-intellij-idea-with-snaps/), and then Rust plug-in: easy, refactoring, spell-check, nice (but editor ... column select??, close tab??), but looks professional
 * internationalization (which is not really supported yet by Rust)
 * a good and fast data collection
 * maybe a little AI layer on determining audio books duplicates/same author by similar spelling, etc.
