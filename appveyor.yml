@@ -64,7 +64,9 @@ init:
   - sh: sudo apt-get --yes install libsodium-dev
   - sh: sudo apt-get --yes install libtag1-dev libtagc0-dev
 #  for deployment
-  - sh: sudo apt-get --yes install p7zip-full upx-ucl
+  - sh: sudo apt-get --yes install p7zip-full # upx-ucl
+  - sh: curl -L https://github.com/upx/upx/releases/download/v3.96/upx-3.96-amd64_linux.tar.xz
+  - sh: tar -xf ./upx-3.96-amd64_linux.tar.xz upx-3.96-amd64_linux/upx --strip-components=1 -C .
 
 # scripts that run after cloning repository
 install:
@@ -123,8 +125,8 @@ artifacts:
 after_build:
   - sh: cp target/$target/release/$CRATE_NAME target/release/$CRATE_NAME-$UBUNTU_VER-$target
   - sh: strip -s target/release/$CRATE_NAME-$UBUNTU_VER-$target -o target/release/$CRATE_NAME-$UBUNTU_VER-$target.stripped
-  - sh: upx --version
-  - sh: upx --best target/release/$CRATE_NAME-$UBUNTU_VER-$target.stripped -o target/release/$CRATE_NAME
+  - sh: ./upx --version
+  - sh: ./upx --best target/release/$CRATE_NAME-$UBUNTU_VER-$target.stripped -o target/release/$CRATE_NAME
   - sh: 7z a -r target/release/$CRATE_NAME-$UBUNTU_VER-$target.7z ./target/release/$CRATE_NAME ./README-release.md ./LICENSE
   - sh: sha256sum target/release/$CRATE_NAME-$UBUNTU_VER-$target.7z > target/release/$CRATE_NAME-$UBUNTU_VER-$target.7z.sha256
 
@@ -138,7 +140,7 @@ deploy:
     -'shachecksum'
   auth_token:
     # yes this is encrypted/signed by appveyor (from the github token)
-    secure: aT3Xjbg4GSAJtYjhk7SrC1RInLV28rI6e64he6JClx2W09nToXvPyHr/zXc0tqPj
+    secure: r7fSlUlYmQ1WCJeuTZu8XnQ0n5QNvWb+eVX5lsowCbA9gLlq3DtIFiTSjXTXjs6V
   draft: false
   prerelease: false
   on:
