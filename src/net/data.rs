@@ -18,6 +18,7 @@ pub enum DataSession {
 }
 
 impl DataAuth {
+    #[allow(dead_code)]
     pub fn new(peer_id: PeerId) -> DataAuth {
         let major: u8 = str::parse(env!("CARGO_PKG_VERSION_MAJOR")).unwrap_or(0);
         let minor: u8 = str::parse(env!("CARGO_PKG_VERSION_MINOR")).unwrap_or(0);
@@ -28,9 +29,13 @@ impl DataAuth {
             version: computed_version,
         }
     }
+
+    #[allow(dead_code)]
     pub fn get_id(&self) -> &Vec<u8> {
         &self.id
     }
+
+    #[allow(dead_code)]
     pub fn get_version(&self) -> &VersionType {
         &self.version
     }

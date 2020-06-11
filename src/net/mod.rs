@@ -7,8 +7,8 @@ mod data;
 
 pub mod key_keeper;
 
-use self::{connect_from::ConnectFromOutside, connect_to::ConnectToOther};
-use super::{config, ctrl};
+use self::connect_to::ConnectToOther;
+use super::ctrl;
 use async_std::{
     sync::{Arc, Mutex},
     task,
@@ -23,6 +23,7 @@ use std::{
     sync::mpsc::{channel, Sender},
 };
 
+#[allow(dead_code)]
 #[derive(Clone)]
 enum ToThread<T: Send + Clone> {
     Data(T),
@@ -31,6 +32,7 @@ enum ToThread<T: Send + Clone> {
 
 /// The Net component keeps control about everything from net.
 pub struct Net {
+    #[allow(dead_code)]
     peer_id: PeerId,
     clients_connected: Arc<Mutex<Vec<PeerId>>>,
     tui_sender: Sender<ctrl::UiUpdateMsg>,
@@ -64,8 +66,6 @@ impl Net {
         let has_tui_mdns_input = self.has_tui.clone();
         let has_tui_stats = self.has_tui.clone();
         let has_tui_new_client = self.has_tui.clone();
-
-        let peer_id = self.peer_id.clone();
 
         // to controller messages (mostly tui now)
         let ctrl_sender = self.tui_sender.clone();
@@ -137,7 +137,7 @@ impl Net {
     }
 
     async fn async_mdns_discover(
-        mdns_send_ip: std::sync::mpsc::Sender<ToThread<PeerId>>,
+        _mdns_send_ip: std::sync::mpsc::Sender<ToThread<PeerId>>,
     ) -> Result<usize, std::io::Error> {
         let mut count_no_response: usize = 0;
 

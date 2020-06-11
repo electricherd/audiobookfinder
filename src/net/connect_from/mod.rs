@@ -1,15 +1,14 @@
 ///! The server section of ssh communication
 pub mod com_server;
 
-use self::com_server::ComServer;
-use super::super::config;
 use libp2p::PeerId;
 use std::io::Result;
 
 pub struct ConnectFromOutside {}
 
 impl ConnectFromOutside {
-    pub async fn create_thread(peer_id: PeerId) -> Result<()> {
+    #[allow(dead_code)]
+    pub async fn create_thread(_peer_id: PeerId) -> Result<()> {
         info!("SSH ComServer starting...");
 
         // let _ = ring::rand::SystemRandom::new();

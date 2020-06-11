@@ -1,7 +1,6 @@
 //! A component to use key
 
 use super::super::config;
-use async_std::sync::Arc;
 use dirs;
 use libp2p::{
     self,

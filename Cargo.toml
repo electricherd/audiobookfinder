@@ -80,9 +80,6 @@ codegen-units = 1
 incremental = false
 opt-level = "z"
 
-[target.armv7-unknown-linux-gnueabihf]
-linker = "arm-linux-gnueabihf-gcc"
-
 # possible enhancements of cross
 # for cross of trust with travis
 # https://github.com/japaric/trust

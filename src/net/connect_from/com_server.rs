@@ -1,6 +1,6 @@
 //! The ssh communication server, decisions will be made here, of how to interact with
 //! the clients, is basically still taken from trussh example (with corrections)
-use super::super::data::DataSession;
+//use super::super::data::DataSession;
 use libp2p::PeerId;
 
 #[derive(Clone)]
