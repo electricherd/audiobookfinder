@@ -8,7 +8,7 @@ extern crate clap;
 extern crate rayon;
 
 use adbflib::{
-    common::startup::{self, StartUp, SyncStartUp},
+    common::startup::{StartUp, SyncStartUp},
     ctrl::{CollectionPathAlive, Ctrl, NetMessages, Status, UiUpdateMsg},
     data::{self, Collection},
     logit,
@@ -22,10 +22,9 @@ use std::{
     path::Path, // path, clear
     sync::{
         self,
-        mpsc::{channel, Receiver, Sender},
+        mpsc::{channel, Sender},
         Arc, Mutex,
     },
-    time::Duration,
 };
 
 static INPUT_FOLDERS: &str = "folders";
@@ -33,6 +32,7 @@ static APP_TITLE: &str = concat!("The audiobook finder (", env!("CARGO_PKG_NAME"
 static ARG_NET: &str = "net";
 static ARG_TUI: &str = "tui";
 static ARG_WEBUI: &str = "webui";
+static ARG_KEEP_ALIVE: &str = "keep";
 
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 const AUTHORS: &'static str = env!("CARGO_PKG_AUTHORS");
@@ -95,6 +95,13 @@ fn main() -> io::Result<()> {
                 .takes_value(false),
         )
         .arg(
+            clap::Arg::with_name(ARG_KEEP_ALIVE)
+                .short("k")
+                .long(ARG_KEEP_ALIVE)
+                .help("With keep alive process will continue even after search has been performed.")
+                .takes_value(false),
+        )
+        .arg(
             clap::Arg::with_name(INPUT_FOLDERS)
                 .help("Sets multiple input folder(s) to be searched for audio files.")
                 .multiple(true)
@@ -119,6 +126,7 @@ fn main() -> io::Result<()> {
     let has_tui = has_arg(ARG_TUI);
     let has_webui = has_arg(ARG_WEBUI);
     let has_net = has_arg(ARG_NET);
+    let keep_alive = has_arg(ARG_KEEP_ALIVE);
 
     // either one will have a ui, representing data and error messages
     let has_ui = has_tui || has_webui;
@@ -153,8 +161,9 @@ fn main() -> io::Result<()> {
                 match Ctrl::new(
                     key_keeper::get_p2p_server_id(),
                     &ui_paths,
-                    tx.clone(),
+                    rx,
                     has_net,
+                    ready_ui_send,
                 ) {
                     Ok(mut controller) => {
                         // wait for synchronisation
@@ -163,10 +172,11 @@ fn main() -> io::Result<()> {
                         }
                         if has_tui {
                             info!("starting tui");
+
                             // do finally the necessary
                             // this blocks this async future
                             controller
-                                .run_tui(ready_ui_send, rx)
+                                .run_tui()
                                 .map_err(|error_text| Error::new(ErrorKind::Other, error_text))?;
                         }
                         Ok::<(), Error>(())
@@ -215,7 +225,11 @@ fn main() -> io::Result<()> {
                         .expect("collection from net receiver not yet there???");
                     Ok::<(), Error>(())
                 }
-            });
+            })
+            .unwrap_or_else(|_| {
+                // do nothing
+                ()
+            })
         });
 
     // the collector ... still a problem with threading and parse_args
@@ -251,14 +265,43 @@ fn main() -> io::Result<()> {
                 .lock()
                 .and_then(|locked_collection| Ok(locked_collection.print_stats()))
                 .unwrap_or(())
-            // todo: send terminate to net runner depending if it should continue or not
         }
         info!("collector finished!!");
     }
 
-    // todo: how to secure this??
-    drop(net_thread);
-    drop(ui_thread);
+    // look for keeping alive argument if that was chosen
+    if keep_alive {
+        ui_thread
+            .and_then(|running_thread| Ok(running_thread.join()))
+            .unwrap_or_else(|_| {
+                // it doesn't matter because we will terminate anyway
+                error!("this should be result of ui thread!!");
+                Ok(Ok(()))
+            })
+            .unwrap_or_else(|_| {
+                // it doesn't matter because we will terminate anyway
+                error!("is this normal when joining ui thread???");
+                Ok(())
+            })
+            .unwrap();
+        if has_ui {
+            info!("Stopped ui thread");
+        }
+        net_thread
+            .and_then(|running_thread| Ok(running_thread.join()))
+            .unwrap_or_else(|_| {
+                // it doesn't matter because we will terminate anyway
+                error!("is this normal when joining net thread???");
+                Ok(())
+            })
+            .unwrap();
+        if has_net {
+            info!("Stopped net thread");
+        }
+    } else {
+        drop(net_thread);
+        drop(ui_thread);
+    }
     Ok(())
 }
 
@@ -285,7 +328,7 @@ fn search_in_single_path(
                             Status::ON,
                         ))
                         .unwrap_or_else(|_| {
-                            error!("... lost start animation for index {:?}", index)
+                            warn!("... lost start animation for index {:?}", index)
                         });
                     trace!("start busy animation");
                     Ok(())
@@ -312,7 +355,7 @@ fn search_in_single_path(
                                     Status::OFF,
                                 ))
                                 .unwrap_or_else(|_| {
-                                    error!("... lost stop animation for {:?}", index)
+                                    warn!("... lost stop animation for {:?}", index)
                                 });
                             trace!("stop busy animation");
                             Ok(())

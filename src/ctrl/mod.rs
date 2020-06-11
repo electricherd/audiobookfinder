@@ -9,8 +9,7 @@ use self::tui::Tui;
 use self::webui::WebUI;
 use super::config;
 
-use crate::common::startup::{self, StartUp, SyncStartUp};
-use crate::ctrl::UiUpdateMsg::NetUpdate;
+use crate::common::startup::{StartUp, SyncStartUp};
 
 use async_std::{
     sync::{Arc, Mutex},
@@ -22,32 +21,35 @@ use std::sync::mpsc::{channel, Receiver, Sender};
 
 type PeerRepresentation = [u8; 16];
 
-/// Alive Signal for net
-#[derive(Clone, Copy)]
+/// alive Signal for path from collector
+/// or net search alive
+#[derive(Clone)]
 pub enum CollectionPathAlive {
     BusyPath(usize),
     HostSearch,
 }
 
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 pub enum Status {
     ON,
     OFF,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 pub enum NetMessages {
     Debug,
     ShowNewHost,
     ShowStats { show: NetStats },
 }
 
+/// todo: something funny yet .. string is unbounded but like this it worked?
 type ForwardNetMessage = (NetMessages, String);
 
+/// internal messages inside ui
 pub enum InternalUiMsg {
     Update(ForwardNetMessage),
-    Animate(CollectionPathAlive, Status),
-    TimeOut(CollectionPathAlive),
+    StartAnimate(CollectionPathAlive, Status),
+    StepAndAnimate(CollectionPathAlive),
 }
 
 #[derive(Clone)]
@@ -63,11 +65,22 @@ pub struct NetStats {
     pub max: usize,
 }
 
+/// it's just to logically couple these
+/// two, because the sync should only
+/// happen once and if tui and webui
+/// is used it could happen twice
+struct SyncWithMain {
+    done: bool,
+    syncing: Sender<SyncStartUp>,
+}
+// todo: what about 2 message loops?? web and tui using try_recv?
+
 pub struct Ctrl {
     peer_id: PeerId,
     paths: Vec<String>,
-    sender: Sender<UiUpdateMsg>,
+    receiver: Receiver<UiUpdateMsg>,
     with_net: bool,
+    sync_main: SyncWithMain,
 }
 
 impl Ctrl {
@@ -77,27 +90,28 @@ impl Ctrl {
     /// * 'peer_id' - The peer_id this client/server uses
     /// * 'paths' - The paths that will be searched
     /// * 'receiver' - The receiver that takes incoming ctrl messages
-    /// * 'sender'   - The sender that sends from ctrl
     /// * 'with_net' - If ctrl should consider net messages
+    /// * 'sync_sender' - For start up that main can be informed, "I'm ready"
     pub fn new(
         new_id: PeerId,
         paths: &Vec<String>,
-        sender: Sender<UiUpdateMsg>,
+        receiver: Receiver<UiUpdateMsg>,
         with_net: bool,
+        sync_sender: Sender<SyncStartUp>,
     ) -> Result<Self, String> {
         Ok(Ctrl {
             peer_id: new_id,
             paths: paths.clone(),
-            sender,
+            receiver,
             with_net,
+            sync_main: SyncWithMain {
+                done: false,
+                syncing: sync_sender,
+            },
         })
     }
     /// Run the controller
-    pub fn run_tui(
-        &mut self,
-        ready_sender: Sender<SyncStartUp>,
-        external_receiver: Receiver<UiUpdateMsg>,
-    ) -> Result<(), String> {
+    pub fn run_tui(&mut self) -> Result<(), String> {
         info!("tui about to run");
 
         let title = self.peer_id.to_string().clone();
@@ -110,25 +124,39 @@ impl Ctrl {
         let tui_sender = Arc::new(Mutex::new(tui_sender));
         let internal_tui_sender = tui_sender.clone();
 
-        // loop external messages and forward to internal
-        // ui messages
-
-        let mut tui;
         info!("spawning tui async thread");
-        tui = Tui::new(title, &paths, with_net)?;
+        let mut tui = Tui::new(title, &paths, with_net)?;
         task::block_on(async move {
             let tui_sender1 = internal_tui_sender.lock().await.clone();
             let tui_sender2 = tui_sender1.clone();
 
-            // sync
-            StartUp::block_on_sync(ready_sender, "ui");
+            // sync/block startup with main thread
+            self.sync_with_main();
+
             info!("spawning tui async thread");
             loop {
-                tui.run(&tui_receiver, &tui_sender1).await;
-                Self::run_message_forwarding(&external_receiver, &tui_sender2).await;
+                // todo: this below looks like a select! looped async block
+                // due to pressing 'q' tui will stop and hence also the loop
+                if !tui.refresh().await {
+                    break;
+                }
+                tui.run_cursive(&tui_sender1, &tui_receiver).await;
+                if !self.run_message_forwarding(&tui_sender2).await {
+                    break;
+                }
             }
         });
         Ok(())
+    }
+
+    /// Send the sync to main, if not already done
+    fn sync_with_main(&mut self) {
+        if !self.sync_main.done {
+            StartUp::block_on_sync(self.sync_main.syncing.clone(), "ui");
+            self.sync_main.done = true;
+        } else {
+            info!("Sync with main has been already done, shouldn't be a problem!");
+        }
     }
 
     /// Run the controller
@@ -140,6 +168,9 @@ impl Ctrl {
         if webbrowser::open(&["http://", config::net::WEBSOCKET_ADDR].concat()).is_err() {
             info!("Could not open browser!");
         }
+        // sync/block startup with main thread
+        self.sync_with_main();
+
         //task::spawn(async move { WebUI::new(peer_representation, net_support) }).await
         WebUI::new(peer_representation, net_support).and_then(|_webui| {
             // _webui is good and see what we can do
@@ -147,33 +178,38 @@ impl Ctrl {
         })
     }
 
-    async fn run_message_forwarding(
-        from_external_receiver: &Receiver<UiUpdateMsg>,
-        forward_sender: &Sender<InternalUiMsg>,
-    ) -> Result<bool, String> {
-        let mut status = true;
-
-        if let Ok(forward_sys_message) = from_external_receiver.try_recv() {
+    async fn run_message_forwarding(&self, forward_sender: &Sender<InternalUiMsg>) -> bool {
+        if let Ok(forward_sys_message) = self.receiver.try_recv() {
             match forward_sys_message {
                 UiUpdateMsg::NetUpdate((recv_dialog, text)) => {
                     trace!("net update forwarding");
                     forward_sender
                         .send(InternalUiMsg::Update((recv_dialog, text)))
                         .unwrap();
+                    true
                 }
                 UiUpdateMsg::CollectionUpdate(signal, on_off) => {
-                    trace!("collection update forwarding");
+                    trace!(
+                        "forwarding collection message to turn '{}'",
+                        match on_off {
+                            Status::ON => "on",
+                            Status::OFF => "off",
+                        }
+                    );
                     forward_sender
-                        .send(InternalUiMsg::Animate(signal, on_off))
+                        .send(InternalUiMsg::StartAnimate(signal, on_off))
                         .unwrap();
+                    true
                 }
                 UiUpdateMsg::StopUI => {
                     // if error something or Ok(false) results in the same
-                    trace!("stop from forwarding");
-                    status = false;
+                    trace!("stop all message forwarding to ui");
+                    false
                 }
             }
+        } else {
+            // couldn't find a message yet (trying) but that is fine
+            true
         }
-        Ok::<bool, String>(status)
     }
 } // impl Controller
