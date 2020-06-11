@@ -1,12 +1,7 @@
 //! The ssh client yet of what it will be capable of
 //! and taken from trussh example (with corrections).
 
-use super::super::{
-    config,
-    connect_to::sc_com_to::{self, SCClient},
-    data::{DataAuth, DataSession},
-    key_keeper,
-};
+use super::super::connect_to::sc_com_to::{self, SCClient};
 use libp2p::PeerId;
 
 #[derive(Clone)]
@@ -37,8 +32,8 @@ impl ComClient {
         ComClient { peer_id: peer_id }
     }
 
-    pub fn run(self, addr: &PeerId) {
-        let id = self.peer_id.clone();
+    pub fn run(self, _addr: &PeerId) {
+        let _id = self.peer_id.clone();
 
         // just use a copy to arc
         //let key = Arc::clone(&*key_keeper::SERVER_KEY_SSH);

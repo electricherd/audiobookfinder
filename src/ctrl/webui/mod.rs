@@ -36,7 +36,9 @@ pub struct WebServerState {
 }
 
 pub struct WebUI {
+    #[allow(dead_code)]
     id: PeerRepresentation,
+    #[allow(dead_code)]
     serve_others: bool,
 }
 
@@ -49,6 +51,7 @@ struct JSONResponse {
 #[derive(Serialize)]
 enum WebCommand {
     Started,
+    #[allow(dead_code)]
     NewMdnsClient(String),
 }
 

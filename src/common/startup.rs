@@ -1,9 +1,6 @@
 // to synchronize start of threads
 use std::{
-    sync::{
-        mpsc::{channel, Receiver, Sender},
-        Arc, Mutex,
-    },
+    sync::mpsc::{channel, Receiver, Sender},
     time::Duration,
 };
 
