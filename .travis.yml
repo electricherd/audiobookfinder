@@ -57,8 +57,8 @@ install:
   - bash ci/install.sh
   - source ~/.cargo/env || true
   # get upx directly from github
-  - curl -L https://github.com/upx/upx/releases/download/v3.96/upx-3.96-amd64_linux.tar.xz
-  - tar -xf ./upx-3.96-amd64_linux.tar.xz upx-3.96-amd64_linux/upx --strip-components=1 -C .
+  - curl -L https://github.com/upx/upx/releases/download/v3.96/upx-3.96-amd64_linux.tar.xz > upx.xz
+  - tar -xf ./upx.xz upx-3.96-amd64_linux/upx --strip-components=1 -C .
   # install xargo before / later inside ci/install.sh
   # force should be replaced by a check but travis is mysterious
   - cargo install xargo --force
