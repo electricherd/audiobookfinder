@@ -35,7 +35,8 @@ addons:
     update: true
     packages:
       - p7zip-full  # 7z compression
-      - upx-ucl     # executable binary compression
+      #  upx probably has too low version for lts 16.04 (https://github.com/upx/upx/issues/212)
+      #- upx-ucl     # executable binary compression
 
 # disable cache when needed
 cache: cargo
@@ -55,6 +56,9 @@ install:
   # from japaric (https://github.com/japaric/trust)
   - bash ci/install.sh
   - source ~/.cargo/env || true
+  # get upx directly from github
+  - curl -L https://github.com/upx/upx/releases/download/v3.96/upx-3.96-amd64_linux.tar.xz
+  - tar -xf ./upx-3.96-amd64_linux.tar.xz upx-3.96-amd64_linux/upx --strip-components=1 -C .
   # install xargo before / later inside ci/install.sh
   # force should be replaced by a check but travis is mysterious
   - cargo install xargo --force
@@ -72,11 +76,11 @@ after_script:
 
 before_deploy:
   - cp target/$TARGET/release/$CRATE_NAME target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET
-#  - strip -s target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET -o target/release/$CRATE_NAME.stripped
-  - strip -s target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET -o target/release/$CRATE_NAME
-#  - upx -1 target/release/$CRATE_NAME.stripped -o target/release/$CRATE_NAME
+  - strip -s target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET -o target/release/$CRATE_NAME.stripped
+#  - strip -s target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET -o target/release/$CRATE_NAME
+  - ./upx --best target/release/$CRATE_NAME.stripped -o target/release/$CRATE_NAME
 # upx probably has too low version for lts 16.04 (https://github.com/upx/upx/issues/212)
-  - upx --version
+  - ./upx --version
   - 7z a -r target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z ./target/release/$CRATE_NAME ./README-release.md ./LICENSE
   - sha256sum target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z > target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z.sha256
 

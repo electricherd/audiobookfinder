@@ -99,10 +99,10 @@ The Continuous Integration is done on 2 services, Travis and AppVeyor but will p
     * [Audiobookfinder Build Linux 18.04](https://ci.appveyor.com/project/electricherd/audiobookfinder/) ![appveyor](https://ci.appveyor.com/api/projects/status/jkpo45oocs8tmmo3?svg=true)
 * On Travis
     * [Audiobookfinder Build Linux 16.04](https://travis-ci.org/electricherd/audiobookfinder) ![travis](https://travis-matrix-badges.herokuapp.com/repos/electricherd/audiobookfinder/branches/master/2)
-    * [Audiobookfinder Build Linux 14.04](https://travis-ci.org/electricherd/audiobookfinder) ![travis](https://travis-matrix-badges.herokuapp.com/repos/electricherd/audiobookfinder/branches/master/1)
+    * only until version 0.1.18: [Audiobookfinder Build Linux 14.04](https://travis-ci.org/electricherd/audiobookfinder) ![travis](https://travis-matrix-badges.herokuapp.com/repos/electricherd/audiobookfinder/branches/master/1)
 
 
-Let's see where also cross compiling for embedded will lead ... (a stub and not working Windows compile is already in AppVeyor)
+Let's see where also cross compiling for embedded will lead ... (a stub and not working Windows compile is already in AppVeyor but cannot yet be compiled due to the usage of crate `Cursive` which uses crate `Termion` which doesn't work on Windows, only when cursive is taken out it will be possible).
 
 ### Goals
 The primary goal is to learn Rust and to cover various aspects of the language, of which some of I already used inside the program, such as:
