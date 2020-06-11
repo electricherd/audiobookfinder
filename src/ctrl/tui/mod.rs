@@ -80,27 +80,24 @@ impl Tui {
         Ok(tui)
     }
 
-    pub async fn run(
-        &mut self,
-        tui_receiver: &Receiver<InternalUiMsg>,
-        tui_sender: &Sender<InternalUiMsg>,
-    ) -> Result<(), String> {
-        // this is the own channel just for tui
-        self.run_cursive(&tui_sender, &tui_receiver).await;
-        Ok(())
+    pub async fn refresh(&mut self) -> bool {
+        if !self.handle.is_running() {
+            trace!("Cursive is not running!");
+            false
+        } else {
+            self.handle.refresh();
+            true
+        }
     }
 
-    async fn run_cursive(
+    pub async fn run_cursive(
         &mut self,
         tui_sender: &Sender<InternalUiMsg>,
         tui_receiver: &Receiver<InternalUiMsg>,
-    ) -> Result<bool, ()> {
-        if !self.handle.is_running() {
-            error!("Cursive is not running!");
-            return Err(());
-        }
-
+    ) {
+        // step ui
         self.handle.step();
+
         if let Ok(message) = tui_receiver.try_recv() {
             match message {
                 InternalUiMsg::Update((recv_dialog, text)) => match recv_dialog {
@@ -128,22 +125,19 @@ impl Tui {
                         }
                     }
                 },
-                InternalUiMsg::Animate(signal, on_off) => {
+                InternalUiMsg::StartAnimate(signal, on_off) => {
                     let sender_clone = tui_sender.clone();
                     match on_off {
                         Status::ON => {
                             self.toggle_alive(signal.clone(), AliveSym::GoOn);
-                            let (already_running, toggle, timeout_id): (bool, &mut bool, usize) =
-                                match signal {
-                                    CollectionPathAlive::BusyPath(nr) => (
-                                        self.alive.paths[nr].runs,
-                                        &mut self.alive.paths[nr].runs,
-                                        nr + 1,
-                                    ),
-                                    CollectionPathAlive::HostSearch => {
-                                        (self.alive.host.runs, &mut self.alive.host.runs, 0)
-                                    }
-                                };
+                            let (already_running, toggle): (bool, &mut bool) = match signal {
+                                CollectionPathAlive::BusyPath(nr) => {
+                                    (self.alive.paths[nr].runs, &mut self.alive.paths[nr].runs)
+                                }
+                                CollectionPathAlive::HostSearch => {
+                                    (self.alive.host.runs, &mut self.alive.host.runs)
+                                }
+                            };
                             trace!("received path alive");
                             if !already_running {
                                 *toggle = true;
@@ -151,7 +145,7 @@ impl Tui {
                                 task::sleep(Duration::from_millis(config::tui::ALIVE_REFRESH_MSEC))
                                     .await;
                                 sender_clone
-                                    .send(InternalUiMsg::TimeOut(signal.clone()))
+                                    .send(InternalUiMsg::StepAndAnimate(signal.clone()))
                                     .unwrap();
                             }
                         }
@@ -165,10 +159,10 @@ impl Tui {
                         }
                     }
                 }
-                InternalUiMsg::TimeOut(which) => {
-                    let (continue_timeout, timeout_id) = match which {
-                        CollectionPathAlive::BusyPath(nr) => (self.alive.paths[nr].runs, nr + 1),
-                        CollectionPathAlive::HostSearch => (self.alive.host.runs, 0),
+                InternalUiMsg::StepAndAnimate(which) => {
+                    let continue_timeout = match which {
+                        CollectionPathAlive::BusyPath(nr) => self.alive.paths[nr].runs,
+                        CollectionPathAlive::HostSearch => self.alive.host.runs,
                     };
                     if continue_timeout {
                         self.toggle_alive(which.clone(), AliveSym::GoOn);
@@ -176,15 +170,15 @@ impl Tui {
                         task::sleep(Duration::from_millis(config::tui::ALIVE_REFRESH_MSEC)).await;
                         trace!("refresh path alive");
                         sender_clone
-                            .send(InternalUiMsg::TimeOut(which))
+                            .send(InternalUiMsg::StepAndAnimate(which))
                             .unwrap_or_else(|_| {
                                 // nothing to be done, that timer is just at the end
+                                error!("when does this happen???")
                             });
                     }
                 }
             }
         }
-        Ok(true)
     }
 
     ///    # Example test
