@@ -45,10 +45,10 @@ impl Worker {
     /// # Arguments
     /// * 'id' - the identification (each will create an own hash)
     /// * 'max_threads' - how many threads can the worker create
-    pub fn new(peer_id: PeerId, maxthreads: usize) -> Worker {
+    pub fn new(peer_id: PeerId, max_threads: usize) -> Worker {
         Worker {
             peer_id: peer_id,
-            max_threads: maxthreads,
+            max_threads: max_threads,
         }
     }
 }
@@ -59,7 +59,7 @@ pub struct Collection {
     collection: HashMap<String, Box<InfoAlbum>>,
     stats: Stats,
 }
-
+/// Only some statistics
 pub struct FilesStat {
     pub analyzed: u32,
     pub faulty: u32,
@@ -68,6 +68,9 @@ pub struct FilesStat {
 }
 
 impl FilesStat {
+    /// Adds stats from one to the other,
+    /// used for combining different thread
+    /// results.
     fn add(&mut self, other: &FilesStat) {
         self.analyzed += other.analyzed;
         self.faulty += other.faulty;
@@ -79,7 +82,7 @@ impl FilesStat {
 struct Stats {
     files: FilesStat,
     audio: Audio,
-    threads: u8,
+    threads: usize,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -90,11 +93,11 @@ struct Audio {
 
 type FileFn = dyn Fn(&mut Collection, &DirEntry, &mut FilesStat) -> io::Result<()>;
 
-/// This part implements all functions
 impl Collection {
-    pub fn new(peer_id: &PeerId, numthreads: usize) -> Collection {
+    /// Sets up the whole collection that books all threads.
+    pub fn new(peer_id: &PeerId, num_threads: usize) -> Collection {
         Collection {
-            who: Worker::new(peer_id.clone(), numthreads),
+            who: Worker::new(peer_id.clone(), num_threads),
             collection: HashMap::new(),
             stats: Stats {
                 files: FilesStat {
@@ -107,13 +110,13 @@ impl Collection {
                     albums: 0,
                     max_songs: 0,
                 },
-                threads: 0,
+                threads: num_threads,
             },
         }
     }
 
-    /// The function that runs from the starting point
-    pub fn visit_dirs(&mut self, dir: &Path, cb: &FileFn) -> io::Result<FilesStat> {
+    /// The function that runs from a certain path
+    pub fn visit_path(&mut self, dir: &Path, cb: &FileFn) -> io::Result<FilesStat> {
         let mut file_stats = FilesStat {
             analyzed: 0,
             faulty: 0,
@@ -128,7 +131,7 @@ impl Collection {
                 let entry = entry?;
                 let path = entry.path();
                 if path.is_dir() {
-                    let file_stats_loop = self.visit_dirs(&path, cb)?;
+                    let file_stats_loop = self.visit_path(&path, cb)?;
                     loop_file_stats.add(&file_stats_loop);
                 } else {
                     cb(self, &entry, &mut loop_file_stats).or_else(|io_error| {
@@ -177,6 +180,7 @@ impl Collection {
                     Ok(())
                 }
             }
+            // FIXME: video in taglib holds also oga which are audio indeed ...
             Some("text") | Some("application") | Some("image") | Some("video") => Ok(()),
             _ => {
                 error!("[{:?}]{:?}", prefix, cb.path());
@@ -187,6 +191,7 @@ impl Collection {
         }
     }
 
+    /// Check the file and retrieve the meta-data info
     fn visit_audio_files(&mut self, cb: &Path, file_stats: &mut FilesStat) -> Result<(), ()> {
         taglib::File::new(cb.to_str().unwrap())
             .and_then(|file| {
@@ -263,8 +268,9 @@ impl Collection {
 
         info!("{}", output_string);
     }
-} // end of impl Collection
+}
 
+/// Just a test for a drop function ;-)
 impl Drop for Collection {
     fn drop(&mut self) {
         println!(

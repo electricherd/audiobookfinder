@@ -35,13 +35,6 @@ pub struct WebServerState {
     nr_connections: Arc<Mutex<usize>>,
 }
 
-pub struct WebUI {
-    #[allow(dead_code)]
-    id: PeerRepresentation,
-    #[allow(dead_code)]
-    serve_others: bool,
-}
-
 /// needs to be serializable for json
 #[derive(Serialize)]
 struct JSONResponse {
@@ -76,6 +69,13 @@ impl fmt::Display for WebCommand {
 //fn app_js() -> Result<fs::NamedFile> {
 //Ok(fs::NamedFile::open("src/ctrl/webui/js/app.js")?)
 //}
+
+pub struct WebUI {
+    #[allow(dead_code)]
+    id: PeerRepresentation,
+    #[allow(dead_code)]
+    serve_others: bool,
+}
 
 impl WebUI {
     pub fn new(id: PeerRepresentation, serve: bool) -> io::Result<Self> {
@@ -347,8 +347,8 @@ impl Actor for MyWebSocket {
     }
 }
 
-/// Handler for `ws::Message`
 impl StreamHandler<ws::Message, ws::ProtocolError> for MyWebSocket {
+    /// Handler for `ws::Message`    
     fn handle(&mut self, msg: ws::Message, ctx: &mut Self::Context) {
         // process websocket messages
         println!("WS: {:?}", msg);

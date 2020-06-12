@@ -18,11 +18,6 @@ use std::{
     time::Duration,
 };
 
-pub struct Tui {
-    handle: Cursive,
-    alive: AliveDisplayData,
-}
-
 #[derive(Clone)]
 struct AliveState {
     draw_char: usize,
@@ -54,7 +49,24 @@ static ID_HOST_INDEX: &str = "id_host";
 static ID_HOST_NUMBER: &str = "id_max";
 static ID_HOST_ALIVE: &str = "id_host_alive";
 
+/// The Tui wrapper holds cursive tui and the
+/// alive data of the ui-state needed.
+pub struct Tui {
+    handle: Cursive,
+    alive: AliveDisplayData,
+}
+
 impl Tui {
+    /// Steps through cursive tui and if a message is
+    /// received, it will:
+    /// - update the ui (net and path)
+    /// - re-send a timed animation change
+    ///
+    /// # Arguments
+    ///
+    /// * `title` - the title of the tui
+    /// * `paths` - the paths to be shown searching bar and name them
+    /// * `with_net` - if net feature is activated for displaying live data
     pub fn new(title: String, paths: &Vec<String>, with_net: bool) -> Result<Self, String> {
         let later_handle = Self::build_tui(title, paths, with_net)?;
 
@@ -80,6 +92,8 @@ impl Tui {
         Ok(tui)
     }
 
+    /// Refreshes the screen and returns
+    /// if tui is shut down (e.g. due to 'q' quitting)
     pub async fn refresh(&mut self) -> bool {
         if !self.handle.is_running() {
             trace!("Cursive is not running!");
@@ -90,6 +104,15 @@ impl Tui {
         }
     }
 
+    /// Steps through cursive tui and if a message is
+    /// received, it will:
+    /// - update the ui (net and path)
+    /// - re-send a timed animation change
+    ///
+    /// # Arguments
+    ///
+    /// * `tui_sender` - the sender to re-send messages
+    /// * `tui_receiver` - the receiver to listen on
     pub async fn run_cursive(
         &mut self,
         tui_sender: &Sender<InternalUiMsg>,
@@ -221,7 +244,10 @@ impl Tui {
         out
     }
 
+    /// Toggle the alive signal by changing the data inside
+    /// signal can be for the path search or net search.   
     fn toggle_alive(&mut self, signal: CollectionPathAlive, on: AliveSym) {
+        // retrieve view name and the counter value
         let (view_name, counter) = match signal {
             CollectionPathAlive::HostSearch => {
                 (ID_HOST_ALIVE.to_string(), &mut self.alive.host.draw_char)
@@ -233,6 +259,7 @@ impl Tui {
         };
         let mut output = self.handle.find_name::<TextView>(&view_name);
         if let Some(ref mut found) = output {
+            // change the data in place
             let char_idx_to_put = match on {
                 AliveSym::GoOn => {
                     *counter = (*counter + 1) % (STR_ALIVE.len() - 2);
@@ -247,6 +274,17 @@ impl Tui {
         }
     }
 
+    /// Builds up the whole cursive tui: views, lists, etc.
+    /// Net features result in a slightly different display, that
+    /// found host can be listed.
+    ///
+    /// Blocks until channel counterpart receiver gives an ok.
+    ///
+    /// # Arguments
+    ///
+    /// * `title` - The title to be shown on top
+    /// * `paths` - the paths as string to be searched
+    /// * `with_net` - if the net list box has to be displayed
     fn build_tui(title: String, paths: &Vec<String>, with_net: bool) -> Result<Cursive, String> {
         let later_handle = Cursive::default();
 

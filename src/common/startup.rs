@@ -1,4 +1,4 @@
-// to synchronize start of threads
+//! To synchronize start up of threads with
 use std::{
     sync::mpsc::{channel, Receiver, Sender},
     time::Duration,
@@ -14,9 +14,27 @@ pub enum SyncStartUp {
     NoWait,
 }
 
+/// StartUp is a module with just methods, no data
+/// to simplify sub-threads to main thread synchronization
+/// by basically using a channel with a back message.
+///
+/// The idea is that threads start unordered to a certain
+/// point when they can assure that they from this point on
+/// are ready for going forward (e.g. listening for other
+/// channel messages) and are blocked until the main thread
+/// commands a go.
+/// Here it is that main thread waits for 2 threads to get
+/// ready and then main thread sends based on that a go
+/// for the thread.
 pub struct StartUp {}
 
 impl StartUp {
+    /// Blocks until channel counterpart receiver gives an ok.
+    ///
+    /// # Arguments
+    ///
+    /// * `ready_sender` - The sender of the channel which the main thread listens on
+    /// * `name` - A string slice that holds the name of the person
     pub fn block_on_sync(ready_sender: Sender<SyncStartUp>, name: &str) {
         let (ready_sync_sender_from, ready_sync_receiver_from) = channel::<Process>();
         ready_sender

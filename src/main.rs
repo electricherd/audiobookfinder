@@ -153,7 +153,7 @@ fn main() -> io::Result<()> {
     // all optional components are wrapped into threads
     // 1 - UI         ui_thread   (optional)
     // 2 - Net        net_thread  (optional)
-    // 3 - Collector  no thread yet (will use multiple rayon worker threads)
+    // 3 - Collector  no thread yet (uses multiple rayon worker threads)
     let ui_thread = std::thread::Builder::new()
         .name("ui".into())
         .spawn(move || {
@@ -340,7 +340,7 @@ fn search_in_single_path(
 
     // do it: main task here is to visit and dive deep
     //        into the subfolders of this folder
-    match locked_collection.visit_dirs(Path::new(elem), &data::Collection::visit_files) {
+    match locked_collection.visit_path(Path::new(elem), &data::Collection::visit_files) {
         Ok(local_stats) => {
             if has_ui {
                 // send stop animation for that path

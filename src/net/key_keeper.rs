@@ -1,4 +1,6 @@
-//! A component to use key
+//! A component to use secure communication
+//! using keys. It is not yet clear ...
+//! basically what libp2p offers is best.
 
 use super::super::config;
 use dirs;

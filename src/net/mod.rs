@@ -1,5 +1,5 @@
 //! The net module is resonsible for the network related parts,
-//! the mDNS registering, mDNS search, ssh server and ssh client.
+//! the mDNS registering, mDNS search, communication server and client.
 //! It also let's us startup and perform everything in yet one step.
 mod connect_from;
 mod connect_to;
@@ -31,31 +31,36 @@ enum ToThread<T: Send + Clone> {
 }
 
 /// The Net component keeps control about everything from net.
+///
+/// # Arguments
+/// * 'peer_id' - the own peer id (to not talk to much with itself ;-))
+/// * 'clients_connected' - All clients that are connected
+/// * 'has_ui' - if there is an ui present, that would need update messages///
+/// * 'ui_sender' - to send out update ui messages
 pub struct Net {
     #[allow(dead_code)]
     peer_id: PeerId,
     clients_connected: Arc<Mutex<Vec<PeerId>>>,
-    tui_sender: Sender<ctrl::UiUpdateMsg>,
-    has_tui: bool,
+    has_ui: bool,
+    ui_sender: Sender<ctrl::UiUpdateMsg>,
 }
 
 impl Net {
-    pub fn new(peer_id: PeerId, tui: bool, sender: Sender<ctrl::UiUpdateMsg>) -> Self {
-        // the drop of self.dns_handle will unregister
-        // so I need to keep it like here :-(
+    pub fn new(peer_id: PeerId, has_ui: bool, ui_sender: Sender<ctrl::UiUpdateMsg>) -> Self {
         Net {
             peer_id,
             clients_connected: Arc::new(Mutex::new(Vec::new())),
-            tui_sender: sender,
-            has_tui: tui,
+            has_ui,
+            ui_sender,
         }
     }
 
     /// Lookup yet is the start of the networking.
     /// It looks for possible mDNS clients and spawns
-    // threads to connect to them.
-    // It uses timeouts, checkups.
     pub async fn lookup(&mut self) {
+        // threads to connect to them.
+        // It uses timeouts, checkups.
+
         // we are sending SocketAddr ToThread
 
         let (sender_ssh_client, receiver_client) = channel::<ToThread<PeerId>>();
@@ -63,13 +68,13 @@ impl Net {
         // I might not need that one here
         // maybe to attach some more data
         //let borrow_arc = &self.addresses_found.clone();
-        let has_tui_mdns_input = self.has_tui.clone();
-        let has_tui_stats = self.has_tui.clone();
-        let has_tui_new_client = self.has_tui.clone();
+        let has_tui_mdns_input = self.has_ui.clone();
+        let has_tui_stats = self.has_ui.clone();
+        let has_tui_new_client = self.has_ui.clone();
 
         // to controller messages (mostly tui now)
-        let ctrl_sender = self.tui_sender.clone();
-        let ctrl_sender2 = self.tui_sender.clone();
+        let ctrl_sender = self.ui_sender.clone();
+        let ctrl_sender2 = self.ui_sender.clone();
 
         // collection of addresses
         let borrow_arc_connected_clients = self.clients_connected.clone();
@@ -136,6 +141,8 @@ impl Net {
         mdns_send_stop.send(ToThread::Stop).unwrap();
     }
 
+    /// Discovers mdns on the net and should have a whole
+    /// process with discovered clients to share data.
     async fn async_mdns_discover(
         _mdns_send_ip: std::sync::mpsc::Sender<ToThread<PeerId>>,
     ) -> Result<usize, std::io::Error> {
@@ -294,7 +301,7 @@ impl Net {
 
 impl Drop for Net {
     fn drop(&mut self) {
-        if !self.has_tui {
+        if !self.has_ui {
             println!("Dropping/destroying net");
         }
     }

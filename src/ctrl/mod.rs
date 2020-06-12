@@ -110,7 +110,8 @@ impl Ctrl {
             },
         })
     }
-    /// Run the controller
+
+    /// Run the UIs - there is less controlling rather than showing
     pub fn run_tui(&mut self) -> Result<(), String> {
         info!("tui about to run");
 
@@ -178,6 +179,9 @@ impl Ctrl {
         })
     }
 
+    /// This basically wraps incoming UiUpdateMsg to InternalUiMsg
+    /// which kind of defines an extra layer for convenience, and to
+    /// be extended and so on.
     async fn run_message_forwarding(&self, forward_sender: &Sender<InternalUiMsg>) -> bool {
         if let Ok(forward_sys_message) = self.receiver.try_recv() {
             match forward_sys_message {
@@ -212,4 +216,4 @@ impl Ctrl {
             true
         }
     }
-} // impl Controller
+}

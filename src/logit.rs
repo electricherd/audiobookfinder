@@ -11,11 +11,13 @@ pub enum Log {
     System,
 }
 
-pub struct Logit {
-    //
-}
+/// The logger for all log-types: warn, info, trace, error, debug
+pub struct Logit {}
 
-/// Uses 3 types of logging yet.
+/// The very practical logger. It can use 3 types of logging yet.
+///  - system logger
+///  - console logging
+///  - file logging (used)
 impl Logit {
     pub fn init(which: Log) {
         match which {
