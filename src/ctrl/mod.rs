@@ -150,16 +150,6 @@ impl Ctrl {
         Ok(())
     }
 
-    /// Send the sync to main, if not already done
-    fn sync_with_main(&mut self) {
-        if !self.sync_main.done {
-            StartUp::block_on_sync(self.sync_main.syncing.clone(), "ui");
-            self.sync_main.done = true;
-        } else {
-            info!("Sync with main has been already done, shouldn't be a problem!");
-        }
-    }
-
     /// Run the controller
     pub fn run_webui(&mut self) -> io::Result<()> {
         let net_support = self.with_net;
@@ -213,6 +203,16 @@ impl Ctrl {
         } else {
             // couldn't find a message yet (trying) but that is fine
             true
+        }
+    }
+
+    /// Send the sync to main, if not already done
+    fn sync_with_main(&mut self) {
+        if !self.sync_main.done {
+            StartUp::block_on_sync(self.sync_main.syncing.clone(), "ui");
+            self.sync_main.done = true;
+        } else {
+            info!("Sync with main has been already done, shouldn't be a problem!");
         }
     }
 }
