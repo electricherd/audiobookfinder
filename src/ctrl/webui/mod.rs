@@ -9,15 +9,15 @@ use actix::{Actor, ActorContext, AsyncContext};
 use actix_files as fs;
 use actix_web::{
     http::StatusCode,
-    web::{self, HttpRequest, HttpResponse, Json},
-    App, Error, HttpServer,
+    web::{self, HttpResponse, Json},
+    App, Error, HttpRequest, HttpServer,
 };
 use actix_web_actors::ws;
 use get_if_addrs;
 use hostname;
 use std::{
     ffi::OsString,
-    io,
+    fmt, io,
     net::IpAddr,
     string::String,
     sync::{Arc, Mutex},
@@ -48,8 +48,6 @@ enum WebCommand {
     NewMdnsClient(String),
 }
 
-/// The formatters here for json output
-use std::fmt;
 impl fmt::Display for JSONResponse {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.cmd)
@@ -78,13 +76,13 @@ pub struct WebUI {
 }
 
 impl WebUI {
-    pub fn new(id: PeerRepresentation, serve: bool) -> io::Result<Self> {
+    pub async fn run(id: PeerRepresentation, _serve: bool) -> io::Result<()> {
         let sys = actix::System::new("http-server");
         let connection_count = Arc::new(Mutex::new(0));
 
         let local_addresses = get_if_addrs::get_if_addrs().unwrap();
 
-        let initial_state = web::Data::new(Mutex::new(WebServerState {
+        let initial_state = Arc::new(Mutex::new(WebServerState {
             id: id.clone(),
             nr_connections: connection_count.clone(),
         }));
@@ -112,7 +110,7 @@ impl WebUI {
                 Ok(HttpServer::new(move || {
                     App::new()
                         // each server has an initial state (e.g. 0 connections)
-                        .register_data(initial_state.clone())
+                        .data(initial_state.clone())
                         .service(web::resource("/app.js").to(WebUI::js_app))
                         .default_service(web::resource("").to(WebUI::single_page))
                         //.default_service(web::resource("").to(WebUI::dyn_devel_html)) // Todo: only for devel
@@ -158,38 +156,26 @@ impl WebUI {
                     })
                 },
             );
-
-        // finally start everything, failure was funnily not already captured by ? above???
-        web_server.and_then(|web_server_correct| {
-            web_server_correct.start();
-            sys.run().and_then(|_| {
-                Ok(WebUI {
-                    id,
-                    serve_others: serve,
-                })
-            })
-        })
+        web_server?.run();
+        sys.run()
     }
 
     #[allow(dead_code)]
-    fn dyn_devel_html(
-        _state: web::Data<Mutex<WebServerState>>,
+    async fn dyn_devel_html(
+        _state: web::Data<Arc<Mutex<WebServerState>>>,
         _req: HttpRequest,
+        _path: web::Path<(String,)>,
     ) -> Result<fs::NamedFile, Error> {
         Ok(fs::NamedFile::open("src/ctrl/webui/html/single_page.html")?)
     }
 
     #[allow(dead_code)]
-    fn dyn_devel_js(
-        _state: web::Data<Mutex<WebServerState>>,
-        _req: HttpRequest,
-    ) -> Result<fs::NamedFile, Error> {
+    async fn dyn_devel_js() -> Result<fs::NamedFile, Error> {
         Ok(fs::NamedFile::open("src/ctrl/webui/js/app.js")?)
     }
 
-    fn single_page(
-        state: web::Data<Mutex<WebServerState>>,
-        _req: HttpRequest,
+    async fn single_page(
+        state: web::Data<Arc<Mutex<WebServerState>>>,
     ) -> Result<HttpResponse, Error> {
         // change state
         let mut data = state.lock().unwrap();
@@ -203,11 +189,7 @@ impl WebUI {
             .body(id_page))
     }
 
-    fn bootstrap_css(
-        _state: web::Data<Mutex<WebServerState>>,
-        _req: HttpRequest,
-        path: web::Path<(String,)>,
-    ) -> Result<HttpResponse, Error> {
+    async fn bootstrap_css(path: web::Path<(String,)>) -> Result<HttpResponse, Error> {
         let css = &*path.0;
         let output = match css {
             "bootstrap.css" => Some(*config::webui::bootstrap::CSS),
@@ -238,11 +220,7 @@ impl WebUI {
         }
     }
 
-    fn bootstrap_js(
-        _state: web::Data<Mutex<WebServerState>>,
-        _req: HttpRequest,
-        path: web::Path<(String,)>,
-    ) -> Result<HttpResponse, Error> {
+    async fn bootstrap_js(path: web::Path<(String,)>) -> Result<HttpResponse, Error> {
         let js = &*path.0;
         let output = match js {
             "bootstrap.js" => Some(*config::webui::bootstrap::JS),
@@ -269,10 +247,7 @@ impl WebUI {
         }
     }
 
-    fn js_app(
-        state: web::Data<Mutex<WebServerState>>,
-        _req: HttpRequest,
-    ) -> Result<HttpResponse, Error> {
+    async fn js_app(state: web::Data<Arc<Mutex<WebServerState>>>) -> Result<HttpResponse, Error> {
         let data = state.lock().unwrap();
         let id = data.id;
 
@@ -282,11 +257,7 @@ impl WebUI {
             .body(output))
     }
 
-    fn ws_index(
-        _state: web::Data<Mutex<WebServerState>>,
-        req: HttpRequest,
-        stream: web::Payload,
-    ) -> Result<HttpResponse, Error> {
+    async fn ws_index(req: HttpRequest, stream: web::Payload) -> Result<HttpResponse, Error> {
         ws::start(MyWebSocket::new(), &req, stream)
     }
 
@@ -352,42 +323,48 @@ impl Actor for MyWebSocket {
     }
 }
 
-impl StreamHandler<ws::Message, ws::ProtocolError> for MyWebSocket {
+impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for MyWebSocket {
     /// Handler for `ws::Message`    
-    fn handle(&mut self, msg: ws::Message, ctx: &mut Self::Context) {
+    fn handle(&mut self, msg: Result<ws::Message, ws::ProtocolError>, ctx: &mut Self::Context) {
         // process websocket messages
-        trace!("WS: {:?}", msg);
         match msg {
-            ws::Message::Ping(msg) => {
-                self.hb = Instant::now();
-                ctx.pong(&msg);
-            }
-            ws::Message::Pong(_) => {
-                self.hb = Instant::now();
-            }
-            ws::Message::Text(text) => {
-                let m = text.trim();
-                // /command
-                if m.starts_with('/') {
-                    let v: Vec<&str> = m.splitn(2, ' ').collect();
-                    match v[0] {
-                        "/start" => {
-                            ctx.text(
-                                Json(JSONResponse {
-                                    cmd: WebCommand::Started,
-                                })
-                                .to_string(),
-                            );
-                        }
-                        _ => ctx.text(format!("!!! unknown command: {:?}", m)),
+            Ok(good_message) => {
+                trace!(":: {:?}", good_message);
+                match good_message {
+                    ws::Message::Ping(msg) => {
+                        self.hb = Instant::now();
+                        ctx.pong(&msg);
                     }
+                    ws::Message::Pong(_) => {
+                        self.hb = Instant::now();
+                    }
+                    ws::Message::Text(text) => {
+                        let m = text.trim();
+                        // /command
+                        if m.starts_with('/') {
+                            let v: Vec<&str> = m.splitn(2, ' ').collect();
+                            match v[0] {
+                                "/start" => {
+                                    ctx.text(
+                                        Json(JSONResponse {
+                                            cmd: WebCommand::Started,
+                                        })
+                                        .to_string(),
+                                    );
+                                }
+                                _ => ctx.text(format!("!!! unknown command: {:?}", m)),
+                            }
+                        }
+                    }
+                    ws::Message::Binary(bin) => ctx.binary(bin),
+                    ws::Message::Close(_) => {
+                        ctx.stop();
+                    }
+                    ws::Message::Nop => (),
+                    ws::Message::Continuation(_) => (), // todo: what's this?
                 }
             }
-            ws::Message::Binary(bin) => ctx.binary(bin),
-            ws::Message::Close(_) => {
-                ctx.stop();
-            }
-            ws::Message::Nop => (),
+            Err(e) => warn!("message was not good {}", e),
         }
     }
 }
@@ -414,7 +391,7 @@ impl MyWebSocket {
                 return;
             }
 
-            ctx.ping("");
+            ctx.ping(b"");
         });
     }
 }

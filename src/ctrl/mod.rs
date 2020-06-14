@@ -172,10 +172,9 @@ impl Ctrl {
         // sync/block startup with main thread
         self.sync_with_main();
 
-        //task::spawn(async move { WebUI::new(peer_representation, net_support) }).await
-        WebUI::new(peer_representation, net_support).and_then(|_webui| {
-            // _webui is good and see what we can do
-            Ok(())
+        task::block_on(async move {
+            //task::spawn(async move { WebUI::new(peer_representation, net_support) }).await
+            WebUI::run(peer_representation, net_support).await
         })
     }
 

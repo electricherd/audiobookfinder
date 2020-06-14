@@ -48,10 +48,10 @@ taglib = "1.0"  # taglib for id3tags
 
 rayon = "1.3"       # for multi-threading, very good
 
-actix = "0.8"         # basic for webserver
-actix-web = "1.0"     # for mini webserver and websocket
-actix-files = "0.1"
-actix-web-actors = "1.0"
+actix = "0.9"         # basic for webserver
+actix-web = "2.0"     # for mini webserver and websocket
+actix-files = "0.2"
+actix-web-actors = "2.0"
 
 webbrowser = "0.5"    # for opening webpage on machine
 get_if_addrs = "0.5"  # for range of localhosts
