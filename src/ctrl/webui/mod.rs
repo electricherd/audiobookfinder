@@ -104,7 +104,7 @@ impl WebUI {
                     );
                     true
                 } else {
-                    info!("{} is not a loopback device!", ipaddr.addr.ip().to_string());
+                    warn!("{} is not a loopback device!", ipaddr.addr.ip().to_string());
                     true
                 }
             })
@@ -345,13 +345,18 @@ impl Actor for MyWebSocket {
     fn started(&mut self, ctx: &mut Self::Context) {
         self.hb(ctx);
     }
+    fn stopped(&mut self, _ctx: &mut Self::Context) {
+        // On system stop this may or may not run
+        warn!("shutting down whole actix-system");
+        actix::System::current().stop();
+    }
 }
 
 impl StreamHandler<ws::Message, ws::ProtocolError> for MyWebSocket {
     /// Handler for `ws::Message`    
     fn handle(&mut self, msg: ws::Message, ctx: &mut Self::Context) {
         // process websocket messages
-        println!("WS: {:?}", msg);
+        trace!("WS: {:?}", msg);
         match msg {
             ws::Message::Ping(msg) => {
                 self.hb = Instant::now();

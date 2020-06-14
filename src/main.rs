@@ -168,7 +168,12 @@ fn main() -> io::Result<()> {
                     Ok(mut controller) => {
                         // wait for synchronisation
                         if has_webui {
-                            controller.run_webui()?;
+                            info!("start webui in main");
+                            controller.run_webui().or_else(|forward| {
+                                error!("error from webui-server: {}", forward);
+                                Err(forward)
+                            })?;
+                            info!("stopped webui gracefully in main");
                         }
                         if has_tui {
                             info!("starting tui");
@@ -178,6 +183,7 @@ fn main() -> io::Result<()> {
                             controller
                                 .run_tui()
                                 .map_err(|error_text| Error::new(ErrorKind::Other, error_text))?;
+                            info!("stopped tui gracefully in main");
                         }
                         Ok::<(), Error>(())
                     }
