@@ -10,7 +10,7 @@ use actix_files as fs;
 use actix_web::{
     http::StatusCode,
     web::{self, HttpResponse, Json},
-    App, Error, HttpRequest, HttpServer,
+    App, Error, HttpRequest, HttpServer, Responder,
 };
 use actix_web_actors::ws;
 use get_if_addrs;
@@ -136,7 +136,7 @@ impl WebUI {
                         .service(
                             web::resource("/js/{name}").route(web::get().to(WebUI::bootstrap_js)),
                         )
-                        .service(web::resource("/ws").route(web::get().to(WebUI::ws_index)))
+                        .service(web::resource("/ws").route(web::get().to(WebUI::websocket_answer)))
                 })),
                 |web_server_binding_chain: Result<HttpServer<_, _, _, _>, io::Error>, ipaddr| {
                     web_server_binding_chain.and_then(|webserver| {
@@ -170,13 +170,11 @@ impl WebUI {
     }
 
     #[allow(dead_code)]
-    async fn dyn_devel_js() -> Result<fs::NamedFile, Error> {
-        Ok(fs::NamedFile::open("src/ctrl/webui/js/app.js")?)
+    async fn dyn_devel_js() -> impl Responder {
+        fs::NamedFile::open("src/ctrl/webui/js/app.js")
     }
 
-    async fn single_page(
-        state: web::Data<Arc<Mutex<WebServerState>>>,
-    ) -> Result<HttpResponse, Error> {
+    async fn single_page(state: web::Data<Arc<Mutex<WebServerState>>>) -> impl Responder {
         // change state
         let mut data = state.lock().unwrap();
         let id = data.id;
@@ -184,12 +182,12 @@ impl WebUI {
 
         let id_page = Self::replace_static_content(*config::webui::HTML_PAGE, &id);
 
-        Ok(HttpResponse::build(StatusCode::OK)
+        HttpResponse::build(StatusCode::OK)
             .content_type("text/html; charset=utf-8")
-            .body(id_page))
+            .body(id_page)
     }
 
-    async fn bootstrap_css(path: web::Path<(String,)>) -> Result<HttpResponse, Error> {
+    async fn bootstrap_css(path: web::Path<(String,)>) -> impl Responder {
         let css = &*path.0;
         let output = match css {
             "bootstrap.css" => Some(*config::webui::bootstrap::CSS),
@@ -210,17 +208,17 @@ impl WebUI {
             }
         };
         if let Some(content) = output {
-            Ok(HttpResponse::build(StatusCode::OK)
+            HttpResponse::build(StatusCode::OK)
                 .content_type("text/css; charset=utf-8")
-                .body(content))
+                .body(content)
         } else {
-            Ok(HttpResponse::build(StatusCode::NOT_FOUND)
+            HttpResponse::build(StatusCode::NOT_FOUND)
                 .content_type("text/css; charset=utf-8")
-                .body(""))
+                .body("")
         }
     }
 
-    async fn bootstrap_js(path: web::Path<(String,)>) -> Result<HttpResponse, Error> {
+    async fn bootstrap_js(path: web::Path<(String,)>) -> impl Responder {
         let js = &*path.0;
         let output = match js {
             "bootstrap.js" => Some(*config::webui::bootstrap::JS),
@@ -237,27 +235,30 @@ impl WebUI {
             }
         };
         if let Some(content) = output {
-            Ok(HttpResponse::build(StatusCode::OK)
+            HttpResponse::build(StatusCode::OK)
                 .content_type("application/javascript; charset=utf-8")
-                .body(content))
+                .body(content)
         } else {
-            Ok(HttpResponse::build(StatusCode::NOT_FOUND)
+            HttpResponse::build(StatusCode::NOT_FOUND)
                 .content_type("application/javascript; charset=utf-8")
-                .body(""))
+                .body("")
         }
     }
 
-    async fn js_app(state: web::Data<Arc<Mutex<WebServerState>>>) -> Result<HttpResponse, Error> {
+    async fn js_app(state: web::Data<Arc<Mutex<WebServerState>>>) -> impl Responder {
         let data = state.lock().unwrap();
         let id = data.id;
 
         let output = Self::replace_static_content(*config::webui::JS_APP, &id);
-        Ok(HttpResponse::build(StatusCode::OK)
+        HttpResponse::build(StatusCode::OK)
             .content_type("text/html; charset=utf-8")
-            .body(output))
+            .body(output)
     }
 
-    async fn ws_index(req: HttpRequest, stream: web::Payload) -> Result<HttpResponse, Error> {
+    async fn websocket_answer(
+        req: HttpRequest,
+        stream: web::Payload,
+    ) -> Result<HttpResponse, Error> {
         ws::start(MyWebSocket::new(), &req, stream)
     }
 
