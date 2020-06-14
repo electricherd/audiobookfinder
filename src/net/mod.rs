@@ -68,13 +68,12 @@ impl Net {
         // I might not need that one here
         // maybe to attach some more data
         //let borrow_arc = &self.addresses_found.clone();
-        let has_tui_mdns_input = self.has_ui.clone();
-        let has_tui_stats = self.has_ui.clone();
-        let has_tui_new_client = self.has_ui.clone();
+        let has_ui_mdns_input = self.has_ui.clone();
+        let has_ui_stats = self.has_ui.clone();
+        let has_ui_new_client = self.has_ui.clone();
 
         // to controller messages (mostly tui now)
-        let ctrl_sender = self.ui_sender.clone();
-        let ctrl_sender2 = self.ui_sender.clone();
+        let ui_update_sender = self.ui_sender.clone();
 
         // collection of addresses
         let borrow_arc_connected_clients = self.clients_connected.clone();
@@ -86,8 +85,8 @@ impl Net {
             Self::connect_new_clients(
                 receiver_client,
                 borrow_arc_connected_clients,
-                ctrl_sender,
-                has_tui_new_client,
+                ui_update_sender,
+                has_ui_new_client,
             )
             .await;
         });
@@ -101,6 +100,7 @@ impl Net {
 
         let mdns_send_stop = mdns_send_peer.clone();
 
+        let ctrl_sender = self.ui_sender.clone();
         // take input from mdns_discoper_thread
         // (new ssh client discovered).
         //
@@ -111,8 +111,8 @@ impl Net {
             Self::take_mdns_input(
                 mdns_receive_peer,
                 sender_ssh_client,
-                ctrl_sender2,
-                has_tui_mdns_input,
+                ctrl_sender,
+                has_ui_mdns_input,
                 // change these
                 &mut count_no_cast,
                 &mut count_valid,
@@ -121,7 +121,7 @@ impl Net {
 
         Self::async_mdns_discover(mdns_send_peer)
             .and_then(|count_response| async move {
-                if !has_tui_stats {
+                if !has_ui_stats {
                     let output_string = format!(
                         "no response from : {no_resp:>width$}\n\
                          not castable     : {no_cast:>width$}\n",
