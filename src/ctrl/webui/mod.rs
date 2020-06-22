@@ -4,8 +4,10 @@
 //! implementation should probably be reworked)
 use super::super::config;
 use super::PeerRepresentation;
-use actix::prelude::StreamHandler;
-use actix::{Actor, ActorContext, AsyncContext};
+use crate::ctrl::InternalUiMsg;
+use actix::prelude::{StreamHandler, *};
+
+use actix::{Actor, ActorContext, AsyncContext, Context, Handler};
 use actix_files as fs;
 use actix_web::{
     http::StatusCode,
@@ -20,7 +22,7 @@ use std::{
     fmt, io,
     net::IpAddr,
     string::String,
-    sync::{Arc, Mutex},
+    sync::{mpsc::Receiver, Arc, Mutex},
     time::{Duration, Instant},
     vec::Vec,
 };
@@ -33,6 +35,50 @@ const CLIENT_TIMEOUT: Duration = Duration::from_secs(10);
 pub struct WebServerState {
     id: PeerRepresentation,
     nr_connections: Arc<Mutex<usize>>,
+}
+
+impl Message for InternalUiMsg {
+    type Result = Result<bool, std::io::Error>;
+}
+pub struct ChannelForwarder {
+    receiver: Receiver<InternalUiMsg>,
+}
+impl Actor for ChannelForwarder {
+    type Context = Context<Self>;
+
+    fn started(&mut self, ctx: &mut Self::Context) {
+        trace!("Channel forwarder started");
+        // loop {
+        //     if let Ok(received) = self.receiver.try_recv() {
+        //         match received {
+        //             InternalUiMsg::Update(_) => {
+        //                 trace!("update received!!!!!!!!!!");
+        //             }
+        //             InternalUiMsg::StartAnimate(_, _) => {
+        //                 trace!("start animate received!!!!!!!!!!");
+        //             }
+        //             InternalUiMsg::StepAndAnimate(_) => {
+        //                 trace!("step and animate received!!!!!!!!!!");
+        //             }
+        //         }
+        //     }
+        // }
+    }
+}
+/// Define handler for `Messages` enum
+impl Handler<InternalUiMsg> for ChannelForwarder {
+    type Result = Result<bool, std::io::Error>;
+
+    fn handle(&mut self, msg: InternalUiMsg, ctx: &mut Self::Context) -> Self::Result {
+        trace!("got channel forwarder handle message");
+
+        Ok(true)
+    }
+}
+impl ChannelForwarder {
+    pub fn new(receiver: Receiver<InternalUiMsg>) -> Self {
+        Self { receiver }
+    }
 }
 
 /// needs to be serializable for json
@@ -69,23 +115,51 @@ impl fmt::Display for WebCommand {
 //}
 
 pub struct WebUI {
-    #[allow(dead_code)]
     id: PeerRepresentation,
-    #[allow(dead_code)]
     serve_others: bool,
 }
 
 impl WebUI {
-    pub async fn run(id: PeerRepresentation, _serve: bool) -> io::Result<()> {
-        let sys = actix::System::new("http-server");
+    pub fn new(id: PeerRepresentation, serve_others: bool) -> Self {
+        WebUI { id, serve_others }
+    }
+
+    pub async fn run(&self, receiver: Receiver<InternalUiMsg>) -> io::Result<()> {
         let connection_count = Arc::new(Mutex::new(0));
 
         let local_addresses = get_if_addrs::get_if_addrs().unwrap();
 
         let initial_state = Arc::new(Mutex::new(WebServerState {
-            id: id.clone(),
+            id: self.id.clone(),
             nr_connections: connection_count.clone(),
         }));
+
+        let sys = actix::System::new("http-server");
+
+        let to_ws_forwarder = async move {
+            info!("Trying to poll/receive internal messages");
+            loop {
+                if let Ok(internal_message) = receiver.recv() {
+                    match internal_message {
+                        InternalUiMsg::StepAndAnimate(_) => {
+                            info!("StepAndAnimate");
+                        }
+                        InternalUiMsg::StartAnimate(_, _) => {
+                            info!("StartAnimate");
+                        }
+                        InternalUiMsg::Update(_) => {
+                            info!("Update");
+                        }
+                    }
+                }
+            }
+            //let sum_result = sum_addr.send(Value(6, 7)).await;
+        };
+        Arbiter::spawn(to_ws_forwarder);
+        //actix::System::
+        // let forwarder = ChannelForwarder::new();
+        //
+        // forwarder.start();
 
         // take all local addresses and start if necessary
         // one server with multiple binds

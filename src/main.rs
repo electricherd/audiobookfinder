@@ -18,7 +18,7 @@ use async_std::task;
 use log::{error, info, trace, warn};
 use rayon::prelude::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator};
 use std::{
-    io::{self, Error, ErrorKind},
+    io::{self, Error},
     path::Path, // path, clear
     sync::{
         self,
@@ -158,40 +158,15 @@ fn main() -> io::Result<()> {
         .name("ui".into())
         .spawn(move || {
             if has_ui {
-                match Ctrl::new(
+                Ctrl::run(
                     key_keeper::get_p2p_server_id(),
                     &ui_paths,
                     rx,
                     has_net,
                     ready_ui_send,
-                ) {
-                    Ok(mut controller) => {
-                        // wait for synchronisation
-                        if has_webui {
-                            info!("start webui in main");
-                            controller.run_webui().or_else(|forward| {
-                                error!("error from webui-server: {}", forward);
-                                Err(forward)
-                            })?;
-                            info!("stopped webui gracefully in main");
-                        }
-                        if has_tui {
-                            info!("starting tui");
-
-                            // do finally the necessary
-                            // this blocks this async future
-                            controller
-                                .run_tui()
-                                .map_err(|error_text| Error::new(ErrorKind::Other, error_text))?;
-                            info!("stopped tui gracefully in main");
-                        }
-                        Ok::<(), Error>(())
-                    }
-                    Err(error_text) => {
-                        error!("{:?}", error_text);
-                        Err(Error::new(ErrorKind::Other, error_text))
-                    }
-                }
+                    has_webui,
+                    has_tui,
+                )
             } else {
                 info!("no ui was created!");
                 ready_ui_send
