@@ -269,13 +269,3 @@ impl Collection {
         info!("{}", output_string);
     }
 }
-
-/// Just a test for a drop function ;-)
-impl Drop for Collection {
-    fn drop(&mut self) {
-        println!(
-            "Dropping/destroying collection from {}",
-            self.who.peer_id.to_string().to_uppercase()
-        );
-    }
-}
