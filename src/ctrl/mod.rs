@@ -9,7 +9,6 @@ use self::tui::Tui;
 use self::webui::WebUI;
 use super::config;
 use crate::common::startup::{StartUp, SyncStartUp};
-use crate::ctrl::webui::ChannelForwarder;
 use async_std::task;
 use libp2p::PeerId;
 use std::{
@@ -67,21 +66,10 @@ pub struct NetStats {
     pub max: usize,
 }
 
-/// it's just to logically couple these
-/// two, because the sync should only
-/// happen once and if tui and webui
-/// is used it could happen twice
-struct SyncWithMain {
-    done: bool,
-    syncing: Sender<SyncStartUp>,
-}
-// todo: what about 2 message loops?? web and tui using try_recv?
-
 pub struct Ctrl {
     peer_id: PeerId,
     paths: Vec<String>,
     with_net: bool,
-    sync_main: SyncWithMain,
 }
 
 impl Ctrl {
@@ -93,20 +81,11 @@ impl Ctrl {
     /// * 'receiver' - The receiver that takes incoming ctrl messages
     /// * 'with_net' - If ctrl should consider net messages
     /// * 'sync_sender' - For start up that main can be informed, "I'm ready"
-    pub fn new(
-        new_id: PeerId,
-        paths: &Vec<String>,
-        with_net: bool,
-        sync_sender: Sender<SyncStartUp>,
-    ) -> Self {
+    pub fn new(new_id: PeerId, paths: &Vec<String>, with_net: bool) -> Self {
         Self {
             peer_id: new_id,
             paths: paths.clone(),
             with_net,
-            sync_main: SyncWithMain {
-                done: false,
-                syncing: sync_sender,
-            },
         }
     }
 
@@ -119,7 +98,12 @@ impl Ctrl {
         has_webui: bool,
         has_tui: bool,
     ) -> Result<(), std::io::Error> {
-        let instance = Ctrl::new(new_id, paths, with_net, sync_sender);
+        // sync both sub uis
+        let (ready_tui_send, ready_tui_receiver) = channel::<SyncStartUp>();
+        let (ready_wui_send, ready_wui_receiver) = channel::<SyncStartUp>();
+
+        // create instance which will be passed into the different uis
+        let instance = Ctrl::new(new_id, paths, with_net);
 
         let arc_self_tui = Arc::new(Mutex::new(instance));
         let arc_self_webui = arc_self_tui.clone();
@@ -133,8 +117,17 @@ impl Ctrl {
             let (sender_to_register, receiver_to_tui_thread) = channel::<InternalUiMsg>();
             let resender = sender_to_register.clone();
             internal_senders.push(sender_to_register);
-            Self::spawn_tui(arc_self_tui, resender, receiver_to_tui_thread)?
+            Self::spawn_tui(
+                arc_self_tui,
+                resender,
+                receiver_to_tui_thread,
+                ready_tui_send,
+            )?
         } else {
+            // don't wait and block for tui
+            ready_tui_send
+                .send(SyncStartUp::NoWait)
+                .expect("collection from net receiver not yet there???");
             // empty thread
             std::thread::spawn(|| Ok(()))
         };
@@ -143,33 +136,41 @@ impl Ctrl {
         let thread_webui = if has_webui {
             let (sender_to_register, receiver_to_web_ui_thread) = channel::<InternalUiMsg>();
             internal_senders.push(sender_to_register);
-            Self::spawn_webui(arc_self_webui, receiver_to_web_ui_thread)?
+            Self::spawn_webui(arc_self_webui, receiver_to_web_ui_thread, ready_wui_send)?
         } else {
+            // don't wait and block for web ui
+            ready_wui_send
+                .send(SyncStartUp::NoWait)
+                .expect("collection from net receiver not yet there???");
             // empty thread
             std::thread::spawn(|| Ok(()))
         };
 
-        // sync/block startup with main thread
-        {
-            let mut unlocker = arc_self_message_loop.lock().unwrap();
-            unlocker.sync_with_main();
-        }
-
-        // 3) message ui forwarding thread
+        // 3) ui message forwarding loop thread
         let message_loop = Self::spawn_message_loop(receiver, internal_senders);
 
-        // todo: yes ... way to go!!!
-        //drop(thread_tui);
+        // A) wait for sub syncs in order ...
+        info!("syncing with 2 other sub threads webui and tui");
+        StartUp::send_and_block2(&ready_tui_receiver, &ready_wui_receiver);
+
+        // B) ... to unlock sync/block startup with main thread
+        // we are ready: up and listening!!
+        StartUp::block_on_sync(sync_sender, "ui");
+
+        // todo: if tui and webui both run, both have to be joined AT THE SAME time in order
+        //       to know when they are ended
+        // todo: NOW only with tui (not webui) the "KEEP" option from main thread is working
         let res_tui = thread_tui.join();
         // todo: there is no quitting yet ... is there???
-        drop(thread_webui);
         drop(message_loop);
+        drop(thread_webui);
         Ok::<(), std::io::Error>(())
     }
 
     fn spawn_webui(
         this: Arc<Mutex<Self>>,
         receiver: Receiver<InternalUiMsg>,
+        sync_startup: Sender<SyncStartUp>,
     ) -> Result<thread::JoinHandle<Result<(), std::io::Error>>, std::io::Error> {
         let mut peer_representation: PeerRepresentation = [0 as u8; 16];
         let with_net;
@@ -181,10 +182,12 @@ impl Ctrl {
 
         thread::Builder::new().name("webui".into()).spawn(move || {
             info!("start webui");
-            Self::run_webui(receiver, with_net, peer_representation).or_else(|forward| {
-                error!("error from webui-server: {}", forward);
-                Err(forward)
-            })?;
+            Self::run_webui(receiver, with_net, peer_representation, sync_startup).or_else(
+                |forward| {
+                    error!("error from webui-server: {}", forward);
+                    Err(forward)
+                },
+            )?;
             info!("stopped webui");
             Ok::<(), std::io::Error>(())
         })
@@ -194,6 +197,7 @@ impl Ctrl {
         this: Arc<Mutex<Self>>,
         resender: Sender<InternalUiMsg>,
         receiver: Receiver<InternalUiMsg>,
+        sync_startup: Sender<SyncStartUp>,
     ) -> Result<thread::JoinHandle<Result<(), std::io::Error>>, std::io::Error> {
         let title;
         let paths;
@@ -211,6 +215,7 @@ impl Ctrl {
             .spawn(move || {
                 info!("starting tui");
 
+                StartUp::block_on_sync(sync_startup, "tui");
                 // do finally the necessary
                 // this blocks this async future
                 Self::run_tui(title, paths, with_net, receiver, resender).map_err(
@@ -266,6 +271,7 @@ impl Ctrl {
         webui_receiver: Receiver<InternalUiMsg>,
         net_support: bool,
         peer_representation: PeerRepresentation,
+        sync_startup: Sender<SyncStartUp>,
     ) -> io::Result<()> {
         if webbrowser::open(&["http://", config::net::WEBSOCKET_ADDR].concat()).is_err() {
             info!("Could not open browser!");
@@ -276,7 +282,7 @@ impl Ctrl {
 
             info!("spawning webui async thread");
             let webui = WebUI::new(peer_representation, net_support);
-            webui.run(webui_receiver).await
+            webui.run(webui_receiver, sync_startup).await
         })
     }
 
@@ -287,7 +293,7 @@ impl Ctrl {
         receiver: &Receiver<UiUpdateMsg>,
         multiplex_send: &Vec<Sender<InternalUiMsg>>,
     ) -> bool {
-        if let Ok(forward_sys_message) = receiver.try_recv() {
+        if let Ok(forward_sys_message) = receiver.recv() {
             match forward_sys_message {
                 UiUpdateMsg::NetUpdate((recv_dialog, text)) => {
                     trace!("net update forwarding");
@@ -296,7 +302,9 @@ impl Ctrl {
                     for forward_sender in multiplex_send {
                         forward_sender
                             .send(InternalUiMsg::Update(outter_containment.clone()))
-                            .unwrap();
+                            .unwrap_or_else(|_| {
+                                warn!("forwarding message cancelled probably due to quitting!");
+                            });
                     }
                     true
                 }
@@ -311,7 +319,9 @@ impl Ctrl {
                     for forward_sender in multiplex_send {
                         forward_sender
                             .send(InternalUiMsg::StartAnimate(signal.clone(), on_off.clone()))
-                            .unwrap();
+                            .unwrap_or_else(|_| {
+                                warn!("forwarding message cancelled probably due to quitting!");
+                            });
                     }
                     true
                 }
@@ -324,16 +334,6 @@ impl Ctrl {
         } else {
             // couldn't find a message yet (trying) but that is fine
             true
-        }
-    }
-
-    /// Send the sync to main, if not already done
-    fn sync_with_main(&mut self) {
-        if !self.sync_main.done {
-            StartUp::block_on_sync(self.sync_main.syncing.clone(), "ui");
-            self.sync_main.done = true;
-        } else {
-            info!("Sync with main has been already done, shouldn't be a problem!");
         }
     }
 }

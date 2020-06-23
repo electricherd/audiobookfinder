@@ -2,11 +2,15 @@
 //! This is a webui about to replace the TUI, to be nice, better accessable, and
 //! new technology using websockets (since actix changed a lot actix_web, many
 //! implementation should probably be reworked)
-use super::super::config;
-use super::PeerRepresentation;
-use crate::ctrl::InternalUiMsg;
+use super::{
+    super::{
+        common::startup::{StartUp, SyncStartUp},
+        config,
+        ctrl::InternalUiMsg,
+    },
+    PeerRepresentation,
+};
 use actix::prelude::{StreamHandler, *};
-
 use actix::{Actor, ActorContext, AsyncContext, Context, Handler};
 use actix_files as fs;
 use actix_web::{
@@ -22,7 +26,10 @@ use std::{
     fmt, io,
     net::IpAddr,
     string::String,
-    sync::{mpsc::Receiver, Arc, Mutex},
+    sync::{
+        mpsc::{Receiver, Sender},
+        Arc, Mutex,
+    },
     time::{Duration, Instant},
     vec::Vec,
 };
@@ -37,47 +44,41 @@ pub struct WebServerState {
     nr_connections: Arc<Mutex<usize>>,
 }
 
-impl Message for InternalUiMsg {
-    type Result = Result<bool, std::io::Error>;
+#[derive(Message)]
+#[rtype(result = "()")]
+struct RegisterWSClient {
+    addr: Addr<MyWebSocket>,
 }
-pub struct ChannelForwarder {
-    receiver: Receiver<InternalUiMsg>,
+#[derive(Message)]
+#[rtype(result = "()")]
+struct ServerEvent {
+    event: String,
 }
-impl Actor for ChannelForwarder {
+struct ServerMonitor {
+    listeners: Vec<Addr<MyWebSocket>>,
+}
+
+impl Actor for ServerMonitor {
     type Context = Context<Self>;
 
     fn started(&mut self, ctx: &mut Self::Context) {
-        trace!("Channel forwarder started");
-        // loop {
-        //     if let Ok(received) = self.receiver.try_recv() {
-        //         match received {
-        //             InternalUiMsg::Update(_) => {
-        //                 trace!("update received!!!!!!!!!!");
-        //             }
-        //             InternalUiMsg::StartAnimate(_, _) => {
-        //                 trace!("start animate received!!!!!!!!!!");
-        //             }
-        //             InternalUiMsg::StepAndAnimate(_) => {
-        //                 trace!("step and animate received!!!!!!!!!!");
-        //             }
-        //         }
-        //     }
-        // }
+        trace!("...............server monitor got started");
+        ctx.run_interval(Duration::from_secs(5), |act, _| {
+            for ws in &act.listeners {
+                trace!("...............{}", String::from("Event:"));
+                ws.do_send(ServerEvent {
+                    event: String::from("Event:"),
+                });
+            }
+        });
     }
 }
-/// Define handler for `Messages` enum
-impl Handler<InternalUiMsg> for ChannelForwarder {
-    type Result = Result<bool, std::io::Error>;
+impl Handler<RegisterWSClient> for ServerMonitor {
+    type Result = ();
 
-    fn handle(&mut self, msg: InternalUiMsg, ctx: &mut Self::Context) -> Self::Result {
-        trace!("got channel forwarder handle message");
-
-        Ok(true)
-    }
-}
-impl ChannelForwarder {
-    pub fn new(receiver: Receiver<InternalUiMsg>) -> Self {
-        Self { receiver }
+    fn handle(&mut self, msg: RegisterWSClient, _: &mut Context<Self>) {
+        trace!("...............got handle");
+        self.listeners.push(msg.addr);
     }
 }
 
@@ -124,31 +125,42 @@ impl WebUI {
         WebUI { id, serve_others }
     }
 
-    pub async fn run(&self, receiver: Receiver<InternalUiMsg>) -> io::Result<()> {
+    pub async fn run(
+        &self,
+        receiver: Receiver<InternalUiMsg>,
+        sync_startup: Sender<SyncStartUp>,
+    ) -> io::Result<()> {
         let connection_count = Arc::new(Mutex::new(0));
 
         let local_addresses = get_if_addrs::get_if_addrs().unwrap();
 
+        // data
         let initial_state = Arc::new(Mutex::new(WebServerState {
             id: self.id.clone(),
             nr_connections: connection_count.clone(),
         }));
 
+        // very important: after this the actix system, message loop,
+        // whatever ... is UP!!!
         let sys = actix::System::new("http-server");
+
+        let web_socket_handler = Arc::new(Mutex::new(ServerMonitor { listeners: vec![] }.start()));
 
         let to_ws_forwarder = async move {
             info!("Trying to poll/receive internal messages");
+
             loop {
                 if let Ok(internal_message) = receiver.recv() {
                     match internal_message {
                         InternalUiMsg::StepAndAnimate(_) => {
-                            info!("StepAndAnimate");
+                            trace!("StepAndAnimate");
+                            //was.send()
                         }
                         InternalUiMsg::StartAnimate(_, _) => {
-                            info!("StartAnimate");
+                            trace!("StartAnimate");
                         }
                         InternalUiMsg::Update(_) => {
-                            info!("Update");
+                            trace!("Update");
                         }
                     }
                 }
@@ -156,10 +168,6 @@ impl WebUI {
             //let sum_result = sum_addr.send(Value(6, 7)).await;
         };
         Arbiter::spawn(to_ws_forwarder);
-        //actix::System::
-        // let forwarder = ChannelForwarder::new();
-        //
-        // forwarder.start();
 
         // take all local addresses and start if necessary
         // one server with multiple binds
@@ -184,6 +192,7 @@ impl WebUI {
                 Ok(HttpServer::new(move || {
                     App::new()
                         // each server has an initial state (e.g. 0 connections)
+                        .data(web_socket_handler.clone())
                         .data(initial_state.clone())
                         .service(web::resource("/app.js").to(WebUI::js_app))
                         .default_service(web::resource("").to(WebUI::single_page))
@@ -230,6 +239,7 @@ impl WebUI {
                     })
                 },
             );
+        StartUp::block_on_sync(sync_startup, "webui");
         web_server?.run();
         sys.run()
     }
@@ -332,8 +342,13 @@ impl WebUI {
     async fn websocket_answer(
         req: HttpRequest,
         stream: web::Payload,
+        data: web::Data<Arc<Mutex<Addr<ServerMonitor>>>>,
     ) -> Result<HttpResponse, Error> {
-        ws::start(MyWebSocket::new(), &req, stream)
+        let (addr, res) = ws::start_with_addr(MyWebSocket::new(), &req, stream)?;
+        trace!("........ websocket start with address");
+        data.lock().unwrap().do_send(RegisterWSClient { addr });
+        trace!("........ websocket send");
+        Ok(res)
     }
 
     fn replace_static_content(html_in: &str, id: &PeerRepresentation) -> String {
@@ -389,6 +404,7 @@ impl Actor for MyWebSocket {
 
     /// Method is called on actor start. We start the heartbeat process here.
     fn started(&mut self, ctx: &mut Self::Context) {
+        trace!("heartbeat started");
         self.hb(ctx);
     }
     fn stopped(&mut self, _ctx: &mut Self::Context) {
@@ -397,7 +413,14 @@ impl Actor for MyWebSocket {
         actix::System::current().stop();
     }
 }
+impl Handler<ServerEvent> for MyWebSocket {
+    type Result = ();
 
+    fn handle(&mut self, msg: ServerEvent, ctx: &mut Self::Context) {
+        trace!("goooooooooo");
+        ctx.text(msg.event);
+    }
+}
 impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for MyWebSocket {
     /// Handler for `ws::Message`    
     fn handle(&mut self, msg: Result<ws::Message, ws::ProtocolError>, ctx: &mut Self::Context) {
