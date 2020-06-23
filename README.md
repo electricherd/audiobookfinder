@@ -39,6 +39,8 @@ So far only the state charts and their connection is not done but the general co
 It is an inline [CI](https://travis-ci.org/electricherd/audiobookfinder/) generated documentation which can be found [here](https://electricherd.github.io/audiobookfinder/audiobookfinder/index.html)! Rust does a nice job here as well!
 
 ### Changes
+* working on Actor, Arbiter, Websockets in actix ... passing updates to web ui
+* back to many threads, but synced and working just fine - webui must be able to replace tui at some time
 * fixed up many older problems, yet ready for libp2p migration for communication over net
 * cleaned up yet inactivated parts: former ssh connection, state machine replacement
 * introducing a nice way to sync threads on startup by creating a channel, send its sender to main thread and block own thread until sender is sent back to self controlled receiver. 
@@ -73,6 +75,7 @@ It is an inline [CI](https://travis-ci.org/electricherd/audiobookfinder/) genera
 * found emojis :grin:
 
 ### ToDo
+* fixing webui to show all updates and infos as libp2p network preparation 
 * libp2p changes
     + uuid not needed any more: identification is done via a hash from public key, so called peer id
     + change from old [state_machine_future](https://docs.rs/state_machine_future/) to [smlang](https://crates.io/crates/smlang) state machine
@@ -107,7 +110,7 @@ Let's see where also cross compiling for embedded will lead ... (a stub and not 
 ### Goals
 The primary goal is to learn Rust and to cover various aspects of the language, of which some of I already used inside the program, such as:
 - [ ] borrowing: the borrow checker, I am getting more comfortable with it, but not completely there
-- [ ] shared-data over different threads (not yet lifetime optimized)
+- [x] shared-data over different threads (not yet lifetime optimized)
 - [x] multi-threading, a lot of threads and communication is inside, also  ([Rayon](https://github.com/rayon-rs/rayon))
 - [x] learning [futures](https://en.wikipedia.org/wiki/Futures_and_promises)
 - [x] an optional graphical interface that even runs on console only machines (the [Cursive](https://github.com/gyscos/Cursive) TUI), but probably better...
