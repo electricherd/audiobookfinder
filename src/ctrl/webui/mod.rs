@@ -1,9 +1,10 @@
 #![cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 //! This is a webui about to replace the TUI, to be nice, better accessable, and
 //! new technology using websockets
-//! todo: this file gets too big, decouple actors and messaging a little
+//! todo: this file must be logically ordered
 
 mod json;
+mod pages;
 
 use super::{
     super::{
@@ -15,18 +16,14 @@ use super::{
 };
 use actix::prelude::{StreamHandler, *};
 use actix::{Actor, ActorContext, AsyncContext, Context, Handler};
-use actix_files as fs;
 use actix_web::{
-    http::StatusCode,
     web::{self, HttpResponse, Json},
-    App, Error, HttpRequest, HttpServer, Responder,
+    App, Error, HttpRequest, HttpServer,
 };
 use actix_web_actors::ws;
 use get_if_addrs;
-use hostname;
-use json::*;
+use json::WSJson;
 use std::{
-    ffi::OsString,
     fmt, io,
     net::IpAddr,
     string::String,
@@ -58,10 +55,14 @@ struct RegisterWSClient {
 struct ServerEvent {
     event: Json<WSJson>,
 }
+
+/// Monitors all connected websockets,
+/// and therefore distributes the internal incoming
+/// messages.
 struct ServerMonitor {
     receiver: Receiver<InternalUiMsg>,
     listeners: Vec<Addr<MyWebSocket>>,
-    startup_sync: Sender<SyncStartUp>,
+    startup_sync: Sender<SyncStartUp>, // todo: move this to after "start" from browser!!!!!!
 }
 
 impl Actor for ServerMonitor {
@@ -89,7 +90,7 @@ impl Actor for ServerMonitor {
                     }
                     Err(attribute) => {
                         warn!(
-                            "No, we don't want the internal variable '{:?}' send out!",
+                            "No, we don't want the internal variable '{:?}' sent out!",
                             attribute
                         );
                     }
@@ -202,10 +203,10 @@ impl WebUI {
                         // each server has an initial state (e.g. 0 connections)
                         .data(web_socket_handler.clone())
                         .data(initial_state.clone())
-                        .service(web::resource("/app.js").to(WebUI::js_app))
-                        .default_service(web::resource("").to(WebUI::single_page))
-                        //.default_service(web::resource("").to(WebUI::dyn_devel_html)) // Todo: only for devel
-                        //.service(web::resource("/app.js").to(WebUI::dyn_devel_js)) // todo: only for devel
+                        .service(web::resource("/app.js").to(pages::js_app))
+                        .default_service(web::resource("").to(pages::single_page))
+                        //.default_service(web::resource("").to(static_pages::dyn_devel_html)) // Todo: only for devel
+                        //.service(web::resource("/app.js").to(static_pages::dyn_devel_js)) // todo: only for devel
                         .service(web::resource("/jquery.min.js").to(|| {
                             HttpResponse::Ok()
                                 .content_type("application/javascript; charset=utf-8")
@@ -227,10 +228,10 @@ impl WebUI {
                                 .body(*config::webui::PIC_SHEEP)
                         }))
                         .service(
-                            web::resource("/css/{name}").route(web::get().to(WebUI::bootstrap_css)),
+                            web::resource("/css/{name}").route(web::get().to(pages::bootstrap_css)),
                         )
                         .service(
-                            web::resource("/js/{name}").route(web::get().to(WebUI::bootstrap_js)),
+                            web::resource("/js/{name}").route(web::get().to(pages::bootstrap_js)),
                         )
                         .service(web::resource("/ws").route(web::get().to(WebUI::websocket_answer)))
                 })),
@@ -256,97 +257,6 @@ impl WebUI {
         sys.run()
     }
 
-    #[allow(dead_code)]
-    async fn dyn_devel_html() -> impl Responder {
-        fs::NamedFile::open("src/ctrl/webui/html/single_page.html")
-    }
-
-    #[allow(dead_code)]
-    async fn dyn_devel_js() -> impl Responder {
-        fs::NamedFile::open("src/ctrl/webui/js/app.js")
-    }
-
-    async fn single_page(state: web::Data<Arc<Mutex<WebServerState>>>) -> impl Responder {
-        // change state
-        let mut data = state.lock().unwrap();
-        let id = data.id;
-        *(data.nr_connections.lock().unwrap()) += 1;
-
-        let id_page = Self::replace_static_content(*config::webui::HTML_PAGE, &id);
-
-        HttpResponse::build(StatusCode::OK)
-            .content_type("text/html; charset=utf-8")
-            .body(id_page)
-    }
-
-    async fn bootstrap_css(path: web::Path<(String,)>) -> impl Responder {
-        let css = &*path.0;
-        let output = match css {
-            "bootstrap.css" => Some(*config::webui::bootstrap::CSS),
-            "bootstrap.css.map" => Some(*config::webui::bootstrap::CSS_MAP),
-            "bootstrap.min.css" => Some(*config::webui::bootstrap::CSS_MIN),
-            "bootstrap.min.css.map" => Some(*config::webui::bootstrap::CSS_MIN_MAP),
-            "bootstrap-grid.css" => Some(*config::webui::bootstrap::CSS_GRID),
-            "bootstrap-grid.css.map" => Some(*config::webui::bootstrap::CSS_GRID_MAP),
-            "bootstrap-grid.min.css" => Some(*config::webui::bootstrap::CSS_GRID_MIN),
-            "bootstrap-grid.min.css.map" => Some(*config::webui::bootstrap::CSS_GRID_MIN_MAP),
-            "bootstrap-reboot.css" => Some(*config::webui::bootstrap::CSS_REBOOT),
-            "bootstrap-reboot.css.map" => Some(*config::webui::bootstrap::CSS_REBOOT_MAP),
-            "bootstrap-reboot.min.css" => Some(*config::webui::bootstrap::CSS_REBOOT_MIN),
-            "bootstrap-reboot.min.css.map" => Some(*config::webui::bootstrap::CSS_REBOOT_MIN_MAP),
-            _ => {
-                error!("CSS: not found {}", css);
-                None
-            }
-        };
-        if let Some(content) = output {
-            HttpResponse::build(StatusCode::OK)
-                .content_type("text/css; charset=utf-8")
-                .body(content)
-        } else {
-            HttpResponse::build(StatusCode::NOT_FOUND)
-                .content_type("text/css; charset=utf-8")
-                .body("")
-        }
-    }
-
-    async fn bootstrap_js(path: web::Path<(String,)>) -> impl Responder {
-        let js = &*path.0;
-        let output = match js {
-            "bootstrap.js" => Some(*config::webui::bootstrap::JS),
-            "bootstrap.js.map" => Some(*config::webui::bootstrap::JS_MAP),
-            "bootstrap.min.js" => Some(*config::webui::bootstrap::JS_MIN),
-            "bootstrap.min.js.map" => Some(*config::webui::bootstrap::JS_MIN_MAP),
-            "bootstrap.bundle.js" => Some(*config::webui::bootstrap::JS_BUNDLE),
-            "bootstrap.bundle.js.map" => Some(*config::webui::bootstrap::JS_BUNDLE_MAP),
-            "bootstrap.bundle.min.js" => Some(*config::webui::bootstrap::JS_BUNDLE_MIN),
-            "bootstrap.bundle.min.js.map" => Some(*config::webui::bootstrap::JS_BUNDLE_MIN_MAP),
-            _ => {
-                error!("JS: not found {}", js);
-                None
-            }
-        };
-        if let Some(content) = output {
-            HttpResponse::build(StatusCode::OK)
-                .content_type("application/javascript; charset=utf-8")
-                .body(content)
-        } else {
-            HttpResponse::build(StatusCode::NOT_FOUND)
-                .content_type("application/javascript; charset=utf-8")
-                .body("")
-        }
-    }
-
-    async fn js_app(state: web::Data<Arc<Mutex<WebServerState>>>) -> impl Responder {
-        let data = state.lock().unwrap();
-        let id = data.id;
-
-        let output = Self::replace_static_content(*config::webui::JS_APP, &id);
-        HttpResponse::build(StatusCode::OK)
-            .content_type("application/javascript; charset=utf-8")
-            .body(output)
-    }
-
     async fn websocket_answer(
         req: HttpRequest,
         stream: web::Payload,
@@ -355,45 +265,6 @@ impl WebUI {
         let (addr, res) = ws::start_with_addr(MyWebSocket::new(), &req, stream)?;
         data.lock().unwrap().do_send(RegisterWSClient { addr });
         Ok(res)
-    }
-
-    fn replace_static_content(html_in: &str, id: &PeerRepresentation) -> String {
-        // short inline struct
-        struct ReplaceStatic<'a> {
-            r: &'a str,
-            c: String,
-        }
-
-        let id_string = std::format!("{:x?}", id);
-        let hostname = hostname::get()
-            .unwrap_or(OsString::from("undefined"))
-            .into_string()
-            .unwrap_or(String::from("undefined"));
-
-        let changers: [ReplaceStatic; 4] = [
-            ReplaceStatic {
-                r: config::net::HTML_REPLACE_STATIC_URL_SOURCE,
-                c: config::net::HTML_URL_SOURCE.to_string(),
-            },
-            ReplaceStatic {
-                r: config::webui::HTML_REPLACE_WEBSOCKET,
-                c: config::net::WEBSOCKET_ADDR.to_string(),
-            },
-            ReplaceStatic {
-                r: config::webui::HTML_REPLACE_UUID,
-                c: id_string,
-            },
-            ReplaceStatic {
-                r: config::webui::HTML_REPLACE_HOSTNAME,
-                c: hostname,
-            },
-        ];
-        let mut replace_this = html_in.to_string();
-
-        for replacer in &changers {
-            replace_this = str::replace(&replace_this, &replacer.r, &replacer.c);
-        }
-        replace_this
     }
 }
 

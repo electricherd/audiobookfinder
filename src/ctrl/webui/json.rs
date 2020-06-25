@@ -6,7 +6,7 @@ use std::fmt;
 
 /// some internal shall fail because they are not supposed to be sent out,
 /// so it results in a correct MyJson or the attribute that shall
-/// not be send out put was tried to do ...
+/// not be send out but was tried to do ...
 pub fn convert(internal_msg: &InternalUiMsg) -> Result<WSJson, String> {
     let ret = match internal_msg {
         InternalUiMsg::Update(_forward_net_message) => WSJson::nothing(),
@@ -53,9 +53,11 @@ pub enum AnimateData {
     cnt(RefreshData, bool),
 }
 
+// This is the critical part here, "event" and "data" to work with
+// "ws_events_dispatcher.js" !!!!!!!!
 #[derive(Serialize, Deserialize, Clone, Copy, Debug)]
 #[serde(tag = "event", content = "data")]
-#[allow(non_camel_case_types)] // no tag info means externally tagged by name therefore camel_case
+#[allow(non_camel_case_types)]
 pub enum WSJson {
     refresh(RefreshData),
     animate(AnimateData),
