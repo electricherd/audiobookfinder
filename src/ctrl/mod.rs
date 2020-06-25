@@ -7,8 +7,8 @@ mod webui;
 
 use self::tui::Tui;
 use self::webui::WebUI;
+use super::common::startup::{StartUp, SyncStartUp};
 use super::config;
-use crate::common::startup::{StartUp, SyncStartUp};
 use async_std::task;
 use libp2p::PeerId;
 use std::{
@@ -24,13 +24,13 @@ type PeerRepresentation = [u8; 16];
 
 /// alive Signal for path from collector
 /// or net search alive
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub enum CollectionPathAlive {
     BusyPath(usize),
     HostSearch,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize)]
 pub enum Status {
     ON,
     OFF,
@@ -43,8 +43,17 @@ pub enum NetMessages {
     ShowStats { show: NetStats },
 }
 
-/// todo: something funny yet .. string is unbounded but like this it worked?
-type ForwardNetMessage = (NetMessages, String);
+#[derive(Clone)]
+pub struct ForwardNetMessage {
+    net: NetMessages,
+    cnt: String,
+}
+
+impl ForwardNetMessage {
+    pub fn new(net: NetMessages, cnt: String) -> Self {
+        Self { net, cnt }
+    }
+}
 
 /// internal messages inside ui
 pub enum InternalUiMsg {
@@ -107,7 +116,6 @@ impl Ctrl {
 
         let arc_self_tui = Arc::new(Mutex::new(instance));
         let arc_self_webui = arc_self_tui.clone();
-        let arc_self_message_loop = arc_self_tui.clone();
 
         // all senders that UiUpdateMessages will be forwarded to
         let mut internal_senders: Vec<Sender<InternalUiMsg>> = vec![];
@@ -295,10 +303,13 @@ impl Ctrl {
     ) -> bool {
         if let Ok(forward_sys_message) = receiver.recv() {
             match forward_sys_message {
-                UiUpdateMsg::NetUpdate((recv_dialog, text)) => {
+                UiUpdateMsg::NetUpdate(ForwardNetMessage {
+                    net: recv_dialog,
+                    cnt: text,
+                }) => {
                     trace!("net update forwarding");
                     // todo: create a closure/fn to do a multiple send
-                    let outter_containment = (recv_dialog, text);
+                    let outter_containment = ForwardNetMessage::new(recv_dialog, text);
                     for forward_sender in multiplex_send {
                         forward_sender
                             .send(InternalUiMsg::Update(outter_containment.clone()))

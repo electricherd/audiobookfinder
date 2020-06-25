@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <!--
-// Copyright (C) 2019 electricherd
+// Copyright (C) 2019-2020 electricherd
 //
 -->
 <html lang="en">
 <head>
-    <meta http-equiv="content-type" content="text/html; charset=utf-8"></meta>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
     <title>audiobookfinder on <!--HOSTNAME--></title>
     <link rel="icon"
       type="image/png"
@@ -14,6 +14,7 @@
     <link rel="stylesheet" href="css/bootstrap.min.css">
     <script src="jquery.min.js"></script>
     <script src="js/bootstrap.min.js"></script>
+    <script src="ws_events_dispatcher.js"></script>
     <script src="app.js"></script>
 
     <!-- app's own style -->
@@ -76,6 +77,22 @@
            <tbody>
            </tbody>
          </table>
+           <!-- -->
+           <button class="btn btn-primary" type="button">
+               <span class="d-none spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+               Click me...
+           </button>
+           <!-- -->
+           <h3>Path(s):</h3>
+           <table class="table table-striped" id='paths_searched'>
+               <thead>
+               <tr>
+                   <th>Paths to search</th>
+               </tr>
+               </thead>
+               <tbody>
+               </tbody>
+           </table>
        </div>
        <div class="col-sm-4">
          <button id="btn2" type="button" class="btn btn-primary btn-block">Append</button>

@@ -8,7 +8,7 @@ mod data;
 pub mod key_keeper;
 
 use self::connect_to::ConnectToOther;
-use super::ctrl;
+use super::ctrl::{self, ForwardNetMessage};
 use async_std::{
     sync::{Arc, Mutex},
     task,
@@ -260,13 +260,13 @@ impl Net {
                                 let count = ip_addresses.len();
                                 if has_tui {
                                     ctrl_sender
-                                        .send(ctrl::UiUpdateMsg::NetUpdate((
+                                        .send(ctrl::UiUpdateMsg::NetUpdate(ForwardNetMessage::new(
                                             ctrl::NetMessages::ShowNewHost,
                                             incoming_id.to_string(),
                                         )))
                                         .unwrap();
                                     ctrl_sender
-                                        .send(ctrl::UiUpdateMsg::NetUpdate((
+                                        .send(ctrl::UiUpdateMsg::NetUpdate(ForwardNetMessage::new(
                                             ctrl::NetMessages::ShowStats {
                                                 show: ctrl::NetStats {
                                                     line: count,

@@ -1,14 +1,17 @@
 #![cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 //! This is a webui about to replace the TUI, to be nice, better accessable, and
-//! new technology using websockets (since actix changed a lot actix_web, many
-//! implementation should probably be reworked)
+//! new technology using websockets
+//! todo: this file gets too big, decouple actors and messaging a little
+
+mod json;
+
 use super::{
     super::{
         common::startup::{StartUp, SyncStartUp},
         config,
         ctrl::InternalUiMsg,
     },
-    PeerRepresentation,
+    CollectionPathAlive, PeerRepresentation,
 };
 use actix::prelude::{StreamHandler, *};
 use actix::{Actor, ActorContext, AsyncContext, Context, Handler};
@@ -21,6 +24,7 @@ use actix_web::{
 use actix_web_actors::ws;
 use get_if_addrs;
 use hostname;
+use json::*;
 use std::{
     ffi::OsString,
     fmt, io,
@@ -52,23 +56,44 @@ struct RegisterWSClient {
 #[derive(Message)]
 #[rtype(result = "()")]
 struct ServerEvent {
-    event: String,
+    event: Json<WSJson>,
 }
 struct ServerMonitor {
+    receiver: Receiver<InternalUiMsg>,
     listeners: Vec<Addr<MyWebSocket>>,
+    startup_sync: Sender<SyncStartUp>,
 }
 
 impl Actor for ServerMonitor {
     type Context = Context<Self>;
 
     fn started(&mut self, ctx: &mut Self::Context) {
-        trace!("...............server monitor got started");
-        ctx.run_interval(Duration::from_secs(5), |act, _| {
-            for ws in &act.listeners {
-                trace!("...............{}", String::from("Event:"));
-                ws.do_send(ServerEvent {
-                    event: String::from("Event:"),
-                });
+        trace!("server monitor got started");
+
+        ctx.run_later(Duration::from_millis(10), |act, _| {
+            StartUp::block_on_sync(act.startup_sync.clone(), "webui");
+        });
+        // todo: this is crap of course, polling in 20ms and try_recv on a receiver
+        //       but for now it's fine!!!
+        ctx.run_interval(Duration::from_millis(20), |act, _| {
+            //loop {
+            if let Ok(internal_message) = act.receiver.try_recv() {
+                // inform all listeners
+                match json::convert(&internal_message) {
+                    Ok(response_json) => {
+                        for ws in &act.listeners {
+                            ws.do_send(ServerEvent {
+                                event: Json(response_json),
+                            });
+                        }
+                    }
+                    Err(attribute) => {
+                        warn!(
+                            "No, we don't want the internal variable '{:?}' send out!",
+                            attribute
+                        );
+                    }
+                }
             }
         });
     }
@@ -77,13 +102,12 @@ impl Handler<RegisterWSClient> for ServerMonitor {
     type Result = ();
 
     fn handle(&mut self, msg: RegisterWSClient, _: &mut Context<Self>) {
-        trace!("...............got handle");
         self.listeners.push(msg.addr);
     }
 }
 
 /// needs to be serializable for json
-#[derive(Serialize)]
+
 struct JSONResponse {
     cmd: WebCommand,
 }
@@ -144,30 +168,14 @@ impl WebUI {
         // whatever ... is UP!!!
         let sys = actix::System::new("http-server");
 
-        let web_socket_handler = Arc::new(Mutex::new(ServerMonitor { listeners: vec![] }.start()));
-
-        let to_ws_forwarder = async move {
-            info!("Trying to poll/receive internal messages");
-
-            loop {
-                if let Ok(internal_message) = receiver.recv() {
-                    match internal_message {
-                        InternalUiMsg::StepAndAnimate(_) => {
-                            trace!("StepAndAnimate");
-                            //was.send()
-                        }
-                        InternalUiMsg::StartAnimate(_, _) => {
-                            trace!("StartAnimate");
-                        }
-                        InternalUiMsg::Update(_) => {
-                            trace!("Update");
-                        }
-                    }
-                }
+        let web_socket_handler = Arc::new(Mutex::new(
+            ServerMonitor {
+                receiver,
+                listeners: vec![],
+                startup_sync: sync_startup,
             }
-            //let sum_result = sum_addr.send(Value(6, 7)).await;
-        };
-        Arbiter::spawn(to_ws_forwarder);
+            .start(),
+        ));
 
         // take all local addresses and start if necessary
         // one server with multiple binds
@@ -200,8 +208,13 @@ impl WebUI {
                         //.service(web::resource("/app.js").to(WebUI::dyn_devel_js)) // todo: only for devel
                         .service(web::resource("/jquery.min.js").to(|| {
                             HttpResponse::Ok()
-                                .content_type("text/html; charset=utf-8")
+                                .content_type("application/javascript; charset=utf-8")
                                 .body(*config::webui::jquery::JS_JQUERY)
+                        }))
+                        .service(web::resource("/ws_events_dispatcher.js").to(|| {
+                            HttpResponse::Ok()
+                                .content_type("application/javascript; charset=utf-8")
+                                .body(*config::webui::JS_WS_EVENT_DISPATCHER)
                         }))
                         .service(web::resource("favicon.png").to(|| {
                             HttpResponse::Ok()
@@ -239,18 +252,13 @@ impl WebUI {
                     })
                 },
             );
-        StartUp::block_on_sync(sync_startup, "webui");
         web_server?.run();
         sys.run()
     }
 
     #[allow(dead_code)]
-    async fn dyn_devel_html(
-        _state: web::Data<Arc<Mutex<WebServerState>>>,
-        _req: HttpRequest,
-        _path: web::Path<(String,)>,
-    ) -> Result<fs::NamedFile, Error> {
-        Ok(fs::NamedFile::open("src/ctrl/webui/html/single_page.html")?)
+    async fn dyn_devel_html() -> impl Responder {
+        fs::NamedFile::open("src/ctrl/webui/html/single_page.html")
     }
 
     #[allow(dead_code)]
@@ -335,7 +343,7 @@ impl WebUI {
 
         let output = Self::replace_static_content(*config::webui::JS_APP, &id);
         HttpResponse::build(StatusCode::OK)
-            .content_type("text/html; charset=utf-8")
+            .content_type("application/javascript; charset=utf-8")
             .body(output)
     }
 
@@ -345,9 +353,7 @@ impl WebUI {
         data: web::Data<Arc<Mutex<Addr<ServerMonitor>>>>,
     ) -> Result<HttpResponse, Error> {
         let (addr, res) = ws::start_with_addr(MyWebSocket::new(), &req, stream)?;
-        trace!("........ websocket start with address");
         data.lock().unwrap().do_send(RegisterWSClient { addr });
-        trace!("........ websocket send");
         Ok(res)
     }
 
@@ -417,8 +423,8 @@ impl Handler<ServerEvent> for MyWebSocket {
     type Result = ();
 
     fn handle(&mut self, msg: ServerEvent, ctx: &mut Self::Context) {
-        trace!("goooooooooo");
-        ctx.text(msg.event);
+        trace!("send {}", msg.event.to_string());
+        ctx.text(msg.event.to_string());
     }
 }
 impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for MyWebSocket {

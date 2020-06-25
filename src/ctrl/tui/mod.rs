@@ -3,7 +3,7 @@
 //! and later status of the connection to the found clients.
 use super::super::{
     config,
-    ctrl::{CollectionPathAlive, InternalUiMsg, NetMessages, Status},
+    ctrl::{CollectionPathAlive, ForwardNetMessage, InternalUiMsg, NetMessages, Status},
 };
 use async_std::task;
 use cursive::{
@@ -123,7 +123,10 @@ impl Tui {
 
         if let Ok(message) = tui_receiver.try_recv() {
             match message {
-                InternalUiMsg::Update((recv_dialog, text)) => match recv_dialog {
+                InternalUiMsg::Update(ForwardNetMessage {
+                    net: recv_dialog,
+                    cnt: text,
+                }) => match recv_dialog {
                     NetMessages::ShowNewHost => {
                         if let Some(mut host_list) = self.handle.find_name::<ListView>(VIEW_LIST_ID)
                         {

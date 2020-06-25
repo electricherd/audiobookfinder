@@ -7,6 +7,7 @@ extern crate adbflib;
 extern crate clap;
 extern crate rayon;
 
+use adbflib::ctrl::ForwardNetMessage;
 use adbflib::{
     common::startup::{StartUp, SyncStartUp},
     ctrl::{CollectionPathAlive, Ctrl, NetMessages, Status, UiUpdateMsg},
@@ -368,7 +369,10 @@ fn search_in_single_path(
                         .lock()
                         .and_then(|locked_update_message| {
                             locked_update_message
-                                .send(UiUpdateMsg::NetUpdate((debug_message_id, text)))
+                                .send(UiUpdateMsg::NetUpdate(ForwardNetMessage::new(
+                                    debug_message_id,
+                                    text,
+                                )))
                                 .unwrap();
                             Ok(())
                         })

@@ -6,12 +6,12 @@ Rust is an awesome but difficult to learn programming language using different a
  * Secure Programming Concepts: let the computer/compiler do what it can do better than a programmer: safe threading, error-concepts, forbid everything non-safe by default
  * Quality: high level language concepts, easy to embed and include high quality external packages, which lets you implement more functionality in less code
  * Embedded: easy cross compiling, interfaces to C, becoming better to be stripped down to core system functions for the sake of minimum code footprint. Async/Await for non OS programs, `no_std` and the `async executors` (even own ones) will be important. 
- * Parallelism and Concurrency: what else to do with multi-core cpu, we are not getting much faster any more, and often cpus are idling due to blocking code. With async / await and futures Rust offers with its security features a very good way of dealing with it. 
+ * Parallelism and Concurrency: what else to do with multi-core cpu, we are not getting much faster anymore, and often cpus are idling due to blocking code. With async / await and futures Rust offers with its security features a very good way of dealing with it. 
  * Testing and Documentation: some build-in concepts
 
 Especially for IoT: I want secure and thereby safe products at home which cannot be turned into zombie devices by buffer overflow and injection, always think of what can go wrong, and let the compiler tell you when you do a common mistake.
 
-As a C++ developer, I know some of the C++11/14/17 enhancements and some don't convince me at all, just look here about the "costs" you have and what it looks like in Simon Brand's ["How Rust gets polymorphism right"](https://www.youtube.com/watch?v=VSlBhAOLtFA).
+As a C++ developer, I know some C++11/14/17 enhancements, and some don't convince me at all, just look here about the "costs" you have and what it looks like in Simon Brand's ["How Rust gets polymorphism right"](https://www.youtube.com/watch?v=VSlBhAOLtFA).
 
 
 # Table of Contents
@@ -39,6 +39,7 @@ So far only the state charts and their connection is not done but the general co
 It is an inline [CI](https://travis-ci.org/electricherd/audiobookfinder/) generated documentation which can be found [here](https://electricherd.github.io/audiobookfinder/audiobookfinder/index.html)! Rust does a nice job here as well!
 
 ### Changes
+* webui now is connected, event-loop yet strangly implemented, working on json and jquery/javascript
 * working on Actor, Arbiter, Websockets in actix ... passing updates to web ui
 * back to many threads, but synced and working just fine - webui must be able to replace tui at some time
 * fixed up many older problems, yet ready for libp2p migration for communication over net
@@ -75,6 +76,7 @@ It is an inline [CI](https://travis-ci.org/electricherd/audiobookfinder/) genera
 * found emojis :grin:
 
 ### ToDo
+* kick ping-pong from webui - websockets don't need it, I suppose, fix boostrap and html issues
 * fixing webui to show all updates and infos as libp2p network preparation 
 * libp2p changes
     + uuid not needed any more: identification is done via a hash from public key, so called peer id
