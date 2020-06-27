@@ -59,32 +59,48 @@ struct ServerEvent {
 /// Monitors all connected websockets,
 /// and therefore distributes the internal incoming
 /// messages.
-struct ServerMonitor {
+struct WSServerMonitor {
     receiver: Receiver<InternalUiMsg>,
-    listeners: Vec<Addr<MyWebSocket>>,
+    listeners: Vec<Addr<MyWebSocket>>, // todo: these are WSCli bla
+    paths: Vec<String>,
     startup_sync: Sender<SyncStartUp>, // todo: move this to after "start" from browser!!!!!!
 }
 
-impl Actor for ServerMonitor {
+impl Actor for WSServerMonitor {
     type Context = Context<Self>;
 
     fn started(&mut self, ctx: &mut Self::Context) {
         trace!("server monitor got started");
 
-        ctx.run_later(Duration::from_millis(10), |act, _| {
-            StartUp::block_on_sync(act.startup_sync.clone(), "webui");
+        //        ctx.run_later(Duration::from_millis(0), |act, _| {
+        StartUp::block_on_sync(self.startup_sync.clone(), "webui");
+        //        });
+
+        let cloned_paths = self.paths.clone();
+        // send init data to ui
+        // todo: waiting is of course not the solution
+        ctx.run_later(Duration::from_millis(3000), move |act, _| {
+            trace!("........... informing");
+            for ws in &act.listeners {
+                let answer = Json(json::generate_init_data(&cloned_paths.clone()));
+                ws.do_send(ServerEvent { event: answer });
+            }
         });
+
+        let all_ws_initialized = false;
         // todo: this is crap of course, polling in 20ms and try_recv on a receiver
         //       but for now it's fine!!!
+
         ctx.run_interval(Duration::from_millis(20), |act, _| {
             //loop {
+
             if let Ok(internal_message) = act.receiver.try_recv() {
                 // inform all listeners
-                match json::convert(&internal_message) {
+                match json::convert_internal_message(&internal_message) {
                     Ok(response_json) => {
                         for ws in &act.listeners {
                             ws.do_send(ServerEvent {
-                                event: Json(response_json),
+                                event: Json(response_json.clone()),
                             });
                         }
                     }
@@ -99,10 +115,11 @@ impl Actor for ServerMonitor {
         });
     }
 }
-impl Handler<RegisterWSClient> for ServerMonitor {
+impl Handler<RegisterWSClient> for WSServerMonitor {
     type Result = ();
 
     fn handle(&mut self, msg: RegisterWSClient, _: &mut Context<Self>) {
+        info!("something done here");
         self.listeners.push(msg.addr);
     }
 }
@@ -143,11 +160,16 @@ impl fmt::Display for WebCommand {
 pub struct WebUI {
     id: PeerRepresentation,
     serve_others: bool,
+    paths: Vec<String>,
 }
 
 impl WebUI {
-    pub fn new(id: PeerRepresentation, serve_others: bool) -> Self {
-        WebUI { id, serve_others }
+    pub fn new(id: PeerRepresentation, serve_others: bool, paths: Vec<String>) -> Self {
+        Self {
+            id,
+            serve_others,
+            paths,
+        }
     }
 
     pub async fn run(
@@ -170,9 +192,10 @@ impl WebUI {
         let sys = actix::System::new("http-server");
 
         let web_socket_handler = Arc::new(Mutex::new(
-            ServerMonitor {
+            WSServerMonitor {
                 receiver,
                 listeners: vec![],
+                paths: self.paths.clone(),
                 startup_sync: sync_startup,
             }
             .start(),
@@ -260,8 +283,9 @@ impl WebUI {
     async fn websocket_answer(
         req: HttpRequest,
         stream: web::Payload,
-        data: web::Data<Arc<Mutex<Addr<ServerMonitor>>>>,
+        data: web::Data<Arc<Mutex<Addr<WSServerMonitor>>>>,
     ) -> Result<HttpResponse, Error> {
+        trace!("new websocket answered!");
         let (addr, res) = ws::start_with_addr(MyWebSocket::new(), &req, stream)?;
         data.lock().unwrap().do_send(RegisterWSClient { addr });
         Ok(res)
@@ -274,6 +298,7 @@ struct MyWebSocket {
     /// Client must send ping at least once per 10 seconds (CLIENT_TIMEOUT),
     /// otherwise we drop connection.
     hb: Instant,
+    browser_sent_start: bool,
 }
 
 impl Actor for MyWebSocket {
@@ -294,7 +319,10 @@ impl Handler<ServerEvent> for MyWebSocket {
     type Result = ();
 
     fn handle(&mut self, msg: ServerEvent, ctx: &mut Self::Context) {
-        trace!("send {}", msg.event.to_string());
+        if !self.browser_sent_start {
+            // send initial json
+        }
+        trace!("send: {}", msg.event.to_string());
         ctx.text(msg.event.to_string());
     }
 }
@@ -304,7 +332,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for MyWebSocket {
         // process websocket messages
         match msg {
             Ok(good_message) => {
-                trace!(":: {:?}", good_message);
+                trace!("hb handler: {:?}", good_message);
                 match good_message {
                     ws::Message::Ping(msg) => {
                         self.hb = Instant::now();
@@ -326,6 +354,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for MyWebSocket {
                                         })
                                         .to_string(),
                                     );
+                                    self.browser_sent_start = true;
                                 }
                                 _ => ctx.text(format!("!!! unknown command: {:?}", m)),
                             }
@@ -346,7 +375,10 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for MyWebSocket {
 
 impl MyWebSocket {
     fn new() -> Self {
-        Self { hb: Instant::now() }
+        Self {
+            hb: Instant::now(),
+            browser_sent_start: false,
+        }
     }
 
     /// helper method that sends ping to client every second.

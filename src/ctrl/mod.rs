@@ -182,15 +182,18 @@ impl Ctrl {
     ) -> Result<thread::JoinHandle<Result<(), std::io::Error>>, std::io::Error> {
         let mut peer_representation: PeerRepresentation = [0 as u8; 16];
         let with_net;
+        let paths;
+        // lock block
         {
             let unlocker = this.lock().unwrap();
+            paths = unlocker.paths.clone();
             peer_representation.copy_from_slice(&unlocker.peer_id.as_bytes()[..16]);
             with_net = unlocker.with_net;
         }
 
         thread::Builder::new().name("webui".into()).spawn(move || {
             info!("start webui");
-            Self::run_webui(receiver, with_net, peer_representation, sync_startup).or_else(
+            Self::run_webui(receiver, with_net, peer_representation, paths, sync_startup).or_else(
                 |forward| {
                     error!("error from webui-server: {}", forward);
                     Err(forward)
@@ -212,10 +215,10 @@ impl Ctrl {
         let with_net;
         // lock block
         {
-            let unlock = this.lock().unwrap();
-            title = unlock.peer_id.to_string().clone();
-            paths = unlock.paths.clone();
-            with_net = unlock.with_net.clone();
+            let unlocker = this.lock().unwrap();
+            title = unlocker.peer_id.to_string().clone();
+            paths = unlocker.paths.clone();
+            with_net = unlocker.with_net.clone();
         }
 
         std::thread::Builder::new()
@@ -279,6 +282,7 @@ impl Ctrl {
         webui_receiver: Receiver<InternalUiMsg>,
         net_support: bool,
         peer_representation: PeerRepresentation,
+        paths: Vec<String>,
         sync_startup: Sender<SyncStartUp>,
     ) -> io::Result<()> {
         if webbrowser::open(&["http://", config::net::WEBSOCKET_ADDR].concat()).is_err() {
@@ -289,7 +293,7 @@ impl Ctrl {
             // loop non blocking
 
             info!("spawning webui async thread");
-            let webui = WebUI::new(peer_representation, net_support);
+            let webui = WebUI::new(peer_representation, net_support, paths);
             webui.run(webui_receiver, sync_startup).await
         })
     }

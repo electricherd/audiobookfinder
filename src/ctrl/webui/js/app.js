@@ -21,18 +21,13 @@ function APPStart() {
            alert("Connection is closed...");
         });
 
-        ws.bind('animate', function(all){
-           $("#paths_searched").append("<tr><td><span class='spinner-border spinner-border-sm' role='status' aria-hidden='true'></span></td></tr>");
+        ws.bind('init', function(data){
+           showPath(data);
         });
 
-        ws.bind('refresh', function(nr){
-            $("#paths_searched").append("<tr><td><span class='spinner-border spinner-border-sm' role='status' aria-hidden='true'></span></td></tr>");
-        })
-
-        ws.bind('refresh', function(nr){
-            $("#paths_searched").append("<tr><td><span class='spinner-border spinner-border-sm' role='status' aria-hidden='true'></span></td></tr>");
-        })
-
+        ws.bind('searchPath', function(data){
+           spinPath(data);
+        });
 
         window.onbeforeunload = function(event) {
              socket.close();
@@ -44,17 +39,14 @@ function APPStart() {
 
     $("#btn2").click(function(){
       //$("#MyActionTable").append("<tr><td>Action</td><td>TimeLastname</td></tr>");
-      $("#paths_searched").append("<tr><td><span class='spinner-border spinner-border-sm' role='status' aria-hidden='true'></span></td></tr>");
     });
 
     // on all buttons it searches for spinner/span ...
     // todo: clearify how to make it nicer!!
-    $(() => {
-      $('button').on('click', e => {
-        let spinner = $(e.currentTarget).find('span')
-        spinner.removeClass('d-none')
-        setTimeout(_ => spinner.addClass('d-none'), 2000)
-      })
+    $('button').on('click', e => {
+      let spinner = $(e.currentTarget).find('span')
+      spinner.removeClass('d-none')
+      setTimeout(_ => spinner.addClass('d-none'), 2000)
     })
 
     // program checks if led_state button was clicked
@@ -76,3 +68,35 @@ function APPStart() {
     });
   });
 }
+
+function spinPath(data) {
+    let path_nr = data[0].nr;
+    let on_off = data[1];
+
+    let spinner = $('#path_obj' + path_nr).find('span');
+
+    if (on_off === false) {
+        spinner.removeClass('d-none');
+        setTimeout(_ => spinner.addClass('d-none'), 1000);
+    }
+    // todo: on is still missed due to timing
+}
+
+function showPath(data) {
+    // encapsulate paths json
+    let paths = data.paths;
+
+    let path_len = paths.length;
+    for (let i=0; i < path_len; i++) {
+        let obj_id =  "path_obj" + paths[i].nr;
+        // create obj
+        let new_el_html = "<tr id='" + obj_id + "'><td>"
+                         + paths[i].name + "</td><td>"
+                         +"<span class='spinner-border spinner-border-sm' role='status' aria-hidden='true'></span>"
+                         + "</tr></td>";
+        new_el = $.parseHTML(new_el_html);
+        // append it as an object
+        $("#paths_searched").append(new_el);
+    }
+}
+

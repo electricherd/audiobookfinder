@@ -25,6 +25,7 @@ As a C++ developer, I know some C++11/14/17 enhancements, and some don't convinc
 7. [Dependencies](#dependencies)
 8. [Issues](#issues)
 9. [Yet in plan](#yet-in-plan)
+10. [Useful links](#useful-links)
 
 ## My first program in Rust
 I planned to do something useful for myself. The program collects information about audio books on different devices/clients, stores it and then processes it, e.g. showing stats, finding duplicates, aggregating everything at one place by a button click.
@@ -39,6 +40,7 @@ So far only the state charts and their connection is not done but the general co
 It is an inline [CI](https://travis-ci.org/electricherd/audiobookfinder/) generated documentation which can be found [here](https://electricherd.github.io/audiobookfinder/audiobookfinder/index.html)! Rust does a nice job here as well!
 
 ### Changes
+* webui gets paths by websocket json, synchronising browser opening with program is a little issue, I don't like javascript but hey ... it has `let` for variables  
 * webui now is connected, event-loop yet strangly implemented, working on json and jquery/javascript
 * working on Actor, Arbiter, Websockets in actix ... passing updates to web ui
 * back to many threads, but synced and working just fine - webui must be able to replace tui at some time
@@ -111,7 +113,7 @@ Let's see where also cross compiling for embedded will lead ... (a stub and not 
 
 ### Goals
 The primary goal is to learn Rust and to cover various aspects of the language, of which some of I already used inside the program, such as:
-- [ ] borrowing: the borrow checker, I am getting more comfortable with it, but not completely there
+- [x] borrowing: the borrow checker, some issues but I am fine with it now
 - [x] shared-data over different threads (not yet lifetime optimized)
 - [x] multi-threading, a lot of threads and communication is inside, also  ([Rayon](https://github.com/rayon-rs/rayon))
 - [x] learning [futures](https://en.wikipedia.org/wiki/Futures_and_promises)
@@ -169,3 +171,12 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
 * internationalization (which is not really supported yet by Rust)
 * a good and fast data collection
 * maybe a little AI layer on determining audio books duplicates/same author by similar spelling, etc.
+
+### Useful links
+* https://jsfiddle.net/boilerplate/jquery : for people who don't really like js but need it:
+* https://thoughtbot.com/blog/json-event-based-convention-websockets : websockets to js commands
+
+### 3rd party (excluding Rust crates)
+* https://getbootstrap.com/docs/4.3/getting-started/introduction/
+* https://jquery.com/
+* https://gist.github.com/ismasan/299789
