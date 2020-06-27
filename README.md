@@ -47,35 +47,39 @@ It is an inline [CI](https://travis-ci.org/electricherd/audiobookfinder/) genera
 * fixed up many older problems, yet ready for libp2p migration for communication over net
 * cleaned up yet inactivated parts: former ssh connection, state machine replacement
 * introducing a nice way to sync threads on startup by creating a channel, send its sender to main thread and block own thread until sender is sent back to self controlled receiver. 
-* trying upx in CI builds again
-* migrated first too many native threads to async green threads, as also most dependant external crates use more general futures approach. It's yet a bit confusing and inconsistant but problem were rayon thread iterator and cursive as thread dependant. But I am about to like and understand async/await quite well, also the consequences for embedded development :grin:
-* bumped to Rust 2018 features async/await in net module using futures in few occasion, but will continue with that
-* version changes of different used crates
-* changed this README, to add version changes to *Changes*, re-ordered, and made [Goals](#goals) as a check list, bumped version to v
-* updated various dependency packages from Rust libraries [actix](https://actix.rs/) (there was a dependency lock for a longer time) to [bootstrap](https://getbootstrap.com/), and [jquery](https://jquery.com).
-* added small key generation documentation in `README-release.md`
-* preparing cross compile for banana pi (Dockerfile)
-* added and will later moving from [travis](https://travis-ci.org/) to [AppVeyor](https://www.appveyor.com/) which doesn't lack bionic 18.04 builds and possibility for Windows builds (AppVeyor was primarily used for Windows builds, Travis for Linux in Rust, so documentation for Linux and Rust builds in AppVeyor is quite bad ... testing)
-* cleaned up changes list, switched to [sublime text](https://www.sublimetext.com) instead of [atom](https://atom.io/) as editor
-* trying xargo instead of cargo to compile (possible problems with std in cross compiling, and optimizations), but only works with nightly.
-* cleaned up deployment, added a release readme, licence to deploy as well
-* repaired deployment of binaries, including stripped and packed binaries (upx optimization doesn't work somehow)
-* included (should work fully offline later, all MIT licensed) 3rdparty css, js-scripts ([jquery](https://jquery.com),[bootstrap](https://getbootstrap.com/)) and all pages hard-included in to webserver (no loading of files, yet for development still possible), added state for server, connected websocket, designed a favicon plus logo
-* added basic webui support: http-server with websockets ([actix](https://actix.rs)), a single page application, the page and websockets are already there.
-* added architecture graphics using [draw.io](https://draw.io), which is awesome. Also connectable by [github support](https://about.draw.io/github-support/) directly via [this](https://www.draw.io/?mode=github) ([howTo](https://github.com/jgraph/drawio-github)).
-* state machine not yet used (need to think more about "futures" architecture and understand futures and how to combine)
-* the client ssh connector (com_client) is behind a state machine (to have reconnect and similar easily)
-* replaced [id3](https://github.com/jameshurst/rust-id3) with [taglib](https://github.com/ebassi/taglib-rust/) (more external libs, but many more available media tags). Unfortunately it took me quite some time to find some strange difference (didn't work) between [crates.io](https://crates.io/crates/taglib) and original [github.com](https://github.com/ebassi/taglib-rust/) version, so I had to use the git pull rather than the convenient crate.io dependency usage in `Cargo.toml`.
-* I suspended the usage of [trust](https://github.com/japaric/trust) which uses [cross](https://github.com/japaric/cross), since the develop cross compiling docker images are based on ubuntu 12.04 (deb jessie), and the libsodium, libavahi uses ubuntu ppa from newer versions. I might even go to xenial (deb stretch), then both libs are included by default. But I would have to create my own dockerfile for that, and not just extend the well prepared dockerfiles from cross. :unamused:
-* [documentation](https://electricherd.github.io/audiobookfinder/audiobookfinder/index.html) deployed, awesome: Rust + github + travis +... (needs javascript enabled)
-* applied single test file for travis run: took Bach's Toccata And Fugue In D Minor by Paul Pitman (licence PD)  [orangefreesounds](www.orangefreesounds.com/toccata-and-fugue-in-d-minor/) in rememberring [Monthy Python's grand rugby match](https://www.youtube.com/watch?v=HKv6o7YqHnE).
-* travis CI working
-* more documentation locally as html: `cargo doc --no-deps --open`
-* file logging in (use [glogg](http://glogg.bonnefon.org/))
-* logging mechanism introduced (`logit.rs`). It was needed because of tui console output was not readable (either syslog or console)
- * run e.g. with `RUST_LOG=adbflib::net=debug RUST_BACKTRACE=full cargo run -- -n ~/Audiobooks`
-* ssh client with example key works, key now external
-* found emojis :grin:
+<details>
+  <summary>click for older changes</summary>
+
+    * trying upx in CI builds again
+    * migrated first too many native threads to async green threads, as also most dependant external crates use more general futures approach. It's yet a bit confusing and inconsistant but problem were rayon thread iterator and cursive as thread dependant. But I am about to like and understand async/await quite well, also the consequences for embedded development :grin:
+    * bumped to Rust 2018 features async/await in net module using futures in few occasion, but will continue with that
+    * version changes of different used crates
+    * changed this README, to add version changes to *Changes*, re-ordered, and made [Goals](#goals) as a check list, bumped version to v
+    * updated various dependency packages from Rust libraries [actix](https://actix.rs/) (there was a dependency lock for a longer time) to [bootstrap](https://getbootstrap.com/), and [jquery](https://jquery.com).
+    * added small key generation documentation in `README-release.md`
+    * preparing cross compile for banana pi (Dockerfile)
+    * added and will later moving from [travis](https://travis-ci.org/) to [AppVeyor](https://www.appveyor.com/) which doesn't lack bionic 18.04 builds and possibility for Windows builds (AppVeyor was primarily used for Windows builds, Travis for Linux in Rust, so documentation for Linux and Rust builds in AppVeyor is quite bad ... testing)
+    * cleaned up changes list, switched to [sublime text](https://www.sublimetext.com) instead of [atom](https://atom.io/) as editor
+    * trying xargo instead of cargo to compile (possible problems with std in cross compiling, and optimizations), but only works with nightly.
+    * cleaned up deployment, added a release readme, licence to deploy as well
+    * repaired deployment of binaries, including stripped and packed binaries (upx optimization doesn't work somehow)
+    * included (should work fully offline later, all MIT licensed) 3rdparty css, js-scripts ([jquery](https://jquery.com),[bootstrap](https://getbootstrap.com/)) and all pages hard-included in to webserver (no loading of files, yet for development still possible), added state for server, connected websocket, designed a favicon plus logo
+    * added basic webui support: http-server with websockets ([actix](https://actix.rs)), a single page application, the page and websockets are already there.
+    * added architecture graphics using [draw.io](https://draw.io), which is awesome. Also connectable by [github support](https://about.draw.io/github-support/) directly via [this](https://www.draw.io/?mode=github) ([howTo](https://github.com/jgraph/drawio-github)).
+    * state machine not yet used (need to think more about "futures" architecture and understand futures and how to combine)
+    * the client ssh connector (com_client) is behind a state machine (to have reconnect and similar easily)
+    * replaced [id3](https://github.com/jameshurst/rust-id3) with [taglib](https://github.com/ebassi/taglib-rust/) (more external libs, but many more available media tags). Unfortunately it took me quite some time to find some strange difference (didn't work) between [crates.io](https://crates.io/crates/taglib) and original [github.com](https://github.com/ebassi/taglib-rust/) version, so I had to use the git pull rather than the convenient crate.io dependency usage in `Cargo.toml`.
+    * I suspended the usage of [trust](https://github.com/japaric/trust) which uses [cross](https://github.com/japaric/cross), since the develop cross compiling docker images are based on ubuntu 12.04 (deb jessie), and the libsodium, libavahi uses ubuntu ppa from newer versions. I might even go to xenial (deb stretch), then both libs are included by default. But I would have to create my own dockerfile for that, and not just extend the well prepared dockerfiles from cross. :unamused:
+    * [documentation](https://electricherd.github.io/audiobookfinder/audiobookfinder/index.html) deployed, awesome: Rust + github + travis +... (needs javascript enabled)
+    * applied single test file for travis run: took Bach's Toccata And Fugue In D Minor by Paul Pitman (licence PD)  [orangefreesounds](www.orangefreesounds.com/toccata-and-fugue-in-d-minor/) in rememberring [Monthy Python's grand rugby match](https://www.youtube.com/watch?v=HKv6o7YqHnE).
+    * travis CI working
+    * more documentation locally as html: `cargo doc --no-deps --open`
+    * file logging in (use [glogg](http://glogg.bonnefon.org/))
+    * logging mechanism introduced (`logit.rs`). It was needed because of tui console output was not readable (either syslog or console)
+     * run e.g. with `RUST_LOG=adbflib::net=debug RUST_BACKTRACE=full cargo run -- -n ~/Audiobooks`
+    * ssh client with example key works, key now external
+    * found emojis :grin:
+</details>
 
 ### ToDo
 * kick ping-pong from webui - websockets don't need it, I suppose, fix boostrap and html issues
