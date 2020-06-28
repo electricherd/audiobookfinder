@@ -20,52 +20,55 @@ use std::{
 #[rtype(result = "()")]
 pub struct MsyncStartup {}
 
-pub struct StartupActor {
+pub struct ActorSyncStartup {
     pub startup_sync: Sender<SyncStartUp>, // todo: move this to after "start" from browser!!!!!!
 }
-impl Actor for StartupActor {
+impl Actor for ActorSyncStartup {
     type Context = Context<Self>;
 
     fn started(&mut self, ctx: &mut Self::Context) {
         trace!("StartUpActor started");
     }
+    fn stopped(&mut self, _ctx: &mut Self::Context) {
+        trace!("StartUpActor stopped because not needed any more!");
+    }
 }
-impl Handler<MsyncStartup> for StartupActor {
+impl Handler<MsyncStartup> for ActorSyncStartup {
     type Result = ();
 
-    fn handle(&mut self, msg: MsyncStartup, _ctx: &mut Context<Self>) {
+    fn handle(&mut self, msg: MsyncStartup, ctx: &mut Context<Self>) {
         info!("MsyncStartup received");
-        StartUp::block_on_sync(self.startup_sync.clone(), "webui");
+        //ctx.stop();
     }
 }
 
 #[derive(Message)]
 #[rtype(result = "()")]
-pub struct RegisterWSClient {
-    pub addr: Addr<MyWebSocket>,
+pub struct MRegisterWSClient {
+    pub addr: Addr<ActorWebSocket>,
 }
 #[derive(Message)]
 #[rtype(result = "()")]
-pub struct ServerEvent {
+pub struct MServerEvent {
     event: Json<WSJson>,
 }
 
 /// Monitors all connected websockets,
 /// and therefore distributes the internal incoming
 /// messages.
-pub struct WSServerMonitor {
+pub struct ActorWSServerMonitor {
     pub receiver: Receiver<InternalUiMsg>,
-    pub listeners: Vec<Addr<MyWebSocket>>, // todo: these are WSCli bla
+    pub listeners: Vec<Addr<ActorWebSocket>>, // todo: these are WSCli bla
     pub paths: Vec<String>,
-    pub startup_sync: Sender<SyncStartUp>,
+    pub startup_sync: Sender<SyncStartUp>, // todo: move this to after "start" from browser!!!!!!
 }
-impl WSServerMonitor {
-    fn register(&mut self, listener: RegisterWSClient) {
+impl ActorWSServerMonitor {
+    fn register(&mut self, listener: MRegisterWSClient) {
         self.listeners.push(listener.addr);
     }
 }
 
-impl Actor for WSServerMonitor {
+impl Actor for ActorWSServerMonitor {
     type Context = Context<Self>;
 
     fn started(&mut self, ctx: &mut Self::Context) {
@@ -80,7 +83,7 @@ impl Actor for WSServerMonitor {
             trace!("sending init!");
             for ws in &act.listeners {
                 let answer = Json(json::generate_init_data(&cloned_paths.clone()));
-                ws.do_send(ServerEvent { event: answer });
+                ws.do_send(MServerEvent { event: answer });
             }
         });
 
@@ -92,7 +95,7 @@ impl Actor for WSServerMonitor {
                 match json::convert_internal_message(&internal_message) {
                     Ok(response_json) => {
                         for ws in &act.listeners {
-                            ws.do_send(ServerEvent {
+                            ws.do_send(MServerEvent {
                                 event: Json(response_json.clone()),
                             });
                         }
@@ -108,10 +111,10 @@ impl Actor for WSServerMonitor {
         });
     }
 }
-impl Handler<RegisterWSClient> for WSServerMonitor {
+impl Handler<MRegisterWSClient> for ActorWSServerMonitor {
     type Result = ();
 
-    fn handle(&mut self, msg: RegisterWSClient, _ctx: &mut Context<Self>) {
+    fn handle(&mut self, msg: MRegisterWSClient, _ctx: &mut Context<Self>) {
         info!("something done here");
         self.register(msg);
     }
@@ -119,14 +122,14 @@ impl Handler<RegisterWSClient> for WSServerMonitor {
 
 /// websocket connection is long running connection, it easier
 /// to handle with an actor
-pub struct MyWebSocket {}
+pub struct ActorWebSocket {}
 
-impl Actor for MyWebSocket {
+impl Actor for ActorWebSocket {
     type Context = ws::WebsocketContext<Self>;
 
     /// Method is called on actor start. We start the heartbeat process here.
     fn started(&mut self, ctx: &mut Self::Context) {
-        trace!("socket started");
+        trace!("ActorWebSocket started");
     }
     fn stopped(&mut self, _ctx: &mut Self::Context) {
         // On system stop this may or may not run
@@ -138,15 +141,15 @@ impl Actor for MyWebSocket {
         actix::System::current().stop();
     }
 }
-impl Handler<ServerEvent> for MyWebSocket {
+impl Handler<MServerEvent> for ActorWebSocket {
     type Result = ();
 
-    fn handle(&mut self, msg: ServerEvent, ctx: &mut Self::Context) {
+    fn handle(&mut self, msg: MServerEvent, ctx: &mut Self::Context) {
         trace!("send: {}", msg.event.to_string());
         ctx.text(msg.event.to_string());
     }
 }
-impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for MyWebSocket {
+impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ActorWebSocket {
     /// Handler for `ws::Message`    
     fn handle(&mut self, msg: Result<ws::Message, ws::ProtocolError>, ctx: &mut Self::Context) {
         // process websocket messages
@@ -184,7 +187,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for MyWebSocket {
     }
 }
 
-impl MyWebSocket {
+impl ActorWebSocket {
     pub fn new() -> Self {
         Self {}
     }

@@ -11,9 +11,10 @@ use super::{
     super::{common::startup::SyncStartUp, config, ctrl::InternalUiMsg},
     CollectionPathAlive, PeerRepresentation,
 };
-use actors::{MyWebSocket, RegisterWSClient, StartupActor, WSServerMonitor};
+use actors::{ActorSyncStartup, ActorWSServerMonitor, ActorWebSocket, MRegisterWSClient};
 
 // external
+use crate::ctrl::webui::actors::MsyncStartup;
 use actix::{prelude::Addr, Actor};
 use actix_web::{
     web::{self, HttpResponse},
@@ -71,13 +72,15 @@ impl WebUI {
         // whatever ... is UP!!!
         let sys = actix::System::new("http-server");
 
-        // let sync_startup_actor = StartupActor {
-        //     startup_sync: sync_startup,
-        // }
-        // .start();
+        // let sync_startup_actor = Arc::new(Mutex::new(
+        //     ActorSyncStartup {
+        //         startup_sync: sync_startup,
+        //     }
+        //     .start(),
+        // ));
 
         let web_socket_handler = Arc::new(Mutex::new(
-            WSServerMonitor {
+            ActorWSServerMonitor {
                 receiver,
                 listeners: vec![],
                 paths: self.paths.clone(),
@@ -168,11 +171,11 @@ impl WebUI {
     async fn websocket_answer(
         req: HttpRequest,
         stream: web::Payload,
-        data: web::Data<Arc<Mutex<Addr<WSServerMonitor>>>>,
+        data: web::Data<Arc<Mutex<Addr<ActorWSServerMonitor>>>>,
     ) -> Result<HttpResponse, Error> {
         trace!("new websocket answered!");
-        let (addr, res) = ws::start_with_addr(MyWebSocket::new(), &req, stream)?;
-        data.lock().unwrap().do_send(RegisterWSClient { addr });
+        let (addr, res) = ws::start_with_addr(ActorWebSocket::new(), &req, stream)?;
+        data.lock().unwrap().do_send(MRegisterWSClient { addr });
         Ok(res)
     }
 }
