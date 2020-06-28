@@ -4,7 +4,7 @@ use std::{
     time::Duration,
 };
 
-const THREAD_SYNC_TIMEOUT: Duration = Duration::from_millis(100);
+const THREAD_SYNC_TIMEOUT: Duration = Duration::from_millis(1000);
 
 pub enum Process {
     Go,
