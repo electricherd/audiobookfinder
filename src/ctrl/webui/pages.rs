@@ -16,6 +16,12 @@ use std::{
     sync::{Arc, Mutex},
 };
 
+/// dynamic development files
+//#[get("/app.js")]
+//fn app_js() -> Result<fs::NamedFile> {
+//Ok(fs::NamedFile::open("src/ctrl/webui/js/app.js")?)
+//}
+
 #[allow(dead_code)]
 pub async fn dyn_devel_html() -> impl Responder {
     fs::NamedFile::open("src/ctrl/webui/html/single_page.html")
