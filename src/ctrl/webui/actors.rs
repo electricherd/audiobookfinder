@@ -28,6 +28,7 @@ impl Actor for ActorSyncStartup {
 
     fn started(&mut self, ctx: &mut Self::Context) {
         trace!("StartUpActor started");
+        StartUp::block_on_sync(self.startup_sync.clone(), "webui");
     }
     fn stopped(&mut self, _ctx: &mut Self::Context) {
         trace!("StartUpActor stopped because not needed any more!");
@@ -60,7 +61,6 @@ pub struct ActorWSServerMonitor {
     pub receiver: Receiver<InternalUiMsg>,
     pub listeners: Vec<Addr<ActorWebSocket>>, // todo: these are WSCli bla
     pub paths: Vec<String>,
-    pub startup_sync: Sender<SyncStartUp>, // todo: move this to after "start" from browser!!!!!!
 }
 impl ActorWSServerMonitor {
     fn register(&mut self, listener: MRegisterWSClient) {
@@ -73,8 +73,6 @@ impl Actor for ActorWSServerMonitor {
 
     fn started(&mut self, ctx: &mut Self::Context) {
         trace!("server monitor got started");
-
-        StartUp::block_on_sync(self.startup_sync.clone(), "webui");
 
         // send init data after a certain time .... yet poor, timeouts are not a solution
         // todo: waiting is of course not the solution
