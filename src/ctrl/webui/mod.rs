@@ -72,18 +72,17 @@ impl WebUI {
         // whatever ... is UP!!!
         let sys = actix::System::new("http-server");
 
-        // let sync_startup_actor = Arc::new(Mutex::new(
-        //     ActorSyncStartup {
-        //         startup_sync: sync_startup,
-        //     }
-        //     .start(),
-        // ));
-
         let web_socket_handler = Arc::new(Mutex::new(
             ActorWSServerMonitor {
                 receiver,
                 listeners: vec![],
                 paths: self.paths.clone(),
+            }
+            .start(),
+        ));
+
+        let sync_startup_actor = Arc::new(Mutex::new(
+            ActorSyncStartup {
                 startup_sync: sync_startup,
             }
             .start(),
@@ -112,8 +111,9 @@ impl WebUI {
                 Ok(HttpServer::new(move || {
                     App::new()
                         // each server has an initial state (e.g. 0 connections)
-                        .data(web_socket_handler.clone())
                         .data(initial_state.clone())
+                        .data(web_socket_handler.clone())
+                        .data(sync_startup_actor.clone())
                         .service(web::resource("/app.js").to(pages::js_app))
                         .default_service(web::resource("").to(pages::single_page))
                         //.default_service(web::resource("").to(static_pages::dyn_devel_html)) // Todo: only for devel
