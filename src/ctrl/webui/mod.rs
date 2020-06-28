@@ -1,7 +1,7 @@
 #![cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 //! This is a webui about to replace the TUI, to be nice, better accessable, and
 //! new technology using websockets
-//! todo: this file must be logically ordered
+// todo: this file must be logically ordered (websocket, actors, http server, etc.)
 
 mod json;
 mod pages;
@@ -72,25 +72,30 @@ impl Actor for WSServerMonitor {
     fn started(&mut self, ctx: &mut Self::Context) {
         trace!("server monitor got started");
 
-        //        ctx.run_later(Duration::from_millis(0), |act, _| {
-        StartUp::block_on_sync(self.startup_sync.clone(), "webui");
-        //        });
+        // send Ready to go to UI -> Main Threads ...
+        // todo: find the right place ...!! Be careful, this doesn't work everywhere and leads to
+        //       panics!
+        ctx.run_later(Duration::from_millis(10), move |act, _| {
+            info!("bloooooooooooooooooooooooo");
+            StartUp::block_on_sync(act.startup_sync.clone(), "webui");
+        });
 
-        let cloned_paths = self.paths.clone();
-        // send init data to ui
+        // All ctx. result "probably"(?) in an async closures ... hence none of these closures
+        // shall not block at all!!
+
+        // send init data after a certain time .... yet poor, timeouts are not a solution
         // todo: waiting is of course not the solution
+        let cloned_paths = self.paths.clone();
         ctx.run_later(Duration::from_millis(3000), move |act, _| {
-            trace!("........... informing");
+            trace!("sending init!");
             for ws in &act.listeners {
                 let answer = Json(json::generate_init_data(&cloned_paths.clone()));
                 ws.do_send(ServerEvent { event: answer });
             }
         });
 
-        let all_ws_initialized = false;
         // todo: this is crap of course, polling in 20ms and try_recv on a receiver
         //       but for now it's fine!!!
-
         ctx.run_interval(Duration::from_millis(20), |act, _| {
             //loop {
 
@@ -118,36 +123,9 @@ impl Actor for WSServerMonitor {
 impl Handler<RegisterWSClient> for WSServerMonitor {
     type Result = ();
 
-    fn handle(&mut self, msg: RegisterWSClient, _: &mut Context<Self>) {
+    fn handle(&mut self, msg: RegisterWSClient, _ctx: &mut Context<Self>) {
         info!("something done here");
         self.listeners.push(msg.addr);
-    }
-}
-
-/// needs to be serializable for json
-
-struct JSONResponse {
-    cmd: WebCommand,
-}
-
-#[derive(Serialize)]
-enum WebCommand {
-    Started,
-    #[allow(dead_code)]
-    NewMdnsClient(String),
-}
-
-impl fmt::Display for JSONResponse {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.cmd)
-    }
-}
-impl fmt::Display for WebCommand {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            WebCommand::Started => write!(f, "Started"),
-            WebCommand::NewMdnsClient(param) => write!(f, "MDNS_IP: {}", param),
-        }
     }
 }
 
@@ -294,24 +272,22 @@ impl WebUI {
 
 /// websocket connection is long running connection, it easier
 /// to handle with an actor
-struct MyWebSocket {
-    /// Client must send ping at least once per 10 seconds (CLIENT_TIMEOUT),
-    /// otherwise we drop connection.
-    hb: Instant,
-    browser_sent_start: bool,
-}
+struct MyWebSocket {}
 
 impl Actor for MyWebSocket {
     type Context = ws::WebsocketContext<Self>;
 
     /// Method is called on actor start. We start the heartbeat process here.
     fn started(&mut self, ctx: &mut Self::Context) {
-        trace!("heartbeat started");
-        self.hb(ctx);
+        trace!("socket started");
     }
     fn stopped(&mut self, _ctx: &mut Self::Context) {
         // On system stop this may or may not run
         warn!("shutting down whole actix-system");
+        // todo: a single (!) websocket disconnect shuts down the whole application!!!
+        //       in a multi connection program this should be deactivated (e.g. only
+        //       per button or never) ... or a certain websocket (localhost ...??) should
+        //       be the "master"
         actix::System::current().stop();
     }
 }
@@ -319,9 +295,6 @@ impl Handler<ServerEvent> for MyWebSocket {
     type Result = ();
 
     fn handle(&mut self, msg: ServerEvent, ctx: &mut Self::Context) {
-        if !self.browser_sent_start {
-            // send initial json
-        }
         trace!("send: {}", msg.event.to_string());
         ctx.text(msg.event.to_string());
     }
@@ -335,12 +308,9 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for MyWebSocket {
                 trace!("hb handler: {:?}", good_message);
                 match good_message {
                     ws::Message::Ping(msg) => {
-                        self.hb = Instant::now();
                         ctx.pong(&msg);
                     }
-                    ws::Message::Pong(_) => {
-                        self.hb = Instant::now();
-                    }
+                    ws::Message::Pong(_) => {}
                     ws::Message::Text(text) => {
                         let m = text.trim();
                         // /command
@@ -348,13 +318,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for MyWebSocket {
                             let v: Vec<&str> = m.splitn(2, ' ').collect();
                             match v[0] {
                                 "/start" => {
-                                    ctx.text(
-                                        Json(JSONResponse {
-                                            cmd: WebCommand::Started,
-                                        })
-                                        .to_string(),
-                                    );
-                                    self.browser_sent_start = true;
+                                    info!("ready from Browser received!");
                                 }
                                 _ => ctx.text(format!("!!! unknown command: {:?}", m)),
                             }
@@ -375,30 +339,6 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for MyWebSocket {
 
 impl MyWebSocket {
     fn new() -> Self {
-        Self {
-            hb: Instant::now(),
-            browser_sent_start: false,
-        }
-    }
-
-    /// helper method that sends ping to client every second.
-    ///
-    /// also this method checks heartbeats from client
-    fn hb(&self, ctx: &mut <Self as Actor>::Context) {
-        ctx.run_interval(HEARTBEAT_INTERVAL, |act, ctx| {
-            // check client heartbeats
-            if Instant::now().duration_since(act.hb) > CLIENT_TIMEOUT {
-                // heartbeat timed out
-                error!("Websocket Client heartbeat failed, disconnecting!");
-
-                // stop actor
-                ctx.stop();
-
-                // don't try to send a ping
-                return;
-            }
-
-            ctx.ping(b"");
-        });
+        Self {}
     }
 }
