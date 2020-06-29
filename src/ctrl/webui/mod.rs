@@ -8,7 +8,7 @@ mod json;
 mod pages;
 
 use super::{
-    super::{common::startup::SyncStartUp, config, ctrl::InternalUiMsg},
+    super::{config, ctrl::InternalUiMsg},
     CollectionPathAlive, PeerRepresentation,
 };
 use actors::{

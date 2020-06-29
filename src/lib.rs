@@ -4,7 +4,6 @@
 #![crate_name = "adbflib"]
 #![crate_type = "lib"]
 // ALL
-pub mod common;
 pub mod config;
 pub mod ctrl;
 pub mod logit;
