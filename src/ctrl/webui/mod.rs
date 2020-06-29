@@ -11,16 +11,17 @@ use super::{
     super::{common::startup::SyncStartUp, config, ctrl::InternalUiMsg},
     CollectionPathAlive, PeerRepresentation,
 };
-use actors::{ActorSyncStartup, ActorWSServerMonitor, ActorWebSocket, MRegisterWSClient};
-
+use actors::{
+    ActorSyncStartup, ActorWSServerMonitor, ActorWebSocket, MRegisterWSClient, MSyncStartup,
+};
 // external
-use crate::ctrl::webui::actors::MsyncStartup;
 use actix::{prelude::Addr, Actor};
 use actix_web::{
     web::{self, HttpResponse},
     App, Error, HttpRequest, HttpServer,
 };
 use actix_web_actors::ws;
+use crossbeam::sync::WaitGroup;
 use get_if_addrs;
 use std::{
     io,
@@ -56,7 +57,7 @@ impl WebUI {
     pub async fn run(
         &self,
         receiver: Receiver<InternalUiMsg>,
-        sync_startup: Sender<SyncStartUp>,
+        wait_ui_sync: WaitGroup,
     ) -> io::Result<()> {
         let connection_count = Arc::new(Mutex::new(0));
 
@@ -82,10 +83,7 @@ impl WebUI {
         ));
 
         let sync_startup_actor = Arc::new(Mutex::new(
-            ActorSyncStartup {
-                startup_sync: sync_startup,
-            }
-            .start(),
+            ActorSyncStartup::new(Some(wait_ui_sync)).start(),
         ));
 
         // take all local addresses and start if necessary
@@ -171,11 +169,21 @@ impl WebUI {
     async fn websocket_answer(
         req: HttpRequest,
         stream: web::Payload,
-        data: web::Data<Arc<Mutex<Addr<ActorWSServerMonitor>>>>,
+        data_monitor: web::Data<Arc<Mutex<Addr<ActorWSServerMonitor>>>>,
+        data_sync: web::Data<Arc<Mutex<Addr<ActorSyncStartup>>>>,
     ) -> Result<HttpResponse, Error> {
         trace!("new websocket answered!");
-        let (addr, res) = ws::start_with_addr(ActorWebSocket::new(), &req, stream)?;
-        data.lock().unwrap().do_send(MRegisterWSClient { addr });
+        let (addr, res) = ws::start_with_addr(
+            ActorWebSocket {
+                starter: data_sync.lock().unwrap().clone(),
+            },
+            &req,
+            stream,
+        )?;
+        data_monitor
+            .lock()
+            .unwrap()
+            .do_send(MRegisterWSClient { addr });
         Ok(res)
     }
 }

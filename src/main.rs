@@ -16,6 +16,7 @@ use adbflib::{
     net::{key_keeper, Net},
 };
 use async_std::task;
+use crossbeam::sync::WaitGroup;
 use log::{error, info, trace, warn};
 use rayon::prelude::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator};
 use std::{
@@ -41,10 +42,6 @@ const HOMEPAGE: &'static str = env!("CARGO_PKG_HOMEPAGE");
 const DESCRIPTION: &'static str = env!("CARGO_PKG_DESCRIPTION");
 
 fn main() -> io::Result<()> {
-    // for synced start
-    let (ready_ui_send, ready_ui_receiver) = channel::<SyncStartUp>();
-    let (ready_net_send, ready_net_receiver) = channel::<SyncStartUp>();
-
     let parse_args = clap::App::new(APP_TITLE)
         .version(VERSION)
         .author(AUTHORS)
@@ -119,6 +116,11 @@ fn main() -> io::Result<()> {
         vec!["."]
     };
 
+    // for synced start
+    let wait_collector = WaitGroup::new();
+    let wait_ui = wait_collector.clone();
+    let wait_net = wait_collector.clone();
+
     //
     // check argments if tui and net search is needed
     //
@@ -164,15 +166,13 @@ fn main() -> io::Result<()> {
                     &ui_paths,
                     rx,
                     has_net,
-                    ready_ui_send,
+                    wait_ui,
                     has_webui,
                     has_tui,
                 )
             } else {
                 info!("no ui was created!");
-                ready_ui_send
-                    .send(SyncStartUp::NoWait)
-                    .expect("collection from ui receiver not yet there???");
+                drop(wait_ui);
                 Ok::<(), Error>(())
             }
         });
@@ -181,11 +181,12 @@ fn main() -> io::Result<()> {
     let net_thread = std::thread::Builder::new()
         .name("net".into())
         .spawn(move || {
-            task::block_on(async move {
-                // This thread will not end itself
-                // - can be terminated by ui message
-                // - collector finished (depending on definition)
-                if has_net {
+            if has_net {
+                task::block_on(async move {
+                    // This thread will not end itself
+                    // - can be terminated by ui message
+                    // - collector finished (depending on definition)
+
                     info!("net started!!");
                     let net_system_messages = tx_net;
                     let mut network = Net::new(
@@ -195,23 +196,17 @@ fn main() -> io::Result<()> {
                     );
 
                     // startup net synchronization
-                    StartUp::block_on_sync(ready_net_send, "net");
+                    wait_net.wait();
 
                     network.lookup().await;
                     info!("net finished!!");
                     Ok::<(), Error>(())
-                } else {
-                    info!("no net!");
-                    ready_net_send
-                        .send(SyncStartUp::NoWait)
-                        .expect("collection from net receiver not yet there???");
-                    Ok::<(), Error>(())
-                }
-            })
-            .unwrap_or_else(|_| {
-                // do nothing
-                ()
-            })
+                })
+            } else {
+                info!("no net!");
+                drop(wait_net);
+                Ok::<(), Error>(())
+            }
         });
 
     // the collector ... still a problem with threading and parse_args
@@ -221,7 +216,7 @@ fn main() -> io::Result<()> {
     {
         trace!("syncing with 2 other threads");
         // todo: return false is yet weak, it means timeout happened
-        StartUp::send_and_block2(&ready_ui_receiver, &ready_net_receiver);
+        wait_collector.wait();
         trace!("sync with net and ui done ... collector can start");
 
         let synced_to_ui_messages = tx_from_collector_to_ui.clone();
@@ -274,7 +269,7 @@ fn main() -> io::Result<()> {
             .unwrap_or_else(|_| {
                 // it doesn't matter because we will terminate anyway
                 error!("is this normal when joining net thread???");
-                Ok(())
+                Ok(Ok(()))
             })
             .unwrap();
         if has_net {

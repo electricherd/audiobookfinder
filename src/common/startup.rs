@@ -4,7 +4,7 @@ use std::{
     time::Duration,
 };
 
-const THREAD_SYNC_TIMEOUT: Duration = Duration::from_millis(1000);
+const THREAD_SYNC_TIMEOUT: Duration = Duration::from_millis(15000);
 
 pub enum Process {
     Go,
@@ -39,12 +39,39 @@ impl StartUp {
         let (ready_sync_sender_from, ready_sync_receiver_from) = channel::<Process>();
         ready_sender
             .send(SyncStartUp::SendReceiver(ready_sync_sender_from))
+            .map_err(|e| {
+                error!("sending error: '{}'", e);
+                e
+            })
             .expect(&["collection from ui receiver for", name, "not yet there???"].join(" "));
         trace!("sending out to sync ui start for {:?}", name);
         ready_sync_receiver_from
             .recv_timeout(THREAD_SYNC_TIMEOUT)
+            .map_err(|e| {
+                error!("receiving error: '{}'", e);
+                e
+            })
             .expect(&["the ui channel for", name, "was just sent?"].join(" "));
+
         trace!("sync ui start received for {:?}", name);
+    }
+
+    /// Don't blocks until channel counterpart receiver gives an ok.
+    ///
+    /// # Arguments
+    ///
+    /// * `ready_sender` - The sender of the channel which the main thread listens on
+    /// * `name` - A string slice that holds the name of the person
+    pub fn dont_block_on_sync(ready_sender: Sender<SyncStartUp>, name: &str) {
+        let (ready_sync_sender_from, ready_sync_receiver_from) = channel::<Process>();
+        ready_sender
+            .send(SyncStartUp::SendReceiver(ready_sync_sender_from))
+            .map_err(|e| {
+                error!("sending error: '{}'", e);
+                e
+            })
+            .expect(&["collection from ui receiver for", name, "not yet there???"].join(" "));
+        trace!("sending out to sync ui start for {:?}", name);
     }
 
     // todo: timeout and results should be considered!!! a little panicking maybe

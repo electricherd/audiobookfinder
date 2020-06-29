@@ -4,11 +4,12 @@ use super::super::super::{
     ctrl::InternalUiMsg,
 };
 use super::json::{self, WSJson};
-
+// external
 use actix::prelude::{StreamHandler, *};
-use actix::{Actor, ActorContext, AsyncContext, Context, Handler};
+use actix::{Actor, ActorContext, AsyncContext, Context, Handler, Recipient};
 use actix_web::web::Json;
 use actix_web_actors::ws;
+use crossbeam::sync::WaitGroup;
 use std::{
     string::String,
     sync::mpsc::{Receiver, Sender},
@@ -18,28 +19,41 @@ use std::{
 
 #[derive(Message)]
 #[rtype(result = "()")]
-pub struct MsyncStartup {}
+pub struct MSyncStartup {}
 
+/// Secure ActorSyncStartup by an Option
+/// and consume it fast!
 pub struct ActorSyncStartup {
-    pub startup_sync: Sender<SyncStartUp>, // todo: move this to after "start" from browser!!!!!!
+    startup_sync: Option<WaitGroup>, // todo: move this to after "start" from browser!!!!!!
+}
+impl ActorSyncStartup {
+    pub fn new(startup_sync: Option<WaitGroup>) -> Self {
+        Self { startup_sync }
+    }
 }
 impl Actor for ActorSyncStartup {
     type Context = Context<Self>;
 
     fn started(&mut self, ctx: &mut Self::Context) {
         trace!("StartUpActor started");
-        StartUp::block_on_sync(self.startup_sync.clone(), "webui");
     }
     fn stopped(&mut self, _ctx: &mut Self::Context) {
-        trace!("StartUpActor stopped because not needed any more!");
+        trace!("StartUpActor stopped!");
     }
 }
-impl Handler<MsyncStartup> for ActorSyncStartup {
+impl Handler<MSyncStartup> for ActorSyncStartup {
     type Result = ();
 
-    fn handle(&mut self, msg: MsyncStartup, ctx: &mut Context<Self>) {
-        info!("MsyncStartup received");
+    fn handle(&mut self, msg: MSyncStartup, ctx: &mut Context<Self>) {
         //ctx.stop();
+        trace!("webui: waiting ui sync");
+        if self.startup_sync.is_some() {
+            let a = self.startup_sync.take();
+            a.unwrap().wait();
+        } else {
+            error!("no, this should not used again!");
+        }
+        trace!("webui: go");
     }
 }
 
@@ -77,7 +91,7 @@ impl Actor for ActorWSServerMonitor {
         // send init data after a certain time .... yet poor, timeouts are not a solution
         // todo: waiting is of course not the solution
         let cloned_paths = self.paths.clone();
-        ctx.run_later(Duration::from_millis(3000), move |act, _| {
+        ctx.run_later(Duration::from_millis(10000), move |act, _| {
             trace!("sending init!");
             for ws in &act.listeners {
                 let answer = Json(json::generate_init_data(&cloned_paths.clone()));
@@ -120,7 +134,9 @@ impl Handler<MRegisterWSClient> for ActorWSServerMonitor {
 
 /// websocket connection is long running connection, it easier
 /// to handle with an actor
-pub struct ActorWebSocket {}
+pub struct ActorWebSocket {
+    pub starter: Addr<ActorSyncStartup>,
+}
 
 impl Actor for ActorWebSocket {
     type Context = ws::WebsocketContext<Self>;
@@ -167,9 +183,14 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ActorWebSocket {
                             match v[0] {
                                 "/start" => {
                                     info!("ready from Browser received!");
+                                    self.starter.do_send(MSyncStartup {})
                                 }
                                 _ => ctx.text(format!("!!! unknown command: {:?}", m)),
                             }
+                        } else {
+                            trace!("shittttttty parser");
+                            info!("ready from Browser received!");
+                            self.starter.do_send(MSyncStartup {})
                         }
                     }
                     ws::Message::Binary(bin) => ctx.binary(bin),
@@ -182,11 +203,5 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ActorWebSocket {
             }
             Err(e) => warn!("message was not good {}", e),
         }
-    }
-}
-
-impl ActorWebSocket {
-    pub fn new() -> Self {
-        Self {}
     }
 }
