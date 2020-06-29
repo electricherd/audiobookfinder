@@ -3,35 +3,38 @@ use super::super::super::ctrl::InternalUiMsg;
 use super::json::{self, WSJsonIn, WSJsonOut};
 // external
 use actix::prelude::{StreamHandler, *};
-use actix::{Actor, ActorContext, AsyncContext, Context, Handler, Recipient};
+use actix::{Actor, ActorContext, AsyncContext, Context, Handler};
 use actix_web::web::Json;
 use actix_web_actors::ws;
 use crossbeam::sync::WaitGroup;
-use std::{
-    string::String,
-    sync::mpsc::{Receiver, Sender},
-    time::Duration,
-    vec::Vec,
-};
+use std::{string::String, sync::mpsc::Receiver, time::Duration, vec::Vec};
 
 #[derive(Message)]
 #[rtype(result = "()")]
 pub struct MSyncStartup {}
 
+#[derive(Message)]
+#[rtype(result = "()")]
+pub struct MDoneSyncStartup {}
+
 /// Secure ActorSyncStartup by an Option
 /// and consume it fast!
 pub struct ActorSyncStartup {
     startup_sync: Option<WaitGroup>, // todo: move this to after "start" from browser!!!!!!
+    inform_to: Addr<ActorWSServerMonitor>,
 }
 impl ActorSyncStartup {
-    pub fn new(startup_sync: Option<WaitGroup>) -> Self {
-        Self { startup_sync }
+    pub fn new(startup_sync: Option<WaitGroup>, inform_to: Addr<ActorWSServerMonitor>) -> Self {
+        Self {
+            startup_sync,
+            inform_to,
+        }
     }
 }
 impl Actor for ActorSyncStartup {
     type Context = Context<Self>;
 
-    fn started(&mut self, ctx: &mut Self::Context) {
+    fn started(&mut self, _ctx: &mut Self::Context) {
         trace!("StartUpActor started");
     }
     fn stopped(&mut self, _ctx: &mut Self::Context) {
@@ -41,13 +44,14 @@ impl Actor for ActorSyncStartup {
 impl Handler<MSyncStartup> for ActorSyncStartup {
     type Result = ();
 
-    fn handle(&mut self, msg: MSyncStartup, ctx: &mut Context<Self>) {
+    fn handle(&mut self, _msg: MSyncStartup, _ctx: &mut Context<Self>) {
         //ctx.stop();
         if self.startup_sync.is_some() {
             let a = self.startup_sync.take();
             trace!("webui: waiting ui sync");
             a.unwrap().wait();
             trace!("webui: go");
+            self.inform_to.do_send(MDoneSyncStartup {});
         } else {
             error!("no, this should not used again!");
         }
@@ -86,17 +90,6 @@ impl Actor for ActorWSServerMonitor {
     fn started(&mut self, ctx: &mut Self::Context) {
         trace!("server monitor got started");
 
-        // send init data after a certain time .... yet poor, timeouts are not a solution
-        // todo: waiting is of course not the solution
-        let cloned_paths = self.paths.clone();
-        ctx.run_later(Duration::from_millis(10000), move |act, _| {
-            trace!("sending init!");
-            for ws in &act.listeners {
-                let answer = Json(json::generate_init_data(&cloned_paths.clone()));
-                ws.do_send(MServerEvent { event: answer });
-            }
-        });
-
         // todo: this is crap of course, polling in 20ms and try_recv on a receiver
         //       but for now it's fine!!!
         ctx.run_interval(Duration::from_millis(20), |act, _| {
@@ -129,6 +122,21 @@ impl Handler<MRegisterWSClient> for ActorWSServerMonitor {
     }
 }
 
+impl Handler<MDoneSyncStartup> for ActorWSServerMonitor {
+    type Result = ();
+
+    fn handle(&mut self, _msg: MDoneSyncStartup, _ctx: &mut Context<Self>) {
+        trace!("sending init!");
+        // todo: init shall be sent of course for each(!) new connecting websocket
+        //       and this is going to ALL not matter if they did receive already
+        let cloned_paths = self.paths.clone();
+        for ws in &self.listeners {
+            let answer = Json(json::generate_init_data(&cloned_paths.clone()));
+            ws.do_send(MServerEvent { event: answer });
+        }
+    }
+}
+
 /// websocket connection is long running connection, it easier
 /// to handle with an actor
 pub struct ActorWebSocket {
@@ -139,7 +147,7 @@ impl Actor for ActorWebSocket {
     type Context = ws::WebsocketContext<Self>;
 
     /// Method is called on actor start. We start the heartbeat process here.
-    fn started(&mut self, ctx: &mut Self::Context) {
+    fn started(&mut self, _ctx: &mut Self::Context) {
         trace!("ActorWebSocket started");
     }
     fn stopped(&mut self, _ctx: &mut Self::Context) {

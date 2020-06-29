@@ -11,9 +11,7 @@ use super::{
     super::{config, ctrl::InternalUiMsg},
     CollectionPathAlive, PeerRepresentation,
 };
-use actors::{
-    ActorSyncStartup, ActorWSServerMonitor, ActorWebSocket, MRegisterWSClient, MSyncStartup,
-};
+use actors::{ActorSyncStartup, ActorWSServerMonitor, ActorWebSocket, MRegisterWSClient};
 // external
 use actix::{prelude::Addr, Actor};
 use actix_web::{
@@ -27,10 +25,7 @@ use std::{
     io,
     net::IpAddr,
     string::String,
-    sync::{
-        mpsc::{Receiver, Sender},
-        Arc, Mutex,
-    },
+    sync::{mpsc::Receiver, Arc, Mutex},
     vec::Vec,
 };
 
@@ -83,7 +78,11 @@ impl WebUI {
         ));
 
         let sync_startup_actor = Arc::new(Mutex::new(
-            ActorSyncStartup::new(Some(wait_ui_sync)).start(),
+            ActorSyncStartup::new(
+                Some(wait_ui_sync),
+                web_socket_handler.lock().unwrap().clone(),
+            )
+            .start(),
         ));
 
         // take all local addresses and start if necessary
@@ -184,6 +183,7 @@ impl WebUI {
             .lock()
             .unwrap()
             .do_send(MRegisterWSClient { addr });
+
         Ok(res)
     }
 }

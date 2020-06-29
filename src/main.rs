@@ -270,6 +270,8 @@ fn main() -> io::Result<()> {
                 error!("is this normal when joining net thread???");
                 Ok(Ok(()))
             })
+            // todo: honestly ... fix this here!!!!!! unwrap TWICE!!!
+            .unwrap()
             .unwrap();
         if has_net {
             info!("Stopped net thread");

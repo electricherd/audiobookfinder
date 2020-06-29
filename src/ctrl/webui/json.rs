@@ -40,7 +40,7 @@ pub fn convert_external_message(input_data: &str) -> Result<WSJsonIn, String> {
             "error: this is a json but not as expected: {}",
             good_json.to_string()
         ),
-        Err(bad_json) => format!("error: this is not even a json: {}", input_data),
+        Err(_bad_json) => format!("error: this is not even a json: {}", input_data),
     })
 }
 
