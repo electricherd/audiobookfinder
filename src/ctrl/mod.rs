@@ -9,7 +9,9 @@ use self::tui::Tui;
 use self::webui::WebUI;
 use super::common::startup::{StartUp, SyncStartUp};
 use super::config;
+
 use async_std::task;
+use crossbeam::sync::WaitGroup;
 use libp2p::PeerId;
 use std::{
     io,
@@ -103,13 +105,12 @@ impl Ctrl {
         paths: &Vec<String>,
         receiver: Receiver<UiUpdateMsg>,
         with_net: bool,
-        sync_sender: Sender<SyncStartUp>,
+        wait_main: WaitGroup,
         has_webui: bool,
         has_tui: bool,
     ) -> Result<(), std::io::Error> {
         // sync both sub uis
-        let (ready_tui_send, ready_tui_receiver) = channel::<SyncStartUp>();
-        let (ready_wui_send, ready_wui_receiver) = channel::<SyncStartUp>();
+        let ui_waitgroup = WaitGroup::new();
 
         // create instance which will be passed into the different uis
         let instance = Ctrl::new(new_id, paths, with_net);
@@ -122,6 +123,7 @@ impl Ctrl {
 
         // 1) tui thread
         let thread_tui = if has_tui {
+            let tui_waitgroup = ui_waitgroup.clone();
             let (sender_to_register, receiver_to_tui_thread) = channel::<InternalUiMsg>();
             let resender = sender_to_register.clone();
             internal_senders.push(sender_to_register);
@@ -129,27 +131,19 @@ impl Ctrl {
                 arc_self_tui,
                 resender,
                 receiver_to_tui_thread,
-                ready_tui_send,
+                tui_waitgroup,
             )?
         } else {
-            // don't wait and block for tui
-            ready_tui_send
-                .send(SyncStartUp::NoWait)
-                .expect("collection from net receiver not yet there???");
-            // empty thread
             std::thread::spawn(|| Ok(()))
         };
 
         // 2) webui thread
         let thread_webui = if has_webui {
+            let wui_waitgroup = ui_waitgroup.clone();
             let (sender_to_register, receiver_to_web_ui_thread) = channel::<InternalUiMsg>();
             internal_senders.push(sender_to_register);
-            Self::spawn_webui(arc_self_webui, receiver_to_web_ui_thread, ready_wui_send)?
+            Self::spawn_webui(arc_self_webui, receiver_to_web_ui_thread, wui_waitgroup)?
         } else {
-            // don't wait and block for web ui
-            ready_wui_send
-                .send(SyncStartUp::NoWait)
-                .expect("collection from net receiver not yet there???");
             // empty thread
             std::thread::spawn(|| Ok(()))
         };
@@ -159,11 +153,13 @@ impl Ctrl {
 
         // A) wait for sub syncs in order ...
         info!("syncing with 2 other sub threads webui and tui");
-        StartUp::send_and_block2(&ready_tui_receiver, &ready_wui_receiver);
-
+        ui_waitgroup.wait();
+        info!("synced with 2 other sub threads webui and tui");
         // B) ... to unlock sync/block startup with main thread
         // we are ready: up and listening!!
-        StartUp::block_on_sync(sync_sender, "ui");
+        info!("waiting for main thread sync");
+        wait_main.wait();
+        info!("synced with main thread");
 
         // todo: if tui and webui both run, both have to be joined AT THE SAME time in order
         //       to know when they are ended
@@ -178,7 +174,7 @@ impl Ctrl {
     fn spawn_webui(
         this: Arc<Mutex<Self>>,
         receiver: Receiver<InternalUiMsg>,
-        sync_startup: Sender<SyncStartUp>,
+        wait_ui_sync: WaitGroup,
     ) -> Result<thread::JoinHandle<Result<(), std::io::Error>>, std::io::Error> {
         let mut peer_representation: PeerRepresentation = [0 as u8; 16];
         let with_net;
@@ -193,7 +189,7 @@ impl Ctrl {
 
         thread::Builder::new().name("webui".into()).spawn(move || {
             info!("start webui");
-            Self::run_webui(receiver, with_net, peer_representation, paths, sync_startup).or_else(
+            Self::run_webui(receiver, with_net, peer_representation, paths, wait_ui_sync).or_else(
                 |forward| {
                     error!("error from webui-server: {}", forward);
                     Err(forward)
@@ -208,7 +204,7 @@ impl Ctrl {
         this: Arc<Mutex<Self>>,
         resender: Sender<InternalUiMsg>,
         receiver: Receiver<InternalUiMsg>,
-        sync_startup: Sender<SyncStartUp>,
+        sync_startup: WaitGroup,
     ) -> Result<thread::JoinHandle<Result<(), std::io::Error>>, std::io::Error> {
         let title;
         let paths;
@@ -224,9 +220,10 @@ impl Ctrl {
         std::thread::Builder::new()
             .name("tui".into())
             .spawn(move || {
-                info!("starting tui");
-
-                StartUp::block_on_sync(sync_startup, "tui");
+                trace!("tui waits for sync");
+                // synchronizing
+                sync_startup.wait();
+                trace!("tui starts");
                 // do finally the necessary
                 // this blocks this async future
                 Self::run_tui(title, paths, with_net, receiver, resender).map_err(
@@ -283,18 +280,16 @@ impl Ctrl {
         net_support: bool,
         peer_representation: PeerRepresentation,
         paths: Vec<String>,
-        sync_startup: Sender<SyncStartUp>,
+        wait_ui_sync: WaitGroup,
     ) -> io::Result<()> {
         if webbrowser::open(&["http://", config::net::WEBSOCKET_ADDR].concat()).is_err() {
             info!("Could not open browser!");
         }
 
         task::block_on(async move {
-            // loop non blocking
-
             info!("spawning webui async thread");
             let webui = WebUI::new(peer_representation, net_support, paths);
-            webui.run(webui_receiver, sync_startup).await
+            webui.run(webui_receiver, wait_ui_sync).await
         })
     }
 

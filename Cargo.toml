@@ -29,6 +29,7 @@ path = "src/main.rs"
 [dependencies]
 async-std = "1.6"     # rust std async executor
 
+crossbeam = "0.7"
 clap = "2.33"         # for the command line parsing
 dirs = "2.0"          # to browse dirs fast in taglib
 lazy_static = "1.4"   # awesome lib for lazy data structures

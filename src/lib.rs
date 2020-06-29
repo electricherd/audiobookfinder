@@ -19,6 +19,7 @@ pub mod data;
 
 // ctrl
 // ctrl/tui
+extern crate crossbeam;
 extern crate cursive;
 // ctrl/webui
 extern crate actix;
