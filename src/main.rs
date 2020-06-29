@@ -9,7 +9,6 @@ extern crate rayon;
 
 use adbflib::ctrl::ForwardNetMessage;
 use adbflib::{
-    common::startup::{StartUp, SyncStartUp},
     ctrl::{CollectionPathAlive, Ctrl, NetMessages, Status, UiUpdateMsg},
     data::{self, Collection},
     logit,

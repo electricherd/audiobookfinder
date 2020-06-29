@@ -7,7 +7,6 @@ mod webui;
 
 use self::tui::Tui;
 use self::webui::WebUI;
-use super::common::startup::{StartUp, SyncStartUp};
 use super::config;
 
 use async_std::task;

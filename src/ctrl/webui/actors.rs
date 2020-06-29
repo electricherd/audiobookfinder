@@ -1,9 +1,6 @@
 ///! All actors from webui are represented here
-use super::super::super::{
-    common::startup::{StartUp, SyncStartUp},
-    ctrl::InternalUiMsg,
-};
-use super::json::{self, WSJson};
+use super::super::super::ctrl::InternalUiMsg;
+use super::json::{self, WSJsonIn, WSJsonOut};
 // external
 use actix::prelude::{StreamHandler, *};
 use actix::{Actor, ActorContext, AsyncContext, Context, Handler, Recipient};
@@ -46,14 +43,14 @@ impl Handler<MSyncStartup> for ActorSyncStartup {
 
     fn handle(&mut self, msg: MSyncStartup, ctx: &mut Context<Self>) {
         //ctx.stop();
-        trace!("webui: waiting ui sync");
         if self.startup_sync.is_some() {
             let a = self.startup_sync.take();
+            trace!("webui: waiting ui sync");
             a.unwrap().wait();
+            trace!("webui: go");
         } else {
             error!("no, this should not used again!");
         }
-        trace!("webui: go");
     }
 }
 
@@ -65,7 +62,7 @@ pub struct MRegisterWSClient {
 #[derive(Message)]
 #[rtype(result = "()")]
 pub struct MServerEvent {
-    event: Json<WSJson>,
+    event: Json<WSJsonOut>,
 }
 
 /// Monitors all connected websockets,
@@ -78,6 +75,7 @@ pub struct ActorWSServerMonitor {
 }
 impl ActorWSServerMonitor {
     fn register(&mut self, listener: MRegisterWSClient) {
+        trace!("register new listener");
         self.listeners.push(listener.addr);
     }
 }
@@ -127,7 +125,6 @@ impl Handler<MRegisterWSClient> for ActorWSServerMonitor {
     type Result = ();
 
     fn handle(&mut self, msg: MRegisterWSClient, _ctx: &mut Context<Self>) {
-        info!("something done here");
         self.register(msg);
     }
 }
@@ -178,19 +175,16 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ActorWebSocket {
                     ws::Message::Text(text) => {
                         let m = text.trim();
                         // /command
-                        if m.starts_with('/') {
-                            let v: Vec<&str> = m.splitn(2, ' ').collect();
-                            match v[0] {
-                                "/start" => {
+                        match json::convert_external_message(m) {
+                            Ok(incoming) => match incoming {
+                                WSJsonIn::start => {
                                     info!("ready from Browser received!");
                                     self.starter.do_send(MSyncStartup {})
                                 }
-                                _ => ctx.text(format!("!!! unknown command: {:?}", m)),
+                            },
+                            Err(wrong_message) => {
+                                error!("received wrong message: {}", wrong_message);
                             }
-                        } else {
-                            trace!("shittttttty parser");
-                            info!("ready from Browser received!");
-                            self.starter.do_send(MSyncStartup {})
                         }
                     }
                     ws::Message::Binary(bin) => ctx.binary(bin),

@@ -14,7 +14,8 @@ function APPStart() {
         // the usual suspects
         ws.bind('open', function(){
             $('#statusMessage').text("connected");
-            ws.send("/start "+"guid_id");
+            ws.send('start'); //+"guid_id");
+            //ws.send( 'start', {id: '<!--UUID-->'} );
         });
         ws.bind('close', function(){
             $('#statusMessage').text("not connected");
