@@ -214,7 +214,6 @@ fn main() -> io::Result<()> {
     // but yet this simple bracket to enclose this a little
     {
         trace!("syncing with 2 other threads");
-        // todo: return false is yet weak, it means timeout happened
         wait_collector.wait();
         trace!("sync with net and ui done ... collector can start");
 

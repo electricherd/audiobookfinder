@@ -1,7 +1,6 @@
 #![cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 //! This is a webui about to replace the TUI, to be nice, better accessable, and
 //! new technology using websockets
-// todo: this file must be logically ordered (websocket, actors, http server, etc.)
 
 mod actors;
 mod json;
@@ -113,8 +112,8 @@ impl WebUI {
                         .data(sync_startup_actor.clone())
                         .service(web::resource("/app.js").to(pages::js_app))
                         .default_service(web::resource("").to(pages::single_page))
-                        //.default_service(web::resource("").to(static_pages::dyn_devel_html)) // Todo: only for devel
-                        //.service(web::resource("/app.js").to(static_pages::dyn_devel_js)) // todo: only for devel
+                        //.default_service(web::resource("").to(static_pages::dyn_devel_html)) // only for devel
+                        //.service(web::resource("/app.js").to(static_pages::dyn_devel_js)) // only for devel
                         .service(web::resource("/jquery.min.js").to(|| {
                             HttpResponse::Ok()
                                 .content_type("application/javascript; charset=utf-8")

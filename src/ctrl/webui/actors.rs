@@ -20,7 +20,7 @@ pub struct MDoneSyncStartup {}
 /// Secure ActorSyncStartup by an Option
 /// and consume it fast!
 pub struct ActorSyncStartup {
-    startup_sync: Option<WaitGroup>, // todo: move this to after "start" from browser!!!!!!
+    startup_sync: Option<WaitGroup>,
     inform_to: Addr<ActorWSServerMonitor>,
 }
 impl ActorSyncStartup {
@@ -74,7 +74,7 @@ pub struct MServerEvent {
 /// messages.
 pub struct ActorWSServerMonitor {
     pub receiver: Receiver<InternalUiMsg>,
-    pub listeners: Vec<Addr<ActorWebSocket>>, // todo: these are WSCli bla
+    pub listeners: Vec<Addr<ActorWebSocket>>,
     pub paths: Vec<String>,
 }
 impl ActorWSServerMonitor {
@@ -200,7 +200,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ActorWebSocket {
                         ctx.stop();
                     }
                     ws::Message::Nop => (),
-                    ws::Message::Continuation(_) => (), // todo: what's this?
+                    ws::Message::Continuation(_) => (),
                 }
             }
             Err(e) => warn!("message was not good {}", e),

@@ -31,7 +31,7 @@ As a C++ developer, I know some C++11/14/17 enhancements, and some don't convinc
 I planned to do something useful for myself. The program collects information about audio books on different devices/clients, stores it and then processes it, e.g. showing stats, finding duplicates, aggregating everything at one place by a button click.
 The task of collecting audio book data can be exchanged with any other task, this basically leads to a local network agent approach with zero-config.
 
-There is an [Architectural Design in UML](#architecture) to understand a bit beforehand, and see some goals which have not been accomplished.
+There is an old [Architectural Design in UML](#architecture) to understand a bit beforehand, and see some goals which have not been accomplished. Because of a bigger overhaul of net design, thrussh is already removed, the net functionality will be very different.
 
 So far only the state charts and their connection is not done but the general communication/lookup works, collecting some data as well.
 
@@ -40,16 +40,15 @@ So far only the state charts and their connection is not done but the general co
 It is an inline [CI](https://travis-ci.org/electricherd/audiobookfinder/) generated documentation which can be found [here](https://electricherd.github.io/audiobookfinder/audiobookfinder/index.html)! Rust does a nice job here as well!
 
 ### Changes
-* webui gets paths by websocket json, synchronising browser opening with program is a little issue, I don't like javascript but hey ... it has `let` for variables  
-* webui now is connected, event-loop yet strangly implemented, working on json and jquery/javascript
-* working on Actor, Arbiter, Websockets in actix ... passing updates to web ui
+* webui is in sync now, prepare net messages for webui to maybe replace tui
 * back to many threads, but synced and working just fine - webui must be able to replace tui at some time
 * fixed up many older problems, yet ready for libp2p migration for communication over net
 * cleaned up yet inactivated parts: former ssh connection, state machine replacement
-* introducing a nice way to sync threads on startup by creating a channel, send its sender to main thread and block own thread until sender is sent back to self controlled receiver. 
+
 <details>
   <summary>click for older changes</summary>
 
+    * introducing a nice way to sync threads on startup by creating a channel, send its sender to main thread and block own thread until sender is sent back to self controlled receiver.
     * trying upx in CI builds again
     * migrated first too many native threads to async green threads, as also most dependant external crates use more general futures approach. It's yet a bit confusing and inconsistant but problem were rayon thread iterator and cursive as thread dependant. But I am about to like and understand async/await quite well, also the consequences for embedded development :grin:
     * bumped to Rust 2018 features async/await in net module using futures in few occasion, but will continue with that
@@ -82,8 +81,8 @@ It is an inline [CI](https://travis-ci.org/electricherd/audiobookfinder/) genera
 </details>
 
 ### ToDo
-* kick ping-pong from webui - websockets don't need it, I suppose, fix boostrap and html issues
-* fixing webui to show all updates and infos as libp2p network preparation 
+* fix net behavior with libp2p
+* fix webui to show all updates and infos as libp2p network preparation
 * libp2p changes
     + uuid not needed any more: identification is done via a hash from public key, so called peer id
     + change from old [state_machine_future](https://docs.rs/state_machine_future/) to [smlang](https://crates.io/crates/smlang) state machine
@@ -91,12 +90,11 @@ It is an inline [CI](https://travis-ci.org/electricherd/audiobookfinder/) genera
     + thrussh ssh server/client communication
     + mDNS from [mDNS](https://crates.parity.io/libp2p/mdns/index.html) 
 * with new feature of [alternative cargo registries](https://blog.rust-lang.org/2019/04/11/Rust-1.34.0.html), ready-made libraries and crates, like [parity](https://crates.parity.io/) with [libp2p](https://crates.parity.io/libp2p/index.html), in a first step [mDNS](https://crates.parity.io/libp2p/mdns/index.html) gets interesting
+* ~~kick ping-pong from webui - websockets don't need it, I suppose, fix boostrap and html issues~~
 * ~~looking into crates like [rust_sodium](https://crates.io/crates/rust_sodium), which might simplify cross compiling~~ replace with libp2p
 * ~~further client thrussh improvements, add secure identification by using zero-knowledge~~ replace with libp2p
-* ~~understand trussh communication, creating key, authorize~~ replace with libp2p
 * ~~test more different targets using 
 for client and server~~ hopes on libp2p
-* nicer timer (thread pool is good but still with sleep)
 * make cross compiling as easy as possible
 * ~~get rid of Avahi~~ hopefully libp2p covers it
 
