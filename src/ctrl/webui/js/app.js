@@ -14,8 +14,8 @@ function APPStart() {
         // the usual suspects
         ws.bind('open', function(){
             $('#statusMessage').text("connected");
-            ws.send('start'); //+"guid_id");
-            //ws.send( 'start', {id: '<!--UUID-->'} );
+            ws.send('start');
+            // register hash UUID
         });
         ws.bind('close', function(){
             $('#statusMessage').text("not connected");
@@ -76,11 +76,12 @@ function spinPath(data) {
 
     let spinner = $('#path_obj' + path_nr).find('span');
 
-    if (on_off === false) {
+    if (on_off === true) {
         spinner.removeClass('d-none');
-        setTimeout(_ => spinner.addClass('d-none'), 1000);
+    } else {
+        //spinner.removeClass('d-none');
+        setTimeout(_ => spinner.addClass('d-none'), 100);
     }
-    // todo: on is still missed due to timing
 }
 
 function showPath(data) {
@@ -93,7 +94,7 @@ function showPath(data) {
         // create obj
         let new_el_html = "<tr id='" + obj_id + "'><td>"
                          + paths[i].name + "</td><td>"
-                         +"<span class='spinner-border spinner-border-sm' role='status' aria-hidden='true'></span>"
+                         +"<span class='d-none spinner-border spinner-border-sm' role='status' aria-hidden='true'></span>"
                          + "</tr></td>";
         new_el = $.parseHTML(new_el_html);
         // append it as an object
