@@ -15,12 +15,16 @@ use async_std::{
 };
 use futures_util::TryFutureExt;
 use libp2p::{
-    mdns::{service::MdnsPacket, MdnsService},
+    mdns::{
+        service::{self, MdnsPacket},
+        MdnsService,
+    },
     PeerId,
 };
 use std::{
     self,
     sync::mpsc::{channel, Sender},
+    time::Duration,
 };
 
 #[allow(dead_code)]
@@ -78,6 +82,7 @@ impl Net {
         // collection of addresses
         let borrow_arc_connected_clients = self.clients_connected.clone();
 
+        // todo: remove spawn when async_receiver can await through receivers/stream
         let _get_ip_thread = task::spawn(async move {
             //
             //
@@ -119,7 +124,8 @@ impl Net {
             );
         });
 
-        Self::async_mdns_discover(mdns_send_peer)
+        let my_peer_id = &self.peer_id;
+        Self::async_mdns_discover(my_peer_id, mdns_send_peer)
             .and_then(|count_response| async move {
                 if !has_ui_stats {
                     let output_string = format!(
@@ -144,6 +150,7 @@ impl Net {
     /// Discovers mdns on the net and should have a whole
     /// process with discovered clients to share data.
     async fn async_mdns_discover(
+        my_peer_id: &PeerId,
         _mdns_send_ip: std::sync::mpsc::Sender<ToThread<PeerId>>,
     ) -> Result<usize, std::io::Error> {
         let mut count_no_response: usize = 0;
@@ -153,14 +160,23 @@ impl Net {
 
         async move {
             info!("Starting Mdns Looping!");
+
             loop {
-                info!("taking package ...");
-                let (srv, packet) = service.next().await;
+                trace!("taking package ...");
+                let (mut srv, packet) = service.next().await;
                 match packet {
                     MdnsPacket::Query(query) => {
                         // We detected a libp2p mDNS query on the network. In a real application, you
                         // probably want to answer this query by doing `query.respond(...)`.
-                        info!("Detected query from {:?}", query.remote_addr());
+                        trace!("Detected query from {:?}", query.remote_addr());
+                        let response = service::build_query_response(
+                            query.query_id(),
+                            my_peer_id.clone(),
+                            vec![].into_iter(), // something or leave it empty??
+                            Duration::from_secs(120),
+                        )
+                        .unwrap();
+                        srv.enqueue_response(response);
                     }
                     MdnsPacket::Response(response) => {
                         // We detected a libp2p mDNS response on the network. Responses are for

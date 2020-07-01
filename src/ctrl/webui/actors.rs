@@ -174,7 +174,6 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ActorWebSocket {
         // process websocket messages
         match msg {
             Ok(good_message) => {
-                trace!("hb handler: {:?}", good_message);
                 match good_message {
                     ws::Message::Ping(msg) => {
                         ctx.pong(&msg);
@@ -186,7 +185,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ActorWebSocket {
                         match json::convert_external_message(m) {
                             Ok(incoming) => match incoming {
                                 WSJsonIn::start => {
-                                    info!("ready from Browser received!");
+                                    trace!("ready from Browser received!");
                                     self.starter.do_send(MSyncStartup {})
                                 }
                             },
