@@ -61,6 +61,7 @@ pub enum InternalUiMsg {
     Update(ForwardNetMessage),
     StartAnimate(CollectionPathAlive, Status),
     StepAndAnimate(CollectionPathAlive),
+    Terminate,
 }
 
 #[derive(Clone)]
@@ -74,6 +75,11 @@ pub enum UiUpdateMsg {
 pub struct NetStats {
     pub line: usize,
     pub max: usize,
+}
+
+enum Finisher {
+    TUI,
+    WEBUI,
 }
 
 pub struct Ctrl {
@@ -109,7 +115,9 @@ impl Ctrl {
         has_tui: bool,
     ) -> Result<(), std::io::Error> {
         // sync both sub uis
-        let ui_waitgroup = WaitGroup::new();
+        let wait_all_uis = WaitGroup::new();
+
+        let (thread_finisher, finish_threads) = channel::<Finisher>();
 
         // create instance which will be passed into the different uis
         let instance = Ctrl::new(new_id, paths, with_net);
@@ -121,27 +129,40 @@ impl Ctrl {
         let mut internal_senders: Vec<Sender<InternalUiMsg>> = vec![];
 
         // 1) tui thread
+        let (sender_tui_to_register, receiver_to_tui_thread) = channel::<InternalUiMsg>();
+        let sender_tui_only_to_finish = sender_tui_to_register.clone();
         let thread_tui = if has_tui {
-            let tui_waitgroup = ui_waitgroup.clone();
-            let (sender_to_register, receiver_to_tui_thread) = channel::<InternalUiMsg>();
-            let resender = sender_to_register.clone();
-            internal_senders.push(sender_to_register);
+            let sender_to_register = sender_tui_to_register.clone();
+            let tui_waitgroup = wait_all_uis.clone();
+            let thread_finisher_tui = thread_finisher.clone();
+
+            let resender = sender_tui_to_register.clone();
+            internal_senders.push(sender_tui_to_register);
             Self::spawn_tui(
                 arc_self_tui,
                 resender,
                 receiver_to_tui_thread,
                 tui_waitgroup,
+                thread_finisher_tui,
             )?
         } else {
             std::thread::spawn(|| Ok(()))
         };
 
         // 2) webui thread
+        let (sender_wui, receiver_to_web_ui_thread) = channel::<InternalUiMsg>();
         let thread_webui = if has_webui {
-            let wui_waitgroup = ui_waitgroup.clone();
-            let (sender_to_register, receiver_to_web_ui_thread) = channel::<InternalUiMsg>();
+            let sender_to_register = sender_wui.clone();
+            let wui_waitgroup = wait_all_uis.clone();
+            let thread_finisher_tui = thread_finisher.clone();
+
             internal_senders.push(sender_to_register);
-            Self::spawn_webui(arc_self_webui, receiver_to_web_ui_thread, wui_waitgroup)?
+            Self::spawn_webui(
+                arc_self_webui,
+                receiver_to_web_ui_thread,
+                wui_waitgroup,
+                thread_finisher_tui,
+            )?
         } else {
             // empty thread
             std::thread::spawn(|| Ok(()))
@@ -152,7 +173,7 @@ impl Ctrl {
 
         // A) wait for sub syncs in order ...
         info!("syncing with 2 other sub threads webui and tui");
-        ui_waitgroup.wait();
+        wait_all_uis.wait();
         info!("synced with 2 other sub threads webui and tui");
         // B) ... to unlock sync/block startup with main thread
         // we are ready: up and listening!!
@@ -160,20 +181,40 @@ impl Ctrl {
         wait_main.wait();
         info!("synced with main thread");
 
-        // todo: if tui and webui both run, both have to be joined AT THE SAME time in order
-        //       to know when they are ended
-        // todo: NOW only with tui (not webui) the "KEEP" option from main thread is working
-        let res_tui = thread_tui.join();
-        // todo: there is no quitting yet ... is there???
-        drop(message_loop);
-        drop(thread_webui);
-        Ok::<(), std::io::Error>(())
+        // either of these can finish and we want to block!
+        match finish_threads.recv() {
+            Ok(finished) => match finished {
+                Finisher::TUI => {
+                    info!("TUI finished first, so drop WEBUI!");
+                    drop(message_loop);
+                    sender_wui.send(InternalUiMsg::Terminate).unwrap();
+                    thread_tui.join().unwrap()
+                }
+                Finisher::WEBUI => {
+                    info!("WEBUI finished first, so drop TUI!");
+                    drop(message_loop);
+                    sender_tui_only_to_finish
+                        .send(InternalUiMsg::Terminate)
+                        .unwrap();
+                    thread_webui.join().unwrap()
+                }
+            },
+            Err(e) => {
+                error!("something really bad happenend: {}!!", e);
+                // todo: make a new error
+                drop(thread_webui);
+                drop(thread_tui);
+
+                Ok::<(), std::io::Error>(())
+            }
+        }
     }
 
     fn spawn_webui(
         this: Arc<Mutex<Self>>,
         receiver: Receiver<InternalUiMsg>,
         wait_ui_sync: WaitGroup,
+        thread_finisher: Sender<Finisher>,
     ) -> Result<thread::JoinHandle<Result<(), std::io::Error>>, std::io::Error> {
         let mut peer_representation: PeerRepresentation = [0 as u8; 16];
         let with_net;
@@ -195,6 +236,12 @@ impl Ctrl {
                 },
             )?;
             info!("stopped webui");
+
+            // send finish
+            thread_finisher.send(Finisher::WEBUI).unwrap_or_else(|_| {
+                info!("probably receiver got tui finisher first!");
+            });
+
             Ok::<(), std::io::Error>(())
         })
     }
@@ -204,6 +251,7 @@ impl Ctrl {
         resender: Sender<InternalUiMsg>,
         receiver: Receiver<InternalUiMsg>,
         sync_startup: WaitGroup,
+        thread_finisher: Sender<Finisher>,
     ) -> Result<thread::JoinHandle<Result<(), std::io::Error>>, std::io::Error> {
         let title;
         let paths;
@@ -229,6 +277,12 @@ impl Ctrl {
                     |error_text| std::io::Error::new(std::io::ErrorKind::Other, error_text),
                 )?;
                 info!("stopped tui");
+
+                // send finisher since it should also stop webui
+                thread_finisher.send(Finisher::TUI).unwrap_or_else(|_| {
+                    info!("probably receiver got webui finisher first!");
+                });
+
                 Ok::<(), std::io::Error>(())
             })
     }

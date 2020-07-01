@@ -203,6 +203,9 @@ impl Tui {
                             });
                     }
                 }
+                InternalUiMsg::Terminate => {
+                    self.handle.quit();
+                }
             }
         }
     }

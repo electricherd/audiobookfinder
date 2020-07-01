@@ -8,30 +8,32 @@ use std::fmt;
 /// so it results in a correct MyJson or the attribute that shall
 /// not be send out but was tried to do ...
 pub fn convert_internal_message(internal_msg: &InternalUiMsg) -> Result<WSJsonOut, String> {
-    let ret = match internal_msg {
-        InternalUiMsg::Update(_forward_net_message) => WSJsonOut::nothing(),
+    match internal_msg {
+        InternalUiMsg::Update(_forward_net_message) => Ok(WSJsonOut::nothing()),
         InternalUiMsg::StartAnimate(paths_alive, status) => match paths_alive {
-            CollectionPathAlive::BusyPath(nr) => WSJsonOut::searchPath(AnimateData::cnt(
+            CollectionPathAlive::BusyPath(nr) => Ok(WSJsonOut::searchPath(AnimateData::cnt(
                 RefreshData::path { nr: *nr },
                 match status {
                     Status::ON => true,
                     Status::OFF => false,
                 },
-            )),
-            CollectionPathAlive::HostSearch => WSJsonOut::searchPath(AnimateData::cnt(
+            ))),
+            CollectionPathAlive::HostSearch => Ok(WSJsonOut::searchPath(AnimateData::cnt(
                 RefreshData::net,
                 match status {
                     Status::ON => true,
                     Status::OFF => false,
                 },
-            )),
+            ))),
         },
         InternalUiMsg::StepAndAnimate(paths_alive) => match paths_alive {
-            CollectionPathAlive::BusyPath(nr) => WSJsonOut::refresh(RefreshData::path { nr: *nr }),
-            CollectionPathAlive::HostSearch => WSJsonOut::refresh(RefreshData::net),
+            CollectionPathAlive::BusyPath(nr) => {
+                Ok(WSJsonOut::refresh(RefreshData::path { nr: *nr }))
+            }
+            CollectionPathAlive::HostSearch => Ok(WSJsonOut::refresh(RefreshData::net)),
         },
-    };
-    Ok(ret)
+        InternalUiMsg::Terminate => Err("terminate is not really of interest, is it?".to_string()),
+    }
 }
 
 pub fn convert_external_message(input_data: &str) -> Result<WSJsonIn, String> {

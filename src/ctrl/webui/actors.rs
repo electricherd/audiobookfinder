@@ -94,20 +94,25 @@ impl Actor for ActorWSServerMonitor {
         //       but for now it's fine!!!
         ctx.run_interval(Duration::from_millis(20), |act, _| {
             if let Ok(internal_message) = act.receiver.try_recv() {
-                // inform all listeners
-                match json::convert_internal_message(&internal_message) {
-                    Ok(response_json) => {
-                        for ws in &act.listeners {
-                            ws.do_send(MServerEvent {
-                                event: Json(response_json.clone()),
-                            });
+                match internal_message {
+                    InternalUiMsg::Terminate => actix::System::current().stop(),
+                    _ => {
+                        // inform all listeners
+                        match json::convert_internal_message(&internal_message) {
+                            Ok(response_json) => {
+                                for ws in &act.listeners {
+                                    ws.do_send(MServerEvent {
+                                        event: Json(response_json.clone()),
+                                    });
+                                }
+                            }
+                            Err(attribute) => {
+                                warn!(
+                                    "No, we don't want the internal variable '{:?}' sent out!",
+                                    attribute
+                                );
+                            }
                         }
-                    }
-                    Err(attribute) => {
-                        warn!(
-                            "No, we don't want the internal variable '{:?}' sent out!",
-                            attribute
-                        );
                     }
                 }
             }
