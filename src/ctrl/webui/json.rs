@@ -1,6 +1,9 @@
 ///! Definition and description of the yet output json format to webui
 ///
-use super::{super::super::ctrl::Status, CollectionPathAlive, InternalUiMsg};
+use super::{
+    super::super::ctrl::{ForwardNetMessage, NetMessages, Status},
+    CollectionPathAlive, InternalUiMsg,
+};
 use serde_json;
 use std::fmt;
 
@@ -9,16 +12,22 @@ use std::fmt;
 /// not be send out but was tried to do ...
 pub fn convert_internal_message(internal_msg: &InternalUiMsg) -> Result<WSJsonOut, String> {
     match internal_msg {
-        InternalUiMsg::Update(_forward_net_message) => Ok(WSJsonOut::nothing()),
+        InternalUiMsg::Update(ref forward_net_message) => match forward_net_message.net {
+            NetMessages::Debug => Err("No debug messages".to_string()),
+            NetMessages::ShowNewHost => Ok(WSJsonOut::update(ViewData::host(
+                forward_net_message.cnt.clone(),
+            ))),
+            NetMessages::ShowStats { show: stats } => Ok(WSJsonOut::nothing()),
+        },
         InternalUiMsg::StartAnimate(paths_alive, status) => match paths_alive {
-            CollectionPathAlive::BusyPath(nr) => Ok(WSJsonOut::searchPath(AnimateData::cnt(
+            CollectionPathAlive::BusyPath(nr) => Ok(WSJsonOut::searching(AnimateData::cnt(
                 RefreshData::path { nr: *nr },
                 match status {
                     Status::ON => true,
                     Status::OFF => false,
                 },
             ))),
-            CollectionPathAlive::HostSearch => Ok(WSJsonOut::searchPath(AnimateData::cnt(
+            CollectionPathAlive::HostSearch => Ok(WSJsonOut::searching(AnimateData::cnt(
                 RefreshData::net,
                 match status {
                     Status::ON => true,
@@ -66,7 +75,7 @@ pub fn generate_init_data(paths: &Vec<String>) -> WSJsonOut {
 
 #[allow(non_camel_case_types)]
 #[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(untagged)]
+#[serde(tag = "type", content = "cnt")]
 pub enum RefreshData {
     path { nr: usize },
     net,
@@ -92,6 +101,13 @@ pub struct InitData {
     paths: Vec<PathData>,
 }
 
+#[allow(non_camel_case_types)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(tag = "view", content = "cnt")]
+pub enum ViewData {
+    host(String),
+}
+
 // This is the critical part here, "event" and "data" to work with
 // "ws_events_dispatcher.js" !!!!!!!!
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -99,8 +115,9 @@ pub struct InitData {
 #[allow(non_camel_case_types)]
 pub enum WSJsonOut {
     refresh(RefreshData),
-    searchPath(AnimateData),
+    searching(AnimateData),
     init(InitData),
+    update(ViewData),
     nothing(),
 }
 

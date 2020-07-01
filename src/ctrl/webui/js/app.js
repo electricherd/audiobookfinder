@@ -26,8 +26,12 @@ function APPStart() {
            showPath(data);
         });
 
-        ws.bind('searchPath', function(data){
+        ws.bind('searching', function(data){
            spinPath(data);
+        });
+
+        ws.bind('update', function(data){
+           updateView(data);
         });
 
         window.onbeforeunload = function(event) {
@@ -71,16 +75,27 @@ function APPStart() {
 }
 
 function spinPath(data) {
-    let path_nr = data[0].nr;
     let on_off = data[1];
 
-    let spinner = $('#path_obj' + path_nr).find('span');
+    if (data[0].type === 'net') {
+       let spinner = $('#host_search_progress').find('span');
 
-    if (on_off === true) {
-        spinner.removeClass('d-none');
+       if (on_off === true) {
+           spinner.removeClass('d-none');
+       } else {
+           //spinner.removeClass('d-none');
+           setTimeout(_ => spinner.addClass('d-none'), 100);
+       }
     } else {
-        //spinner.removeClass('d-none');
-        setTimeout(_ => spinner.addClass('d-none'), 100);
+        let path_nr = data[0].cnt.nr
+        let spinner = $('#path_obj' + path_nr).find('span');
+
+        if (on_off === true) {
+            spinner.removeClass('d-none');
+        } else {
+            //spinner.removeClass('d-none');
+            setTimeout(_ => spinner.addClass('d-none'), 100);
+        }
     }
 }
 
@@ -95,10 +110,26 @@ function showPath(data) {
         let new_el_html = "<tr id='" + obj_id + "'><td>"
                          + paths[i].name + "</td><td>"
                          +"<span class='d-none spinner-border spinner-border-sm' role='status' aria-hidden='true'></span>"
-                         + "</tr></td>";
+                         + "</td></tr>";
         new_el = $.parseHTML(new_el_html);
         // append it as an object
         $("#paths_searched").append(new_el);
+    }
+}
+
+function updateView(data) {
+    if (data.view === 'host') {
+        let peer_id = data.cnt;
+        let obj_id =  "host_obj_" + peer_id;
+        // create obj
+        let new_el_html = "<tr id='" + obj_id + "'><td>"
+                         + peer_id
+                         + "</td></tr>";
+        new_el = $.parseHTML(new_el_html);
+        // append it as an object
+        $("#MyIPTable").append(new_el);
+    } else {
+        console.log("The view '" + data.view + "' is not implemented yet!");
     }
 }
 

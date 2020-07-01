@@ -132,11 +132,10 @@ impl Ctrl {
         let (sender_tui_to_register, receiver_to_tui_thread) = channel::<InternalUiMsg>();
         let sender_tui_only_to_finish = sender_tui_to_register.clone();
         let thread_tui = if has_tui {
-            let sender_to_register = sender_tui_to_register.clone();
+            let resender = sender_tui_to_register.clone();
             let tui_waitgroup = wait_all_uis.clone();
             let thread_finisher_tui = thread_finisher.clone();
 
-            let resender = sender_tui_to_register.clone();
             internal_senders.push(sender_tui_to_register);
             Self::spawn_tui(
                 arc_self_tui,
@@ -185,14 +184,14 @@ impl Ctrl {
         match finish_threads.recv() {
             Ok(finished) => match finished {
                 Finisher::TUI => {
-                    info!("TUI finished first, so drop WEBUI!");
+                    info!("TUI finished first, so send to terminate WEBUI!");
                     sender_wui.send(InternalUiMsg::Terminate).unwrap();
                     let to_pass_through = thread_tui.join().unwrap();
                     drop(forwarding_message_loop); // let drop message loop only after joining!!!
                     to_pass_through
                 }
                 Finisher::WEBUI => {
-                    info!("WEBUI finished first, so drop TUI!");
+                    info!("WEBUI finished first, so send to terminate TUI!");
                     sender_tui_only_to_finish
                         .send(InternalUiMsg::Terminate)
                         .unwrap();
