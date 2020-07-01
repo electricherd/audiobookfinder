@@ -262,17 +262,22 @@ fn main() -> io::Result<()> {
         if has_ui {
             info!("Stopped ui thread");
         }
-        net_thread
-            .and_then(|running_thread| Ok(running_thread.join()))
-            .unwrap_or_else(|_| {
-                // it doesn't matter because we will terminate anyway
-                error!("is this normal when joining net thread???");
-                Ok(Ok(()))
-            })
-            // todo: honestly ... fix this here!!!!!! unwrap TWICE!!!
-            .unwrap()
-            .unwrap();
-        if has_net {
+        // net thread
+        if has_ui {
+            // if had a ui , net_thread will stop also after ui quit
+            drop(net_thread);
+        } else {
+            // if didn't have ui, net_thread will continue running
+            net_thread
+                .and_then(|running_thread| Ok(running_thread.join()))
+                .unwrap_or_else(|_| {
+                    // it doesn't matter because we will terminate anyway
+                    error!("is this normal when joining net thread???");
+                    Ok(Ok(()))
+                })
+                // todo: honestly ... fix this here!!!!!! unwrap TWICE!!!
+                .unwrap()
+                .unwrap();
             info!("Stopped net thread");
         }
     } else {

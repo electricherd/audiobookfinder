@@ -169,7 +169,7 @@ impl Ctrl {
         };
 
         // 3) ui message forwarding loop thread
-        let message_loop = Self::spawn_message_loop(receiver, internal_senders);
+        let forwarding_message_loop = Self::spawn_message_loop(receiver, internal_senders);
 
         // A) wait for sub syncs in order ...
         info!("syncing with 2 other sub threads webui and tui");
@@ -186,25 +186,27 @@ impl Ctrl {
             Ok(finished) => match finished {
                 Finisher::TUI => {
                     info!("TUI finished first, so drop WEBUI!");
-                    drop(message_loop);
                     sender_wui.send(InternalUiMsg::Terminate).unwrap();
-                    thread_tui.join().unwrap()
+                    let to_pass_through = thread_tui.join().unwrap();
+                    drop(forwarding_message_loop); // let drop message loop only after joining!!!
+                    to_pass_through
                 }
                 Finisher::WEBUI => {
                     info!("WEBUI finished first, so drop TUI!");
-                    drop(message_loop);
                     sender_tui_only_to_finish
                         .send(InternalUiMsg::Terminate)
                         .unwrap();
-                    thread_webui.join().unwrap()
+                    let to_pass_through = thread_webui.join().unwrap();
+                    drop(forwarding_message_loop); // let drop forwarding message loop only after joining!!!!
+                    to_pass_through
                 }
             },
             Err(e) => {
                 error!("something really bad happenend: {}!!", e);
-                // todo: make a new error
                 drop(thread_webui);
                 drop(thread_tui);
-
+                drop(forwarding_message_loop);
+                // todo: make a new error
                 Ok::<(), std::io::Error>(())
             }
         }
