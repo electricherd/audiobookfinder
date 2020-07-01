@@ -1,5 +1,7 @@
 window.onload = APPStart;
 
+var known_paths = [];
+
 // Page onload event handler
 function APPStart() {
     state = false;
@@ -18,8 +20,7 @@ function APPStart() {
             // register hash UUID
         });
         ws.bind('close', function(){
-            $('#statusMessage').text("not connected");
-           alert("Connection is closed...");
+            gracefullyClose();
         });
 
         ws.bind('init', function(data){
@@ -93,8 +94,8 @@ function spinPath(data) {
         if (on_off === true) {
             spinner.removeClass('d-none');
         } else {
-            //spinner.removeClass('d-none');
-            setTimeout(_ => spinner.addClass('d-none'), 100);
+            //setTimeout(_ => spinner.addClass('d-none'), 100);
+            spinner.addClass('d-none');
         }
     }
 }
@@ -105,7 +106,10 @@ function showPath(data) {
 
     let path_len = paths.length;
     for (let i=0; i < path_len; i++) {
-        let obj_id =  "path_obj" + paths[i].nr;
+        let path_nr = paths[i].nr;
+        // register for graceful closing
+        known_paths.push(path_nr);
+        let obj_id =  "path_obj" + path_nr;
         // create obj
         let new_el_html = "<tr id='" + obj_id + "'><td>"
                          + paths[i].name + "</td><td>"
@@ -133,3 +137,16 @@ function updateView(data) {
     }
 }
 
+function gracefullyClose() {
+      // stop host spinner
+      let spinnerSearchHost = $('#host_search_progress').find('span');
+      spinnerSearchHost.addClass('d-none');
+      // stop path spinners
+      for (let i=0; i < known_paths.length; i++) {
+          let spinnerPath = $('#path_obj' + known_paths[i]).find('span');
+          spinnerPath.addClass('d-none');
+      }
+
+      $('#statusMessage').text("not connected");
+      alert("Connection is closed...");
+}
