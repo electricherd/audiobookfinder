@@ -55,7 +55,6 @@ impl Net {
 
         // statistics
         let mut count_valid = 0;
-        let mut count_no_cast = 0;
 
         // prepare everything for mdns thread
         let my_peer_id = &self.own_peer_id;
@@ -64,17 +63,15 @@ impl Net {
             &ui_update_sender,
             has_ui,
             borrow_arc_connected_clients,
-            &mut count_no_cast,
             &mut count_valid,
         )
         .await
         .and_then(|count_response| {
             if !has_ui {
                 let output_string = format!(
-                    "no response from : {no_resp:>width$}\n\
-                     no cast:           {no_cast:>width$}\n",
+                    "no response from : \n\
+                     ----------------- {no_resp:>width$}\n",
                     no_resp = count_response,
-                    no_cast = count_no_cast,
                     width = 3
                 );
                 info!("{}", output_string);
@@ -91,7 +88,6 @@ impl Net {
         ctrl_sender: &std::sync::mpsc::Sender<ctrl::UiUpdateMsg>,
         has_ui: bool,
         borrow_arc_connected_clients: Arc<Mutex<Vec<PeerId>>>,
-        count_no_cast: &mut u32,
         count_valid: &mut u32,
     ) -> Result<u32, std::io::Error> {
         let mut count_no_response: u32 = 0;
@@ -99,95 +95,72 @@ impl Net {
         let mut service = MdnsService::new()?;
         info!("Started Mdns Service!");
 
-        async move {
-            info!("Starting Mdns Looping!");
-
-            loop {
-                trace!("taking package ...");
-                let (mut srv, packet) = service.next().await;
-                match packet {
-                    MdnsPacket::Query(query) => {
-                        // We detected a libp2p mDNS query on the network. In a real application, you
-                        // probably want to answer this query by doing `query.respond(...)`.
-                        trace!("Detected query from {:?}", query.remote_addr());
-                        let response = service::build_query_response(
-                            query.query_id(),
-                            my_peer_id.clone(),
-                            vec![].into_iter(), // something or leave it empty??
-                            Duration::from_secs(120),
-                        )
-                        .unwrap();
-                        srv.enqueue_response(response);
-                    }
-                    MdnsPacket::Response(response) => {
-                        // We detected a libp2p mDNS response on the network. Responses are for
-                        // everyone and not just for the requester, which makes it possible to
-                        // passively listen.
-                        for peer in response.discovered_peers() {
-                            info!("Discovered peer {:?}", peer.id());
-                            // These are the self-reported addresses of the peer we just discovered.
-                            for addr in peer.addresses() {
-                                println!(" Address = {:?}", addr);
-                            }
-                            // todo: filter own address already here
-                            Self::take_mdns_input(
-                                peer,
-                                ctrl_sender,
-                                has_ui,
-                                borrow_arc_connected_clients.clone(),
-                                count_no_cast,
-                                count_valid,
-                            )
-                            .await;
-                            count_no_response += 1;
-                        }
-                    }
-                    MdnsPacket::ServiceDiscovery(query) => {
-                        // The last possibility is a service detection query from DNS-SD.
-                        // Just like `Query`, in a real application you probably want to call
-                        // `query.respond`.
-                        info!("Detected service query from {:?}", query.remote_addr());
-                    }
-                }
-                service = srv
-            }
-        }
-        .await;
-        Ok(count_no_response)
-    }
-
-    async fn take_mdns_input(
-        mdns_receive_ip: &MdnsPeer,
-        ctrl_sender: &std::sync::mpsc::Sender<ctrl::UiUpdateMsg>,
-        has_ui: bool,
-        borrow_arc_connected_clients: Arc<Mutex<Vec<PeerId>>>,
-        count_no_cast: &mut u32,
-        count_valid: &mut u32,
-    ) {
-        *count_valid += 1;
-        Self::connect_new_clients(
-            mdns_receive_ip,
-            borrow_arc_connected_clients,
-            ctrl_sender,
-            has_ui,
-        )
-        .await;
-
         // finally stop animation
         if has_ui {
-            info!("Stop animation!");
+            info!("Start animation!");
             ctrl_sender
                 .send(ctrl::UiUpdateMsg::CollectionUpdate(
                     ctrl::CollectionPathAlive::HostSearch,
-                    ctrl::Status::OFF,
+                    ctrl::Status::ON,
                 ))
                 .unwrap();
         }
+
+        info!("Starting Mdns Looping!");
+        loop {
+            trace!("taking package ...");
+            let (mut srv, packet) = service.next().await;
+            match packet {
+                MdnsPacket::Query(query) => {
+                    // We detected a libp2p mDNS query on the network. In a real application, you
+                    // probably want to answer this query by doing `query.respond(...)`.
+                    trace!("Detected query from {:?}", query.remote_addr());
+                    let response = service::build_query_response(
+                        query.query_id(),
+                        my_peer_id.clone(),
+                        vec![].into_iter(), // something or leave it empty??
+                        Duration::from_secs(120),
+                    )
+                    .unwrap();
+                    srv.enqueue_response(response);
+                }
+                MdnsPacket::Response(response) => {
+                    // We detected a libp2p mDNS response on the network. Responses are for
+                    // everyone and not just for the requester, which makes it possible to
+                    // passively listen.
+                    for new_peer in response.discovered_peers() {
+                        info!("Discovered peer {:?}", new_peer.id());
+                        // These are the self-reported addresses of the peer we just discovered.
+                        for addr in new_peer.addresses() {
+                            println!(" Address = {:?}", addr);
+                        }
+                        // todo: filter own address already here
+                        *count_valid += 1;
+                        Self::connect_new_clients(
+                            new_peer,
+                            borrow_arc_connected_clients.clone(),
+                            ctrl_sender,
+                            has_ui,
+                        )
+                        .await;
+                        count_no_response += 1;
+                    }
+                }
+                MdnsPacket::ServiceDiscovery(query) => {
+                    // The last possibility is a service detection query from DNS-SD.
+                    // Just like `Query`, in a real application you probably want to call
+                    // `query.respond`.
+                    info!("Detected service query from {:?}", query.remote_addr());
+                }
+            }
+            service = srv
+        }
+        Ok(count_no_response)
     }
 
     async fn connect_new_clients(
-        receiver_client: &MdnsPeer,
-        clients_connected: Arc<Mutex<Vec<PeerId>>>,
+        new_peer: &MdnsPeer,
+        peers_connected: Arc<Mutex<Vec<PeerId>>>,
         ctrl_sender: &std::sync::mpsc::Sender<ctrl::UiUpdateMsg>,
         has_ui: bool,
     ) {
@@ -196,12 +169,12 @@ impl Net {
         // input address
         //
         //let to_push_into_arc_clone = incoming_id.clone();
-        if let Some(mut guard) = clients_connected.try_lock() {
+        if let Some(mut guard) = peers_connected.try_lock() {
             let ip_addresses = &mut *guard;
             // search if ip address is already collected
             if ip_addresses
                 .iter()
-                .all(|stored_peer_ids| stored_peer_ids != receiver_client.id())
+                .all(|stored_peer_ids| stored_peer_ids != new_peer.id())
             {
                 // put into collection to not find again
                 // todo: what this
@@ -213,7 +186,7 @@ impl Net {
                     ctrl_sender
                         .send(ctrl::UiUpdateMsg::NetUpdate(ForwardNetMessage::new(
                             ctrl::NetMessages::ShowNewHost,
-                            receiver_client.id().to_string(),
+                            new_peer.id().to_string(),
                         )))
                         .unwrap();
                     ctrl_sender
