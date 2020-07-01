@@ -111,7 +111,7 @@ function showPath(data) {
         known_paths.push(path_nr);
         let obj_id =  "path_obj" + path_nr;
         // create obj
-        let new_el_html = "<tr id='" + obj_id + "'><td>"
+        let new_el_html = "<tr id='" + obj_id + "'><td class='col-xs-3'>"
                          + paths[i].name + "</td><td>"
                          +"<span class='d-none spinner-border spinner-border-sm' role='status' aria-hidden='true'></span>"
                          + "</td></tr>";
@@ -126,12 +126,12 @@ function updateView(data) {
         let peer_id = data.cnt;
         let obj_id =  "host_obj_" + peer_id;
         // create obj
-        let new_el_html = "<tr id='" + obj_id + "'><td>"
+        let new_el_html = "<tr id='" + obj_id + "'><td class='col-xs-3'>"
                          + peer_id
                          + "</td></tr>";
         new_el = $.parseHTML(new_el_html);
         // append it as an object
-        $("#MyIPTable").append(new_el);
+        $("#found_peers").append(new_el);
     } else {
         console.log("The view '" + data.view + "' is not implemented yet!");
     }
@@ -149,4 +149,5 @@ function gracefullyClose() {
 
       $('#statusMessage').text("not connected");
       alert("Connection is closed...");
+      document.getElementById("overlay").style.display = "block";
 }
