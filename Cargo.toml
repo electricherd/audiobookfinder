@@ -42,7 +42,7 @@ log = "0.4"            # basic log feature
 syslog = "5.0"           # another logger for system log
 
 futures = "0.3"     ####   # futures, used in state machine yet (and in many other crates)
-futures-util = "0.3.4"
+futures-util = "0.3"
 
 tree_magic = "0.2"  # for fast file tree operations
 id3 = "0.5"         # id3 tags
@@ -70,25 +70,21 @@ libp2p = "0.20"      # network stack for secure p2p with mdns and general commun
 [dependencies.cursive]
 version = "0.15"
 default-features = false
-
 [features]
 default = ["cursive/crossterm-backend"]
 system-alloc = []
 
+# profiles
 [profile.release]
 panic = "abort"
-lto = true
+lto = false
 codegen-units = 1
 incremental = false
-opt-level = "z"
+opt-level = 2
 
-# possible enhancements of cross
-# for cross of trust with travis
-# https://github.com/japaric/trust
-# https://github.com/japaric/cross
-#[build.env]
-#passthrough = [
-#    "RUST_BACKTRACE",
-#    "RUST_LOG",
-#    "TRAVIS",
-#]
+[profile.dev]
+panic = "abort"
+lto = true
+codegen-units = 2
+incremental = true
+opt-level = 0
