@@ -195,7 +195,6 @@ impl Tui {
                         self.toggle_alive(which.clone(), AliveSym::GoOn);
                         let sender_clone = tui_sender.clone();
                         task::sleep(Duration::from_millis(config::tui::ALIVE_REFRESH_MSEC)).await;
-                        trace!("refresh path alive");
                         sender_clone
                             .send(InternalUiMsg::StepAndAnimate(which))
                             .unwrap_or_else(|_| {
