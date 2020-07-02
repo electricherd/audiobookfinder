@@ -81,8 +81,8 @@ before_deploy:
   - strip -s target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET -o target/release/$CRATE_NAME.stripped
 #  - strip -s target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET -o target/release/$CRATE_NAME
   - ./upx --best target/release/$CRATE_NAME.stripped -o target/release/$CRATE_NAME
-  - 7z a -r target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET$TRAVIS_TAG.7z ./target/release/$CRATE_NAME ./README-release.md ./LICENSE
-  - sha256sum target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET$TRAVIS_TAG.7z > target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET$TRAVIS_TAG.7z.sha256
+  - 7z a -r target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET-$TRAVIS_TAG.7z ./target/release/$CRATE_NAME ./README-release.md ./LICENSE
+  - sha256sum target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET-$TRAVIS_TAG.7z > target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET-$TRAVIS_TAG.7z.sha256
 
 deploy:
   # look at
@@ -90,8 +90,8 @@ deploy:
   overwrite: true
   file_glob: true
   file:
-    - target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z
-    - target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z.sha256
+    - target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET-$TRAVIS_TAG.7z
+    - target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET-$TRAVIS_TAG.7z.sha256
   provider: releases
   skip_cleanup: true
   on:

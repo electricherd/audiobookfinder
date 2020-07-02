@@ -28,10 +28,11 @@ pub struct ComClient {
 // }
 
 impl ComClient {
+    #[allow(dead_code)]
     pub fn new(peer_id: PeerId) -> ComClient {
         ComClient { peer_id: peer_id }
     }
-
+    #[allow(dead_code)]
     pub fn run(self, _addr: &PeerId) {
         let _id = self.peer_id.clone();
 

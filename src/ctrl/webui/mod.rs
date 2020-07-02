@@ -35,6 +35,7 @@ pub struct WebServerState {
 
 pub struct WebUI {
     id: PeerRepresentation,
+    #[allow(dead_code)]
     serve_others: bool,
     paths: Vec<String>,
 }
