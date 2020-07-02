@@ -122,7 +122,7 @@ after_build:
 # windows
   - cmd: copy "target\%target%\release\%CRATE_NAME%.exe" "target\release\%CRATE_NAME%-%target%-orig.exe"
   - cmd: upx --best "target\release\%CRATE_NAME%-%target%-orig.exe" -o "target\release\%CRATE_NAME%.exe"
-  - cmd: 7z a -r "%CRATE_NAME%-%target%-%APPVEYOR_REPO_TAG_NAME%.7z" "target\release\%CRATE_NAME%.exe" README-release.md LICENSE
+  - cmd: 7z a -r "%CRATE_NAME%-%target%-%APPVEYOR_REPO_TAG_NAME%.7z" ".\target\release\%CRATE_NAME%.exe" ".\README-release.md" ".\LICENSE"
   - cmd: certUtil -hashfile "%CRATE_NAME%-%target%-%APPVEYOR_REPO_TAG_NAME%.7z" SHA256 > "%CRATE_NAME%-%target%-%APPVEYOR_REPO_TAG_NAME%.7z.sha256"
 
 test_script:
