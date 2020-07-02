@@ -85,6 +85,6 @@ opt-level = 2
 [profile.dev]
 panic = "abort"
 lto = true
-codegen-units = 2
-incremental = true
-opt-level = 0
+codegen-units = 1
+incremental = false
+opt-level = "z"
