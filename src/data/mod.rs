@@ -1,14 +1,14 @@
 //! The oldest module, the data module stores all the data needed to collect.
 use super::config;
+use id3::Tag;
 use libp2p::PeerId;
 use std::{
-    cmp,                                         //max
-    collections::hash_map::{Entry, HashMap},     // my main item uses a hash map
-    fs::{self, DirEntry, Metadata, Permissions}, // directory
-    io,                                          // reading files
+    cmp,                                     //max
+    collections::hash_map::{Entry, HashMap}, // my main item uses a hash map
+    fs::{self, DirEntry, Permissions},       // directory
+    io,                                      // reading files
     path::{Path, PathBuf},
 }; // path, clear
-use taglib;
 use tree_magic;
 
 #[allow(dead_code)]
@@ -192,54 +192,47 @@ impl Collection {
 
     /// Check the file and retrieve the meta-data info
     fn visit_audio_files(&mut self, cb: &Path, file_stats: &mut FilesStat) -> Result<(), ()> {
-        taglib::File::new(cb.to_str().unwrap())
-            .and_then(|file| {
-                match file.tag() {
-                    Ok(tag) => {
-                        let artist = tag.artist().unwrap_or("unknown".to_string());
+        Tag::read_from_path(cb.to_str().unwrap())
+            .and_then(|tag| {
+                let artist = tag.artist().unwrap_or("unknown");
 
-                        self.stats.files.analyzed += 1;
-                        file_stats.analyzed += 1;
+                self.stats.files.analyzed += 1;
+                file_stats.analyzed += 1;
 
-                        let path_buffer = cb.to_path_buf();
+                let path_buffer = cb.to_path_buf();
 
-                        let metadata = fs::metadata(cb).unwrap();
-                        let filesize = metadata.len();
-                        let permissions = metadata.permissions();
+                let metadata = fs::metadata(cb).unwrap();
+                let filesize = metadata.len();
+                let permissions = metadata.permissions();
 
-                        let possible_entry = FileInfo {
-                            path: path_buffer,
-                            size: filesize,
-                            permissions: permissions,
-                        };
+                let possible_entry = FileInfo {
+                    path: path_buffer,
+                    size: filesize,
+                    permissions: permissions,
+                };
 
-                        match self.collection.entry(String::from(artist)) {
-                            Entry::Occupied(mut entry) => {
-                                entry.get_mut().reference_path.push(possible_entry);
+                match self.collection.entry(String::from(artist)) {
+                    Entry::Occupied(mut entry) => {
+                        entry.get_mut().reference_path.push(possible_entry);
 
-                                let this_albums_length = entry.get().reference_path.len();
-                                self.stats.audio.max_songs =
-                                    cmp::max(self.stats.audio.max_songs, this_albums_length);
-                            }
-                            Entry::Vacant(entry) => {
-                                let this_album: InfoAlbum = InfoAlbum {
-                                    reference_path: vec![possible_entry],
-                                };
-                                entry.insert(Box::new(this_album));
-                                self.stats.audio.albums += 1;
-                            }
-                        }
+                        let this_albums_length = entry.get().reference_path.len();
+                        self.stats.audio.max_songs =
+                            cmp::max(self.stats.audio.max_songs, this_albums_length);
                     }
-                    Err(_) => {
-                        self.stats.files.faulty += 1;
-                        file_stats.faulty += 1;
+                    Entry::Vacant(entry) => {
+                        let this_album: InfoAlbum = InfoAlbum {
+                            reference_path: vec![possible_entry],
+                        };
+                        entry.insert(Box::new(this_album));
+                        self.stats.audio.albums += 1;
                     }
                 }
                 Ok(())
             })
-            .or_else(|e| {
-                error!("{:?}:{:?}", e, cb);
-                Err(())
+            .or_else(|_| {
+                self.stats.files.faulty += 1;
+                file_stats.faulty += 1;
+                Ok(())
             })
     }
 
