@@ -84,7 +84,7 @@ impl Net {
     /// Discovers mdns on the net and should have a whole
     /// process with discovered clients to share data.
     async fn async_mdns_discover(
-        my_peer_id: &PeerId,
+        own_peer_id: &PeerId,
         ctrl_sender: &std::sync::mpsc::Sender<ctrl::UiUpdateMsg>,
         has_ui: bool,
         borrow_arc_connected_clients: Arc<Mutex<Vec<PeerId>>>,
@@ -95,9 +95,9 @@ impl Net {
         let mut service = MdnsService::new()?;
         info!("Started Mdns Service!");
 
-        // finally stop animation
+        // start animation
         if has_ui {
-            info!("Start animation!");
+            info!("Start netsearch animation!");
             ctrl_sender
                 .send(ctrl::UiUpdateMsg::CollectionUpdate(
                     ctrl::CollectionPathAlive::HostSearch,
@@ -105,19 +105,26 @@ impl Net {
                 ))
                 .unwrap();
         }
-
         info!("Starting Mdns Looping!");
+        // todo: to gracefully stop here, inside the loop could be a receive, which in an
+        //       async select! block or just by try_select waits for a terminate message
+        //       through a channel.
         loop {
-            trace!("taking package ...");
+            trace!("taking new package ...");
             let (mut srv, packet) = service.next().await;
             match packet {
                 MdnsPacket::Query(query) => {
                     // We detected a libp2p mDNS query on the network. In a real application, you
                     // probably want to answer this query by doing `query.respond(...)`.
-                    trace!("Detected query from {:?}", query.remote_addr());
+                    trace!("Query came in from {:?}", query.remote_addr());
+                    if !has_ui {
+                        println!("Query came in from: {:?}", query.remote_addr());
+                    }
+
+                    // send back own peer ?? todo: a bit more maybe? addresses?
                     let response = service::build_query_response(
                         query.query_id(),
-                        my_peer_id.clone(),
+                        own_peer_id.clone(),
                         vec![].into_iter(), // something or leave it empty??
                         Duration::from_secs(120),
                     )
@@ -129,21 +136,33 @@ impl Net {
                     // everyone and not just for the requester, which makes it possible to
                     // passively listen.
                     for new_peer in response.discovered_peers() {
-                        info!("Discovered peer {:?}", new_peer.id());
-                        // These are the self-reported addresses of the peer we just discovered.
-                        for addr in new_peer.addresses() {
-                            println!(" Address = {:?}", addr);
+                        // if found myself then don't connect
+                        if own_peer_id != new_peer.id() {
+                            info!("Discovered: {:?}", new_peer.id());
+                            if !has_ui {
+                                println!("Discovered: {:?}", new_peer.id());
+                            }
+                            // These are the self-reported addresses of the peer we just discovered.
+                            for addr in new_peer.addresses() {
+                                trace!(" Address = {:?}", addr);
+                            }
+
+                            *count_valid += 1;
+                            Self::connect_new_clients(
+                                new_peer,
+                                borrow_arc_connected_clients.clone(),
+                                ctrl_sender,
+                                has_ui,
+                            )
+                            .await;
+                            count_no_response += 1;
+                        } else {
+                            trace!("Found myself: {:?}", new_peer.id());
+                            // to terminal
+                            if !has_ui {
+                                println!("Found myself: {:?}", new_peer.id());
+                            }
                         }
-                        // todo: filter own address already here
-                        *count_valid += 1;
-                        Self::connect_new_clients(
-                            new_peer,
-                            borrow_arc_connected_clients.clone(),
-                            ctrl_sender,
-                            has_ui,
-                        )
-                        .await;
-                        count_no_response += 1;
                     }
                 }
                 MdnsPacket::ServiceDiscovery(query) => {
@@ -153,6 +172,7 @@ impl Net {
                     info!("Detected service query from {:?}", query.remote_addr());
                 }
             }
+            // todo: really necessary???
             service = srv
         }
         Ok(count_no_response)
@@ -164,24 +184,14 @@ impl Net {
         ctrl_sender: &std::sync::mpsc::Sender<ctrl::UiUpdateMsg>,
         has_ui: bool,
     ) {
-        // wait for message
-        //
-        // input address
-        //
-        //let to_push_into_arc_clone = incoming_id.clone();
         if let Some(mut guard) = peers_connected.try_lock() {
-            let ip_addresses = &mut *guard;
+            let all_stored_peers = &mut *guard;
             // search if ip address is already collected
-            if ip_addresses
+            if all_stored_peers
                 .iter()
-                .all(|stored_peer_ids| stored_peer_ids != new_peer.id())
+                .all(|stored_peer| stored_peer != new_peer.id())
             {
-                // put into collection to not find again
-                // todo: what this
-                // let id_for_processing = to_push_into_arc_clone.clone();
-                // ip_addresses.push(to_push_into_arc_clone);
-
-                let count = ip_addresses.len();
+                let count = all_stored_peers.len();
                 if has_ui {
                     ctrl_sender
                         .send(ctrl::UiUpdateMsg::NetUpdate(ForwardNetMessage::new(
@@ -201,6 +211,10 @@ impl Net {
                         )))
                         .unwrap();
                 }
+                // put into collection to not find again
+                all_stored_peers.push(new_peer.id().clone());
+
+                // todo: here!!!!!!!!!!!!!!!!!!!!!!!
                 // create ssh client in new thread
                 // let _connect_ip_client_thread = task::spawn(async move {
                 //     let connector = ConnectToOther::new(&id_for_processing);
