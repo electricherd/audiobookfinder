@@ -73,6 +73,7 @@ install:
   - sh: curl -L https://github.com/upx/upx/releases/download/v3.96/upx-3.96-amd64_linux.tar.xz > upx.xz
   - sh: tar -xf ./upx.xz upx-3.96-amd64_linux/upx --strip-components=1 -C .
   - sh: ./upx --version
+  - sh: echo $CRATE_NAME-$target-$APPVEYOR_REPO_TAG_NAME
   - sh: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > ./rustup.sh
   - sh: sh ./rustup.sh -y 
 # for debugging: ls -al
@@ -94,7 +95,7 @@ install:
   - cmd: appveyor DownloadFile https://github.com/upx/upx/releases/download/v3.96/upx-3.96-win64.zip
   - cmd: 7z e upx-3.96-win64.zip upx-3.96-win64\upx.exe
   - cmd: upx.exe --version
-  - cmd: echo "%CRATE_NAME%-%target%.7z"
+  - cmd: echo "%CRATE_NAME%-%target%-%APPVEYOR_REPO_TAG_NAME%"
    # old way test download https://libsodium.gitbook.io/doc/installation
   #- cmd: appveyor-retry appveyor DownloadFile https://download.libsodium.org/libsodium/releases/libsodium-%LIBSODIUM_WIN_VER%-stable-msvc.zip -FileName libsodium.7z 
   #- cmd: 7z x -y libsodium.7z -oC:\build_libs\libsodium
