@@ -2,11 +2,10 @@
 use super::config;
 use libp2p::PeerId;
 use std::{
-    cmp,                                     //max
-    collections::hash_map::{Entry, HashMap}, // my main item uses a hash map
-    fs::{self, DirEntry, Permissions},       // directory
-    io,                                      // reading files
-    os::linux::fs::MetadataExt,              //use std::os::windows::fs::MetadataExt;
+    cmp,                                         //max
+    collections::hash_map::{Entry, HashMap},     // my main item uses a hash map
+    fs::{self, DirEntry, Metadata, Permissions}, // directory
+    io,                                          // reading files
     path::{Path, PathBuf},
 }; // path, clear
 use taglib;
@@ -205,7 +204,7 @@ impl Collection {
                         let path_buffer = cb.to_path_buf();
 
                         let metadata = fs::metadata(cb).unwrap();
-                        let filesize = metadata.st_size();
+                        let filesize = metadata.len();
                         let permissions = metadata.permissions();
 
                         let possible_entry = FileInfo {
