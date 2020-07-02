@@ -40,14 +40,15 @@ So far only the state charts and their connection is not done but the general co
 It is an inline [CI](https://travis-ci.org/electricherd/audiobookfinder/) generated documentation which can be found [here](https://electricherd.github.io/audiobookfinder/audiobookfinder/index.html)! Rust does a nice job here as well!
 
 ### Changes
+* pretty webui design, net messages as good as tui now, fixed thread termination issues to be mostly graceful
 * webui is in sync now, prepare net messages for webui to maybe replace tui
 * back to many threads, but synced and working just fine - webui must be able to replace tui at some time
 * fixed up many older problems, yet ready for libp2p migration for communication over net
-* cleaned up yet inactivated parts: former ssh connection, state machine replacement
 
 <details>
   <summary>click for older changes</summary>
 
+    * cleaned up yet inactivated parts: former ssh connection, state machine replacement
     * introducing a nice way to sync threads on startup by creating a channel, send its sender to main thread and block own thread until sender is sent back to self controlled receiver.
     * trying upx in CI builds again
     * migrated first too many native threads to async green threads, as also most dependant external crates use more general futures approach. It's yet a bit confusing and inconsistant but problem were rayon thread iterator and cursive as thread dependant. But I am about to like and understand async/await quite well, also the consequences for embedded development :grin:
@@ -120,7 +121,7 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
 - [x] multi-threading, a lot of threads and communication is inside, also  ([Rayon](https://github.com/rayon-rs/rayon))
 - [x] learning [futures](https://en.wikipedia.org/wiki/Futures_and_promises)
 - [x] an optional graphical interface that even runs on console only machines (the [Cursive](https://github.com/gyscos/Cursive) TUI), but probably better...
-- [ ] webui, modern and nice with [actix](https://actix.rs/), [bootstrap](https://getbootstrap.com/), and [jquery](https://jquery.com) - but this is only alpha yet
+- [x] webui, modern and nice with [actix](https://actix.rs/), [bootstrap](https://getbootstrap.com/), and [jquery](https://jquery.com) - but this is only alpha yet
 - [x] [architecture](#architecture) (modules), did some rework with file structure but it is not yet perfect in Rust, really. Now the code is better hidden inside a library... this gives some more opportunities
 - [x] high-level functionality of different crates / including/using different crates (I don't want to reinvent the wheel, and yes, that is very nice)
 - [x] in-code documentation with html generation, really nice!
