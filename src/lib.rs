@@ -30,8 +30,8 @@ extern crate hostname;
 extern crate webbrowser;
 
 // data
+extern crate id3;
 extern crate serde;
-extern crate taglib;
 #[macro_use]
 extern crate serde_derive;
 extern crate tree_magic; // mime types

@@ -62,7 +62,6 @@ init:
 #  - sh: sudo DEBIAN_FRONTEND=noninteractive ACCEPT_EULA=Y apt-get upgrade -yq
   - sh: sudo apt-get --yes install build-essential
   - sh: sudo apt-get --yes install libsodium-dev
-  - sh: sudo apt-get --yes install libtag1-dev libtagc0-dev
 #  for deployment
   - sh: sudo apt-get --yes install p7zip-full # upx-ucl is now in install
 
@@ -87,7 +86,6 @@ install:
   #
   # trying NuGet and powershell for lib installation
   - cmd: appveyor DownloadFile https://dist.nuget.org/win-x86-commandline/latest/nuget.exe
-  - cmd: nuget install taglib -Version %TAGLIB_WIN_VER%
   - cmd: nuget install libsodium -Version %LIBSODIUM_WIN_VER%
   - cmd: set SODIUM_LIB_DIR=%ProgramFiles(x86)%\Microsoft SDKs\NuGetPackages\libsodium\runtimes\win-x64\native
   - cmd: set SODIUM_STATIC=1

@@ -13,8 +13,7 @@ RUN apt-get update && \
     make \
     pkg-config \
     libavahi-compat-libdnssd-dev:armhf \
-    libsodium-dev:armhf \
-    libtag1-dev:armhf libtagc0-dev:armhf
+    libsodium-dev:armhf
 
 RUN curl -fsSL https://raw.githubusercontent.com/japaric/cross/master/docker/xargo.sh > xargo.sh && \
     bash /xargo.sh
