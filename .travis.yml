@@ -60,6 +60,7 @@ install:
   - curl -L https://github.com/upx/upx/releases/download/v3.96/upx-3.96-amd64_linux.tar.xz > upx.xz
   - tar -xf ./upx.xz upx-3.96-amd64_linux/upx --strip-components=1 -C .
   - ./upx --version
+  - echo $CRATE_NAME-$target-$TRAVIS_TAG
   # install xargo before / later inside ci/install.sh
   # force should be replaced by a check but travis is mysterious
   - cargo install xargo --force
@@ -80,8 +81,8 @@ before_deploy:
   - strip -s target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET -o target/release/$CRATE_NAME.stripped
 #  - strip -s target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET -o target/release/$CRATE_NAME
   - ./upx --best target/release/$CRATE_NAME.stripped -o target/release/$CRATE_NAME
-  - 7z a -r target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z ./target/release/$CRATE_NAME ./README-release.md ./LICENSE
-  - sha256sum target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z > target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET.7z.sha256
+  - 7z a -r target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET$TRAVIS_TAG.7z ./target/release/$CRATE_NAME ./README-release.md ./LICENSE
+  - sha256sum target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET$TRAVIS_TAG.7z > target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET$TRAVIS_TAG.7z.sha256
 
 deploy:
   # look at

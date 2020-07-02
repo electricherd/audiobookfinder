@@ -17,7 +17,7 @@ pub fn convert_internal_message(internal_msg: &InternalUiMsg) -> Result<WSJsonOu
             NetMessages::ShowNewHost => Ok(WSJsonOut::update(ViewData::host(
                 forward_net_message.cnt.clone(),
             ))),
-            NetMessages::ShowStats { show: stats } => Ok(WSJsonOut::nothing()),
+            NetMessages::ShowStats { show: _stats } => Ok(WSJsonOut::nothing()),
         },
         InternalUiMsg::StartAnimate(paths_alive, status) => match paths_alive {
             CollectionPathAlive::BusyPath(nr) => Ok(WSJsonOut::searching(AnimateData::cnt(
