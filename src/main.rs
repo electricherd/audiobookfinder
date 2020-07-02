@@ -188,11 +188,8 @@ fn main() -> io::Result<()> {
 
                     info!("net started!!");
                     let net_system_messages = tx_net;
-                    let mut network = Net::new(
-                        key_keeper::get_p2p_server_id(),
-                        has_tui,
-                        net_system_messages,
-                    );
+                    let mut network =
+                        Net::new(key_keeper::get_p2p_server_id(), has_ui, net_system_messages);
 
                     // startup net synchronization
                     wait_net.wait();
@@ -228,7 +225,6 @@ fn main() -> io::Result<()> {
             let collection_data_in_iterator = collection_protected.clone();
             search_in_single_path(
                 has_ui,
-                has_tui,
                 collection_data_in_iterator,
                 sender_loop,
                 index,
@@ -289,7 +285,6 @@ fn main() -> io::Result<()> {
 
 fn search_in_single_path(
     has_ui: bool,
-    has_tui: bool,
     collection_protected: sync::Arc<sync::Mutex<Collection>>,
     mutex_to_ui_msg: sync::Arc<sync::Mutex<Sender<UiUpdateMsg>>>,
     index: usize,
@@ -299,24 +294,20 @@ fn search_in_single_path(
         println!("[{:?}] looking into path {:?}", index, elem);
     } else {
         // send start animation for that path
-        if has_tui {
-            mutex_to_ui_msg
-                .lock()
-                .and_then(|locked_to_start_ui_message| {
-                    trace!("send startAnimation for path {:?}", index);
-                    locked_to_start_ui_message
-                        .send(UiUpdateMsg::CollectionUpdate(
-                            CollectionPathAlive::BusyPath(index),
-                            Status::ON,
-                        ))
-                        .unwrap_or_else(|_| {
-                            warn!("... lost start animation for index {:?}", index)
-                        });
-                    trace!("start busy animation");
-                    Ok(())
-                })
-                .unwrap_or_else(|_| error!("... that should not happen here at start"));
-        }
+        mutex_to_ui_msg
+            .lock()
+            .and_then(|locked_to_start_ui_message| {
+                trace!("send startAnimation for path {:?}", index);
+                locked_to_start_ui_message
+                    .send(UiUpdateMsg::CollectionUpdate(
+                        CollectionPathAlive::BusyPath(index),
+                        Status::ON,
+                    ))
+                    .unwrap_or_else(|_| warn!("... lost start animation for index {:?}", index));
+                trace!("start busy animation");
+                Ok(())
+            })
+            .unwrap_or_else(|_| error!("... that should not happen here at start"));
     }
     let locked_collection = &mut *collection_protected.lock().unwrap();
 
@@ -326,26 +317,22 @@ fn search_in_single_path(
         Ok(local_stats) => {
             if has_ui {
                 // send stop animation for that path
-                if has_tui {
-                    trace!("send stopAnimation for path {:?}", index);
-                    mutex_to_ui_msg
-                        .lock()
-                        .and_then(|locked_to_stop_ui_message| {
-                            locked_to_stop_ui_message
-                                .send(UiUpdateMsg::CollectionUpdate(
-                                    CollectionPathAlive::BusyPath(index),
-                                    Status::OFF,
-                                ))
-                                .unwrap_or_else(|_| {
-                                    warn!("... lost stop animation for {:?}", index)
-                                });
-                            trace!("stop busy animation");
-                            Ok(())
-                        })
-                        .unwrap_or_else(|_| {
-                            error!("... that should not happen here at stop");
-                        });
-                }
+                trace!("send stopAnimation for path {:?}", index);
+                mutex_to_ui_msg
+                    .lock()
+                    .and_then(|locked_to_stop_ui_message| {
+                        locked_to_stop_ui_message
+                            .send(UiUpdateMsg::CollectionUpdate(
+                                CollectionPathAlive::BusyPath(index),
+                                Status::OFF,
+                            ))
+                            .unwrap_or_else(|_| warn!("... lost stop animation for {:?}", index));
+                        trace!("stop busy animation");
+                        Ok(())
+                    })
+                    .unwrap_or_else(|_| {
+                        error!("... that should not happen here at stop");
+                    });
             } else {
                 let text = format!(
                     "\n\
@@ -363,21 +350,19 @@ fn search_in_single_path(
         Err(_e) => {
             let text = format!("An error has occurred in search path [{}]!!", index);
             if has_ui {
-                if has_tui {
-                    let debug_message_id = NetMessages::Debug;
-                    mutex_to_ui_msg
-                        .lock()
-                        .and_then(|locked_update_message| {
-                            locked_update_message
-                                .send(UiUpdateMsg::NetUpdate(ForwardNetMessage::new(
-                                    debug_message_id,
-                                    text,
-                                )))
-                                .unwrap();
-                            Ok(())
-                        })
-                        .unwrap();
-                }
+                let debug_message_id = NetMessages::Debug;
+                mutex_to_ui_msg
+                    .lock()
+                    .and_then(|locked_update_message| {
+                        locked_update_message
+                            .send(UiUpdateMsg::NetUpdate(ForwardNetMessage::new(
+                                debug_message_id,
+                                text,
+                            )))
+                            .unwrap();
+                        Ok(())
+                    })
+                    .unwrap();
             } else {
                 println!("{:?}", text);
             }
