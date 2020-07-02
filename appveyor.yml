@@ -119,11 +119,10 @@ after_build:
   - sh: 7z a -r $CRATE_NAME-$UBUNTU_VER-$target.7z ./target/release/$CRATE_NAME ./README-release.md ./LICENSE
   - sh: sha256sum $CRATE_NAME-$UBUNTU_VER-$target.7z > $CRATE_NAME-$UBUNTU_VER-$target.7z.sha256
 # windows
-  - cmd: copy target\x86_64-pc-windows-msvc\release\audiobookfinder.exe target\release\audiobookfinder-x86_64-pc-windows-msvc.exe
-  - cmd: echo "upx --best target\release\%CRATE_NAME%-%target%.7z -o target/release/%CRATE_NAME%"
-  - cmd: 7z a -r target\release\audiobookfinder-x86_64-pc-windows-msvc.7z target\release\audiobookfinder-x86_64-pc-windows-msvc.exe README-release.md LICENSE
-  - cmd: certUtil -hashfile target\release\audiobookfinder-x86_64-pc-windows-msvc.7z SHA256 > target\release\audiobookfinder-x86_64-pc-windows-msvc.7z.sha256
-
+  - cmd: copy "target\%target%\release\%CRATE_NAME%.exe" "target\release\%CRATE_NAME%-%target%-orig.exe"
+  - cmd: upx --best "target\release\%CRATE_NAME%-%target%-orig.exe" -o "target\release\%CRATE_NAME%-%target%.exe"
+  - cmd: 7z a -r "%CRATE_NAME%-%target%.7z" "target\release\%CRATE_NAME%-%target%.exe" README-release.md LICENSE
+  - cmd: certUtil -hashfile "%CRATE_NAME%-%target%.7z" SHA256 > "%CRATE_NAME%-%target%.7z.sha256"
 
 test_script:
 # comment next lines for quick build  
