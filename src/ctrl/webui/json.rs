@@ -1,7 +1,7 @@
 ///! Definition and description of the yet output json format to webui
 ///
 use super::{
-    super::super::ctrl::{ForwardNetMessage, NetMessages, Status},
+    super::super::ctrl::{NetMessages, Status},
     CollectionPathAlive, InternalUiMsg,
 };
 use serde_json;
