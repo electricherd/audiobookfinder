@@ -113,6 +113,11 @@ after_build:
   - sh: ./upx --best target/release/$CRATE_NAME-$UBUNTU_VER-$target.stripped -o target/release/$CRATE_NAME
   - sh: 7z a -r $CRATE_NAME-$UBUNTU_VER-$target.7z ./target/release/$CRATE_NAME ./README-release.md ./LICENSE
   - sh: sha256sum $CRATE_NAME-$UBUNTU_VER-$target.7z > $CRATE_NAME-$UBUNTU_VER-$target.7z.sha256
+# windows
+  - cmd: copy target\%target%\release\%CRATE_NAME% target\release\%CRATE_NAME%-%target%
+  - cmd: 7z a -r %CRATE_NAME%-%target%.7z target\release\%CRATE_NAME%-%target% README-release.md LICENSE
+  - cmd: certUtil -hashfile %CRATE_NAME%-%target%.7z SHA256 > %CRATE_NAME%-%target%.7z.sha256
+#  sha256sum and upx later
 
 test_script:
 # comment next lines for quick build  
@@ -121,10 +126,14 @@ test_script:
   - sh: ./target/$target/release/$CRATE_NAME -- testaudio  
 
 artifacts:
+  - path: %CRATE_NAME%-%target%.7z
+    name: windowsBuild
+  - path: %CRATE_NAME%-%target%.7z.sha256
+    name: windowsSha
   - path: $CRATE_NAME-$UBUNTU_VER-$target.7z
-    name: zippedFiles
+    name: linuxBuild
   - path: $CRATE_NAME-$UBUNTU_VER-$target.7z.sha256
-    name: shachecksum
+    name: linuxSha
 
 deploy:
 # due to mutually exclusive branch and tagged (https://www.appveyor.com/docs/branches/)
