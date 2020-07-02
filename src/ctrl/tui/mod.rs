@@ -11,6 +11,7 @@ use cursive::{
     traits::*, //{Identifiable,select};
     views::{Dialog, Layer, LinearLayout, ListView, Panel, ResizedView, TextView},
     Cursive,
+    CursiveExt,
 };
 use std::{
     iter::Iterator,

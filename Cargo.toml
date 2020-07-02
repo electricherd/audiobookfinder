@@ -68,11 +68,11 @@ libp2p = "0.20"      # network stack for secure p2p with mdns and general commun
 
 # cursive is the tui
 [dependencies.cursive]
-version = "0.14"
+version = "0.15"
 default-features = false
 
 [features]
-default = ["cursive/termion-backend"]
+default = ["cursive/crossterm-backend"]
 system-alloc = []
 
 [profile.release]
