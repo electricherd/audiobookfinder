@@ -126,9 +126,9 @@ test_script:
   - sh: ./target/$target/release/$CRATE_NAME -- testaudio  
 
 artifacts:
-  - path: %CRATE_NAME%-%target%.7z
+  - path: "%CRATE_NAME%-%target%.7z"
     name: windowsBuild
-  - path: %CRATE_NAME%-%target%.7z.sha256
+  - path: "%CRATE_NAME%-%target%.7z.sha256"
     name: windowsSha
   - path: $CRATE_NAME-$UBUNTU_VER-$target.7z
     name: linuxBuild
