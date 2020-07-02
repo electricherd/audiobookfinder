@@ -1,7 +1,7 @@
 version: "{build}"
 
 image:
-# - Visual Studio 2017
+- Visual Studio 2017
 - Ubuntu1804
 - Ubuntu2004
 
@@ -22,24 +22,24 @@ environment:
       type: Release
       CHANNEL: stable
       platform: x64
-#    - target: x86_64-pc-windows-msvc
-#      ARCH: amd64
-#      type: Release
-#      CHANNEL: stable
-#      platform: x64
-#      # versions for libs
-#      LIBSODIUM_WIN_VER: 1.0.17
-#      TAGLIB_WIN_VER: 2.1.0
+    - target: x86_64-pc-windows-msvc
+      ARCH: amd64
+      type: Release
+      CHANNEL: stable
+      platform: x64
+      # versions for libs
+      LIBSODIUM_WIN_VER: 1.0.17
+      TAGLIB_WIN_VER: 2.1.0
 
 
 matrix:
   exclude:
-#    - image: Visual Studio 2017
-#      target: x86_64-unknown-linux-gnu
-#    - image: Ubuntu1804
-#      target: x86_64-pc-windows-msvc
-#    - image: Ubuntu2004
-#      target: x86_64-pc-windows-msvc
+    - image: Visual Studio 2017
+      target: x86_64-unknown-linux-gnu
+    - image: Ubuntu1804
+      target: x86_64-pc-windows-msvc
+    - image: Ubuntu2004
+      target: x86_64-pc-windows-msvc
     - image: Ubuntu1804
       UBUNTU_VER: LTS_20.04
     - image: Ubuntu2004
