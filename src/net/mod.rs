@@ -1,10 +1,9 @@
 //! The net module is resonsible for the network related parts,
 //! the mDNS registering, mDNS search, communication server and client.
 //! It also let's us startup and perform everything in yet one step.
-mod connect_from;
-mod connect_to;
 mod data;
 pub mod key_keeper;
+mod noise;
 
 use super::ctrl::{self, ForwardNetMessage};
 
@@ -26,16 +25,16 @@ use std::{self, sync::mpsc::Sender, time::Duration};
 /// * 'has_ui' - if there is an ui present, that would need update messages///
 /// * 'ui_sender' - to send out update ui messages
 pub struct Net {
-    own_peer_id: PeerId,
+    // todo: don't forget, that there are peer methods and life time for this list entries, it
+    //       may be not a good idea to keep it like this, even though it's their ids!
     clients_connected: Arc<Mutex<Vec<PeerId>>>,
     has_ui: bool,
     ui_sender: Sender<ctrl::UiUpdateMsg>,
 }
 
 impl Net {
-    pub fn new(own_peer_id: PeerId, has_ui: bool, ui_sender: Sender<ctrl::UiUpdateMsg>) -> Self {
+    pub fn new(has_ui: bool, ui_sender: Sender<ctrl::UiUpdateMsg>) -> Self {
         Net {
-            own_peer_id,
             clients_connected: Arc::new(Mutex::new(Vec::new())),
             has_ui,
             ui_sender,
@@ -57,9 +56,9 @@ impl Net {
         let mut count_valid = 0;
 
         // prepare everything for mdns thread
-        let my_peer_id = &self.own_peer_id;
+        let my_peer_id = key_keeper::get_p2p_server_id();
         Self::async_mdns_discover(
-            my_peer_id,
+            &my_peer_id,
             &ui_update_sender,
             has_ui,
             borrow_arc_connected_clients,
@@ -105,6 +104,7 @@ impl Net {
                 ))
                 .unwrap();
         }
+
         info!("Starting Mdns Looping!");
         // todo: to gracefully stop here, inside the loop could be a receive, which in an
         //       async select! block or just by try_select waits for a terminate message
@@ -147,14 +147,21 @@ impl Net {
                                 trace!(" Address = {:?}", addr);
                             }
 
-                            *count_valid += 1;
-                            Self::connect_new_clients(
+                            noise::init(
+                                *key_keeper::PRESHARED_SECRET,
                                 new_peer,
-                                borrow_arc_connected_clients.clone(),
-                                ctrl_sender,
-                                has_ui,
+                                &*key_keeper::SERVER_KEY,
                             )
                             .await;
+
+                            // *count_valid += 1;
+                            // Self::connect_new_clients(
+                            //     new_peer,
+                            //     borrow_arc_connected_clients.clone(),
+                            //     ctrl_sender,
+                            //     has_ui,
+                            // )
+                            // .await;
                             count_no_response += 1;
                         } else {
                             trace!("Found myself: {:?}", new_peer.id());
@@ -213,13 +220,6 @@ impl Net {
                 }
                 // put into collection to not find again
                 all_stored_peers.push(new_peer.id().clone());
-
-                // todo: here!!!!!!!!!!!!!!!!!!!!!!!
-                // create ssh client in new thread
-                // let _connect_ip_client_thread = task::spawn(async move {
-                //     let connector = ConnectToOther::new(&id_for_processing);
-                //     connector.run();
-                // });
             }
         }
         ()

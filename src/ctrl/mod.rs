@@ -11,7 +11,7 @@ use super::config;
 
 use async_std::task;
 use crossbeam::sync::WaitGroup;
-use libp2p::PeerId;
+use libp2p_core::PeerId;
 use std::{
     io,
     sync::{
