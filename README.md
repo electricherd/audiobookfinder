@@ -35,19 +35,23 @@ There is an old [Architectural Design in UML](#architecture) to understand a bit
 
 So far only the state charts and their connection is not done but the general communication/lookup works, collecting some data as well.
 
+__It's crossplatform now!__
+
 
 ### Documentation
 It is an inline [CI](https://travis-ci.org/electricherd/audiobookfinder/) generated documentation which can be found [here](https://electricherd.github.io/audiobookfinder/audiobookfinder/index.html)! Rust does a nice job here as well!
 
 ### Changes
+* releases for ubuntu, windows, raspberry (20LTS had a upx packing problem due to changed compiler flags, I suppose)
+* fixed webui behavior, now crossplatform (after cursive backend change, taglib replaced by id3)
 * pretty webui design, net messages as good as tui now, fixed thread termination issues to be mostly graceful
 * webui is in sync now, prepare net messages for webui to maybe replace tui
 * back to many threads, but synced and working just fine - webui must be able to replace tui at some time
-* fixed up many older problems, yet ready for libp2p migration for communication over net
 
 <details>
   <summary>click for older changes</summary>
 
+    * fixed up many older problems, yet ready for libp2p migration for communication over net
     * cleaned up yet inactivated parts: former ssh connection, state machine replacement
     * introducing a nice way to sync threads on startup by creating a channel, send its sender to main thread and block own thread until sender is sent back to self controlled receiver.
     * trying upx in CI builds again
@@ -82,22 +86,17 @@ It is an inline [CI](https://travis-ci.org/electricherd/audiobookfinder/) genera
 </details>
 
 ### ToDo
+* fix collection of data - right now it's just dumb, and just counts files
+* fix key management for libp2p peers
 * fix net behavior with libp2p
-* fix webui to show all updates and infos as libp2p network preparation
 * libp2p changes
-    + uuid not needed any more: identification is done via a hash from public key, so called peer id
     + change from old [state_machine_future](https://docs.rs/state_machine_future/) to [smlang](https://crates.io/crates/smlang) state machine
 * change/replace all net functionality to [libp2p](https://crates.parity.io/libp2p/index.html)
-    + thrussh ssh server/client communication
-    + mDNS from [mDNS](https://crates.parity.io/libp2p/mdns/index.html) 
+    + ~~thrussh ssh server/client communication~~
+    + ~~mDNS from [mDNS](https://crates.parity.io/libp2p/mdns/index.html).~~ 
 * with new feature of [alternative cargo registries](https://blog.rust-lang.org/2019/04/11/Rust-1.34.0.html), ready-made libraries and crates, like [parity](https://crates.parity.io/) with [libp2p](https://crates.parity.io/libp2p/index.html), in a first step [mDNS](https://crates.parity.io/libp2p/mdns/index.html) gets interesting
 * ~~kick ping-pong from webui - websockets don't need it, I suppose, fix boostrap and html issues~~
-* ~~looking into crates like [rust_sodium](https://crates.io/crates/rust_sodium), which might simplify cross compiling~~ replace with libp2p
-* ~~further client thrussh improvements, add secure identification by using zero-knowledge~~ replace with libp2p
-* ~~test more different targets using 
-for client and server~~ hopes on libp2p
-* make cross compiling as easy as possible
-* ~~get rid of Avahi~~ hopefully libp2p covers it
+
 
 ### Architecture
 ![Diagram](diag_architecture_general.svg)
@@ -143,19 +142,11 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
 - [ ] learning and understanding rust macros (some day)
 
 ### Dependencies
-* `libtag1-dev` and `libtagc0-dev` for libtag
-* `libssl-dev` as a clean setup might not have it
+* no non-Rust libraries, it's crossplatform now
 
 
 ### Issues
 * AppVeyor deployment is stuck, it builds but the deployment by git tags is not well documented, and different to Travis.
-* versioning of AppVeyor and Git tag, plus own versioning
-* cross compiling for windows is almost impossible yet, though travis now can support, even in a local VM it is very difficult. OpenSSL, Libsodium are possible but since mDNS or bonjour is used, this looks frustratingly impossible
-* logging from other modules too detailed/too much
-* how to decide if an mDNS device is duplicated (more than 1 ipAdress representation, which is correct?, and do they come not within the same record)
-* no net is a problem
-* bad mDNS search interface to external crate needs a further timeout, even kill a newly created search thread.
-* tui update on Raspberry was slow, better find another way
 
 
 ### Yet in plan
@@ -178,6 +169,7 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
 ### Useful links
 * https://jsfiddle.net/boilerplate/jquery : for people who don't really like js but need it:
 * https://thoughtbot.com/blog/json-event-based-convention-websockets : websockets to js commands
+* https://github.com/Ragnaroek/rust-on-raspberry-docker : headachefree compiling for raspberry pi locally with docker
 
 ### 3rd party (excluding Rust crates)
 * https://getbootstrap.com/docs/4.3/getting-started/introduction/
