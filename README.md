@@ -25,7 +25,8 @@ As a C++ developer, I know some C++11/14/17 enhancements, and some don't convinc
 7. [Dependencies](#dependencies)
 8. [Issues](#issues)
 9. [Yet in plan](#yet-in-plan)
-10. [Useful links](#useful-links)
+10. [Tools](#tools)
+11. [Useful links](#useful-links)
 
 ## My first program in Rust
 I planned to do something useful for myself. The program collects information about audio books on different devices/clients, stores it and then processes it, e.g. showing stats, finding duplicates, aggregating everything at one place by a button click.
@@ -116,6 +117,7 @@ Let's see where also cross compiling for embedded will lead ... (a stub and not 
 ### Goals
 The primary goal is to learn Rust and to cover various aspects of the language, of which some of I already used inside the program, such as:
 - [x] borrowing: the borrow checker, some issues but I am fine with it now
+- [ ] async/await: almost there
 - [x] shared-data over different threads (not yet lifetime optimized)
 - [x] multi-threading, a lot of threads and communication is inside, also  ([Rayon](https://github.com/rayon-rs/rayon))
 - [x] learning [futures](https://en.wikipedia.org/wiki/Futures_and_promises)
@@ -125,16 +127,15 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
 - [x] high-level functionality of different crates / including/using different crates (I don't want to reinvent the wheel, and yes, that is very nice)
 - [x] in-code documentation with html generation, really nice!
 - [x] easy command-line (always was looking for that, nice: [clap](https://github.com/kbknapp/clap-rs))
-- [x]  channel/thread communication (creating worker threads easily, there are plenty implemented yet, no concurrency problems!!) - I implemented own [futures](https://tokio.rs/docs/getting-started/futures/) in a pure inefficient way ... I need to replace them with [futures pattern](https://en.wikipedia.org/wiki/Futures_and_promises) from Tokio or the planned build-in async IO in Rust
-- [x] high level networking (mDNS): theoretically working, but 1st package depends on avahi ([register](https://github.com/plietar/rust-mdns)), [2nd](https://github.com/dylanmckay/mdns) even [fork](https://github.com/NervosFoundation/rust-mdns-discover) causes heavy CPU-load ...
+- [x] channel/thread communication: with Barrier or crossbeam Waitgroup 
+- [x] high level networking, client/server authorization/management: mDNS and more from libp2p2
 - [ ] use the test feature of Rust (one mod only yet), also with example test being tested! - it's in but very few and in the *to-be-removed* modules cursive aka tui
 - [ ] traits (first a simple drop with print message), but then more, need to be more comfortable with debug for formatting - not really defined an own trait but needed to write little trait implementations
-- [x] thread-pool: a simple self written but nice to use implemention :blush:
-- [x] simple timers, alive signal in TUI (yet a sleep thread for each timer, not perfect but since thread-pool quite ok) - should be taken care of by futures in the future or even a small futures timer implementation
+- [x] thread-pool: a simple self written but nice to use implemention :blush: but not needed any more
+- [x] simple timers: inside async: super easy
 - [ ] before multiple c-library dependency: easy cross compile (and test) for raspberry (v1 and v2, v3)... ok the tui update needs adjustment
 - [x] logging (own module for that), good
-- [x] client/server authorization/management in a safe way (some small crypto with [thrussh](https://pijul.org/thrussh/)), looking at [Pierre-Étienne Meunier - Building SSH servers in minutes](https://www.youtube.com/watch?v=TKQoPQcKKTw) - maybe switching after some time to [Parity's libp2p](https://crates.parity.io/libp2p/index.html)
- cross compiling in general, mix of local (with and without docker) and remote compilation (travis with [xargo](https://github.com/japaric/xargo), [cross](https://github.com/japaric/cross/))
+- [ ] cross compiling in general, it's good but not perfect (continue a bit with [xargo](https://github.com/japaric/xargo), [cross](https://github.com/japaric/cross/))
 - [x] CI with [travis](https://travis-ci.org/electricherd/audiobookfinder/) works, cross compiling is still difficult with [trust](https://github.com/japaric/trust), [cross](https://github.com/japaric/cross/), [docker](https://www.docker.com/), need to watch closely to [steed](https://github.com/japaric/steed) for some problem solving.
 - [x] travis automatically built and automatically deployed own public [documentation](https://electricherd.github.io/audiobookfinder/audiobookfinder/index.html)
 - [x] making a library ([adbflib](https://electricherd.github.io/audiobookfinder/adbflib/index.html) as the main part of the program)
@@ -150,21 +151,17 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
 
 
 ### Yet in plan
-* trying first new feature of adding non-crates.io crates by looking into [parity](https://www.parity.io/) crates, especially [mdns](https://crates.parity.io/libp2p/mdns/index.html).
-* want to get rid of mDNS and sd_dns (due to cross compiling problems, etc.) . Maybe this [multicasting](https://bluejekyll.github.io/blog/rust/2018/03/18/multicasting-in-rust.html) and this [rust_dns](https://bluejekyll.github.io/blog/rust/2018/03/18/multicasting-in-rust.html) crate helps
-* create a key yourself!! And store, which is going to be done if not found at startup
-* communication is now easy with ssh but how to authenticate as a valid adbf? Look at ssh details, and zero-knowledge or something similar: hiding key or secrecy knowledge in code without being to obvious (first should be a simple string, don't bother too much by:\
-`ssh-keygen -f ~/.adbf/client_key.priv -N 'adbf' -t ed25519`)
-* rework the one stub for worker thread to have many worker threads in net to do something with found addresses (use thrussh simple example)
 * further lifetimes optimizations
 * exchange of data over net (probably de-/serialization using [serde](https://docs.serde.rs/serde/)) - for sure
+* internationalization (which is not really supported yet by Rust)
+* a good and fast data collection
+* maybe a little AI layer on determining audio books duplicates/same author by similar spelling, etc.
+
+### Tools
 * Editors:
   * [IntelliJ IDEA](https://intellij-rust.github.io/install.html) [download with snaps](https://blog.jetbrains.com/idea/2017/11/install-intellij-idea-with-snaps/), and then Rust plug-in: easy, refactoring, spell-check, nice, first choice now, because of easy type look-up, and other good features 
   * [sublime text](https://www.sublimetext.com) is good and fast, setup was ok, using it now, works very well
   * [atom](https://atom.io/) was for a long time my choice for development, on my Eee Pc [sublime](https://www.sublimetext.com), because of small footprint and performance, but now that is too slow though I really like the Git feature of it, has README.md syntax
-* internationalization (which is not really supported yet by Rust)
-* a good and fast data collection
-* maybe a little AI layer on determining audio books duplicates/same author by similar spelling, etc.
 
 ### Useful links
 * https://jsfiddle.net/boilerplate/jquery : for people who don't really like js but need it:
