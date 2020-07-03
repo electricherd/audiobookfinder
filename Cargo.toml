@@ -65,7 +65,12 @@ serde_derive = "1.0"  # macro usage from serde
 serde_json = "1.0"    # couldn't find actix json to work, this is good and well documented
 bincode = "1.2"       # another binary en/decoder as serde
 
-libp2p = "0.20"      # network stack for secure p2p with mdns and general communication
+# libp2p network stack for secure p2p with mdns and general communication
+libp2p = "0.21.0"
+libp2p-core = "0.20.0"
+libp2p-tcp = "0.20.0"
+libp2p-noise = "0.20.0"
+
 
 # cursive is the tui
 [dependencies.cursive]

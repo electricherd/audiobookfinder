@@ -1,7 +1,7 @@
 //! The oldest module, the data module stores all the data needed to collect.
 use super::config;
 use id3::Tag;
-use libp2p::PeerId;
+use libp2p_core::PeerId;
 use std::{
     cmp,                                     //max
     collections::hash_map::{Entry, HashMap}, // my main item uses a hash map

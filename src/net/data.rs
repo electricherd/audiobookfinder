@@ -1,5 +1,5 @@
 //! The data view of the ssh communication, exchange between mainly client and server.
-use libp2p::PeerId;
+use libp2p_core::PeerId;
 use std::string::String;
 use std::vec::Vec;
 

@@ -188,8 +188,7 @@ fn main() -> io::Result<()> {
 
                     info!("net started!!");
                     let net_system_messages = tx_net;
-                    let mut network =
-                        Net::new(key_keeper::get_p2p_server_id(), has_ui, net_system_messages);
+                    let mut network = Net::new(has_ui, net_system_messages);
 
                     // startup net synchronization
                     wait_net.wait();
