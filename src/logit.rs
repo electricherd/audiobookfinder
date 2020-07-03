@@ -45,12 +45,15 @@ impl Logit {
                 env_logger::init();
             }
             Log::File => {
-                // todo: fix this for binary and see for default!
-                //       from console good is now:
+                // now only from console, good is now:
                 //       RUST_LOG=audiobookfinder=trace,adbflib=trace
+                //       or
+                //         RUST_LOG=adbflib=trace
+                //         RUST_LOG=adbflib::net=trace
+                //         RUST_LOG=audiobookfinder=trace,adbflib=trace
                 // see:
                 // https://rust-lang-nursery.github.io/rust-cookbook/development_tools/debugging/config_log.html
-                flexi_logger::Logger::with_env_or_str("adbflib=debug, adbflib=warn")
+                flexi_logger::Logger::with_env()
                     .log_to_file()
                     .directory(".")
                     .format(flexi_logger::with_thread) // colored_with_thread
