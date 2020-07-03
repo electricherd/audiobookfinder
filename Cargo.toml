@@ -26,6 +26,8 @@ bench = true
 name = "audiobookfinder"
 path = "src/main.rs"
 
+# ################################################################################
+
 [dependencies]
 async-std = "1.6"     # rust std async executor
 
@@ -35,10 +37,9 @@ dirs = "2.0"          # to browse dirs fast in taglib
 lazy_static = "1.4"   # awesome lib for lazy data structures
 
 hostname = "^0.3"    # for host recognition
-
+log = { version="0.4", features = ["release_max_level_off"]}    # basic log feature
 env_logger = "0.7"     # alongside log for logging
 flexi_logger = {version = "0.15", features = ["colors"] }  # a more flexible logger
-log = "0.4"            # basic log feature
 syslog = "5.0"           # another logger for system log
 
 futures = "0.3"     ####   # futures, used in state machine yet (and in many other crates)
@@ -74,17 +75,8 @@ default-features = false
 default = ["cursive/crossterm-backend"]
 system-alloc = []
 
+# ############################################################################
+# see https://doc.rust-lang.org/cargo/reference/profiles.html
 # profiles
 [profile.release]
-panic = "abort"
-lto = false
-codegen-units = 1
-incremental = false
-opt-level = 2
-
-[profile.dev]
-panic = "abort"
-lto = true
-codegen-units = 1
-incremental = false
-opt-level = "z"
+codegen-units = 8
