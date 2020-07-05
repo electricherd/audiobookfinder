@@ -7,15 +7,30 @@ mod noise;
 
 use super::ctrl::{self, ForwardNetMessage};
 
-use async_std::sync::{Arc, Mutex};
+use async_std::{
+    sync::{Arc as AArc, Mutex as AMutex},
+    task::{self, Context, Poll},
+};
+use futures::future::poll_fn;
+use futures::{future::Future, prelude::*};
+use futures_util::{pin_mut, StreamExt};
 use libp2p::{
+    identify::{Identify, IdentifyEvent},
     mdns::{
         service::{self, MdnsPacket, MdnsPeer},
         MdnsService,
     },
-    PeerId,
+    ping::{self, Ping, PingConfig, PingEvent},
+    swarm::NetworkBehaviourEventProcess,
+    PeerId, Swarm,
 };
-use std::{self, sync::mpsc::Sender, time::Duration};
+use std::{
+    self,
+    error::Error,
+    io,
+    sync::{mpsc::Sender, Arc, Mutex},
+    time::Duration,
+};
 
 /// The Net component keeps control about everything from net.
 ///
@@ -88,10 +103,37 @@ impl Net {
         has_ui: bool,
         borrow_arc_connected_clients: Arc<Mutex<Vec<PeerId>>>,
         count_valid: &mut u32,
-    ) -> Result<u32, std::io::Error> {
+    ) -> Result<u32, Box<dyn Error>> {
+        let local_key = &*key_keeper::SERVER_KEY;
+        let local_peer_id = PeerId::from(local_key.public());
+
+        // get the transporter
+        let transport = noise::build_noise_transport(
+            &*key_keeper::SERVER_KEY,
+            Some(*key_keeper::PRESHARED_SECRET),
+        );
+
+        let mut swarm = {
+            let behaviour = noise::CustomBehaviour {
+                identify: Identify::new(
+                    "adbf/0.1.0".into(),
+                    "adbf-agent".into(),
+                    local_key.public(),
+                ),
+                ping: Ping::new(PingConfig::new()),
+            };
+            Swarm::new(transport, behaviour, local_peer_id.clone())
+        };
+
+        //
+        Swarm::listen_on(&mut swarm, "/ip4/0.0.0.0/tcp/0".parse()?)?;
+
         let mut count_no_response: u32 = 0;
 
         let mut service = MdnsService::new()?;
+
+        //pin_mut!(service);
+
         info!("Started Mdns Service!");
 
         // start animation
@@ -109,85 +151,89 @@ impl Net {
         // todo: to gracefully stop here, inside the loop could be a receive, which in an
         //       async select! block or just by try_select waits for a terminate message
         //       through a channel.
-        loop {
-            trace!("taking new package ...");
-            let (mut srv, packet) = service.next().await;
-            match packet {
-                MdnsPacket::Query(query) => {
-                    // We detected a libp2p mDNS query on the network. In a real application, you
-                    // probably want to answer this query by doing `query.respond(...)`.
-                    trace!("Query came in from {:?}", query.remote_addr());
-                    if !has_ui {
-                        println!("Query came in from: {:?}", query.remote_addr());
-                    }
-
-                    // send back own peer ?? todo: a bit more maybe? addresses?
-                    let response = service::build_query_response(
-                        query.query_id(),
-                        own_peer_id.clone(),
-                        vec![].into_iter(), // something or leave it empty??
-                        Duration::from_secs(120),
-                    )
-                    .unwrap();
-                    srv.enqueue_response(response);
+        let poller = futures::future::poll_fn(|cx: &mut Context| {
+            let mut listening = false;
+            match swarm.poll_next_unpin(cx) {
+                Poll::Ready(Some(event)) => {
+                    info!("{:?}", event);
                 }
-                MdnsPacket::Response(response) => {
-                    // We detected a libp2p mDNS response on the network. Responses are for
-                    // everyone and not just for the requester, which makes it possible to
-                    // passively listen.
-                    for new_peer in response.discovered_peers() {
-                        // if found myself then don't connect
-                        if own_peer_id != new_peer.id() {
-                            info!("Discovered: {:?}", new_peer.id());
-                            if !has_ui {
-                                println!("Discovered: {:?}", new_peer.id());
-                            }
-                            // These are the self-reported addresses of the peer we just discovered.
-                            for addr in new_peer.addresses() {
-                                trace!(" Address = {:?}", addr);
-                            }
-
-                            noise::init(
-                                *key_keeper::PRESHARED_SECRET,
-                                new_peer,
-                                &*key_keeper::SERVER_KEY,
-                            )
-                            .await;
-
-                            // *count_valid += 1;
-                            // Self::connect_new_clients(
-                            //     new_peer,
-                            //     borrow_arc_connected_clients.clone(),
-                            //     ctrl_sender,
-                            //     has_ui,
-                            // )
-                            // .await;
-                            count_no_response += 1;
-                        } else {
-                            trace!("Found myself: {:?}", new_peer.id());
-                            // to terminal
-                            if !has_ui {
-                                println!("Found myself: {:?}", new_peer.id());
-                            }
+                Poll::Ready(None) => return Poll::Ready(Ok::<(), ()>(())),
+                Poll::Pending => {
+                    if !listening {
+                        for addr in Swarm::listeners(&mut swarm) {
+                            //info!("Address {} - {}", addr, local_peer_id);
+                            listening = true;
                         }
                     }
                 }
-                MdnsPacket::ServiceDiscovery(query) => {
-                    // The last possibility is a service detection query from DNS-SD.
-                    // Just like `Query`, in a real application you probably want to call
-                    // `query.respond`.
-                    info!("Detected service query from {:?}", query.remote_addr());
+            }
+            Poll::Pending
+        });
+
+        Self::take_mdns(service, has_ui, own_peer_id).await;
+        Ok(count_no_response)
+    }
+
+    async fn take_mdns(service: MdnsService, has_ui: bool, own_peer_id: &PeerId) {
+        trace!("taking new package ...");
+        let (mut srv, packet) = service.next().await;
+        match packet {
+            MdnsPacket::Query(query) => {
+                // We detected a libp2p mDNS query on the network. In a real application, you
+                // probably want to answer this query by doing `query.respond(...)`.
+                trace!("Query came in from {:?}", query.remote_addr());
+                if !has_ui {
+                    println!("Query came in from: {:?}", query.remote_addr());
+                }
+
+                // send back own peer ?? todo: a bit more maybe? addresses?
+                let response = service::build_query_response(
+                    query.query_id(),
+                    own_peer_id.clone(),
+                    vec![].into_iter(), // something or leave it empty??
+                    Duration::from_secs(120),
+                )
+                .unwrap();
+                srv.enqueue_response(response);
+            }
+            MdnsPacket::Response(response) => {
+                // We detected a libp2p mDNS response on the network. Responses are for
+                // everyone and not just for the requester, which makes it possible to
+                // passively listen.
+                for new_peer in response.discovered_peers() {
+                    // if found myself then don't connect
+                    if own_peer_id != new_peer.id() {
+                        info!("Discovered: {:?}", new_peer.id());
+                        if !has_ui {
+                            println!("Discovered: {:?}", new_peer.id());
+                        }
+                        // These are the self-reported addresses of the peer we just discovered.
+                        for addr in new_peer.addresses() {
+                            trace!(" Address = {:?}", addr);
+                        }
+                    } else {
+                        trace!("Found myself: {:?}", new_peer.id());
+                        // to terminal
+                        if !has_ui {
+                            println!("Found myself: {:?}", new_peer.id());
+                        }
+                    }
                 }
             }
-            // todo: really necessary???
-            service = srv
+            MdnsPacket::ServiceDiscovery(query) => {
+                // The last possibility is a service detection query from DNS-SD.
+                // Just like `Query`, in a real application you probably want to call
+                // `query.respond`.
+                info!("Detected service query from {:?}", query.remote_addr());
+            }
         }
-        Ok(count_no_response)
+        // todo: really necessary???
+        //service = srv
     }
 
     async fn connect_new_clients(
         new_peer: &MdnsPeer,
-        peers_connected: Arc<Mutex<Vec<PeerId>>>,
+        peers_connected: AArc<AMutex<Vec<PeerId>>>,
         ctrl_sender: &std::sync::mpsc::Sender<ctrl::UiUpdateMsg>,
         has_ui: bool,
     ) {
