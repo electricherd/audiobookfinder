@@ -27,17 +27,17 @@ use libp2p_tcp::TcpConfig;
 use std::{error::Error, time::Duration};
 
 #[derive(NetworkBehaviour)]
-struct MyBehaviour {
-    identify: Identify,
-    ping: Ping,
+pub struct CustomBehaviour {
+    pub identify: Identify,
+    pub ping: Ping,
 }
-impl NetworkBehaviourEventProcess<IdentifyEvent> for MyBehaviour {
+impl NetworkBehaviourEventProcess<IdentifyEvent> for CustomBehaviour {
     // Called when `identify` produces an event.
     fn inject_event(&mut self, event: IdentifyEvent) {
         trace!("identify: {:?}", event);
     }
 }
-impl NetworkBehaviourEventProcess<PingEvent> for MyBehaviour {
+impl NetworkBehaviourEventProcess<PingEvent> for CustomBehaviour {
     // Called when `ping` produces an event.
     fn inject_event(&mut self, event: PingEvent) {
         use ping::handler::{PingFailure, PingSuccess};
@@ -86,7 +86,7 @@ pub async fn init(
     let transport = build_noise_transport(local_key, Some(psk));
 
     let mut swarm = {
-        let behaviour = MyBehaviour {
+        let behaviour = CustomBehaviour {
             identify: Identify::new("adbf/0.1.0".into(), "adbf-agent".into(), local_key.public()),
             ping: Ping::new(PingConfig::new()),
         };
@@ -127,7 +127,7 @@ pub async fn init(
     Ok(())
 }
 
-fn build_noise_transport(
+pub fn build_noise_transport(
     key_pair: &identity::Keypair,
     psk: Option<PreSharedKey>,
 ) -> impl Transport<

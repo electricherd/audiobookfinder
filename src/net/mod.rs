@@ -153,16 +153,18 @@ impl Net {
         //       through a channel.
         let poller = futures::future::poll_fn(|cx: &mut Context| {
             let mut listening = false;
-            match swarm.poll_next_unpin(cx) {
-                Poll::Ready(Some(event)) => {
-                    info!("{:?}", event);
-                }
-                Poll::Ready(None) => return Poll::Ready(Ok::<(), ()>(())),
-                Poll::Pending => {
-                    if !listening {
-                        for addr in Swarm::listeners(&mut swarm) {
-                            //info!("Address {} - {}", addr, local_peer_id);
-                            listening = true;
+            loop {
+                match swarm.poll_next_unpin(cx) {
+                    Poll::Ready(Some(event)) => {
+                        info!("{:?}", event);
+                    }
+                    Poll::Ready(None) => return Poll::Ready(Ok::<(), ()>(())),
+                    Poll::Pending => {
+                        if !listening {
+                            for addr in Swarm::listeners(&mut swarm) {
+                                //info!("Address {} - {}", addr, local_peer_id);
+                                listening = true;
+                            }
                         }
                     }
                 }
@@ -170,13 +172,25 @@ impl Net {
             Poll::Pending
         });
 
-        Self::take_mdns(service, has_ui, own_peer_id).await;
+        Self::poll_mdns(service, has_ui, own_peer_id).await;
         Ok(count_no_response)
     }
 
-    async fn take_mdns(service: MdnsService, has_ui: bool, own_peer_id: &PeerId) {
-        trace!("taking new package ...");
-        let (mut srv, packet) = service.next().await;
+    async fn poll_mdns(mut service: MdnsService, has_ui: bool, own_peer_id: &PeerId) {
+        loop {
+            trace!("taking new package ...");
+            let (mut srv, packet) = service.next().await;
+            Self::take_mdns(&mut srv, packet, has_ui, own_peer_id);
+            service = srv;
+        }
+    }
+
+    fn take_mdns(
+        service: &mut MdnsService,
+        packet: MdnsPacket,
+        has_ui: bool,
+        own_peer_id: &PeerId,
+    ) {
         match packet {
             MdnsPacket::Query(query) => {
                 // We detected a libp2p mDNS query on the network. In a real application, you
@@ -194,7 +208,7 @@ impl Net {
                     Duration::from_secs(120),
                 )
                 .unwrap();
-                srv.enqueue_response(response);
+                service.enqueue_response(response);
             }
             MdnsPacket::Response(response) => {
                 // We detected a libp2p mDNS response on the network. Responses are for
@@ -227,8 +241,6 @@ impl Net {
                 info!("Detected service query from {:?}", query.remote_addr());
             }
         }
-        // todo: really necessary???
-        //service = srv
     }
 
     async fn connect_new_clients(
