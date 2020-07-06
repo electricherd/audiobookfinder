@@ -360,7 +360,6 @@ impl Ctrl {
                     net: recv_dialog,
                     cnt: text,
                 }) => {
-                    trace!("net update forwarding");
                     // todo: create a closure/fn to do a multiple send
                     let outter_containment = ForwardNetMessage::new(recv_dialog, text);
                     for forward_sender in multiplex_send {
