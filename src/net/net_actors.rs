@@ -48,13 +48,13 @@ impl NetworkBehaviourEventProcess<MdnsEvent> for CustomBehaviour {
                 for (peer_id, multiaddr) in list {
                     trace!("found new peer {}", peer_id.to_string());
                     self.kademlia.add_address(&peer_id, multiaddr);
-                    self.ui_data.send_to_ui(&peer_id);
+                    self.ui_data.register_address(&peer_id);
                 }
             }
             MdnsEvent::Expired(expired_addresses) => {
                 for (peer_id, multi_addr) in expired_addresses {
                     self.kademlia.remove_address(&peer_id, &multi_addr);
-                    self.ui_data.remove(&peer_id);
+                    self.ui_data.unregister_address(&peer_id);
                 }
             }
         }

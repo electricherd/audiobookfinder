@@ -7,6 +7,7 @@ use super::super::ctrl::{self, ForwardNetMessage, UiUpdateMsg};
 
 pub struct UiData {
     sender: Option<Sender<UiUpdateMsg>>,
+    // todo: use, fill () with some nice data for webui functionality, etc.
     ui_shown_peers: HashMap<PeerId, ()>,
 }
 impl UiData {
@@ -16,7 +17,7 @@ impl UiData {
             ui_shown_peers: HashMap::new(),
         }
     }
-    pub fn send_to_ui(&mut self, peer_id: &PeerId) {
+    pub fn register_address(&mut self, peer_id: &PeerId) {
         let ref mut collection = self.ui_shown_peers;
         if collection.get(peer_id).is_none() {
             // add
@@ -43,7 +44,7 @@ impl UiData {
             }
         }
     }
-    pub fn remove(&mut self, peer_id: &PeerId) {
+    pub fn unregister_address(&mut self, peer_id: &PeerId) {
         //
         let ref mut collection = self.ui_shown_peers;
         if collection.remove(peer_id).is_none() {

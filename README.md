@@ -5,9 +5,10 @@ An example program to learn [Rust](https://www.rust-lang.org/) and meet its conc
 Rust is an awesome but difficult to learn programming language using different approaches and concepts to solve the current main software development issues for system programming:
  * Secure Programming Concepts: let the computer/compiler do what it can do better than a programmer: safe threading, error-concepts, forbid everything non-safe by default
  * Quality: high level language concepts, easy to embed and include high quality external packages, which lets you implement more functionality in less code
- * Embedded: easy cross compiling, interfaces to C, becoming better to be stripped down to core system functions for the sake of minimum code footprint. Async/Await for non OS programs, `no_std` and the `async executors` (even own ones) will be important. 
+ * Embedded: easy cross compiling, interfaces to C, becoming better to be stripped down to core system functions for the sake of minimum code footprint. async/await for non OS programs, `no_std` and the `async executors` (even own ones) will be important.
  * Parallelism and Concurrency: what else to do with multi-core cpu, we are not getting much faster anymore, and often cpus are idling due to blocking code. With async / await and futures Rust offers with its security features a very good way of dealing with it. 
  * Testing and Documentation: some build-in concepts
+ * Crossplatform: many, good Rust libraries are crossplatform, and building on top of that just works
 
 Especially for IoT: I want secure and thereby safe products at home which cannot be turned into zombie devices by buffer overflow and injection, always think of what can go wrong, and let the compiler tell you when you do a common mistake.
 
@@ -43,6 +44,7 @@ __It's crossplatform now!__
 It is an inline [CI](https://travis-ci.org/electricherd/audiobookfinder/) generated documentation which can be found [here](https://electricherd.github.io/audiobookfinder/audiobookfinder/index.html)! Rust does a nice job here as well!
 
 ### Changes
+* using libp2p network swarm, replacing single-on mdsn with it, but having same functionality
 * releases for ubuntu, windows, raspberry (20LTS had a upx packing problem due to changed compiler flags, I suppose)
 * fixed webui behavior, now crossplatform (after cursive backend change, taglib replaced by id3)
 * pretty webui design, net messages as good as tui now, fixed thread termination issues to be mostly graceful
@@ -87,17 +89,10 @@ It is an inline [CI](https://travis-ci.org/electricherd/audiobookfinder/) genera
 </details>
 
 ### ToDo
+* let client/server talk a little
+* fix ForwardNetMessage and NetMessage, non-sense and not-usable data into a proper structure
+* add ui data from swarm peer (timeout, another representation, other info)
 * fix collection of data - right now it's just dumb, and just counts files
-* fix key management for libp2p peers
-* fix net behavior with libp2p
-* libp2p changes
-    + change from old [state_machine_future](https://docs.rs/state_machine_future/) to [smlang](https://crates.io/crates/smlang) state machine
-* change/replace all net functionality to [libp2p](https://crates.parity.io/libp2p/index.html)
-    + ~~thrussh ssh server/client communication~~
-    + ~~mDNS from [mDNS](https://crates.parity.io/libp2p/mdns/index.html).~~ 
-* with new feature of [alternative cargo registries](https://blog.rust-lang.org/2019/04/11/Rust-1.34.0.html), ready-made libraries and crates, like [parity](https://crates.parity.io/) with [libp2p](https://crates.parity.io/libp2p/index.html), in a first step [mDNS](https://crates.parity.io/libp2p/mdns/index.html) gets interesting
-* ~~kick ping-pong from webui - websockets don't need it, I suppose, fix boostrap and html issues~~
-
 
 ### Architecture
 ![Diagram](diag_architecture_general.svg)
@@ -111,8 +106,6 @@ The Continuous Integration is done on 2 services, Travis and AppVeyor but will p
     * [Audiobookfinder Build Linux 16.04](https://travis-ci.org/electricherd/audiobookfinder) ![travis](https://travis-matrix-badges.herokuapp.com/repos/electricherd/audiobookfinder/branches/master/2)
     * only until version 0.1.18: [Audiobookfinder Build Linux 14.04](https://travis-ci.org/electricherd/audiobookfinder) ![travis](https://travis-matrix-badges.herokuapp.com/repos/electricherd/audiobookfinder/branches/master/1)
 
-
-Let's see where also cross compiling for embedded will lead ... (a stub and not working Windows compile is already in AppVeyor but cannot yet be compiled due to the usage of crate `Cursive` which uses crate `Termion` which doesn't work on Windows, only when cursive is taken out it will be possible).
 
 ### Goals
 The primary goal is to learn Rust and to cover various aspects of the language, of which some of I already used inside the program, such as:
@@ -144,7 +137,6 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
 
 ### Dependencies
 * no non-Rust libraries, it's crossplatform now
-
 
 ### Issues
 * AppVeyor deployment is stuck, it builds but the deployment by git tags is not well documented, and different to Travis.
