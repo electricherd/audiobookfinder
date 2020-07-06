@@ -33,7 +33,7 @@ async-std = "1.6"     # rust std async executor
 
 crossbeam = "0.7"
 clap = "2.33"         # for the command line parsing
-dirs = "2.0"          # to browse dirs fast in taglib
+dirs = "3.0"          # to browse dirs fast in taglib
 lazy_static = "1.4"   # awesome lib for lazy data structures
 
 hostname = "^0.3"    # for host recognition
@@ -61,7 +61,6 @@ get_if_addrs = "0.5"  # for range of localhosts
 serde = "1.0"         # serialize anything, awesome for communication items
 serde_derive = "1.0"  # macro usage from serde
 serde_json = "1.0"    # couldn't find actix json to work, this is good and well documented
-bincode = "1.2"       # another binary en/decoder as serde
 
 # libp2p network stack for secure p2p with mdns and general communication
 libp2p = "0.21.0"

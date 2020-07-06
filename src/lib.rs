@@ -37,7 +37,6 @@ extern crate serde_derive;
 extern crate tree_magic; // mime types
 
 // net
-extern crate bincode;
 extern crate dirs;
 
 // com_client.rs com_server.rs

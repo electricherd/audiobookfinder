@@ -1,9 +1,9 @@
 version: "{build}"
 
 image:
+- Ubuntu2004
 - Visual Studio 2017
 - Ubuntu1804
-- Ubuntu2004
 
 environment:
   global:
@@ -70,8 +70,8 @@ install:
   #
   # shell: Linux
   #
-  - sh: curl -L https://github.com/upx/upx/releases/download/v3.96/upx-3.96-amd64_linux.tar.xz > upx.xz
-  - sh: tar -xf ./upx.xz upx-3.96-amd64_linux/upx --strip-components=1 -C .
+  - sh: curl -L https://github.com/upx/upx/releases/download/v3.95/upx-3.95-amd64_linux.tar.xz > upx.xz
+  - sh: tar -xf ./upx.xz upx-3.95-amd64_linux/upx --strip-components=1 -C .
   - sh: ./upx --version
   - sh: echo $CRATE_NAME-$target-$APPVEYOR_REPO_TAG_NAME
   - sh: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > ./rustup.sh
