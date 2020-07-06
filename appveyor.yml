@@ -163,6 +163,7 @@ deploy:
 # don't build on travis configuration changes
 skip_commits:
   files:
+    - ci/
     - .travis.yml
     - README.md
     - README-release.md
