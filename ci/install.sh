@@ -50,6 +50,7 @@ main() {
       armv7-unknown-linux-gnueabihf)
          sudo apt-get update -qq \
          && docker pull ragnaroek/rust-raspberry:1.43.1 \
+         && docker build --tag rust-raspberry:1.43.1 . \
          && docker run --volume .:/home/cross/project rust-raspberry:1.43.1
       ;;
       arm-unknown-linux-gnueabi)
