@@ -34,26 +34,23 @@ main() {
            ;;
            # xenial has libsodium-dev already
            LTS_16.04)
-           sudo apt-get install -qq libavahi-compat-libdnssd-dev -y \
-           && sudo apt-get install libsodium-dev -y
+           sudo apt-get update -qq \
+           && curl -L https://github.com/upx/upx/releases/download/v3.96/upx-3.96-amd64_linux.tar.xz > upx.xz \
+           && tar -xf ./upx.xz upx-3.96-amd64_linux/upx --strip-components=1 -C . \
+           && ./upx --version
            ;;
          esac
          #docker build -t electricherd/adbfimage:0.1.13 ci/docker/x86_64-unknown-linux-gnu
       ;;
       i686-unknown-linux-gnu)
        rustup target install i686-unknown-linux-gnu \
-         && sudo apt-get install -qq libavahi-compat-libdnssd-dev -y \
-         && sudo add-apt-repository ppa:james-page/0mq -y \
          && sudo apt-get update -qq \
          && sudo apt-get install libsodium-dev -y
       ;;
       armv7-unknown-linux-gnueabihf)
-#       rustup target install armv7-unknown-linux-gnueabihf \
-#         && sudo apt-get install -qq arm-linux-gnueabihf-gcc \
-#         && sudo add-apt-repository ppa:segf4ult/zeromq -y \
-#         && sudo apt-get update -qq \
-#         && sudo apt-get install libsodium-dev -y
-        #docker build -t electricherd/adbfimage:0.1.15 ci/docker/armv7-unknown-linux-gnueabihf
+         sudo apt-get update -qq \
+         && docker pull ragnaroek/rust-raspberry:1.43.1 \
+         && docker run --volume .:/home/cross/project rust-raspberry:1.43.1
       ;;
       arm-unknown-linux-gnueabi)
        sudo apt-get install -qq libavahi-compat-libdnssd-dev -y

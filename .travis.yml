@@ -25,6 +25,11 @@ jobs:
       name: job_build_linux_16_04_nightly      
       env: UBUNTU_VER=LTS_16.04 TARGET=x86_64-unknown-linux-gnu
       rust: nightly
+    - os : linux
+      dist: buster
+      name: jobs_build_linux_buster_raspberry
+      env : UBUNTU_VER=buster TARGET=armv7-unknown-linux-gnueabihf
+      rust: stable
   #- os: osx
   #  env: TARGET=x86_64-apple-darwin
   allow_failures:
@@ -57,9 +62,6 @@ install:
   - bash ci/install.sh
   - source ~/.cargo/env || true
   # get upx directly from github
-  - curl -L https://github.com/upx/upx/releases/download/v3.96/upx-3.96-amd64_linux.tar.xz > upx.xz
-  - tar -xf ./upx.xz upx-3.96-amd64_linux/upx --strip-components=1 -C .
-  - ./upx --version
   - echo $CRATE_NAME-$target-$TRAVIS_TAG
   # install xargo before / later inside ci/install.sh
   # force should be replaced by a check but travis is mysterious
