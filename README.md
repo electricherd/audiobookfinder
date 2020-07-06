@@ -8,7 +8,7 @@ Rust is an awesome but difficult to learn programming language using different a
  * Embedded: easy cross compiling, interfaces to C, becoming better to be stripped down to core system functions for the sake of minimum code footprint. async/await for non OS programs, `no_std` and the `async executors` (even own ones) will be important.
  * Parallelism and Concurrency: what else to do with multi-core cpu, we are not getting much faster anymore, and often cpus are idling due to blocking code. With async / await and futures Rust offers with its security features a very good way of dealing with it. 
  * Testing and Documentation: some build-in concepts
- * Crossplatform: many, good Rust libraries are crossplatform, and building on top of that just works
+ * Crossplatform: many good Rust libraries are crossplatform, and building on top of that just works
 
 Especially for IoT: I want secure and thereby safe products at home which cannot be turned into zombie devices by buffer overflow and injection, always think of what can go wrong, and let the compiler tell you when you do a common mistake.
 
@@ -31,11 +31,9 @@ As a C++ developer, I know some C++11/14/17 enhancements, and some don't convinc
 
 ## My first program in Rust
 I planned to do something useful for myself. The program collects information about audio books on different devices/clients, stores it and then processes it, e.g. showing stats, finding duplicates, aggregating everything at one place by a button click.
-The task of collecting audio book data can be exchanged with any other task, this basically leads to a local network agent approach with zero-config.
+The task of collecting audio book data can be exchanged with any other task, this basically leads to a local network agent approach with a libp2p swarm.
 
-There is an old [Architectural Design in UML](#architecture) to understand a bit beforehand, and see some goals which have not been accomplished. Because of a bigger overhaul of net design, thrussh is already removed, the net functionality will be very different.
-
-So far only the state charts and their connection is not done but the general communication/lookup works, collecting some data as well.
+There is the [Architectural Design in UML](#architecture).
 
 __It's crossplatform now!__
 
