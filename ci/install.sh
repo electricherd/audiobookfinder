@@ -50,8 +50,8 @@ main() {
       armv7-unknown-linux-gnueabihf)
          sudo apt-get update -qq \
          && docker pull ragnaroek/rust-raspberry:1.43.1 \
-         && echo "****************************" \
-         && docker run --volume .:/home/cross/project ragnaroek/rust-raspberry:1.43.1
+         && echo "############" \
+         && docker run --volume "$PWD:/home/cross/project" ragnaroek/rust-raspberry:1.43.1
       ;;
       arm-unknown-linux-gnueabi)
        sudo apt-get install -qq libavahi-compat-libdnssd-dev -y
