@@ -7,7 +7,7 @@ license = "MIT" # http://spdx.org/licenses/
 repository = "https://github.com/electricherd/audiobookfinder"
 readme = "README.md"
 documentation = "https://electricherd.github.io/audiobookfinder/audiobookfinder/"
-keywords = ["rust", "tui", "mdns", "libp2p", "webui", "websockets"]
+keywords = ["rust", "tui", "mdns", "libp2p", "webui", "websockets", "actix"]
 publish = false
 homepage = "https://github.com/electricherd/audiobookfinder"
 description = "A program to collect information from audio books, gathered from multiple clients."
@@ -57,8 +57,6 @@ actix-web-actors = "2.0"
 
 webbrowser = "0.5"    # for opening webpage on machine
 get_if_addrs = "0.5"  # for range of localhosts
-
-smlang = "0.3"      # state machine for client server communication for data exchange
 
 serde = "1.0"         # serialize anything, awesome for communication items
 serde_derive = "1.0"  # macro usage from serde
