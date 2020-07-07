@@ -25,6 +25,7 @@ extern crate actix;
 extern crate actix_files;
 extern crate actix_web;
 extern crate actix_web_actors;
+extern crate bincode;
 extern crate get_if_addrs;
 extern crate hostname;
 extern crate webbrowser;

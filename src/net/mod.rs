@@ -79,7 +79,7 @@ impl Net {
                 None
             });
 
-            let behaviour = net_actors::CustomBehaviour {
+            let behaviour = net_actors::AdbfBehavior {
                 kademlia,
                 mdns: Mdns::new()?,
                 ui_data,

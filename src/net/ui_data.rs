@@ -17,7 +17,7 @@ impl UiData {
             ui_shown_peers: HashMap::new(),
         }
     }
-    pub fn register_address(&mut self, peer_id: &PeerId, multi_addresses: &Multiaddr) {
+    pub fn register_address(&mut self, peer_id: &PeerId, multi_addresses: &Multiaddr) -> bool {
         let ref mut collection = self.ui_shown_peers;
         if collection.get(peer_id).is_none() {
             // add
@@ -36,6 +36,9 @@ impl UiData {
                     )))
                     .unwrap_or_else(|e| error!("use one: {}", e));
             }
+            true
+        } else {
+            false
         }
     }
     pub fn unregister_address(&mut self, peer_id: &PeerId) {

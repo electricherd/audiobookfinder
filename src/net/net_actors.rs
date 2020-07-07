@@ -15,10 +15,11 @@
 use super::ui_data::UiData;
 
 use async_std::io;
+use bincode;
 use libp2p::{
     kad::{
-        record::store::MemoryStore, Kademlia, KademliaEvent, PeerRecord, PutRecordOk, QueryResult,
-        Record,
+        record, store::MemoryStore, Kademlia, KademliaEvent, PeerRecord, PutRecordOk, QueryResult,
+        Quorum, Record,
     },
     mdns::{Mdns, MdnsEvent},
     pnet::{PnetConfig, PreSharedKey},
@@ -31,23 +32,48 @@ use libp2p_core::{
 };
 use libp2p_noise::{Keypair, NoiseConfig, X25519Spec};
 use libp2p_tcp::TcpConfig;
-use std::{error::Error, time::Duration};
+use std::{
+    error::Error,
+    time::{Duration, SystemTime},
+};
+
+#[allow(non_camel_case_types)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
+// #[serde(tag = "type", content = "cnt")]
+enum MkadKeys {
+    AllPeers,
+}
+#[allow(non_camel_case_types)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
+struct MkadPeers {
+    peers: Vec<MKadPeerStatus>,
+}
+#[allow(non_camel_case_types)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
+struct MKadPeerStatus {
+    peer: String,
+    knows: bool,
+    joined: SystemTime,
+}
 
 #[derive(NetworkBehaviour)]
-pub struct CustomBehaviour {
+pub struct AdbfBehavior {
     pub kademlia: Kademlia<MemoryStore>,
     pub mdns: Mdns,
     #[behaviour(ignore)]
     pub ui_data: UiData,
 }
-impl NetworkBehaviourEventProcess<MdnsEvent> for CustomBehaviour {
+impl NetworkBehaviourEventProcess<MdnsEvent> for AdbfBehavior {
     // Called when `mdns` produces an event.
     fn inject_event(&mut self, event: MdnsEvent) {
         match event {
             MdnsEvent::Discovered(list) => {
                 for (peer_id, multiaddr) in list {
-                    self.ui_data.register_address(&peer_id, &multiaddr);
+                    let update = self.ui_data.register_address(&peer_id, &multiaddr);
                     self.kademlia.add_address(&peer_id, multiaddr);
+                    if update {
+                        self.test_send(peer_id.to_string());
+                    }
                 }
             }
             MdnsEvent::Expired(expired_addresses) => {
@@ -59,7 +85,7 @@ impl NetworkBehaviourEventProcess<MdnsEvent> for CustomBehaviour {
         }
     }
 }
-impl NetworkBehaviourEventProcess<KademliaEvent> for CustomBehaviour {
+impl NetworkBehaviourEventProcess<KademliaEvent> for AdbfBehavior {
     // Called when `kademlia` produces an event.
     fn inject_event(&mut self, message: KademliaEvent) {
         match message {
@@ -70,11 +96,7 @@ impl NetworkBehaviourEventProcess<KademliaEvent> for CustomBehaviour {
                         ..
                     } in ok.records
                     {
-                        info!(
-                            "Got record {:?} {:?}",
-                            std::str::from_utf8(key.as_ref()).unwrap(),
-                            std::str::from_utf8(&value).unwrap(),
-                        );
+                        self.retrieve_record(key, value);
                     }
                 }
                 QueryResult::GetRecord(Err(err)) => {
@@ -132,4 +154,48 @@ pub fn build_noise_transport(
         .authenticate(noise_config)
         .multiplex(yamux_config)
         .timeout(Duration::from_secs(20))
+}
+
+impl AdbfBehavior {
+    pub fn test_send(&mut self, some_string: String) {
+        let message = MKadPeerStatus {
+            peer: some_string,
+            knows: true,
+            joined: SystemTime::now(),
+        };
+        let bin_key = record::Key::new(&bincode::serialize(&MkadKeys::AllPeers).unwrap());
+        // just clone this one
+        let bin_key_get = bin_key.clone();
+
+        let bin_message = bincode::serialize(&message).unwrap();
+        let record = Record {
+            key: bin_key,
+            value: bin_message,
+            publisher: None,
+            expires: None,
+        };
+        // write out
+        self.kademlia
+            .put_record(record, Quorum::One)
+            .expect("Failed to store record locally.");
+
+        // and get from others
+        self.kademlia.get_record(&bin_key_get, Quorum::One);
+    }
+
+    fn retrieve_record(&mut self, key: record::Key, value: Vec<u8>) {
+        if let Ok(fits_mkad_keys) = bincode::deserialize::<MkadKeys>(&key.to_vec()) {
+            match fits_mkad_keys {
+                MkadKeys::AllPeers => {
+                    let this_status: MKadPeerStatus = bincode::deserialize(&value).unwrap();
+                    info!(
+                        "from {} at time {} was {:?}",
+                        this_status.peer, this_status.knows, this_status.joined
+                    );
+                }
+            }
+        } else {
+            error!("unknown MkadKeys format");
+        }
+    }
 }
