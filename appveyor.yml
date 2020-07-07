@@ -116,8 +116,8 @@ build_script:
 test_script:
   - sh: cargo test
   - cmd: cargo test
-  - sh: .target/$target/release/$CRATE_NAME -- testaudio
-#  - cmd: "target\%target%\release\%CRATE_NAME%.exe" -- testaudio
+  - sh: ./target/$target/release/$CRATE_NAME -- testaudio
+  - cmd: "target\%target%\release\%CRATE_NAME%.exe" -- testaudio
 
 after_build:
   - sh: cp target/$target/release/$CRATE_NAME target/release/$CRATE_NAME-$UBUNTU_VER-$target
