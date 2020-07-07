@@ -3,7 +3,7 @@
 use libp2p_core::PeerId;
 use std::{collections::HashMap, sync::mpsc::Sender};
 
-use super::super::ctrl::{self, ForwardNetMessage, UiUpdateMsg};
+use super::super::ctrl::{self, ForwardNetMessage, UiPeer, UiUpdateMsg};
 
 pub struct UiData {
     sender: Option<Sender<UiUpdateMsg>>,
@@ -25,20 +25,20 @@ impl UiData {
             // and send
             if let Some(ctrl_sender) = &self.sender {
                 ctrl_sender
-                    .send(ctrl::UiUpdateMsg::NetUpdate(ForwardNetMessage::new(
-                        ctrl::NetMessages::ShowNewHost,
-                        peer_id.to_string(),
+                    .send(ctrl::UiUpdateMsg::NetUpdate(ForwardNetMessage::Add(
+                        UiPeer {
+                            id: peer_id.to_string(),
+                        },
                     )))
                     .unwrap_or_else(|e| error!("use one: {}", e));
                 ctrl_sender
-                    .send(ctrl::UiUpdateMsg::NetUpdate(ForwardNetMessage::new(
+                    .send(ctrl::UiUpdateMsg::NetUpdate(ForwardNetMessage::Stats(
                         ctrl::NetMessages::ShowStats {
                             show: ctrl::NetStats {
                                 line: 0, // todo: some count still
                                 max: 0,  //index,
                             },
                         },
-                        String::from(""),
                     )))
                     .unwrap();
             }
@@ -47,7 +47,15 @@ impl UiData {
     pub fn unregister_address(&mut self, peer_id: &PeerId) {
         //
         let ref mut collection = self.ui_shown_peers;
-        if collection.remove(peer_id).is_none() {
+        if collection.remove(peer_id).is_some() {
+            if let Some(ctrl_sender) = &self.sender {
+                ctrl_sender
+                    .send(ctrl::UiUpdateMsg::NetUpdate(ForwardNetMessage::Delete(
+                        peer_id.to_string(),
+                    )))
+                    .unwrap_or_else(|e| error!("use one: {}", e));
+            }
+        } else {
             //
             warn!("Trying to remove something which wasn't there ...");
         }

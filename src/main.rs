@@ -7,13 +7,6 @@ extern crate adbflib;
 extern crate clap;
 extern crate rayon;
 
-use adbflib::ctrl::ForwardNetMessage;
-use adbflib::{
-    ctrl::{CollectionPathAlive, Ctrl, NetMessages, Status, UiUpdateMsg},
-    data::{self, Collection},
-    logit,
-    net::{key_keeper, Net},
-};
 use async_std::task;
 use crossbeam::sync::WaitGroup;
 use log::{error, info, trace, warn};
@@ -26,6 +19,13 @@ use std::{
         mpsc::{channel, Sender},
         Arc, Mutex,
     },
+};
+
+use adbflib::{
+    ctrl::{CollectionPathAlive, Ctrl, ForwardNetMessage, NetMessages, Status, UiUpdateMsg},
+    data::{self, Collection},
+    logit,
+    net::{key_keeper, Net},
 };
 
 static INPUT_FOLDERS: &str = "folders";
@@ -349,14 +349,12 @@ fn search_in_single_path(
         Err(_e) => {
             let text = format!("An error has occurred in search path [{}]!!", index);
             if has_ui {
-                let debug_message_id = NetMessages::Debug;
                 mutex_to_ui_msg
                     .lock()
                     .and_then(|locked_update_message| {
                         locked_update_message
-                            .send(UiUpdateMsg::NetUpdate(ForwardNetMessage::new(
-                                debug_message_id,
-                                text,
+                            .send(UiUpdateMsg::NetUpdate(ForwardNetMessage::Stats(
+                                NetMessages::Debug(text),
                             )))
                             .unwrap();
                         Ok(())

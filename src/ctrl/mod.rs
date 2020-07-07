@@ -39,21 +39,22 @@ pub enum Status {
 
 #[derive(Clone)]
 pub enum NetMessages {
-    Debug,
-    ShowNewHost,
+    Debug(String),
     ShowStats { show: NetStats },
 }
 
+type UiIDPeerClonable = String;
 #[derive(Clone)]
-pub struct ForwardNetMessage {
-    net: NetMessages,
-    cnt: String,
+pub struct UiPeer {
+    //
+    pub id: UiIDPeerClonable,
 }
 
-impl ForwardNetMessage {
-    pub fn new(net: NetMessages, cnt: String) -> Self {
-        Self { net, cnt }
-    }
+#[derive(Clone)]
+pub enum ForwardNetMessage {
+    Add(UiPeer),
+    Delete(UiIDPeerClonable),
+    Stats(NetMessages),
 }
 
 /// internal messages inside ui
@@ -356,18 +357,22 @@ impl Ctrl {
     ) -> bool {
         if let Ok(forward_sys_message) = receiver.recv() {
             match forward_sys_message {
-                UiUpdateMsg::NetUpdate(ForwardNetMessage {
-                    net: recv_dialog,
-                    cnt: text,
-                }) => {
-                    // todo: create a closure/fn to do a multiple send
-                    let outter_containment = ForwardNetMessage::new(recv_dialog, text);
-                    for forward_sender in multiplex_send {
-                        forward_sender
-                            .send(InternalUiMsg::Update(outter_containment.clone()))
-                            .unwrap_or_else(|_| {
-                                warn!("forwarding message cancelled probably due to quitting!");
-                            });
+                UiUpdateMsg::NetUpdate(forward_net_message) => {
+                    match forward_net_message {
+                        ForwardNetMessage::Stats(_net_message) => {
+                            // todo: implement stats here
+                        }
+                        ForwardNetMessage::Add(peer_id_to_add) => {
+                            // todo: create a closure/fn to do a multiple send
+                            for forward_sender in multiplex_send {
+                                forward_sender
+                                    .send(InternalUiMsg::Update( ForwardNetMessage::Add( peer_id_to_add.clone())))
+                                    .unwrap_or_else(|_| {
+                                        warn!("forwarding message cancelled probably due to quitting!");
+                                    });
+                            }
+                        }
+                        ForwardNetMessage::Delete(_) => (),
                     }
                     true
                 }

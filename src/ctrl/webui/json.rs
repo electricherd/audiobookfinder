@@ -1,7 +1,7 @@
 ///! Definition and description of the yet output json format to webui
 ///
 use super::{
-    super::super::ctrl::{NetMessages, Status},
+    super::super::ctrl::{ForwardNetMessage, NetMessages, Status},
     CollectionPathAlive, InternalUiMsg,
 };
 use serde_json;
@@ -12,12 +12,17 @@ use std::fmt;
 /// not be send out but was tried to do ...
 pub fn convert_internal_message(internal_msg: &InternalUiMsg) -> Result<WSJsonOut, String> {
     match internal_msg {
-        InternalUiMsg::Update(ref forward_net_message) => match forward_net_message.net {
-            NetMessages::Debug => Err("No debug messages".to_string()),
-            NetMessages::ShowNewHost => Ok(WSJsonOut::update(ViewData::host(
-                forward_net_message.cnt.clone(),
-            ))),
-            NetMessages::ShowStats { show: _stats } => Ok(WSJsonOut::nothing()),
+        InternalUiMsg::Update(ref forward_net_message) => match forward_net_message {
+            ForwardNetMessage::Stats(message) => match message {
+                NetMessages::Debug(_text) => Err("No debug messages".to_string()),
+                NetMessages::ShowStats { show: _stats } => Ok(WSJsonOut::nothing()),
+            },
+            ForwardNetMessage::Add(ui_peer_to_add) => {
+                Ok(WSJsonOut::update(ViewData::host(ui_peer_to_add.id.clone())))
+            }
+            ForwardNetMessage::Delete(ui_peer_id_to_add) => {
+                Ok(WSJsonOut::update(ViewData::host(ui_peer_id_to_add.clone())))
+            }
         },
         InternalUiMsg::StartAnimate(paths_alive, status) => match paths_alive {
             CollectionPathAlive::BusyPath(nr) => Ok(WSJsonOut::searching(AnimateData::cnt(

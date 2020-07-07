@@ -1,10 +1,6 @@
 //! The TUI parts, greatly using [Cursive](https://gyscos.github.io/Cursive/cursive/index.html)
 //! showing table, the paths being searched, an alive for that, also the mDNS search performed
 //! and later status of the connection to the found clients.
-use super::super::{
-    config,
-    ctrl::{CollectionPathAlive, ForwardNetMessage, InternalUiMsg, NetMessages, Status},
-};
 use async_std::task;
 use cursive::{
     align,
@@ -17,6 +13,11 @@ use std::{
     iter::Iterator,
     sync::mpsc::{Receiver, Sender},
     time::Duration,
+};
+
+use super::super::{
+    config,
+    ctrl::{CollectionPathAlive, ForwardNetMessage, InternalUiMsg, NetMessages, Status, UiPeer},
 };
 
 #[derive(Clone)]
@@ -124,33 +125,50 @@ impl Tui {
 
         if let Ok(message) = tui_receiver.try_recv() {
             match message {
-                InternalUiMsg::Update(ForwardNetMessage {
-                    net: recv_dialog,
-                    cnt: text,
-                }) => match recv_dialog {
-                    NetMessages::ShowNewHost => {
+                InternalUiMsg::Update(forward_net_message) => match forward_net_message {
+                    ForwardNetMessage::Add(ui_peer) => {
                         if let Some(mut host_list) = self.handle.find_name::<ListView>(VIEW_LIST_ID)
                         {
-                            host_list.add_child("", TextView::new(format!("{}", text)));
+                            host_list.add_child(
+                                "",
+                                TextView::new(Tui::split_intelligently_ralign(&ui_peer.id, 50)),
+                            );
                         } else {
                             error!("View {} could not be found!", VIEW_LIST_ID);
                         }
                     }
-                    NetMessages::ShowStats { show } => {
-                        let output = self.handle.find_name::<TextView>(ID_HOST_INDEX);
-                        if let Some(mut found) = output {
-                            found.set_content(show.line.to_string());
+                    ForwardNetMessage::Delete(_ui_peer_to_delete) => {
+                        if let Some(_host_list) = self.handle.find_name::<ListView>(VIEW_LIST_ID) {
+                            // fixme: index or find child first and then remove
+                            // host_list
+                            //     .remove_child(
+                            //         "",
+                            //         TextView::new(format!("{}", ui_peer_to_delete.id)),
+                            //     )
+                            //     .unwrap();
                         } else {
-                            error!("View {} could not be found!", ID_HOST_INDEX);
+                            error!("View {} could not be found!", VIEW_LIST_ID);
                         }
                     }
-                    NetMessages::Debug => {
-                        if let Some(mut found) = self.handle.find_name::<TextView>(DEBUG_TEXT_ID) {
-                            found.set_content(text);
-                        } else {
-                            error!("Debug view {} could not be found!", DEBUG_TEXT_ID);
+                    ForwardNetMessage::Stats(net_message) => match net_message {
+                        NetMessages::ShowStats { show } => {
+                            let output = self.handle.find_name::<TextView>(ID_HOST_INDEX);
+                            if let Some(mut found) = output {
+                                found.set_content(show.line.to_string());
+                            } else {
+                                error!("View {} could not be found!", ID_HOST_INDEX);
+                            }
                         }
-                    }
+                        NetMessages::Debug(text) => {
+                            if let Some(mut found) =
+                                self.handle.find_name::<TextView>(DEBUG_TEXT_ID)
+                            {
+                                found.set_content(text);
+                            } else {
+                                error!("Debug view {} could not be found!", DEBUG_TEXT_ID);
+                            }
+                        }
+                    },
                 },
                 InternalUiMsg::StartAnimate(signal, on_off) => {
                     let sender_clone = tui_sender.clone();
@@ -220,34 +238,34 @@ impl Tui {
     ///         "A cool hat does not fit you.".into()];
     ///  let expected_output: Vec<String> =
     ///     vec!["The duc..mming.".into(), "A cool ..t you.".into()];
-    ///  let output = adbflib::ctrl::tui::Tui::split_intelligently_ralign(&input_vec, boundary);
+    ///  let output = adbflib::ctrl::tui::Tui::split_intelligently_ralign_vec(&input_vec, boundary);
     ///  ```
     // todo: not public... only due to testing
-    pub fn split_intelligently_ralign(vec: &Vec<String>, max_len: usize) -> Vec<String> {
+    pub fn split_intelligently_ralign_vec(vec: &Vec<String>, max_len: usize) -> Vec<String> {
         let mut out: Vec<String> = Vec::new();
         for el in vec {
-            let real_len = el.chars().count();
-            // simple case
-            if real_len < max_len {
-                out.push(format!(
-                    "{}{}",
-                    " ".repeat(max_len - real_len),
-                    el.to_string()
-                ));
-            } else if real_len < max_len / 2 {
-                out.push(el.chars().skip(real_len - max_len).collect::<String>());
-            } else {
-                let diff = max_len - SEPARATOR.chars().count();
-                let real_middle = diff / 2;
-                let offset = if real_middle * 2 < diff { 1 } else { 0 };
-
-                let first_part = el.chars().take(real_middle + offset).collect::<String>();
-                let last_part = el.chars().skip(real_len - real_middle).collect::<String>();
-
-                out.push(format!("{}{}{}", first_part, SEPARATOR, last_part));
-            }
+            out.push(Self::split_intelligently_ralign(el, max_len));
         }
         out
+    }
+
+    pub fn split_intelligently_ralign(el: &String, max_len: usize) -> String {
+        let real_len = el.chars().count();
+        // simple case
+        if real_len < max_len {
+            format!("{}{}", " ".repeat(max_len - real_len), el.to_string())
+        } else if real_len < max_len / 2 {
+            el.chars().skip(real_len - max_len).collect::<String>()
+        } else {
+            let diff = max_len - SEPARATOR.chars().count();
+            let real_middle = diff / 2;
+            let offset = if real_middle * 2 < diff { 1 } else { 0 };
+
+            let first_part = el.chars().take(real_middle + offset).collect::<String>();
+            let last_part = el.chars().skip(real_len - real_middle).collect::<String>();
+
+            format!("{}{}{}", first_part, SEPARATOR, last_part)
+        }
     }
 
     /// Toggle the alive signal by changing the data inside
@@ -356,7 +374,8 @@ impl Tui {
             for i in 0..cols {
                 let my_number = j * max_cols + i; // j >= 1
 
-                let differentiate_path = Self::split_intelligently_ralign(paths, max_table_width);
+                let differentiate_path =
+                    Self::split_intelligently_ralign_vec(paths, max_table_width);
                 let path_name = format!("{}{}", PATHS_PREFIX_ID, my_number);
 
                 horizontal_layout.add_child(Panel::new(
@@ -395,7 +414,7 @@ mod tests {
 
     //run "cargo test -- --nocapture" to see debug println
     fn equal_with_boundary(input: &Vec<String>, expected: &Vec<String>, boundary: usize) -> bool {
-        let output = Tui::split_intelligently_ralign(&input, boundary);
+        let output = Tui::split_intelligently_ralign_vec(&input, boundary);
         println!("|{:?}|", output);
         println!("|{:?}|", expected);
         output.len() == expected.len() && output.iter().zip(expected.iter()).all(|(e, o)| e == o)
@@ -405,7 +424,7 @@ mod tests {
     fn split_intelligently_ralign_exists() {
         let boundary = 20;
         let input_vec: Vec<String> = Vec::new();
-        let _ = Tui::split_intelligently_ralign(&input_vec, boundary);
+        let _ = Tui::split_intelligently_ralign_vec(&input_vec, boundary);
         assert!(true);
     }
 
