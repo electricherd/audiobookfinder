@@ -40,7 +40,7 @@ pub mod webui {
     pub mod jquery {
         lazy_static! {
             pub static ref JS_JQUERY: &'static str =
-                include_str!("ctrl/webui/3rdparty/jquery/jquery-3.4.1.min.js");
+                include_str!("ctrl/webui/3rdparty/jquery/jquery-3.5.1.min.js");
         }
     }
     // 3rd party bootstrap hard-wired: css 317kb + js 107kb + fonts 216kb
