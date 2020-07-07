@@ -5,7 +5,9 @@ use async_std::task;
 use cursive::{
     align,
     traits::*, //{Identifiable,select};
-    views::{Dialog, Layer, LinearLayout, ListView, Panel, ResizedView, TextView},
+    views::{
+        Dialog, Layer, LinearLayout, ListChild, ListView, Panel, ResizedView, TextContent, TextView,
+    },
     Cursive,
     CursiveExt,
 };
@@ -39,6 +41,7 @@ enum AliveSym {
 }
 
 static RECT: usize = 40;
+static INNER: usize = RECT + 10;
 static SEPARATOR: &str = "..";
 static STR_ALIVE: [char; 6] = ['.', '|', '/', '-', '\\', '*']; // first char is start, last char is stop
 
@@ -73,7 +76,7 @@ impl Tui {
         let later_handle = Self::build_tui(title, paths, with_net)?;
 
         // now build the actual TUI object
-        let mut tui = Tui {
+        let mut tui = Self {
             handle: later_handle,
             alive: AliveDisplayData {
                 host: AliveState {
@@ -129,23 +132,39 @@ impl Tui {
                     ForwardNetMessage::Add(ui_peer) => {
                         if let Some(mut host_list) = self.handle.find_name::<ListView>(VIEW_LIST_ID)
                         {
-                            host_list.add_child(
-                                "",
-                                TextView::new(Tui::split_intelligently_ralign(&ui_peer.id, 50)),
-                            );
+                            let content = TextContent::new(Self::split_intelligently_ralign(
+                                &ui_peer.id,
+                                INNER,
+                            ));
+                            host_list.add_child("", TextView::new_with_content(content));
                         } else {
                             error!("View {} could not be found!", VIEW_LIST_ID);
                         }
                     }
-                    ForwardNetMessage::Delete(_ui_peer_to_delete) => {
-                        if let Some(_host_list) = self.handle.find_name::<ListView>(VIEW_LIST_ID) {
-                            // fixme: index or find child first and then remove
-                            // host_list
-                            //     .remove_child(
-                            //         "",
-                            //         TextView::new(format!("{}", ui_peer_to_delete.id)),
-                            //     )
-                            //     .unwrap();
+                    ForwardNetMessage::Delete(ui_peer_to_delete) => {
+                        if let Some(mut host_list) = self.handle.find_name::<ListView>(VIEW_LIST_ID)
+                        {
+                            for i in 0..host_list.len() {
+                                let child = host_list.get_row(i);
+                                match child {
+                                    ListChild::Row(_label, ref view) => {
+                                        // text if view is textview with content of peer
+                                        if let Some(textview) = view.downcast_ref::<TextView>() {
+                                            let found_text =
+                                                textview.get_content().source().to_string();
+                                            let search_text = Self::split_intelligently_ralign(
+                                                &ui_peer_to_delete,
+                                                INNER,
+                                            );
+                                            if found_text == search_text {
+                                                host_list.remove_child(i);
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    ListChild::Delimiter => (),
+                                }
+                            }
                         } else {
                             error!("View {} could not be found!", VIEW_LIST_ID);
                         }
