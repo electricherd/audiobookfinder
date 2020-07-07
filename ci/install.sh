@@ -89,32 +89,28 @@ main() {
        rustup component add rust-src
     fi
 
-
-    # This fetches latest stable release
-    local tag=$(git ls-remote --tags --refs --exit-code https://github.com/japaric/cross \
-                       | cut -d/ -f3 \
-                       | grep -E '^v[0.1.0-9.]+$' \
-                       | $sort --version-sort \
-                       | tail -n1)
-    curl -LSfs https://japaric.github.io/trust/install.sh | \
-        sh -s -- \
-           --force \
-           --git japaric/cross \
-           --tag $tag \
-           --target $target
-
-      # install xargo before / later inside ci/install.sh
-  # force should be replaced by a check but travis is mysterious
-    # compile
+    # install xargo before / later inside ci/install.sh
+    # force should be replaced by a check but travis is mysterious
     case $TARGET in
       x86_64-unknown-linux-gnu|i686-unknown-linux-gnu|arm-unknown-linux-gnueabi|aarch64-unknown-linux-gnu|x86_64-apple-darwin)
-         cargo install xargo --force
+        # This fetches latest stable release
+        local tag=$(git ls-remote --tags --refs --exit-code https://github.com/japaric/cross \
+                           | cut -d/ -f3 \
+                           | grep -E '^v[0.1.0-9.]+$' \
+                           | $sort --version-sort \
+                           | tail -n1)
+        curl -LSfs https://japaric.github.io/trust/install.sh | \
+            sh -s -- \
+               --force \
+               --git japaric/cross \
+               --tag $tag \
+               --target $target
+
+        cargo install xargo --force
       ;;
       armv7-unknown-linux-gnueabihf)
         # don't do anything
       ;;
     esac
-
-
 }
 main
