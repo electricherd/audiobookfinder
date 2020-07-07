@@ -90,6 +90,7 @@ It is an inline [CI](https://travis-ci.org/electricherd/audiobookfinder/) genera
 * let client/server talk a little
 * fix ForwardNetMessage and NetMessage, non-sense and not-usable data into a proper structure
 * add ui data from swarm peer (timeout, another representation, other info)
+* update jquery and bootstrap
 * fix collection of data - right now it's just dumb, and just counts files
 
 ### Architecture
@@ -100,12 +101,12 @@ It is an inline [CI](https://travis-ci.org/electricherd/audiobookfinder/) genera
 The Continuous Integration is done on 2 services, Travis and AppVeyor but will probably once completely moved to AppVeyor because Travis recently only had old LTS 16.04 images, and no possible Windows compilation (they are working on it), so there is:
 * On Appveyor
     * [Audiobookfinder Build Windows](https://ci.appveyor.com/project/electricherd/audiobookfinder/) ![appveyor](https://appveyor-matrix-badges.herokuapp.com/repos/electricherd/audiobookfinder/branch/master/2)
-    * [Audiobookfinder Build Linux 20.04](https://ci.appveyor.com/project/electricherd/audiobookfinder/) ![appveyor](https://appveyor-matrix-badges.herokuapp.com/repos/electricherd/audiobookfinder/branch/master/1)
-    * [Audiobookfinder Build Linux 18.04](https://ci.appveyor.com/project/electricherd/audiobookfinder/) ![appveyor](https://appveyor-matrix-badges.herokuapp.com/repos/electricherd/audiobookfinder/branch/master/3)
+    * [Audiobookfinder Build Ubuntu 20.04](https://ci.appveyor.com/project/electricherd/audiobookfinder/) ![appveyor](https://appveyor-matrix-badges.herokuapp.com/repos/electricherd/audiobookfinder/branch/master/1)
+    * [Audiobookfinder Build Ubuntu 18.04](https://ci.appveyor.com/project/electricherd/audiobookfinder/) ![appveyor](https://appveyor-matrix-badges.herokuapp.com/repos/electricherd/audiobookfinder/branch/master/3)
 * On Travis
-    * [Audiobookfinder Build Linux 16.04](https://travis-ci.org/electricherd/audiobookfinder) ![travis](https://travis-matrix-badges.herokuapp.com/repos/electricherd/audiobookfinder/branches/master/2)
-    * only until version 0.1.18: [Audiobookfinder Build Linux 14.04](https://travis-ci.org/electricherd/audiobookfinder) ![travis](https://travis-matrix-badges.herokuapp.com/repos/electricherd/audiobookfinder/branches/master/1)
-
+    * [Audiobookfinder Build Ubuntu 16.04](https://travis-ci.org/electricherd/audiobookfinder) ![travis](https://travis-matrix-badges.herokuapp.com/repos/electricherd/audiobookfinder/branches/master/1)
+    * [Audiobookfinder Build Debian Buster Raspberry](https://travis-ci.org/electricherd/audiobookfinder) ![travis](https://travis-matrix-badges.herokuapp.com/repos/electricherd/audiobookfinder/branches/master/2)
+    * only until version 0.1.18: Build Linux 14.04
 
 ### Goals
 The primary goal is to learn Rust and to cover various aspects of the language, of which some of I already used inside the program, such as:

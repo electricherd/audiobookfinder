@@ -70,6 +70,7 @@ install:
   #
   # shell: Linux
   #
+  # IMPORTANT: yet 3.96 somehow errors on LTS20 build, 3.95 NOT!! This is why 3.95 is used here
   - sh: curl -L https://github.com/upx/upx/releases/download/v3.95/upx-3.95-amd64_linux.tar.xz > upx.xz
   - sh: tar -xf ./upx.xz upx-3.95-amd64_linux/upx --strip-components=1 -C .
   - sh: ./upx --version
