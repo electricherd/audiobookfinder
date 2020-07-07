@@ -17,7 +17,7 @@ use std::{
 
 use super::super::{
     config,
-    ctrl::{CollectionPathAlive, ForwardNetMessage, InternalUiMsg, NetMessages, Status, UiPeer},
+    ctrl::{CollectionPathAlive, ForwardNetMessage, InternalUiMsg, NetMessages, Status},
 };
 
 #[derive(Clone)]
@@ -401,7 +401,7 @@ impl Tui {
 
         // return the dialog
         let layer =
-            Dialog::around(Layer::new(vertical_layout)).title(format!("This uuid: {}", title));
+            Dialog::around(Layer::new(vertical_layout)).title(format!("Peer ID: {}", title));
         let mut later_handle = later_handle;
         later_handle.add_layer(layer);
         Ok(later_handle)

@@ -48,6 +48,7 @@ type UiIDPeerClonable = String;
 pub struct UiPeer {
     //
     pub id: UiIDPeerClonable,
+    pub addresses: Vec<String>,
 }
 
 #[derive(Clone)]
@@ -362,17 +363,24 @@ impl Ctrl {
                         ForwardNetMessage::Stats(_net_message) => {
                             // todo: implement stats here
                         }
-                        ForwardNetMessage::Add(peer_id_to_add) => {
-                            // todo: create a closure/fn to do a multiple send
+                        ForwardNetMessage::Add(peer_to_add) => {
                             for forward_sender in multiplex_send {
                                 forward_sender
-                                    .send(InternalUiMsg::Update( ForwardNetMessage::Add( peer_id_to_add.clone())))
+                                    .send(InternalUiMsg::Update( ForwardNetMessage::Add( peer_to_add.clone())))
                                     .unwrap_or_else(|_| {
                                         warn!("forwarding message cancelled probably due to quitting!");
                                     });
                             }
                         }
-                        ForwardNetMessage::Delete(_) => (),
+                        ForwardNetMessage::Delete(peer_id_to_remove) => {
+                            for forward_sender in multiplex_send {
+                                forward_sender
+                                    .send(InternalUiMsg::Update( ForwardNetMessage::Delete( peer_id_to_remove.clone())))
+                                    .unwrap_or_else(|_| {
+                                        warn!("forwarding message cancelled probably due to quitting!");
+                                    });
+                            }
+                        }
                     }
                     true
                 }

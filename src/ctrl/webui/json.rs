@@ -18,11 +18,14 @@ pub fn convert_internal_message(internal_msg: &InternalUiMsg) -> Result<WSJsonOu
                 NetMessages::ShowStats { show: _stats } => Ok(WSJsonOut::nothing()),
             },
             ForwardNetMessage::Add(ui_peer_to_add) => {
-                Ok(WSJsonOut::update(ViewData::host(ui_peer_to_add.id.clone())))
+                Ok(WSJsonOut::update(NetData::add(PeerJson {
+                    id: ui_peer_to_add.id.clone(),
+                    addr: ui_peer_to_add.addresses.clone(),
+                })))
             }
-            ForwardNetMessage::Delete(ui_peer_id_to_add) => {
-                Ok(WSJsonOut::update(ViewData::host(ui_peer_id_to_add.clone())))
-            }
+            ForwardNetMessage::Delete(ui_peer_id_to_add) => Ok(WSJsonOut::update(NetData::remove(
+                ui_peer_id_to_add.clone(),
+            ))),
         },
         InternalUiMsg::StartAnimate(paths_alive, status) => match paths_alive {
             CollectionPathAlive::BusyPath(nr) => Ok(WSJsonOut::searching(AnimateData::cnt(
@@ -108,9 +111,17 @@ pub struct InitData {
 
 #[allow(non_camel_case_types)]
 #[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct PeerJson {
+    id: String,
+    addr: Vec<String>,
+}
+
+#[allow(non_camel_case_types)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(tag = "view", content = "cnt")]
-pub enum ViewData {
-    host(String),
+pub enum NetData {
+    add(PeerJson),
+    remove(String),
 }
 
 // This is the critical part here, "event" and "data" to work with
@@ -122,7 +133,7 @@ pub enum WSJsonOut {
     refresh(RefreshData),
     searching(AnimateData),
     init(InitData),
-    update(ViewData),
+    update(NetData),
     nothing(),
 }
 

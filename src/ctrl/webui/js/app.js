@@ -32,7 +32,7 @@ function APPStart() {
         });
 
         ws.bind('update', function(data){
-           updateView(data);
+           updateNetView(data);
         });
 
         window.onbeforeunload = function(event) {
@@ -121,17 +121,34 @@ function showPath(data) {
     }
 }
 
-function updateView(data) {
-    if (data.view === 'host') {
-        let peer_id = data.cnt;
+function updateNetView(data) {
+    if (data.view === 'add') {
+        let peer_id = data.cnt.id;
+        let addresses = data.cnt.addr;
+
         let obj_id =  "host_obj_" + peer_id;
+        let tooltip = "";
+        for(let i = 0; i < addresses.length; i++){
+            tooltip += "<p>" + addresses[i] + "</p>";
+        }
         // create obj
-        let new_el_html = "<tr id='" + obj_id + "'><td class='col-xs-3'>"
+        let new_el_html = "<tr id='" + obj_id + "' "
+                         + "data-toggle='tooltip' data-placement='bottom' data-html='true' "
+                         + "title='<em>Adresses:</em>"
+                         + tooltip
+                         + "'><td class='col-xs-3'>"
                          + peer_id
                          + "</td></tr>";
         new_el = $.parseHTML(new_el_html);
         // append it as an object
         $("#found_peers").append(new_el);
+    }
+    else if (data.view === 'remove') {
+        // delete object
+        let peer_id = data.cnt;
+
+        let obj_id =  "host_obj_" + peer_id;
+        $('#' + obj_id).remove();
     } else {
         console.log("The view '" + data.view + "' is not implemented yet!");
     }

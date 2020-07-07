@@ -1,6 +1,6 @@
 /// a very small mod just for ui data send by net. It is important to
 /// not send all discovery blindly (e.g. duplicates)
-use libp2p_core::PeerId;
+use libp2p_core::{Multiaddr, PeerId};
 use std::{collections::HashMap, sync::mpsc::Sender};
 
 use super::super::ctrl::{self, ForwardNetMessage, UiPeer, UiUpdateMsg};
@@ -17,30 +17,24 @@ impl UiData {
             ui_shown_peers: HashMap::new(),
         }
     }
-    pub fn register_address(&mut self, peer_id: &PeerId) {
+    pub fn register_address(&mut self, peer_id: &PeerId, multi_addresses: &Multiaddr) {
         let ref mut collection = self.ui_shown_peers;
         if collection.get(peer_id).is_none() {
             // add
             collection.insert(peer_id.clone(), ());
+            trace!("found new peer {}", peer_id.to_string());
             // and send
             if let Some(ctrl_sender) = &self.sender {
+                let addr_as_string = multi_addresses.iter().map(|x| x.to_string()).collect();
+
                 ctrl_sender
                     .send(ctrl::UiUpdateMsg::NetUpdate(ForwardNetMessage::Add(
                         UiPeer {
                             id: peer_id.to_string(),
+                            addresses: addr_as_string,
                         },
                     )))
                     .unwrap_or_else(|e| error!("use one: {}", e));
-                ctrl_sender
-                    .send(ctrl::UiUpdateMsg::NetUpdate(ForwardNetMessage::Stats(
-                        ctrl::NetMessages::ShowStats {
-                            show: ctrl::NetStats {
-                                line: 0, // todo: some count still
-                                max: 0,  //index,
-                            },
-                        },
-                    )))
-                    .unwrap();
             }
         }
     }
@@ -48,6 +42,7 @@ impl UiData {
         //
         let ref mut collection = self.ui_shown_peers;
         if collection.remove(peer_id).is_some() {
+            trace!("removed peer {}", peer_id.to_string());
             if let Some(ctrl_sender) = &self.sender {
                 ctrl_sender
                     .send(ctrl::UiUpdateMsg::NetUpdate(ForwardNetMessage::Delete(

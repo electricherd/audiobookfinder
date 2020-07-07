@@ -46,9 +46,8 @@ impl NetworkBehaviourEventProcess<MdnsEvent> for CustomBehaviour {
         match event {
             MdnsEvent::Discovered(list) => {
                 for (peer_id, multiaddr) in list {
-                    trace!("found new peer {}", peer_id.to_string());
+                    self.ui_data.register_address(&peer_id, &multiaddr);
                     self.kademlia.add_address(&peer_id, multiaddr);
-                    self.ui_data.register_address(&peer_id);
                 }
             }
             MdnsEvent::Expired(expired_addresses) => {
