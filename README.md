@@ -42,6 +42,7 @@ __It's crossplatform now!__
 It is an inline [CI](https://travis-ci.org/electricherd/audiobookfinder/) generated documentation which can be found [here](https://electricherd.github.io/audiobookfinder/audiobookfinder/index.html)! Rust does a nice job here as well!
 
 ### Changes
+* boostrap, jquery upgraded, some webui animation, better net communication struct, multiaddr on peer per webui tooltip
 * peers in webui can now deregister because of e.g. timeout
 * using libp2p network swarm, replacing single-on mdsn with it, but having same functionality
 * releases for ubuntu, windows, raspberry (20LTS had a upx packing problem due to changed compiler flags, I suppose)
@@ -90,8 +91,8 @@ It is an inline [CI](https://travis-ci.org/electricherd/audiobookfinder/) genera
 ### ToDo
 * let client/server talk a little
 * add ui data from swarm peer (timeout)
-* update jquery and bootstrap
 * fix collection of data - right now it's just dumb, and just counts files
+* ~~update jquery and bootstrap~~
 * ~~fix ForwardNetMessage and NetMessage, non-sense and not-usable data into a proper structure~~
 * ~~add ui data from swarm peer (timeout, another representation, other info)~~
 

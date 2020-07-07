@@ -357,7 +357,7 @@ impl Tui {
                                 ),
                         ),
                 )
-                .title("Host list"),
+                .title("Peer list"),
             );
         }
 
@@ -400,8 +400,7 @@ impl Tui {
         ));
 
         // return the dialog
-        let layer =
-            Dialog::around(Layer::new(vertical_layout)).title(format!("Peer ID: {}", title));
+        let layer = Dialog::around(Layer::new(vertical_layout)).title(format!("Peer: {}", title));
         let mut later_handle = later_handle;
         later_handle.add_layer(layer);
         Ok(later_handle)

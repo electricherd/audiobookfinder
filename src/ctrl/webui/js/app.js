@@ -7,7 +7,6 @@ function APPStart() {
     state = false;
     // guid_id = "<!--UUID-->";
     guid_id = "devel";
-
     $(document).ready(function(){
     if ("WebSocket" in window) {
         // using something from other js - seems fine
@@ -129,12 +128,13 @@ function updateNetView(data) {
         let obj_id =  "host_obj_" + peer_id;
         let tooltip = "";
         for(let i = 0; i < addresses.length; i++){
-            tooltip += "<p>" + addresses[i] + "</p>";
+            tooltip += "=" + addresses[i] + "=";
         }
         // create obj
         let new_el_html = "<tr id='" + obj_id + "' "
+                        // todo: fix html tooltip
                          + "data-toggle='tooltip' data-placement='bottom' data-html='true' "
-                         + "title='<em>Adresses:</em>"
+                         + "title='Adresses: "
                          + tooltip
                          + "'><td class='col-xs-3'>"
                          + peer_id
@@ -142,13 +142,14 @@ function updateNetView(data) {
         new_el = $.parseHTML(new_el_html);
         // append it as an object
         $("#found_peers").append(new_el);
+        $('#' + obj_id).hide().fadeIn(500);
     }
     else if (data.view === 'remove') {
         // delete object
         let peer_id = data.cnt;
 
         let obj_id =  "host_obj_" + peer_id;
-        $('#' + obj_id).remove();
+        $('#' + obj_id).fadeOut(1500).remove();
     } else {
         console.log("The view '" + data.view + "' is not implemented yet!");
     }
