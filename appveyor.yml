@@ -116,7 +116,7 @@ build_script:
 test_script:
   - sh: cargo test
   - cmd: cargo test
-#  - sh: target/$target/release/$CRATE_NAME -- testaudio
+  - sh: .target/$target/release/$CRATE_NAME -- testaudio
 #  - cmd: "target\%target%\release\%CRATE_NAME%.exe" -- testaudio
 
 after_build:
@@ -131,11 +131,11 @@ after_build:
   - cmd: 7z a -r "%CRATE_NAME%-%target%-%APPVEYOR_REPO_TAG_NAME%.7z" ".\target\release\%CRATE_NAME%.exe" ".\README-release.md" ".\LICENSE"
   - cmd: certUtil -hashfile "%CRATE_NAME%-%target%-%APPVEYOR_REPO_TAG_NAME%.7z" SHA256 > "%CRATE_NAME%-%target%-%APPVEYOR_REPO_TAG_NAME%.7z.sha256"
 
-test_script:
+#test_script:
 # comment next lines for quick build  
 #  - sh: cargo run --release --target $target -- testaudio
 #  - sh: cargo test --release --target $target
-  - sh: ./target/$target/release/$CRATE_NAME -- testaudio  
+#  - sh: ./target/$target/release/$CRATE_NAME -- testaudio
 
 artifacts:
   - path: "%CRATE_NAME%-%target%-%APPVEYOR_REPO_TAG_NAME%.7z"
