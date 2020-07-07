@@ -34,10 +34,7 @@ main() {
            ;;
            # xenial has libsodium-dev already
            LTS_16.04)
-           sudo apt-get update -qq \
-           && curl -L https://github.com/upx/upx/releases/download/v3.96/upx-3.96-amd64_linux.tar.xz > upx.xz \
-           && tar -xf ./upx.xz upx-3.96-amd64_linux/upx --strip-components=1 -C . \
-           && ./upx --version
+           # sudo apt-get update -qq \
            ;;
          esac
          #docker build -t electricherd/adbfimage:0.1.13 ci/docker/x86_64-unknown-linux-gnu
@@ -49,9 +46,7 @@ main() {
       ;;
       armv7-unknown-linux-gnueabihf)
          sudo apt-get update -qq \
-         && docker pull ragnaroek/rust-raspberry:1.43.1 \
-         && echo "############" \
-         && docker run --volume "$PWD:/home/cross/project" ragnaroek/rust-raspberry:1.43.1
+         && docker pull ragnaroek/rust-raspberry:1.43.1
       ;;
       arm-unknown-linux-gnueabi)
        sudo apt-get install -qq libavahi-compat-libdnssd-dev -y
@@ -107,5 +102,19 @@ main() {
            --git japaric/cross \
            --tag $tag \
            --target $target
+
+      # install xargo before / later inside ci/install.sh
+  # force should be replaced by a check but travis is mysterious
+    # compile
+    case $TARGET in
+      x86_64-unknown-linux-gnu|i686-unknown-linux-gnu|arm-unknown-linux-gnueabi|aarch64-unknown-linux-gnu|x86_64-apple-darwin)
+         cargo install xargo --force
+      ;;
+      armv7-unknown-linux-gnueabihf)
+        # don't do anything
+      ;;
+    esac
+
+
 }
 main

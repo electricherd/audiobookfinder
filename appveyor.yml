@@ -96,7 +96,7 @@ install:
   - cmd: 7z e upx-3.96-win64.zip upx-3.96-win64\upx.exe
   - cmd: upx.exe --version
   - cmd: echo "%CRATE_NAME%-%target%-%APPVEYOR_REPO_TAG_NAME%"
-   # old way test download https://libsodium.gitbook.io/doc/installation
+  # old way test download https://libsodium.gitbook.io/doc/installation
   #- cmd: appveyor-retry appveyor DownloadFile https://download.libsodium.org/libsodium/releases/libsodium-%LIBSODIUM_WIN_VER%-stable-msvc.zip -FileName libsodium.7z 
   #- cmd: 7z x -y libsodium.7z -oC:\build_libs\libsodium
   - cmd: curl -sSf -o rustup-init.exe https://win.rustup.rs
@@ -112,6 +112,12 @@ build_script:
 #  - cargo build
   - sh: cargo build --release --target $target  
   - cmd: cargo build --release --target %target%
+
+test_script:
+  - sh: cargo test
+  - cmd: cargo test
+#  - sh: target/$target/release/$CRATE_NAME -- testaudio
+#  - cmd: "target\%target%\release\%CRATE_NAME%.exe" -- testaudio
 
 after_build:
   - sh: cp target/$target/release/$CRATE_NAME target/release/$CRATE_NAME-$UBUNTU_VER-$target
