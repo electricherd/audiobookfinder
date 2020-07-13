@@ -21,7 +21,7 @@ statemachine! {
     *Start + Go = WaitingForPeerAction,
     WaitingForPeerAction + GotANewPeer(NewPeerData) [ not_known ] / process_new_peer = SendKademliaOut,
     SendKademliaOut + Done = WaitingForPeerAction,
-    WaitingForPeerAction + HaveToRemovePeer(PeerId) / remove_peer = WaitingForPeerAction,
+    WaitingForPeerAction + HaveToRemovePeer(PeerId) [ known ] / remove_peer = WaitingForPeerAction,
 }
 
 pub struct AdbfStateChart {
@@ -46,6 +46,9 @@ impl StateMachineContext for AdbfStateChart {
     // guards
     fn not_known(&mut self, event_data: &NewPeerData) -> bool {
         !self.ui_data.has_peer(&event_data.id)
+    }
+    fn known(&mut self, event_data: &PeerId) -> bool {
+        self.ui_data.has_peer(&event_data)
     }
 
     // actions

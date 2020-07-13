@@ -3,7 +3,9 @@
 //! currently kademlia, mdns
 //! https://docs.rs/libp2p/0.21.1/libp2p/swarm/struct.DummyBehaviour.html
 use libp2p::swarm::{
-    protocols_handler, NetworkBehaviour, NetworkBehaviourAction, PollParameters, ProtocolsHandler,
+    protocols_handler, NetworkBehaviour,
+    NetworkBehaviourAction::{self, GenerateEvent},
+    PollParameters, ProtocolsHandler,
 };
 use libp2p_core::{
     connection::{ConnectedPoint, ConnectionId},
@@ -17,18 +19,22 @@ use super::{
 };
 
 /// Events going from StateMachine back to the net behavior
+#[allow(non_camel_case_types)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum SMOutEvents {
-    TestSend(String),
+    MyPathSearchRunning(bool),
 }
 
 //#[derive(Clone, Default)]
 pub struct SMBehaviour {
     sm: sm::StateMachine<AdbfStateChart>,
+    send_buffer: Vec<SMOutEvents>,
 }
 impl SMBehaviour {
     pub fn new(own_peer: PeerId, ui_data: UiData) -> Self {
         Self {
             sm: AdbfStateChart::init(AdbfStateChart::new(own_peer, ui_data)),
+            send_buffer: vec![],
         }
     }
 
@@ -52,12 +58,12 @@ impl SMBehaviour {
                 States::Start => (),                // nothing to do
                 States::WaitingForPeerAction => (), // is just waiting
                 States::SendKademliaOut => {
-                    // todo: forward somehow TestSend
-                    info!("would send out to kademlia!");
+                    self.send_buffer
+                        .push(SMOutEvents::MyPathSearchRunning(true));
                     self.sm.process_event(Done);
                 }
             },
-            Err(_process_without_new_state) => (), // this is normal
+            Err(_process_without_valid_state_transition) => (), // this is normal in a state chart
         }
     }
 }
@@ -95,6 +101,10 @@ impl NetworkBehaviour for SMBehaviour {
             Self::OutEvent,
         >,
     > {
-        Poll::Pending
+        if let Some(item) = self.send_buffer.pop() {
+            Poll::Ready(GenerateEvent(item))
+        } else {
+            Poll::Pending
+        }
     }
 }

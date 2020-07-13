@@ -52,7 +52,7 @@ struct MkadPeers {
 #[allow(non_camel_case_types)]
 #[derive(Serialize, Deserialize, Clone, Debug)]
 struct MKadPeerStatus {
-    peer: String,
+    event: SMOutEvents,
     knows: bool,
     joined: SystemTime,
 }
@@ -119,8 +119,8 @@ impl NetworkBehaviourEventProcess<SMOutEvents> for AdbfBehavior {
     // Called when SM produces an event.
     fn inject_event(&mut self, event: SMOutEvents) {
         match event {
-            SMOutEvents::TestSend(text) => {
-                self.test_send_over_kademlia(text);
+            SMOutEvents::MyPathSearchRunning(isRunning) => {
+                self.test_send_over_kademlia(event);
             }
         }
     }
@@ -165,9 +165,9 @@ pub fn build_noise_transport(
 }
 
 impl AdbfBehavior {
-    pub fn test_send_over_kademlia(&mut self, some_string: String) {
+    pub fn test_send_over_kademlia(&mut self, event: SMOutEvents) {
         let message = MKadPeerStatus {
-            peer: some_string,
+            event,
             knows: true,
             joined: SystemTime::now(),
         };
@@ -197,8 +197,8 @@ impl AdbfBehavior {
                 MkadKeys::AllPeers => {
                     let this_status: MKadPeerStatus = bincode::deserialize(&value).unwrap();
                     info!(
-                        "from {} at time {} was {:?}",
-                        this_status.peer, this_status.knows, this_status.joined
+                        "{:?} at time {} was {:?}",
+                        this_status.event, this_status.knows, this_status.joined
                     );
                 }
             }
