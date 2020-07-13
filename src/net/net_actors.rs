@@ -1,3 +1,4 @@
+use super::sm_behaviour::SMBehaviour;
 /// The net will be represented by a swarm as in libp2p
 /// https://docs.rs/libp2p/latest/libp2p/swarm/index.html.
 ///
@@ -12,7 +13,7 @@
 /// The noise protocol to be used
 /// (http://noiseprotocol.org/)
 ///
-use super::ui_data::UiData;
+use super::sm_behaviour::SMOutEvents;
 
 use async_std::io;
 use bincode;
@@ -60,8 +61,7 @@ struct MKadPeerStatus {
 pub struct AdbfBehavior {
     pub kademlia: Kademlia<MemoryStore>,
     pub mdns: Mdns,
-    #[behaviour(ignore)]
-    pub ui_data: UiData,
+    pub sm_behaviour: SMBehaviour,
 }
 impl NetworkBehaviourEventProcess<MdnsEvent> for AdbfBehavior {
     // Called when `mdns` produces an event.
@@ -69,17 +69,14 @@ impl NetworkBehaviourEventProcess<MdnsEvent> for AdbfBehavior {
         match event {
             MdnsEvent::Discovered(list) => {
                 for (peer_id, multiaddr) in list {
-                    let update = self.ui_data.register_address(&peer_id, &multiaddr);
+                    self.sm_behaviour.mdns_new_peer(&peer_id, &multiaddr);
                     self.kademlia.add_address(&peer_id, multiaddr);
-                    if update {
-                        self.test_send(peer_id.to_string());
-                    }
                 }
             }
             MdnsEvent::Expired(expired_addresses) => {
                 for (peer_id, multi_addr) in expired_addresses {
                     self.kademlia.remove_address(&peer_id, &multi_addr);
-                    self.ui_data.unregister_address(&peer_id);
+                    self.sm_behaviour.mdns_remove(&peer_id);
                 }
             }
         }
@@ -114,6 +111,17 @@ impl NetworkBehaviourEventProcess<KademliaEvent> for AdbfBehavior {
                 _ => {}
             },
             _ => {}
+        }
+    }
+}
+
+impl NetworkBehaviourEventProcess<SMOutEvents> for AdbfBehavior {
+    // Called when SM produces an event.
+    fn inject_event(&mut self, event: SMOutEvents) {
+        match event {
+            SMOutEvents::TestSend(text) => {
+                self.test_send_over_kademlia(text);
+            }
         }
     }
 }
@@ -157,7 +165,7 @@ pub fn build_noise_transport(
 }
 
 impl AdbfBehavior {
-    pub fn test_send(&mut self, some_string: String) {
+    pub fn test_send_over_kademlia(&mut self, some_string: String) {
         let message = MKadPeerStatus {
             peer: some_string,
             knows: true,

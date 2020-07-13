@@ -17,7 +17,13 @@ impl UiData {
             ui_shown_peers: HashMap::new(),
         }
     }
-    pub fn register_address(&mut self, peer_id: &PeerId, multi_addresses: &Multiaddr) -> bool {
+
+    pub fn has_peer(&mut self, peer_id: &PeerId) -> bool {
+        let ref collection = self.ui_shown_peers;
+        collection.get(peer_id).is_some()
+    }
+
+    pub fn register_address(&mut self, peer_id: &PeerId, multi_addresses: &Multiaddr) {
         let ref mut collection = self.ui_shown_peers;
         if collection.get(peer_id).is_none() {
             // add
@@ -36,13 +42,11 @@ impl UiData {
                     )))
                     .unwrap_or_else(|e| error!("use one: {}", e));
             }
-            true
         } else {
-            false
+            error!("Hey, the StateMachine should have made this impossible!!!");
         }
     }
     pub fn unregister_address(&mut self, peer_id: &PeerId) {
-        //
         let ref mut collection = self.ui_shown_peers;
         if collection.remove(peer_id).is_some() {
             trace!("removed peer {}", peer_id.to_string());
@@ -54,7 +58,6 @@ impl UiData {
                     .unwrap_or_else(|e| error!("use one: {}", e));
             }
         } else {
-            //
             warn!("Trying to remove something which wasn't there ...");
         }
     }

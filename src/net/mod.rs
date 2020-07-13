@@ -4,9 +4,12 @@
 mod data;
 pub mod key_keeper;
 mod net_actors;
+mod sm;
+mod sm_behaviour;
 mod ui_data;
 
 use super::ctrl;
+use sm_behaviour::SMBehaviour;
 use ui_data::UiData;
 
 use async_std::task::{self, Context, Poll};
@@ -56,7 +59,7 @@ impl Net {
     /// Discovers mdns on the net and should have a whole
     /// process with discovered clients to share data.
     async fn build_swarm_and_run(
-        _own_peer_id: &PeerId,
+        own_peer_id: &PeerId,
         ctrl_sender: &std::sync::mpsc::Sender<ctrl::UiUpdateMsg>,
         has_ui: bool,
     ) -> Result<(), Box<dyn Error>> {
@@ -82,7 +85,7 @@ impl Net {
             let behaviour = net_actors::AdbfBehavior {
                 kademlia,
                 mdns: Mdns::new()?,
-                ui_data,
+                sm_behaviour: SMBehaviour::new(own_peer_id.clone(), ui_data),
             };
             Swarm::new(transport, behaviour, local_peer_id.clone())
         };
