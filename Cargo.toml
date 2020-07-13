@@ -58,6 +58,7 @@ actix-web-actors = "2.0"
 webbrowser = "0.5"    # for opening webpage on machine
 get_if_addrs = "0.5"  # for range of localhosts
 
+smlang = "0.3"        # state machine for client server communication for data exchange
 serde = "1.0"         # serialize anything, awesome for communication items
 serde_derive = "1.0"  # macro usage from serde
 serde_json = "1.0"    # couldn't find actix json to work, this is good and well documented
@@ -68,7 +69,6 @@ libp2p = "0.21.0"
 libp2p-core = "0.20.0"
 libp2p-tcp = "0.20.0"
 libp2p-noise = "0.20.0"
-
 
 # cursive is the tui
 [dependencies.cursive]
