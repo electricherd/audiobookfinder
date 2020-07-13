@@ -43,7 +43,7 @@ It is an inline [CI](https://travis-ci.org/electricherd/audiobookfinder/) genera
 
 ### Changes
 * state machine was added, wrapped in a layer of a custom net behaviour in the libp2p swarm
-* an unfortunately now unused [observer pattern](wiki/Observer-pattern) was added to wiki - better version of what
+* an unfortunately now unused [observer pattern](../../wiki/Observer-pattern) was added to wiki - better version of what
  could be found in internet (Rust is very restrictive).
 * boostrap, jquery upgraded, some webui animation, better net communication struct, multiaddr on peer per webui tooltip
 * peers in webui can now deregister because of e.g. timeout
