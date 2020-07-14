@@ -37,7 +37,9 @@ impl AdbfStateChart {
     pub fn init(me: Self) -> StateMachine<AdbfStateChart> {
         let mut sm = StateMachine::new(me);
         // todo: is that ok, start here?
-        sm.process_event(Events::Go);
+        if sm.process_event(Events::Go).is_err() {
+            error!("No, no, re-check state chart to hold the Go initial state!");
+        }
         sm
     }
 }

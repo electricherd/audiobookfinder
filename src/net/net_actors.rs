@@ -57,6 +57,8 @@ struct MKadPeerStatus {
     joined: SystemTime,
 }
 
+/// The swarm injected behavior is the key element for the whole communication
+/// See https://docs.rs/libp2p/0.21.1/libp2p/swarm/trait.NetworkBehaviour.html for more
 #[derive(NetworkBehaviour)]
 pub struct AdbfBehavior {
     pub kademlia: Kademlia<MemoryStore>,
@@ -118,11 +120,8 @@ impl NetworkBehaviourEventProcess<KademliaEvent> for AdbfBehavior {
 impl NetworkBehaviourEventProcess<SMOutEvents> for AdbfBehavior {
     // Called when SM produces an event.
     fn inject_event(&mut self, event: SMOutEvents) {
-        match event {
-            SMOutEvents::MyPathSearchRunning(isRunning) => {
-                self.test_send_over_kademlia(event);
-            }
-        }
+        // send whole event
+        self.test_send_over_kademlia(event);
     }
 }
 

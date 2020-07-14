@@ -17,7 +17,7 @@ use std::{
 };
 
 use super::{
-    sm::{self, AdbfStateChart, Events, Events::*, NewPeerData, States},
+    sm::{self, AdbfStateChart, Error as SMError, Events, Events::*, NewPeerData, States},
     ui_data::UiData,
 };
 
@@ -63,14 +63,24 @@ impl SMBehaviour {
                 States::SendKademliaOut => {
                     self.send_buffer
                         .push_back(SMOutEvents::MyPathSearchRunning(true));
-                    self.sm.process_event(Done);
+                    if self.sm.process_event(Done).is_err() {
+                        error!("Done must work here due to state chart design, re-check design!");
+                    }
                 }
             },
-            Err(_process_without_valid_state_transition) => (), // this is normal in a state chart
+            Err(bad_state) => {
+                match bad_state {
+                    SMError::InvalidEvent => warn!("unexpected event transition"),
+                    SMError::GuardFailed => (), // this is quite normal, this is what guards are for
+                }
+            }
         }
     }
 }
 
+/// This is an almost empty SMBehaviour, but callable and with a return OutEvent
+/// and a queue that holds the Polling event, and can be influenced. It basically
+/// lacks all higher network behaviors, but that was just needed.
 impl NetworkBehaviour for SMBehaviour {
     type ProtocolsHandler = protocols_handler::DummyProtocolsHandler;
     type OutEvent = SMOutEvents;
@@ -92,6 +102,7 @@ impl NetworkBehaviour for SMBehaviour {
         _: ConnectionId,
         _: <Self::ProtocolsHandler as ProtocolsHandler>::OutEvent,
     ) {
+        // todo ... maybe use inject_event rather than direkt SMBehaviour calls from net_actors?
     }
 
     fn poll(
