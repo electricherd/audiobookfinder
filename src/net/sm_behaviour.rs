@@ -11,7 +11,10 @@ use libp2p_core::{
     connection::{ConnectedPoint, ConnectionId},
     Multiaddr, PeerId,
 };
-use std::task::{Context, Poll};
+use std::{
+    collections::vec_deque::VecDeque,
+    task::{Context, Poll},
+};
 
 use super::{
     sm::{self, AdbfStateChart, Events, Events::*, NewPeerData, States},
@@ -28,13 +31,13 @@ pub enum SMOutEvents {
 //#[derive(Clone, Default)]
 pub struct SMBehaviour {
     sm: sm::StateMachine<AdbfStateChart>,
-    send_buffer: Vec<SMOutEvents>,
+    send_buffer: VecDeque<SMOutEvents>,
 }
 impl SMBehaviour {
     pub fn new(own_peer: PeerId, ui_data: UiData) -> Self {
         Self {
             sm: AdbfStateChart::init(AdbfStateChart::new(own_peer, ui_data)),
-            send_buffer: vec![],
+            send_buffer: VecDeque::new(),
         }
     }
 
@@ -59,7 +62,7 @@ impl SMBehaviour {
                 States::WaitingForPeerAction => (), // is just waiting
                 States::SendKademliaOut => {
                     self.send_buffer
-                        .push(SMOutEvents::MyPathSearchRunning(true));
+                        .push_back(SMOutEvents::MyPathSearchRunning(true));
                     self.sm.process_event(Done);
                 }
             },
@@ -101,7 +104,7 @@ impl NetworkBehaviour for SMBehaviour {
             Self::OutEvent,
         >,
     > {
-        if let Some(item) = self.send_buffer.pop() {
+        if let Some(item) = self.send_buffer.pop_front() {
             Poll::Ready(GenerateEvent(item))
         } else {
             Poll::Pending
