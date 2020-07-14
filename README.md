@@ -42,9 +42,9 @@ __It's crossplatform now!__
 It is an inline [CI](https://travis-ci.org/electricherd/audiobookfinder/) generated documentation which can be found [here](https://electricherd.github.io/audiobookfinder/audiobookfinder/index.html)! Rust does a nice job here as well!
 
 ### Changes
-* state machine was added, wrapped in a layer of a custom net behaviour in the libp2p swarm
-* an unfortunately now unused [observer pattern](../../wiki/Observer-pattern) was added to wiki - better version of what
- could be found in internet (Rust is very restrictive).
+* state machine was added, wrapped in a layer of a custom net behaviour in the libp2p swarm ([architecture design]((#architecture)) updated)
+* my unfortunately now unused [observer pattern](../../wiki/Observer-pattern) was added to wiki - a better version of what
+ could be found in internet (Rust is very restrictive, some patterns don't work that well).
 * boostrap, jquery upgraded, some webui animation, better net communication struct, multiaddr on peer per webui tooltip
 * peers in webui can now deregister because of e.g. timeout
 * using libp2p network swarm, replacing single-on mdsn with it, but having same functionality
@@ -92,6 +92,8 @@ It is an inline [CI](https://travis-ci.org/electricherd/audiobookfinder/) genera
 </details>
 
 ### ToDo
+* let state machine *talk* (as ipc) with data collection via [crossbeam](https://github.com/crossbeam-rs/crossbeam) (first only the finish search status)
+* look into state and extra data usage of already used [smlang-rs](https://github.com/korken89/smlang-rs/blob/master/examples/event_with_reference_data.rs)
 * think of a protocol what adbf clients agree on and exchange (e.g. still searching, files found, etc) 
 * add ui data from swarm peer (timeout)
 * fix collection of data - right now it's just dumb, and just counts files
@@ -123,16 +125,16 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
 - [x] shared-data over different threads (not yet lifetime optimized)
 - [x] multi-threading, a lot of threads and communication is inside, also  ([Rayon](https://github.com/rayon-rs/rayon))
 - [x] learning [futures](https://en.wikipedia.org/wiki/Futures_and_promises)
-- [x] an optional graphical interface that even runs on console only machines (the [Cursive](https://github.com/gyscos/Cursive) TUI), but probably better...
-- [x] webui, modern and nice with [actix](https://actix.rs/), [bootstrap](https://getbootstrap.com/), and [jquery](https://jquery.com) - but this is only alpha yet
+- [x] an optional graphical interface that even runs on console only machines (the [Cursive](https://github.com/gyscos/Cursive) TUI)
+- [x] webui, modern and nice with [actix](https://actix.rs/), [bootstrap](https://getbootstrap.com/), and [jquery](https://jquery.com)
 - [x] [architecture](#architecture) (modules), did some rework with file structure but it is not yet perfect in Rust, really. Now the code is better hidden inside a library... this gives some more opportunities
 - [x] high-level functionality of different crates / including/using different crates (I don't want to reinvent the wheel, and yes, that is very nice)
 - [x] in-code documentation with html generation, really nice!
 - [x] easy command-line (always was looking for that, nice: [clap](https://github.com/kbknapp/clap-rs))
-- [x] channel/thread communication: with Barrier or crossbeam Waitgroup 
-- [x] high level networking, client/server authorization/management: mDNS and more from libp2p2
+- [x] channel/thread communication control with [crossbeam](https://github.com/crossbeam-rs/crossbeam) *Waitgroup* instead of std barrier 
+- [x] high level networking, client/server authorization/management from libp2p2 (mdns, swarm, noise-protocol transport layer) 
 - [ ] use the test feature of Rust (one mod only yet), also with example test being tested! - it's in but very few and in the *to-be-removed* modules cursive aka tui
-- [ ] traits (first a simple drop with print message), but then more, need to be more comfortable with debug for formatting - not really defined an own trait but needed to write little trait implementations
+- [ ] traits: getting better with unfortunately unused [observer pattern](../../wiki/Observer-pattern) 
 - [x] thread-pool: a simple self written but nice to use implemention :blush: but not needed any more
 - [x] simple timers: inside async: super easy
 - [ ] before multiple c-library dependency: easy cross compile (and test) for raspberry (v1 and v2, v3)... ok the tui update needs adjustment
@@ -141,8 +143,9 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
 - [x] CI with [travis](https://travis-ci.org/electricherd/audiobookfinder/) works, cross compiling is still difficult with [trust](https://github.com/japaric/trust), [cross](https://github.com/japaric/cross/), [docker](https://www.docker.com/), need to watch closely to [steed](https://github.com/japaric/steed) for some problem solving.
 - [x] travis automatically built and automatically deployed own public [documentation](https://electricherd.github.io/audiobookfinder/audiobookfinder/index.html)
 - [x] making a library ([adbflib](https://electricherd.github.io/audiobookfinder/adbflib/index.html) as the main part of the program)
-- [ ] using a [state machine](https://github.com/fitzgen/state_machine_future) where it fits, here for client server *communication* states - inside but yet to really be used (and to decide when to use smaller *futures*)
+- [x] using a Boost-SML style [state machine](https://github.com/korken89/smlang-rs) now, nice one!
 - [ ] learning and understanding rust macros (some day)
+- [x] exchange of data over all kinds of boundaries (net, thread) via de-/serialization using [serde](https://docs.serde.rs/serde/) and its json feature for webui
 
 ### Dependencies
 * no non-Rust libraries, it's crossplatform now
@@ -153,7 +156,6 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
 
 ### Yet in plan
 * further lifetimes optimizations
-* exchange of data over net (probably de-/serialization using [serde](https://docs.serde.rs/serde/)) - for sure
 * internationalization (which is not really supported yet by Rust)
 * a good and fast data collection
 * maybe a little AI layer on determining audio books duplicates/same author by similar spelling, etc.
