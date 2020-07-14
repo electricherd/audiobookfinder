@@ -107,6 +107,7 @@ pub mod webui {
     // own pages
     lazy_static! {
         pub static ref HTML_PAGE: &'static str = include_str!("ctrl/webui/html/single_page.html");
+        pub static ref PEER_PAGE: &'static str = include_str!("ctrl/webui/html/peer_page.html");
         pub static ref JS_APP: &'static str = include_str!("ctrl/webui/js/app.js");
         pub static ref JS_WS_EVENT_DISPATCHER: &'static str =
             include_str!("ctrl/webui/js/ws_events_dispatcher.js");

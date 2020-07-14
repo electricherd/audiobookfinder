@@ -113,6 +113,11 @@ impl WebUI {
                         .data(sync_startup_actor.clone())
                         .service(web::resource("/app.js").to(pages::js_app))
                         .default_service(web::resource("").to(pages::single_page))
+                        .service(web::resource("peer_page.html").to(|| {
+                            HttpResponse::Ok()
+                                .content_type("text/html; charset=utf-8")
+                                .body(*config::webui::PEER_PAGE)
+                        }))
                         //.default_service(web::resource("").to(static_pages::dyn_devel_html)) // only for devel
                         //.service(web::resource("/app.js").to(static_pages::dyn_devel_js)) // only for devel
                         .service(web::resource("/jquery.min.js").to(|| {

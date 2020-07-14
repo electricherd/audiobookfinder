@@ -9,6 +9,9 @@ function APPStart() {
     guid_id = "devel";
     $(document).ready(function(){
     if ("WebSocket" in window) {
+        // peer page for later extendable
+        $('#peer_page').load('peer_page.html');
+
         // using something from other js - seems fine
         var ws = new FancyWebSocket("ws://localhost:8088/ws");
 
