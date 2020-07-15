@@ -126,10 +126,18 @@ fn replace_static_content(html_in: &str, id: &PeerRepresentation) -> String {
         .into_string()
         .unwrap_or(String::from("undefined"));
 
-    let changers: [ReplaceStatic; 4] = [
+    let changers: [ReplaceStatic; 6] = [
         ReplaceStatic {
             r: config::net::HTML_REPLACE_STATIC_URL_SOURCE,
             c: config::net::HTML_URL_SOURCE.to_string(),
+        },
+        ReplaceStatic {
+            r: config::net::HTML_REPLACE_STATIC_WEBSOCKET_ADDR,
+            c: config::net::WEBSOCKET_ADDR.to_string(),
+        },
+        ReplaceStatic {
+            r: config::net::HTML_REPLACE_STATIC_PORT_WEBSOCKET,
+            c: config::net::PORT_WEBSOCKET.to_string(),
         },
         ReplaceStatic {
             r: config::webui::HTML_REPLACE_WEBSOCKET,

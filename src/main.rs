@@ -34,6 +34,7 @@ static ARG_NET: &str = "net";
 static ARG_TUI: &str = "tui";
 static ARG_WEBUI: &str = "webui";
 static ARG_KEEP_ALIVE: &str = "keep";
+static ARG_BROWSER: &str = "browser";
 
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 const AUTHORS: &'static str = env!("CARGO_PKG_AUTHORS");
@@ -99,6 +100,13 @@ fn main() -> io::Result<()> {
                 .takes_value(false),
         )
         .arg(
+            clap::Arg::with_name(ARG_BROWSER)
+                .short("b")
+                .long(ARG_BROWSER)
+                .help("Shall browser be openend automatically (only works with webui).")
+                .takes_value(false),
+        )
+        .arg(
             clap::Arg::with_name(INPUT_FOLDERS)
                 .help("Sets multiple input folder(s) to be searched for audio files.")
                 .multiple(true)
@@ -129,6 +137,7 @@ fn main() -> io::Result<()> {
     let has_webui = has_arg(ARG_WEBUI);
     let has_net = has_arg(ARG_NET);
     let keep_alive = has_arg(ARG_KEEP_ALIVE);
+    let open_browser = has_arg(ARG_BROWSER);
 
     // either one will have a ui, representing data and error messages
     let has_ui = has_tui || has_webui;
@@ -168,6 +177,7 @@ fn main() -> io::Result<()> {
                     wait_ui,
                     has_webui,
                     has_tui,
+                    open_browser,
                 )
             } else {
                 info!("no ui was created!");

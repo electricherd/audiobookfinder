@@ -8,73 +8,73 @@ function APPStart() {
     // guid_id = "<!--UUID-->";
     guid_id = "devel";
     $(document).ready(function(){
-    if ("WebSocket" in window) {
-        // peer page for later extendable
-        $('#peer_page').load('peer_page.html');
+        // keep it for later with different id
+        //$('#peer_page').load('peer_page.html');
 
-        // using something from other js - seems fine
-        var ws = new FancyWebSocket("ws://localhost:8088/ws");
+        if ("WebSocket" in window) {
+            // using something from other js - seems fine
+            var ws = new FancyWebSocket("ws://<!--WEBSOCKET_ADDR-->:<!--PORT_WEBSOCKET-->/ws");
 
-        // the usual suspects
-        ws.bind('open', function(){
-            $('#statusMessage').text("connected");
-            ws.send('start');
-            // register hash UUID
-        });
-        ws.bind('close', function(){
-            gracefullyClose();
-        });
+            // the usual suspects
+            ws.bind('open', function(){
+                $('#statusMessage').text("connected");
+                ws.send('start');
+                // register hash UUID
+            });
+            ws.bind('close', function(){
+                gracefullyClose();
+            });
 
-        ws.bind('init', function(data){
-           showPath(data);
-        });
+            ws.bind('init', function(data){
+               showPath(data);
+            });
 
-        ws.bind('searching', function(data){
-           spinPath(data);
-        });
+            ws.bind('searching', function(data){
+               spinPath(data);
+            });
 
-        ws.bind('update', function(data){
-           updateNetView(data);
-        });
+            ws.bind('update', function(data){
+               updateNetView(data);
+            });
 
-        window.onbeforeunload = function(event) {
-             socket.close();
-        };
-    } else {
-        // The browser doesn't support WebSocket
-        alert("WebSocket NOT supported by your Browser!");
-    }
-
-    $("#btn2").click(function(){
-      //$("#MyActionTable").append("<tr><td>Action</td><td>TimeLastname</td></tr>");
-    });
-
-    // on all buttons it searches for spinner/span ...
-    // todo: clearify how to make it nicer!!
-    $('button').on('click', e => {
-      let spinner = $(e.currentTarget).find('span')
-      spinner.removeClass('d-none')
-      setTimeout(_ => spinner.addClass('d-none'), 2000)
-    })
-
-    // program checks if led_state button was clicked
-    $('#state').click(function() {
-        alert ("click");
-        // changes local led state
-        if (led_state == true){
-            $('#on').hide();
-            $('#off').show();
-            state = false;
-            ws.send("ON");
+            window.onbeforeunload = function(event) {
+                 socket.close();
+            };
+        } else {
+            // The browser doesn't support WebSocket
+            alert("WebSocket NOT supported by your Browser!");
         }
-        else{
-            $('#off').hide();
-            $('#on').show();
-            state = true;
-            ws.send("OFF");
-        }
+
+        $("#btn2").click(function(){
+          //$("#MyActionTable").append("<tr><td>Action</td><td>TimeLastname</td></tr>");
+        });
+
+        // on all buttons it searches for spinner/span ...
+        // todo: clearify how to make it nicer!!
+        $('button').on('click', e => {
+          let spinner = $(e.currentTarget).find('span')
+          spinner.removeClass('d-none')
+          setTimeout(_ => spinner.addClass('d-none'), 2000)
+        })
+
+        // program checks if led_state button was clicked
+        $('#state').click(function() {
+            alert ("click");
+            // changes local led state
+            if (led_state == true){
+                $('#on').hide();
+                $('#off').show();
+                state = false;
+                ws.send("ON");
+            }
+            else{
+                $('#off').hide();
+                $('#on').show();
+                state = true;
+                ws.send("OFF");
+            }
+        });
     });
-  });
 }
 
 function spinPath(data) {
@@ -118,7 +118,7 @@ function showPath(data) {
                          +"<span class='d-none spinner-border spinner-border-sm' role='status' aria-hidden='true'></span>"
                          + "</td></tr>";
         new_el = $.parseHTML(new_el_html);
-        // append it as an object
+        // append it as an object but wait since div creation need little time
         $("#paths_searched").append(new_el);
     }
 }

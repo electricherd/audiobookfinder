@@ -115,6 +115,7 @@ impl Ctrl {
         wait_main: WaitGroup,
         has_webui: bool,
         has_tui: bool,
+        open_browser: bool,
     ) -> Result<(), std::io::Error> {
         // sync both sub uis
         let wait_all_uis = WaitGroup::new();
@@ -163,6 +164,7 @@ impl Ctrl {
                 receiver_to_web_ui_thread,
                 wui_waitgroup,
                 thread_finisher_tui,
+                open_browser,
             )?
         } else {
             // empty thread
@@ -218,6 +220,7 @@ impl Ctrl {
         receiver: Receiver<InternalUiMsg>,
         wait_ui_sync: WaitGroup,
         thread_finisher: Sender<Finisher>,
+        open_browser: bool,
     ) -> Result<thread::JoinHandle<Result<(), std::io::Error>>, std::io::Error> {
         let mut peer_representation: PeerRepresentation = [0 as u8; 16];
         let with_net;
@@ -232,12 +235,18 @@ impl Ctrl {
 
         thread::Builder::new().name("webui".into()).spawn(move || {
             info!("start webui");
-            Self::run_webui(receiver, with_net, peer_representation, paths, wait_ui_sync).or_else(
-                |forward| {
-                    error!("error from webui-server: {}", forward);
-                    Err(forward)
-                },
-            )?;
+            Self::run_webui(
+                receiver,
+                with_net,
+                peer_representation,
+                paths,
+                wait_ui_sync,
+                open_browser,
+            )
+            .or_else(|forward| {
+                error!("error from webui-server: {}", forward);
+                Err(forward)
+            })?;
             info!("stopped webui");
 
             // send finish
@@ -337,9 +346,23 @@ impl Ctrl {
         peer_representation: PeerRepresentation,
         paths: Vec<String>,
         wait_ui_sync: WaitGroup,
+        open_browser: bool,
     ) -> io::Result<()> {
-        if webbrowser::open(&["http://", config::net::WEBSOCKET_ADDR].concat()).is_err() {
-            info!("Could not open browser!");
+        if open_browser {
+            if webbrowser::open(
+                // todo: what if https
+                &[
+                    "http://",
+                    config::net::WEBSOCKET_ADDR,
+                    ":",
+                    &config::net::PORT_WEBSOCKET.to_string(),
+                ]
+                .concat(),
+            )
+            .is_err()
+            {
+                error!("Could not open browser!");
+            }
         }
 
         task::block_on(async move {
