@@ -5,22 +5,11 @@
 /// The network related configurations
 #[allow(non_camel_case_types)]
 pub mod net {
-    /// MDNS service address space
-    pub static MDNS_SERVICE_NAME: &str = "_http._tcp"; // "_tcp.local"
+    pub static WEBSOCKET_ADDR: &str = "localhost";
+    pub static HTML_REPLACE_STATIC_WEBSOCKET_ADDR: &str = "<!--WEBSOCKET_ADDR-->";
 
-    pub static MDNS_REGISTER_NAME: &str = "adbf";
-    pub static MDNS_TIMEOUT_SEC: u16 = 5;
-
-    pub static PORT_MDNS: u16 = 80;
-    pub static PORT_SSH: u16 = 8080;
     pub static PORT_WEBSOCKET: u16 = 8088;
-
-    pub static WEBSOCKET_ADDR: &str = "localhost:8088";
-    pub static HOST: &str = "127.0.0.1";
-
-    /// private key path, relatively to env_home
-    pub static PEER_SEC_KEY_PATH: &str = ".adbf";
-    pub static PEER_SEC_KEY_FILE: &str = "client_key.priv";
+    pub static HTML_REPLACE_STATIC_PORT_WEBSOCKET: &str = "<!--PORT_WEBSOCKET-->";
 
     // todo: make this statically assemble before
     pub static HTML_REPLACE_STATIC_URL_SOURCE: &str = "<!--URL_SOURCE-->";
