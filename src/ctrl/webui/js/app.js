@@ -5,15 +5,15 @@ var known_paths = [];
 // Page onload event handler
 function APPStart() {
     state = false;
-    // guid_id = "<!--PEER_SHA2-->";
-    guid_id = "devel";
+    guid_id = "<!---PEER_HASH--->";
+
     $(document).ready(function(){
         // keep it for later with different id
         //$('#peer_page').load('peer_page.html');
 
         if ("WebSocket" in window) {
             // using something from other js - seems fine
-            var ws = new FancyWebSocket("ws://<!--WEBSOCKET_ADDR-->:<!--PORT_WEBSOCKET-->/ws");
+            var ws = new FancyWebSocket("ws://<!---WEBSOCKET_ADDR--->:<!---PORT_WEBSOCKET--->/ws");
 
             // the usual suspects
             ws.bind('open', function(){
@@ -44,18 +44,6 @@ function APPStart() {
             // The browser doesn't support WebSocket
             alert("WebSocket NOT supported by your Browser!");
         }
-
-        $("#btn2").click(function(){
-          //$("#MyActionTable").append("<tr><td>Action</td><td>TimeLastname</td></tr>");
-        });
-
-        // on all buttons it searches for spinner/span ...
-        // todo: clearify how to make it nicer!!
-        $('button').on('click', e => {
-          let spinner = $(e.currentTarget).find('span')
-          spinner.removeClass('d-none')
-          setTimeout(_ => spinner.addClass('d-none'), 2000)
-        })
 
         // program checks if led_state button was clicked
         $('#state').click(function() {
