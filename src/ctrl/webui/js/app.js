@@ -5,7 +5,7 @@ var known_paths = [];
 // Page onload event handler
 function APPStart() {
     state = false;
-    // guid_id = "<!--UUID-->";
+    // guid_id = "<!--PEER_SHA2-->";
     guid_id = "devel";
     $(document).ready(function(){
         // keep it for later with different id

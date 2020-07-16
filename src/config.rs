@@ -103,9 +103,10 @@ pub mod webui {
         pub static ref FAVICON: &'static [u8] = include_bytes!("ctrl/webui/gfx/favicon.png");
         pub static ref PIC_SHEEP: &'static str = include_str!("ctrl/webui/gfx/sheep.svg");
     }
-    pub static HTML_REPLACE_UUID: &str = "<!--UUID-->";
+    pub static HTML_REPLACE_PEER_SHA2: &str = "<!--PEER_SHA2-->";
     pub static HTML_REPLACE_HOSTNAME: &str = "<!--HOSTNAME-->";
     pub static HTML_REPLACE_WEBSOCKET: &str = "<!--WEBSOCKET-->";
+    pub static HTML_REPLACE_PEER_PAGE: &str = "<!--PEER_PAGE-->";
 }
 
 /// The data related configurations of a more general purpose
