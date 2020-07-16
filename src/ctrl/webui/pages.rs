@@ -126,7 +126,9 @@ fn replace_static_content(html_in: &str, id: &PeerRepresentation) -> String {
         .into_string()
         .unwrap_or(String::from("undefined"));
 
-    let changers: [ReplaceStatic; 6] = [
+    // todo: getting to many replacements, should be done more efficiently!!! Like a regex or so
+    //       or function searching for "<!--" and then a LUT!
+    let changers: [ReplaceStatic; 7] = [
         ReplaceStatic {
             r: config::net::HTML_REPLACE_STATIC_URL_SOURCE,
             c: config::net::HTML_URL_SOURCE.to_string(),
@@ -144,12 +146,16 @@ fn replace_static_content(html_in: &str, id: &PeerRepresentation) -> String {
             c: config::net::WEBSOCKET_ADDR.to_string(),
         },
         ReplaceStatic {
-            r: config::webui::HTML_REPLACE_UUID,
+            r: config::webui::HTML_REPLACE_PEER_SHA2,
             c: id_string,
         },
         ReplaceStatic {
             r: config::webui::HTML_REPLACE_HOSTNAME,
             c: hostname,
+        },
+        ReplaceStatic {
+            r: config::webui::HTML_REPLACE_PEER_PAGE,
+            c: config::webui::PEER_PAGE.to_string(),
         },
     ];
     let mut replace_this = html_in.to_string();
