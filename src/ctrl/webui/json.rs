@@ -1,7 +1,7 @@
 ///! Definition and description of the yet output json format to webui
 ///
 use super::{
-    super::super::ctrl::{ForwardNetMessage, NetMessages, Status},
+    super::super::ctrl::{self, ForwardNetMessage, NetMessages, Status},
     CollectionPathAlive, InternalUiMsg,
 };
 use serde_json;
@@ -19,12 +19,12 @@ pub fn convert_internal_message(internal_msg: &InternalUiMsg) -> Result<WSJsonOu
             },
             ForwardNetMessage::Add(ui_peer_to_add) => {
                 Ok(WSJsonOut::update(NetData::add(PeerJson {
-                    id: ui_peer_to_add.id.clone(),
+                    id: ctrl::peer_hash(&ui_peer_to_add.id),
                     addr: ui_peer_to_add.addresses.clone(),
                 })))
             }
             ForwardNetMessage::Delete(ui_peer_id_to_add) => Ok(WSJsonOut::update(NetData::remove(
-                ui_peer_id_to_add.clone(),
+                ctrl::peer_hash(ui_peer_id_to_add),
             ))),
         },
         InternalUiMsg::StartAnimate(paths_alive, status) => match paths_alive {

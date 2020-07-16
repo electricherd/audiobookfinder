@@ -12,6 +12,8 @@ use cursive::{
     CursiveExt,
 };
 use std::{
+    collections::hash_map::DefaultHasher,
+    hash::Hasher,
     iter::Iterator,
     sync::mpsc::{Receiver, Sender},
     time::Duration,
@@ -19,8 +21,12 @@ use std::{
 
 use super::super::{
     config,
-    ctrl::{CollectionPathAlive, ForwardNetMessage, InternalUiMsg, NetMessages, Status},
+    ctrl::{
+        self, CollectionPathAlive, ForwardNetMessage, InternalUiMsg, NetMessages,
+        PeerRepresentation, Status,
+    },
 };
+use libp2p_core::PeerId;
 
 #[derive(Clone)]
 struct AliveState {
@@ -41,7 +47,7 @@ enum AliveSym {
 }
 
 static RECT: usize = 40;
-static INNER: usize = RECT + 10;
+
 static SEPARATOR: &str = "..";
 static STR_ALIVE: [char; 6] = ['.', '|', '/', '-', '\\', '*']; // first char is start, last char is stop
 
@@ -132,10 +138,7 @@ impl Tui {
                     ForwardNetMessage::Add(ui_peer) => {
                         if let Some(mut host_list) = self.handle.find_name::<ListView>(VIEW_LIST_ID)
                         {
-                            let content = TextContent::new(Self::split_intelligently_ralign(
-                                &ui_peer.id,
-                                INNER,
-                            ));
+                            let content = TextContent::new(ctrl::peer_hash(&ui_peer.id));
                             host_list.add_child("", TextView::new_with_content(content));
                         } else {
                             error!("View {} could not be found!", VIEW_LIST_ID);
@@ -152,10 +155,7 @@ impl Tui {
                                         if let Some(textview) = view.downcast_ref::<TextView>() {
                                             let found_text =
                                                 textview.get_content().source().to_string();
-                                            let search_text = Self::split_intelligently_ralign(
-                                                &ui_peer_to_delete,
-                                                INNER,
-                                            );
+                                            let search_text = ctrl::peer_hash(&ui_peer_to_delete);
                                             if found_text == search_text {
                                                 host_list.remove_child(i);
                                                 break;

@@ -36,7 +36,7 @@ impl UiData {
                 ctrl_sender
                     .send(ctrl::UiUpdateMsg::NetUpdate(ForwardNetMessage::Add(
                         UiPeer {
-                            id: peer_id.to_string(),
+                            id: peer_id.clone(),
                             addresses: addr_as_string,
                         },
                     )))
@@ -53,7 +53,7 @@ impl UiData {
             if let Some(ctrl_sender) = &self.sender {
                 ctrl_sender
                     .send(ctrl::UiUpdateMsg::NetUpdate(ForwardNetMessage::Delete(
-                        peer_id.to_string(),
+                        peer_id.clone(),
                     )))
                     .unwrap_or_else(|e| error!("use one: {}", e));
             }

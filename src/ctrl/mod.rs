@@ -13,6 +13,8 @@ use async_std::task;
 use crossbeam::sync::WaitGroup;
 use libp2p_core::PeerId;
 use std::{
+    collections::hash_map::DefaultHasher,
+    hash::Hasher,
     io,
     sync::{
         mpsc::{channel, Receiver, Sender},
@@ -21,7 +23,7 @@ use std::{
     thread,
 };
 
-type PeerRepresentation = [u8; 16];
+type PeerRepresentation = u64;
 
 /// alive Signal for path from collector
 /// or net search alive
@@ -43,18 +45,17 @@ pub enum NetMessages {
     ShowStats { show: NetStats },
 }
 
-type UiIDPeerClonable = String;
 #[derive(Clone)]
 pub struct UiPeer {
     //
-    pub id: UiIDPeerClonable,
+    pub id: PeerId,
     pub addresses: Vec<String>,
 }
 
 #[derive(Clone)]
 pub enum ForwardNetMessage {
     Add(UiPeer),
-    Delete(UiIDPeerClonable),
+    Delete(PeerId),
     Stats(NetMessages),
 }
 
@@ -222,16 +223,18 @@ impl Ctrl {
         thread_finisher: Sender<Finisher>,
         open_browser: bool,
     ) -> Result<thread::JoinHandle<Result<(), std::io::Error>>, std::io::Error> {
-        let mut peer_representation: PeerRepresentation = [0 as u8; 16];
         let with_net;
         let paths;
         // lock block
+        let mut hasher = DefaultHasher::new();
         {
             let unlocker = this.lock().unwrap();
             paths = unlocker.paths.clone();
-            peer_representation.copy_from_slice(&unlocker.peer_id.as_bytes()[..16]);
             with_net = unlocker.with_net;
+            let peer_bytes = &unlocker.peer_id.as_ref();
+            hasher.write(peer_bytes);
         }
+        let peer_representation = hasher.finish();
 
         thread::Builder::new().name("webui".into()).spawn(move || {
             info!("start webui");
@@ -271,7 +274,7 @@ impl Ctrl {
         // lock block
         {
             let unlocker = this.lock().unwrap();
-            title = unlocker.peer_id.to_string().clone();
+            title = peer_hash(&unlocker.peer_id);
             paths = unlocker.paths.clone();
             with_net = unlocker.with_net.clone();
         }
@@ -435,4 +438,10 @@ impl Ctrl {
             true
         }
     }
+}
+
+pub fn peer_hash(peer_id: &PeerId) -> String {
+    let mut hasher = DefaultHasher::default();
+    hasher.write(peer_id.as_ref());
+    std::format!("{:x?}", hasher.finish())
 }

@@ -146,7 +146,7 @@ fn replace_static_content(html_in: &str, id: &PeerRepresentation) -> String {
             c: config::net::WEBSOCKET_ADDR.to_string(),
         },
         ReplaceStatic {
-            r: config::webui::HTML_REPLACE_PEER_SHA2,
+            r: config::webui::HTML_REPLACE_PEER_HASH,
             c: id_string,
         },
         ReplaceStatic {
