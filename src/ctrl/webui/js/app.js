@@ -157,6 +157,5 @@ function gracefullyClose() {
       }
 
       $('#statusMessage').text("not connected");
-      alert("Connection is closed...");
       document.getElementById("overlay").style.display = "block";
 }
