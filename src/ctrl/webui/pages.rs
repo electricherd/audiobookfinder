@@ -115,10 +115,6 @@ pub async fn js_app(state: web::Data<Arc<Mutex<WebServerState>>>) -> impl Respon
 
 fn replace_static_content(html_in: &str, id: &PeerRepresentation) -> String {
     // short inline struct
-    struct ReplaceStatic<'a> {
-        r: &'a str,
-        c: String,
-    }
 
     let id_string = std::format!("{:x?}", id);
     let hostname = hostname::get()
@@ -126,8 +122,6 @@ fn replace_static_content(html_in: &str, id: &PeerRepresentation) -> String {
         .into_string()
         .unwrap_or(String::from("undefined"));
 
-    // todo: getting to many replacements, should be done more efficiently!!! Like a regex or so
-    //       or function searching for "<!--" and then a LUT!
     let changers: [ReplaceStatic; 7] = [
         ReplaceStatic {
             r: config::net::HTML_REPLACE_STATIC_URL_SOURCE,
@@ -158,10 +152,94 @@ fn replace_static_content(html_in: &str, id: &PeerRepresentation) -> String {
             c: config::webui::PEER_PAGE.to_string(),
         },
     ];
-    let mut replace_this = html_in.to_string();
+    linear_LUT_replacer(html_in, &changers)
+}
 
-    for replacer in &changers {
-        replace_this = str::replace(&replace_this, &replacer.r, &replacer.c);
+struct ReplaceStatic<'a> {
+    r: &'a str,
+    c: String,
+}
+
+#[allow(non_snake_case)]
+fn linear_LUT_replacer(replace_this: &str, changers: &[ReplaceStatic]) -> String {
+    let left_bracket = "<!---";
+    let right_bracket = "--->";
+
+    let mut replace_this = replace_this.to_string();
+
+    let mut start = 0;
+    while let Some(found_pattern_start) = replace_this[start..].find(left_bracket) {
+        match &replace_this[found_pattern_start..].find(right_bracket) {
+            None => break,
+            Some(pattern_end) => {
+                let mrange = std::ops::Range {
+                    start: start + found_pattern_start,
+                    end: found_pattern_start + pattern_end + right_bracket.len(),
+                };
+                let part = &replace_this[mrange];
+                if let Some(good) = changers.iter().find(|el| el.r == part) {
+                    let erange = std::ops::Range {
+                        start: start + found_pattern_start,
+                        end: found_pattern_start + pattern_end + right_bracket.len(),
+                    };
+                    replace_this.replace_range(erange, &good.c);
+                    start += &good.c.len();
+                } else {
+                    start += pattern_end;
+                }
+            }
+        }
     }
     replace_this
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn quick_replace_LUT_tests() {
+        let changers: [ReplaceStatic; 5] = [
+            ReplaceStatic {
+                r: config::net::HTML_REPLACE_STATIC_URL_SOURCE,
+                c: config::net::HTML_URL_SOURCE.to_string(),
+            },
+            ReplaceStatic {
+                r: "<!---CAT--->",
+                c: "cat".to_string(),
+            },
+            ReplaceStatic {
+                r: "<!---JUMP--->",
+                c: "jumped".to_string(),
+            },
+            ReplaceStatic {
+                r: "<!---ON--->",
+                c: " on ".to_string(),
+            },
+            ReplaceStatic {
+                r: "<!---TABLE--->",
+                c: "table".to_string(),
+            },
+        ];
+        let replace_this = "The <!---CAT---> <!---JUMP---><!---ON--->the <!---TABLE--->.";
+        let return_value = linear_LUT_replacer(replace_this, &changers);
+        let expect = "The cat jumped on the table.";
+        assert_eq!(return_value, expect);
+
+        let replace_this = "<!---JUMP---> <!---CAT---> <!---ON---> <!---CAT--->.";
+        let return_value = linear_LUT_replacer(replace_this, &changers);
+        let expect = "jumped cat  on  cat.";
+        assert_eq!(return_value, expect);
+
+        let replace_this = "<!---JUMP---><!---CAT--->";
+        let return_value = linear_LUT_replacer(replace_this, &changers);
+        let expect = "jumpedcat";
+        assert_eq!(return_value, expect);
+
+        let replace_this = "<!--JUMP--><!---CAT---><!--- -->";
+        let return_value = linear_LUT_replacer(replace_this, &changers);
+        let expect = "<!--JUMP-->cat<!--- -->";
+        assert_eq!(return_value, expect);
+    }
 }
