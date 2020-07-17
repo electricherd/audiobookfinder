@@ -28,7 +28,7 @@ impl UiData {
         if collection.get(peer_id).is_none() {
             // add
             collection.insert(peer_id.clone(), ());
-            trace!("found new peer {}", peer_id.to_string());
+            trace!("found new peer {}", ctrl::peer_hash(peer_id));
             // and send
             if let Some(ctrl_sender) = &self.sender {
                 let addr_as_string = multi_addresses.iter().map(|x| x.to_string()).collect();
@@ -49,7 +49,7 @@ impl UiData {
     pub fn unregister_address(&mut self, peer_id: &PeerId) {
         let ref mut collection = self.ui_shown_peers;
         if collection.remove(peer_id).is_some() {
-            trace!("removed peer {}", peer_id.to_string());
+            trace!("removed peer {}", ctrl::peer_hash(peer_id));
             if let Some(ctrl_sender) = &self.sender {
                 ctrl_sender
                     .send(ctrl::UiUpdateMsg::NetUpdate(ForwardNetMessage::Delete(
