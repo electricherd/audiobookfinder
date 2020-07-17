@@ -12,8 +12,6 @@ use cursive::{
     CursiveExt,
 };
 use std::{
-    collections::hash_map::DefaultHasher,
-    hash::Hasher,
     iter::Iterator,
     sync::mpsc::{Receiver, Sender},
     time::Duration,
@@ -21,12 +19,8 @@ use std::{
 
 use super::super::{
     config,
-    ctrl::{
-        self, CollectionPathAlive, ForwardNetMessage, InternalUiMsg, NetMessages,
-        PeerRepresentation, Status,
-    },
+    ctrl::{self, CollectionPathAlive, ForwardNetMessage, InternalUiMsg, NetMessages, Status},
 };
-use libp2p_core::PeerId;
 
 #[derive(Clone)]
 struct AliveState {
