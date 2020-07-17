@@ -17,10 +17,12 @@ use super::IPC;
 
 use async_std::io;
 use bincode;
+use bincode::deserialize;
 use libp2p::{
     kad::{
-        record, store::MemoryStore, Kademlia, KademliaEvent, PeerRecord, PutRecordOk, QueryResult,
-        Quorum, Record,
+        record,
+        store::{MemoryStore, RecordStore},
+        Kademlia, KademliaEvent, PeerRecord, PutRecordOk, QueryResult, Quorum, Record,
     },
     mdns::{Mdns, MdnsEvent},
     pnet::{PnetConfig, PreSharedKey},
@@ -90,10 +92,15 @@ impl NetworkBehaviourEventProcess<KademliaEvent> for AdbfBehavior {
                 },
                 QueryResult::PutRecord(put_record) => match put_record {
                     Ok(PutRecordOk { key }) => {
-                        trace!(
-                            "Successfully put record {:?}",
-                            Self::key_reader(&key).unwrap()
-                        );
+                        let raw_key = Self::key_reader(&key);
+                        match raw_key {
+                            Ok(deserialized) => {
+                                trace!("Successfully put record key {:?}", deserialized);
+                            }
+                            Err(_) => {
+                                error!("key could not be verified!");
+                            }
+                        }
                     }
                     Err(err) => {
                         error!("Failed to put record: {:?}", err);
@@ -118,10 +125,26 @@ impl NetworkBehaviourEventProcess<SMOutEvents> for AdbfBehavior {
                 // the key is to avoid duplicate, so the key
                 // is a hash of the message itself
                 match ipc_event {
-                    IPC::DoneSearching(_) => {
+                    IPC::DoneSearching(nr) => {
                         info!("forward ipc {:?}", ipc_event);
-                        let bin_message = bincode::serialize(&ipc_event).unwrap();
+
                         let bin_key = Self::key_writer(MkadKeys::KeyForIPC);
+
+                        // try to read old value
+                        let mut value_to_send = nr;
+                        if let Some(value_ipc) = self.kademlia.store_mut().get(&bin_key) {
+                            let found: u32 = bincode::deserialize(value_ipc.value.as_ref())
+                                .unwrap_or_else(|_| {
+                                    error!("value in store is not what expected!");
+                                    0
+                                });
+                            value_to_send += found;
+                        } else {
+                            trace!("this key was not yet set in the kademlia store!");
+                        }
+
+                        let bin_message =
+                            bincode::serialize(&IPC::DoneSearching(value_to_send)).unwrap();
 
                         let record = Record {
                             key: bin_key,

@@ -231,16 +231,24 @@ fn main() -> io::Result<()> {
         let init_collection = Collection::new(&key_keeper::get_p2p_server_id(), max_threads);
         let collection_protected = sync::Arc::new(sync::Mutex::new(init_collection));
 
+        let all_collection_data =
+            sync::Arc::new(sync::Mutex::new(CollectionData { nr_found_songs: 0 }));
+
         all_pathes.par_iter().enumerate().for_each(|(index, elem)| {
             let sender_loop = synced_to_ui_messages.clone();
             let collection_data_in_iterator = collection_protected.clone();
-            search_in_single_path(
+            let single_path_collection_data = search_in_single_path(
                 has_ui,
                 collection_data_in_iterator,
                 sender_loop,
                 index,
                 elem,
             );
+            // short lock to accumulate data
+            {
+                all_collection_data.lock().unwrap().nr_found_songs +=
+                    single_path_collection_data.nr_found_songs;
+            }
         });
 
         info!("collector finished!!");
@@ -251,9 +259,12 @@ fn main() -> io::Result<()> {
                 .unwrap_or(())
         }
         if has_net {
-            ipc_send.send(IPC::DoneSearching(1)).unwrap_or_else(|_| {
-                error!("net has to be up and receiving this send!");
-            });
+            let to_send = all_collection_data.lock().unwrap().nr_found_songs;
+            ipc_send
+                .send(IPC::DoneSearching(to_send))
+                .unwrap_or_else(|_| {
+                    error!("net has to be up and receiving this send!");
+                });
         }
     }
 
@@ -300,13 +311,18 @@ fn main() -> io::Result<()> {
     Ok(())
 }
 
+// todo: move all below into data module
+struct CollectionData {
+    nr_found_songs: u32,
+}
+
 fn search_in_single_path(
     has_ui: bool,
     collection_protected: sync::Arc<sync::Mutex<Collection>>,
     mutex_to_ui_msg: sync::Arc<sync::Mutex<Sender<UiUpdateMsg>>>,
     index: usize,
     elem: &str,
-) {
+) -> CollectionData {
     if !has_ui {
         println!("[{:?}] looking into path {:?}", index, elem);
     } else {
@@ -363,6 +379,10 @@ fn search_in_single_path(
                 );
                 println!("[{:?}] done {}", index, text);
             }
+            // return this here
+            CollectionData {
+                nr_found_songs: local_stats.analyzed,
+            }
         }
         Err(_e) => {
             let text = format!("An error has occurred in search path [{}]!!", index);
@@ -381,6 +401,8 @@ fn search_in_single_path(
             } else {
                 println!("{:?}", text);
             }
+            // return this here
+            CollectionData { nr_found_songs: 0 }
         }
     }
 }
