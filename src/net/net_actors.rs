@@ -1,4 +1,3 @@
-use super::sm_behaviour::SMBehaviour;
 /// The net will be represented by a swarm as in libp2p
 /// https://docs.rs/libp2p/latest/libp2p/swarm/index.html.
 ///
@@ -13,7 +12,8 @@ use super::sm_behaviour::SMBehaviour;
 /// The noise protocol to be used
 /// (http://noiseprotocol.org/)
 ///
-use super::sm_behaviour::SMOutEvents;
+use super::sm_behaviour::{SMBehaviour, SMOutEvents};
+use super::IPC;
 
 use async_std::io;
 use bincode;
@@ -33,28 +33,13 @@ use libp2p_core::{
 };
 use libp2p_noise::{Keypair, NoiseConfig, X25519Spec};
 use libp2p_tcp::TcpConfig;
-use std::{
-    error::Error,
-    time::{Duration, SystemTime},
-};
+use std::{error::Error, time::Duration};
 
 #[allow(non_camel_case_types)]
 #[derive(Serialize, Deserialize, Clone, Debug)]
-// #[serde(tag = "type", content = "cnt")]
 enum MkadKeys {
-    AllPeers,
-}
-#[allow(non_camel_case_types)]
-#[derive(Serialize, Deserialize, Clone, Debug)]
-struct MkadPeers {
-    peers: Vec<MKadPeerStatus>,
-}
-#[allow(non_camel_case_types)]
-#[derive(Serialize, Deserialize, Clone, Debug)]
-struct MKadPeerStatus {
-    event: SMOutEvents,
-    knows: bool,
-    joined: SystemTime,
+    KeyForAllPeerFinished,
+    KeyForIPC,
 }
 
 /// The swarm injected behavior is the key element for the whole communication
@@ -89,30 +74,34 @@ impl NetworkBehaviourEventProcess<KademliaEvent> for AdbfBehavior {
     fn inject_event(&mut self, message: KademliaEvent) {
         match message {
             KademliaEvent::QueryResult { result, .. } => match result {
-                QueryResult::GetRecord(Ok(ok)) => {
-                    for PeerRecord {
-                        record: Record { key, value, .. },
-                        ..
-                    } in ok.records
-                    {
-                        self.retrieve_record(key, value);
+                QueryResult::GetRecord(get_record) => match get_record {
+                    Ok(ok) => {
+                        for PeerRecord {
+                            record: Record { key, value, .. },
+                            ..
+                        } in ok.records
+                        {
+                            self.retrieve_record(key, value);
+                        }
                     }
-                }
-                QueryResult::GetRecord(Err(err)) => {
-                    error!("Failed to get record: {:?}", err);
-                }
-                QueryResult::PutRecord(Ok(PutRecordOk { key })) => {
-                    trace!(
-                        "Successfully put record {:?}",
-                        std::str::from_utf8(key.as_ref()).unwrap()
-                    );
-                }
-                QueryResult::PutRecord(Err(err)) => {
-                    error!("Failed to put record: {:?}", err);
-                }
-                _ => {}
+                    Err(err) => {
+                        error!("Failed to get record: {:?}", err);
+                    }
+                },
+                QueryResult::PutRecord(put_record) => match put_record {
+                    Ok(PutRecordOk { key }) => {
+                        trace!(
+                            "Successfully put record {:?}",
+                            Self::key_reader(&key).unwrap()
+                        );
+                    }
+                    Err(err) => {
+                        error!("Failed to put record: {:?}", err);
+                    }
+                },
+                _ => trace!("other kademlie query results arrived?!"),
             },
-            _ => {}
+            _ => (), // trace!("kademlie routing events occured!"),
         }
     }
 }
@@ -121,7 +110,33 @@ impl NetworkBehaviourEventProcess<SMOutEvents> for AdbfBehavior {
     // Called when SM produces an event.
     fn inject_event(&mut self, event: SMOutEvents) {
         // send whole event
-        self.test_send_over_kademlia(event);
+        match event {
+            SMOutEvents::ForwardSM(sm_event) => {
+                // there is none yet
+            }
+            SMOutEvents::ForwardIPC(ipc_event) => {
+                // the key is to avoid duplicate, so the key
+                // is a hash of the message itself
+                match ipc_event {
+                    IPC::DoneSearching(_) => {
+                        info!("forward ipc {:?}", ipc_event);
+                        let bin_message = bincode::serialize(&ipc_event).unwrap();
+                        let bin_key = Self::key_writer(MkadKeys::KeyForIPC);
+
+                        let record = Record {
+                            key: bin_key,
+                            value: bin_message,
+                            publisher: None,
+                            expires: None,
+                        };
+                        // write out
+                        self.kademlia
+                            .put_record(record, Quorum::One)
+                            .expect("Failed to store record locally.");
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -164,45 +179,32 @@ pub fn build_noise_transport(
 }
 
 impl AdbfBehavior {
-    pub fn test_send_over_kademlia(&mut self, event: SMOutEvents) {
-        let message = MKadPeerStatus {
-            event,
-            knows: true,
-            joined: SystemTime::now(),
-        };
-        let bin_key = record::Key::new(&bincode::serialize(&MkadKeys::AllPeers).unwrap());
-        // just clone this one
-        let bin_key_get = bin_key.clone();
-
-        let bin_message = bincode::serialize(&message).unwrap();
-        let record = Record {
-            key: bin_key,
-            value: bin_message,
-            publisher: None,
-            expires: None,
-        };
-        // write out
-        self.kademlia
-            .put_record(record, Quorum::One)
-            .expect("Failed to store record locally.");
-
-        // and get from others
-        self.kademlia.get_record(&bin_key_get, Quorum::One);
-    }
-
     fn retrieve_record(&mut self, key: record::Key, value: Vec<u8>) {
-        if let Ok(fits_mkad_keys) = bincode::deserialize::<MkadKeys>(&key.to_vec()) {
+        warn!("..............................................");
+        if let Ok(fits_mkad_keys) = Self::key_reader(&key) {
             match fits_mkad_keys {
-                MkadKeys::AllPeers => {
-                    let this_status: MKadPeerStatus = bincode::deserialize(&value).unwrap();
-                    info!(
-                        "{:?} at time {} was {:?}",
-                        this_status.event, this_status.knows, this_status.joined
-                    );
-                }
+                MkadKeys::KeyForAllPeerFinished => (),
+                MkadKeys::KeyForIPC => info!("ipc message came up!"),
             }
         } else {
             error!("unknown MkadKeys format");
         }
+    }
+
+    fn key_writer(internal_key: MkadKeys) -> record::Key {
+        let bin_key = bincode::serialize(&internal_key).unwrap();
+        record::Key::new(&bin_key)
+    }
+    fn key_reader(
+        key_record: &record::Key,
+    ) -> Result<MkadKeys, std::boxed::Box<bincode::ErrorKind>> {
+        // todo: no unwrap!!
+        bincode::deserialize(key_record.as_ref())
+    }
+
+    fn add_myself_to_peers_done(&mut self) {
+        // see if I am already in there
+        let query_key = Self::key_writer(MkadKeys::KeyForAllPeerFinished);
+        let kad_record = self.kademlia.get_record(&query_key, Quorum::Majority);
     }
 }

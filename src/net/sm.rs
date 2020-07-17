@@ -19,8 +19,7 @@ pub struct NewPeerData {
 
 statemachine! {
     *Start + Go = WaitingForPeerAction,
-    WaitingForPeerAction + GotANewPeer(NewPeerData) [ not_known ] / process_new_peer = SendKademliaOut,
-    SendKademliaOut + Done = WaitingForPeerAction,
+    WaitingForPeerAction + GotANewPeer(NewPeerData) [ not_known ] / process_new_peer = WaitingForPeerAction,
     WaitingForPeerAction + HaveToRemovePeer(PeerId) [ known ] / remove_peer = WaitingForPeerAction,
 }
 

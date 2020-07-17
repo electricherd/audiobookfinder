@@ -1,4 +1,6 @@
 //! The oldest module, the data module stores all the data needed to collect.
+pub mod ipc;
+
 use super::config;
 use id3::Tag;
 use libp2p_core::PeerId;

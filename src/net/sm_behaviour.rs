@@ -2,6 +2,7 @@
 //! the embedded state machine (and inner ui), also back to net services:
 //! currently kademlia, mdns
 //! https://docs.rs/libp2p/0.21.1/libp2p/swarm/struct.DummyBehaviour.html
+use crossbeam::channel::Receiver;
 use libp2p::swarm::{
     protocols_handler, NetworkBehaviour,
     NetworkBehaviourAction::{self, GenerateEvent},
@@ -17,27 +18,37 @@ use std::{
 };
 
 use super::{
+    super::data::ipc::IPC,
     sm::{self, AdbfStateChart, Error as SMError, Events, Events::*, NewPeerData, States},
     ui_data::UiData,
 };
+
+#[allow(non_camel_case_types)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub enum sm_to_net {
+    FoundNewPeer(String),
+}
 
 /// Events going from StateMachine back to the net behavior
 #[allow(non_camel_case_types)]
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum SMOutEvents {
-    MyPathSearchRunning(bool),
+    ForwardSM(sm_to_net),
+    ForwardIPC(IPC),
 }
 
 //#[derive(Clone, Default)]
 pub struct SMBehaviour {
     sm: sm::StateMachine<AdbfStateChart>,
     send_buffer: VecDeque<SMOutEvents>,
+    ipc_receiver: Receiver<IPC>,
 }
 impl SMBehaviour {
-    pub fn new(own_peer: PeerId, ui_data: UiData) -> Self {
+    pub fn new(ipc_receiver: Receiver<IPC>, own_peer: PeerId, ui_data: UiData) -> Self {
         Self {
             sm: AdbfStateChart::init(AdbfStateChart::new(own_peer, ui_data)),
             send_buffer: VecDeque::new(),
+            ipc_receiver,
         }
     }
 
@@ -60,13 +71,6 @@ impl SMBehaviour {
             Ok(good_state) => match good_state {
                 States::Start => (),                // nothing to do
                 States::WaitingForPeerAction => (), // is just waiting
-                States::SendKademliaOut => {
-                    self.send_buffer
-                        .push_back(SMOutEvents::MyPathSearchRunning(true));
-                    if self.sm.process_event(Done).is_err() {
-                        error!("Done must work here due to state chart design, re-check design!");
-                    }
-                }
             },
             Err(bad_state) => {
                 match bad_state {
@@ -115,6 +119,16 @@ impl NetworkBehaviour for SMBehaviour {
             Self::OutEvent,
         >,
     > {
+        // use this poll for ipc, ipc message will be sent raw for now (not through SM)
+        match self.ipc_receiver.try_recv() {
+            Ok(ipc_msg) => {
+                // todo: maybe filter to which IPC messages go directly to net/kademlia
+                //       and which to SM first?
+                self.send_buffer.push_back(SMOutEvents::ForwardIPC(ipc_msg))
+            }
+            Err(_) => (), // just continue
+        }
+        // and
         if let Some(item) = self.send_buffer.pop_front() {
             Poll::Ready(GenerateEvent(item))
         } else {

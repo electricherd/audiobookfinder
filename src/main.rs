@@ -8,7 +8,7 @@ extern crate clap;
 extern crate rayon;
 
 use async_std::task;
-use crossbeam::sync::WaitGroup;
+use crossbeam::{channel::unbounded, sync::WaitGroup};
 use log::{error, info, trace, warn};
 use rayon::prelude::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator};
 use std::{
@@ -23,7 +23,7 @@ use std::{
 
 use adbflib::{
     ctrl::{CollectionPathAlive, Ctrl, ForwardNetMessage, NetMessages, Status, UiUpdateMsg},
-    data::{self, Collection},
+    data::{self, ipc::IPC, Collection},
     logit,
     net::{key_keeper, Net},
 };
@@ -186,6 +186,8 @@ fn main() -> io::Result<()> {
             }
         });
 
+    let (ipc_send, ipc_receive) = unbounded::<IPC>();
+
     // 2 - Net Future
     let net_thread = std::thread::Builder::new()
         .name("net".into())
@@ -203,7 +205,7 @@ fn main() -> io::Result<()> {
                     // startup net synchronization
                     wait_net.wait();
 
-                    network.lookup().await;
+                    network.lookup(ipc_receive).await;
                     info!("net finished!!");
                     Ok::<(), Error>(())
                 })
@@ -240,13 +242,19 @@ fn main() -> io::Result<()> {
                 elem,
             );
         });
+
+        info!("collector finished!!");
         if !has_ui {
             collection_protected
                 .lock()
                 .and_then(|locked_collection| Ok(locked_collection.print_stats()))
                 .unwrap_or(())
         }
-        info!("collector finished!!");
+        if has_net {
+            ipc_send.send(IPC::DoneSearching(1)).unwrap_or_else(|_| {
+                error!("net has to be up and receiving this send!");
+            });
+        }
     }
 
     // look for keeping alive argument if that was chosen

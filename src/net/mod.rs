@@ -8,11 +8,12 @@ mod sm;
 mod sm_behaviour;
 mod ui_data;
 
-use super::ctrl;
+use super::{ctrl, data::ipc::IPC};
 use sm_behaviour::SMBehaviour;
 use ui_data::UiData;
 
 use async_std::task::{self, Context, Poll};
+use crossbeam::channel::Receiver;
 use futures::prelude::*;
 use futures_util::StreamExt;
 use libp2p::{
@@ -43,7 +44,7 @@ impl Net {
 
     /// Lookup yet is the start of the networking.
     /// It looks for possible mDNS clients and spawns eventually
-    pub async fn lookup(&mut self) {
+    pub async fn lookup(&mut self, ipc_receiver: Receiver<IPC>) {
         let has_ui = self.has_ui.clone();
 
         // to controller messages (mostly tui now)
@@ -51,7 +52,7 @@ impl Net {
 
         // prepare everything for mdns thread
         let my_peer_id = key_keeper::get_p2p_server_id();
-        Self::build_swarm_and_run(&my_peer_id, &ui_update_sender, has_ui)
+        Self::build_swarm_and_run(&my_peer_id, &ui_update_sender, ipc_receiver, has_ui)
             .await
             .unwrap();
     }
@@ -61,6 +62,7 @@ impl Net {
     async fn build_swarm_and_run(
         own_peer_id: &PeerId,
         ctrl_sender: &std::sync::mpsc::Sender<ctrl::UiUpdateMsg>,
+        ipc_receiver: Receiver<IPC>,
         has_ui: bool,
     ) -> Result<(), Box<dyn Error>> {
         let local_key = &*key_keeper::SERVER_KEY;
@@ -85,7 +87,7 @@ impl Net {
             let behaviour = net_actors::AdbfBehavior {
                 kademlia,
                 mdns: Mdns::new()?,
-                sm_behaviour: SMBehaviour::new(own_peer_id.clone(), ui_data),
+                sm_behaviour: SMBehaviour::new(ipc_receiver, own_peer_id.clone(), ui_data),
             };
             Swarm::new(transport, behaviour, local_peer_id.clone())
         };
