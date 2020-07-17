@@ -198,7 +198,6 @@ impl AdbfBehavior {
     fn key_reader(
         key_record: &record::Key,
     ) -> Result<MkadKeys, std::boxed::Box<bincode::ErrorKind>> {
-        // todo: no unwrap!!
         bincode::deserialize(key_record.as_ref())
     }
 

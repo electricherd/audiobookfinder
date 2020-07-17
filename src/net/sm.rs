@@ -60,7 +60,6 @@ impl StateMachineContext for AdbfStateChart {
     }
 
     fn remove_peer(&mut self, peer_id: &PeerId) {
-        info!("got {}", peer_id);
         self.ui_data.unregister_address(&peer_id);
     }
 }
