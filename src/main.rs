@@ -22,6 +22,7 @@ use std::{
 };
 
 use adbflib::{
+    config,
     ctrl::{CollectionPathAlive, Ctrl, ForwardNetMessage, NetMessages, Status, UiUpdateMsg},
     data::{self, ipc::IPC, Collection},
     logit,
@@ -123,7 +124,7 @@ fn main() -> io::Result<()> {
         vec!["."]
     };
 
-    // for synced start
+    // for synced start of different threads
     let wait_collector = WaitGroup::new();
     let wait_ui = wait_collector.clone();
     let wait_net = wait_collector.clone();
@@ -138,6 +139,16 @@ fn main() -> io::Result<()> {
     let has_net = has_arg(ARG_NET);
     let keep_alive = has_arg(ARG_KEEP_ALIVE);
     let open_browser = has_arg(ARG_BROWSER);
+
+    // extended help for certain option combinations
+    if !has_tui && has_webui && !open_browser {
+        println!(
+            "Open http://{}:{} to start!",
+            config::net::WEBSOCKET_ADDR,
+            config::net::PORT_WEBSOCKET
+        );
+        println!("The webui needs to get the start signal from there");
+    }
 
     // either one will have a ui, representing data and error messages
     let has_ui = has_tui || has_webui;
