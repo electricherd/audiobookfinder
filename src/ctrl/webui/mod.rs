@@ -31,6 +31,7 @@ use std::{
 pub struct WebServerState {
     id: PeerRepresentation,
     nr_connections: Arc<Mutex<usize>>,
+    web_port: u16,
 }
 
 pub struct WebUI {
@@ -53,6 +54,7 @@ impl WebUI {
         &self,
         receiver: Receiver<InternalUiMsg>,
         wait_ui_sync: WaitGroup,
+        web_port: u16,
     ) -> io::Result<()> {
         let connection_count = Arc::new(Mutex::new(0));
 
@@ -62,6 +64,7 @@ impl WebUI {
         let initial_state = Arc::new(Mutex::new(WebServerState {
             id: self.id.clone(),
             nr_connections: connection_count.clone(),
+            web_port,
         }));
 
         // very important: after this the actix system, message loop,
@@ -151,12 +154,8 @@ impl WebUI {
                 |web_server_binding_chain: Result<HttpServer<_, _, _, _>, io::Error>, ipaddr| {
                     web_server_binding_chain.and_then(|webserver| {
                         let bind_format = match ipaddr.addr.ip() {
-                            IpAddr::V4(ipv4) => {
-                                format!("{}:{:?}", ipv4.to_string(), config::net::PORT_WEBSOCKET)
-                            }
-                            IpAddr::V6(ipv6) => {
-                                format!("{}:{:?}", ipv6.to_string(), config::net::PORT_WEBSOCKET)
-                            }
+                            IpAddr::V4(ipv4) => format!("{}:{:?}", ipv4.to_string(), web_port),
+                            IpAddr::V6(ipv6) => format!("{}:{:?}", ipv6.to_string(), web_port),
                         };
                         let try_bind = webserver.bind(bind_format.clone()).map_err(|error| {
                             error!("On IP ({:?}): {:?}", bind_format, error);

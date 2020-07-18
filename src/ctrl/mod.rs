@@ -117,6 +117,7 @@ impl Ctrl {
         has_webui: bool,
         has_tui: bool,
         open_browser: bool,
+        web_port: u16,
     ) -> Result<(), std::io::Error> {
         // sync both sub uis
         let wait_all_uis = WaitGroup::new();
@@ -166,6 +167,7 @@ impl Ctrl {
                 wui_waitgroup,
                 thread_finisher_tui,
                 open_browser,
+                web_port,
             )?
         } else {
             // empty thread
@@ -222,6 +224,7 @@ impl Ctrl {
         wait_ui_sync: WaitGroup,
         thread_finisher: Sender<Finisher>,
         open_browser: bool,
+        web_port: u16,
     ) -> Result<thread::JoinHandle<Result<(), std::io::Error>>, std::io::Error> {
         let with_net;
         let paths;
@@ -245,6 +248,7 @@ impl Ctrl {
                 paths,
                 wait_ui_sync,
                 open_browser,
+                web_port,
             )
             .or_else(|forward| {
                 error!("error from webui-server: {}", forward);
@@ -350,17 +354,12 @@ impl Ctrl {
         paths: Vec<String>,
         wait_ui_sync: WaitGroup,
         open_browser: bool,
+        web_port: u16,
     ) -> io::Result<()> {
         if open_browser {
             if webbrowser::open(
                 // todo: what if https
-                &[
-                    "http://",
-                    config::net::WEBSOCKET_ADDR,
-                    ":",
-                    &config::net::PORT_WEBSOCKET.to_string(),
-                ]
-                .concat(),
+                &["http://", config::net::WEB_ADDR, ":", &web_port.to_string()].concat(),
             )
             .is_err()
             {
@@ -371,7 +370,7 @@ impl Ctrl {
         task::block_on(async move {
             info!("spawning webui async thread");
             let webui = WebUI::new(peer_representation, net_support, paths);
-            webui.run(webui_receiver, wait_ui_sync).await
+            webui.run(webui_receiver, wait_ui_sync, web_port).await
         })
     }
 

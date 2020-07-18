@@ -37,8 +37,9 @@ pub async fn single_page(state: web::Data<Arc<Mutex<WebServerState>>>) -> impl R
     let mut data = state.lock().unwrap();
     let id = data.id;
     *(data.nr_connections.lock().unwrap()) += 1;
+    let port = data.web_port;
 
-    let id_page = replace_static_content(*config::webui::HTML_PAGE, &id);
+    let id_page = replace_static_content(*config::webui::HTML_PAGE, &id, port);
 
     HttpResponse::build(StatusCode::OK)
         .content_type("text/html; charset=utf-8")
@@ -106,14 +107,15 @@ pub async fn bootstrap_js(path: web::Path<(String,)>) -> impl Responder {
 pub async fn js_app(state: web::Data<Arc<Mutex<WebServerState>>>) -> impl Responder {
     let data = state.lock().unwrap();
     let id = data.id;
+    let port = data.web_port;
 
-    let output = replace_static_content(*config::webui::JS_APP, &id);
+    let output = replace_static_content(*config::webui::JS_APP, &id, port);
     HttpResponse::build(StatusCode::OK)
         .content_type("application/javascript; charset=utf-8")
         .body(output)
 }
 
-fn replace_static_content(html_in: &str, id: &PeerRepresentation) -> String {
+fn replace_static_content(html_in: &str, id: &PeerRepresentation, port: u16) -> String {
     // short inline struct
 
     let id_string = std::format!("{:x?}", id);
@@ -128,16 +130,16 @@ fn replace_static_content(html_in: &str, id: &PeerRepresentation) -> String {
             c: config::net::HTML_URL_SOURCE.to_string(),
         },
         ReplaceStatic {
-            r: config::net::HTML_REPLACE_STATIC_WEBSOCKET_ADDR,
-            c: config::net::WEBSOCKET_ADDR.to_string(),
+            r: config::net::HTML_REPLACE_STATIC_WEB_ADDR,
+            c: config::net::WEB_ADDR.to_string(),
         },
         ReplaceStatic {
-            r: config::net::HTML_REPLACE_STATIC_PORT_WEBSOCKET,
-            c: config::net::PORT_WEBSOCKET.to_string(),
+            r: config::net::HTML_REPLACE_STATIC_WEB_PORT,
+            c: port.to_string(),
         },
         ReplaceStatic {
             r: config::webui::HTML_REPLACE_WEBSOCKET,
-            c: config::net::WEBSOCKET_ADDR.to_string(),
+            c: config::net::WEB_ADDR.to_string(),
         },
         ReplaceStatic {
             r: config::webui::HTML_REPLACE_PEER_HASH,

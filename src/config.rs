@@ -5,11 +5,13 @@
 /// The network related configurations
 #[allow(non_camel_case_types)]
 pub mod net {
-    pub static WEBSOCKET_ADDR: &str = "localhost";
-    pub static PORT_WEBSOCKET: u16 = 8088;
+    pub static WEB_ADDR: &str = "localhost";
+    pub static WEB_PORT_DEFAULT: u16 = 8088;
+    pub static WEB_PORT_MAX: u16 = 8099;
+    pub static WEB_PORT_MIN: u16 = 8080;
 
-    pub static HTML_REPLACE_STATIC_WEBSOCKET_ADDR: &str = "WEBSOCKET_ADDR";
-    pub static HTML_REPLACE_STATIC_PORT_WEBSOCKET: &str = "PORT_WEBSOCKET";
+    pub static HTML_REPLACE_STATIC_WEB_ADDR: &str = "WEBSOCKET_ADDR";
+    pub static HTML_REPLACE_STATIC_WEB_PORT: &str = "PORT_WEBSOCKET";
     pub static HTML_REPLACE_STATIC_URL_SOURCE: &str = "URL_SOURCE";
 
     pub static HTML_URL_SOURCE: &str = "https://github.com/electricherd/audiobookfinder";
