@@ -162,30 +162,30 @@ struct ReplaceStatic<'a> {
 
 #[allow(non_snake_case)]
 fn linear_LUT_replacer(replace_this: &str, changers: &[ReplaceStatic]) -> String {
-    let left_bracket = "<!---";
-    let right_bracket = "--->";
+    let left_bracket = config::webui::HTML_REPLACER_BEGIN;
+    let right_bracket = config::webui::HTML_REPLACER_END;
 
     let mut replace_this = replace_this.to_string();
 
-    let mut start = 0;
-    while let Some(found_pattern_start) = replace_this[start..].find(left_bracket) {
-        match &replace_this[found_pattern_start..].find(right_bracket) {
+    let mut begin = 0;
+    while let Some(found_pattern_begin) = replace_this[begin..].find(left_bracket) {
+        match &replace_this[found_pattern_begin..].find(right_bracket) {
             None => break,
             Some(pattern_end) => {
                 let mrange = std::ops::Range {
-                    start: start + found_pattern_start,
-                    end: found_pattern_start + pattern_end + right_bracket.len(),
+                    start: begin + found_pattern_begin + left_bracket.len(),
+                    end: found_pattern_begin + pattern_end,
                 };
                 let part = &replace_this[mrange];
                 if let Some(good) = changers.iter().find(|el| el.r == part) {
                     let erange = std::ops::Range {
-                        start: start + found_pattern_start,
-                        end: found_pattern_start + pattern_end + right_bracket.len(),
+                        start: begin + found_pattern_begin,
+                        end: found_pattern_begin + pattern_end + right_bracket.len(),
                     };
                     replace_this.replace_range(erange, &good.c);
-                    start += &good.c.len();
+                    begin += &good.c.len() + found_pattern_begin;
                 } else {
-                    start += pattern_end;
+                    begin += pattern_end;
                 }
             }
         }
@@ -206,19 +206,19 @@ mod tests {
                 c: config::net::HTML_URL_SOURCE.to_string(),
             },
             ReplaceStatic {
-                r: "<!---CAT--->",
+                r: "CAT",
                 c: "cat".to_string(),
             },
             ReplaceStatic {
-                r: "<!---JUMP--->",
+                r: "JUMP",
                 c: "jumped".to_string(),
             },
             ReplaceStatic {
-                r: "<!---ON--->",
+                r: "ON",
                 c: " on ".to_string(),
             },
             ReplaceStatic {
-                r: "<!---TABLE--->",
+                r: "TABLE",
                 c: "table".to_string(),
             },
         ];

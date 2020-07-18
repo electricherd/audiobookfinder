@@ -6,16 +6,13 @@
 #[allow(non_camel_case_types)]
 pub mod net {
     pub static WEBSOCKET_ADDR: &str = "localhost";
-    pub static HTML_REPLACE_STATIC_WEBSOCKET_ADDR: &str = "<!---WEBSOCKET_ADDR--->";
-
     pub static PORT_WEBSOCKET: u16 = 8088;
-    pub static HTML_REPLACE_STATIC_PORT_WEBSOCKET: &str = "<!---PORT_WEBSOCKET--->";
 
-    // todo: make this statically assemble before
-    pub static HTML_REPLACE_STATIC_URL_SOURCE: &str = "<!---URL_SOURCE--->";
+    pub static HTML_REPLACE_STATIC_WEBSOCKET_ADDR: &str = "WEBSOCKET_ADDR";
+    pub static HTML_REPLACE_STATIC_PORT_WEBSOCKET: &str = "PORT_WEBSOCKET";
+    pub static HTML_REPLACE_STATIC_URL_SOURCE: &str = "URL_SOURCE";
+
     pub static HTML_URL_SOURCE: &str = "https://github.com/electricherd/audiobookfinder";
-
-    pub struct changeable {}
 }
 
 /// The TUI related configurations of a more general purpose
@@ -103,10 +100,12 @@ pub mod webui {
         pub static ref FAVICON: &'static [u8] = include_bytes!("ctrl/webui/gfx/favicon.png");
         pub static ref PIC_SHEEP: &'static str = include_str!("ctrl/webui/gfx/sheep.svg");
     }
-    pub static HTML_REPLACE_PEER_HASH: &str = "<!---PEER_HASH--->";
-    pub static HTML_REPLACE_HOSTNAME: &str = "<!---HOSTNAME--->";
-    pub static HTML_REPLACE_WEBSOCKET: &str = "<!---WEBSOCKET--->";
-    pub static HTML_REPLACE_PEER_PAGE: &str = "<!---PEER_PAGE--->";
+    pub static HTML_REPLACER_BEGIN: &str = "<!---";
+    pub static HTML_REPLACER_END: &str = "--->";
+    pub static HTML_REPLACE_PEER_HASH: &str = "PEER_HASH";
+    pub static HTML_REPLACE_HOSTNAME: &str = "HOSTNAME";
+    pub static HTML_REPLACE_WEBSOCKET: &str = "WEBSOCKET";
+    pub static HTML_REPLACE_PEER_PAGE: &str = "PEER_PAGE";
 }
 
 /// The data related configurations of a more general purpose
