@@ -84,9 +84,11 @@ function spinPath(data) {
         if (on_off === true) {
             spinner.removeClass('d-none');
         } else {
-            //setTimeout(_ => spinner.addClass('d-none'), 100);
             spinner.addClass('d-none');
-            $('#path_obj' + path_nr).append('done')
+            spinner.replaceWith( "<svg width='1em' height='1em' viewBox='0 0 16 18'"
+                               + " class='bi bi-circle-fill' fill='currentColor'"
+                               + " xmlns='http://www.w3.org/2000/svg'>"
+                               + " <circle cx='8' cy='8' r='8'/></svg>");
         }
     }
 }
@@ -102,9 +104,9 @@ function showPath(data) {
         known_paths.push(path_nr);
         let obj_id =  "path_obj" + path_nr;
         // create obj
-        let new_el_html = "<tr id='" + obj_id + "'><td class='col-xs-3'>"
+        let new_el_html = "<tr id='" + obj_id + "'><td class='col-xs-3 text-monospace' style='width: 90%'>"
                          + paths[i].name + "</td><td>"
-                         +"<span class='d-none spinner-border spinner-border-sm col-xs-3 text-right' role='status' aria-hidden='true'></span>"
+                         +"<span class='d-none spinner-grow spinner-grow-sm col-xs-3 text-right' role='status' aria-hidden='true'></span>"
                          + "</td></tr>";
         new_el = $.parseHTML(new_el_html);
         // append it as an object but wait since div creation need little time

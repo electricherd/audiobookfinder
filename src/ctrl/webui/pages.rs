@@ -24,7 +24,7 @@ use std::{
 
 #[allow(dead_code)]
 pub async fn dyn_devel_html() -> impl Responder {
-    fs::NamedFile::open("src/ctrl/webui/html/single_page.html")
+    fs::NamedFile::open("src/ctrl/webui/html/main_page.html")
 }
 
 #[allow(dead_code)]

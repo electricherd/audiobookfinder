@@ -97,7 +97,7 @@ It is an inline [CI](https://travis-ci.org/electricherd/audiobookfinder/) genera
 * think of a protocol what adbf clients agree on and exchange (e.g. still searching, files found, etc) 
 * add ui data from swarm peer (timeout)
 * fix collection of data - right now it's just dumb, and just counts files
-* make div from html page to extra single file for later multiple clients on one page
+* ~~make div from html page to extra single file for later multiple clients on one page~~
 * ~~let client/server talk a little~~
 * ~~update jquery and bootstrap~~
 * ~~fix ForwardNetMessage and NetMessage, non-sense and not-usable data into a proper structure~~

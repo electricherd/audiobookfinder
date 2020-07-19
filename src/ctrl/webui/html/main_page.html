@@ -120,22 +120,27 @@
             computers in your network, and everywhere a audiobookfinder client also currently runs. Below
             you see a list of the local paths which are being searched.</p>
             <table id="peers_table" class="w-100"><tbody style="height: 55vh;"><tr><td class="align-top">
+                <!-- outter table -->
                 <table class="table table-fixed">
-                <thead>
-                  <tr><td class="w-100 text-right bg-success text-white">Host:
-                      <button class="bg-success text-white"
-                              data-toggle="collapse"
-                              data-target="#peer_<!---PEER_HASH--->"><!---PEER_HASH---></button>
-                  </td></tr>
-                </thead>
+                <thead><tr><td class="w-100 text-right text-white" style="background-color: #74A5ED">
+                    <button
+                     class="text-white btn btn-primary"
+                     type="button"
+                     style="background-color: #74A5ED"
+                     data-toggle="collapse"
+                     data-target="#peer_<!---PEER_HASH--->">Host: <!---PEER_HASH---></button>
+                </td></tr></thead>
                 <tbody style="height: 40vh;">
-                <!-- outter table -->
-                <tr><td><div id="peer_<!---PEER_HASH--->" class="collapse show">
-                    <!---PEER_PAGE--->
-                </div></td></tr>
-                <!-- outter table -->
+                  <tr><td style="border-top-width: 0px;padding: 0px 0px 0px 0px;">
+                      <div id="peer_<!---PEER_HASH--->"
+                           class="collapse show"
+                           style="border: 2px solid #74A5ED; padding: 0px 0.75em 0px 0.75em;">
+                          <!---PEER_PAGE--->
+                      </div>
+                  </td></tr>
                 </tbody>
                 </table>
+                <!-- outter table -->
             </td></tr></tbody></table>
             <p class="lead mb-0">Have fun!</p>
         </div>
