@@ -86,6 +86,7 @@ function spinPath(data) {
         } else {
             //setTimeout(_ => spinner.addClass('d-none'), 100);
             spinner.addClass('d-none');
+            $('#path_obj' + path_nr).append('done')
         }
     }
 }
@@ -103,7 +104,7 @@ function showPath(data) {
         // create obj
         let new_el_html = "<tr id='" + obj_id + "'><td class='col-xs-3'>"
                          + paths[i].name + "</td><td>"
-                         +"<span class='d-none spinner-border spinner-border-sm' role='status' aria-hidden='true'></span>"
+                         +"<span class='d-none spinner-border spinner-border-sm col-xs-3 text-right' role='status' aria-hidden='true'></span>"
                          + "</td></tr>";
         new_el = $.parseHTML(new_el_html);
         // append it as an object but wait since div creation need little time
