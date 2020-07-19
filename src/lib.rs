@@ -4,6 +4,7 @@
 #![crate_name = "adbflib"]
 #![crate_type = "lib"]
 // ALL
+pub mod command_line;
 pub mod config;
 pub mod ctrl;
 pub mod logit;
@@ -14,7 +15,9 @@ extern crate log;
 extern crate env_logger;
 extern crate flexi_logger;
 extern crate syslog;
+
 pub mod data;
+extern crate clap;
 
 // ctrl
 // ctrl/tui

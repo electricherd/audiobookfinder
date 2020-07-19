@@ -4,7 +4,6 @@
 //! get all stats about it).
 //! It acts as a wrapper around adbflib, which holds major parts of the implemention.
 extern crate adbflib;
-extern crate clap;
 extern crate rayon;
 
 use async_std::task;
@@ -22,186 +21,22 @@ use std::{
 };
 
 use adbflib::{
-    config,
+    command_line,
     ctrl::{CollectionPathAlive, Ctrl, ForwardNetMessage, NetMessages, Status, UiUpdateMsg},
     data::{self, ipc::IPC, Collection},
     logit,
     net::{key_keeper, Net},
 };
 
-static INPUT_FOLDERS: &str = "folders";
-static APP_TITLE: &str = concat!("The audiobook finder (", env!("CARGO_PKG_NAME"), ")");
-static ARG_NET: &str = "net";
-static ARG_TUI: &str = "tui";
-static ARG_WEBUI: &str = "webui";
-static ARG_KEEP_ALIVE: &str = "keep";
-static ARG_BROWSER: &str = "browser";
-static ARG_BROWSER_PORT: &str = "port";
-
-const VERSION: &'static str = env!("CARGO_PKG_VERSION");
-const AUTHORS: &'static str = env!("CARGO_PKG_AUTHORS");
-const HOMEPAGE: &'static str = env!("CARGO_PKG_HOMEPAGE");
-const DESCRIPTION: &'static str = env!("CARGO_PKG_DESCRIPTION");
-
 fn main() -> io::Result<()> {
-    let parse_args = clap::App::new(APP_TITLE)
-        .version(VERSION)
-        .author(AUTHORS)
-        .about(DESCRIPTION)
-        .long_about::<&str>(
-            &[
-                &DESCRIPTION,
-                "\n\
-                 It reads data from possibly multiple given path(s). Via local network it searches \
-                 for other instances of the program, and will later exchange data securely.\n\
-                 All information gathered will be used to find duplicates, versions of \
-                 different quality, different tags for same content (spelling, \
-                 incompleteness).\n\
-                 For documentation see: ",
-                &HOMEPAGE,
-                "\n \
-                 A program to learn, embrace, and love Rust! \n\
-                 Have fun!",
-            ]
-            .concat(),
-        )
-        .arg(
-            clap::Arg::with_name("config")
-                .short("c")
-                .long("config")
-                .value_name("FILE")
-                .help("Sets custom config file (not implemented yet)")
-                .takes_value(true),
-        )
-        .arg(
-            clap::Arg::with_name(ARG_TUI)
-                .short("t")
-                .long(ARG_TUI)
-                .help("Run with TUI")
-                .takes_value(false),
-        )
-        .arg(
-            clap::Arg::with_name(ARG_WEBUI)
-                .short("w")
-                .long(ARG_WEBUI)
-                .help("Run with-in a webui.")
-                .takes_value(false),
-        )
-        .arg(
-            clap::Arg::with_name(ARG_BROWSER_PORT)
-                .short("p")
-                .long(ARG_BROWSER_PORT)
-                .help(
-                    &vec![
-                        "Define port for webui (only works with webui).\nDefault port is:"
-                            .to_string(),
-                        config::net::WEB_PORT_DEFAULT.to_string(),
-                        " but please choose from 8080 to 8099)".to_string(),
-                    ]
-                    .join(""),
-                )
-                .takes_value(true),
-        )
-        .arg(
-            clap::Arg::with_name(ARG_NET)
-                .short("n")
-                .long(ARG_NET)
-                .help("With net search for other audiobookfinders running in local network.")
-                .takes_value(false),
-        )
-        .arg(
-            clap::Arg::with_name(ARG_KEEP_ALIVE)
-                .short("k")
-                .long(ARG_KEEP_ALIVE)
-                .help("With keep alive process will continue even after search has been performed.")
-                .takes_value(false),
-        )
-        .arg(
-            clap::Arg::with_name(ARG_BROWSER)
-                .short("b")
-                .long(ARG_BROWSER)
-                .help("Shall browser be openend automatically (only works with webui).")
-                .takes_value(false),
-        )
-        .arg(
-            clap::Arg::with_name(INPUT_FOLDERS)
-                .help("Sets multiple input folder(s) to be searched for audio files.")
-                .multiple(true)
-                .required(false),
-        )
-        .get_matches();
-    // tricky thing, but I really like that
-    let all_pathes = if let Some(correct_input) = parse_args.values_of(INPUT_FOLDERS) {
-        correct_input.collect()
-    } else {
-        vec!["."]
-    };
+    // get start values from the input parser!!!
+    let (ui_paths, has_tui, has_webui, has_net, keep_alive, open_browser, web_port, has_ui) =
+        command_line::get_start_values();
 
-    //
-    // check argments if tui and net search is needed
-    //
-    let has_arg = |x: &str| parse_args.is_present(x);
+    // clone as ro
+    let ui_path_ro = ui_paths.clone();
 
-    let has_tui = has_arg(ARG_TUI);
-    let has_webui = has_arg(ARG_WEBUI);
-    let has_net = has_arg(ARG_NET);
-    let keep_alive = has_arg(ARG_KEEP_ALIVE);
-    let open_browser = has_arg(ARG_BROWSER);
-
-    // todo: hide this somewhere
-    let web_port = {
-        let web_default_string = config::net::WEB_PORT_DEFAULT.to_string();
-        let has_to_write_console = !has_tui && has_webui;
-        let parsed_value = parse_args
-            .value_of(ARG_BROWSER_PORT)
-            .unwrap_or_else(|| {
-                if has_to_write_console {
-                    println!(
-                        "Port argument was bad, using default port {}!",
-                        config::net::WEB_ADDR
-                    );
-                }
-                &web_default_string
-            })
-            .parse::<u16>()
-            .unwrap_or_else(|_| {
-                if has_to_write_console {
-                    println!(
-                        "Invalid port input, using default port {}!",
-                        &web_default_string
-                    );
-                }
-                config::net::WEB_PORT_DEFAULT
-            });
-        if parsed_value < config::net::WEB_PORT_MIN || parsed_value > config::net::WEB_PORT_MAX {
-            if has_to_write_console {
-                let web_max_string = config::net::WEB_PORT_MAX.to_string();
-                let web_min_string = config::net::WEB_PORT_MIN.to_string();
-                println!(
-                    "Port not in range {} .. {}, using default {}!",
-                    &web_min_string, &web_max_string, &web_default_string
-                );
-            }
-            config::net::WEB_PORT_DEFAULT
-        } else {
-            parsed_value
-        }
-    };
-
-    // extended help for certain option combinations
-    if !has_tui && has_webui && !open_browser {
-        println!(
-            "Open http://{}:{} to start!",
-            config::net::WEB_ADDR,
-            config::net::WEB_PORT_DEFAULT
-        );
-        println!("The webui needs to get the start signal from there");
-    }
-
-    // either one will have a ui, representing data and error messages
-    let has_ui = has_tui || has_webui;
-
-    //
+    // rayon threads for heavy cpu usage for fast results in collection search
     let max_threads = rayon::current_num_threads();
 
     // for synced start of different threads
@@ -220,11 +55,6 @@ fn main() -> io::Result<()> {
     // for now this will stay wrapped
     let tx_from_collector_to_ui = Arc::new(Mutex::new(tx.clone()));
 
-    //
-    // pathes: copy to vec<&str>
-    //
-    let ui_paths = all_pathes.iter().map(|s| s.to_string()).collect();
-
     // start the logging
     logit::Logit::init(logit::Log::File);
 
@@ -238,7 +68,7 @@ fn main() -> io::Result<()> {
             if has_ui {
                 Ctrl::run(
                     key_keeper::get_p2p_server_id(),
-                    &ui_paths,
+                    &ui_path_ro,
                     rx,
                     has_net,
                     wait_ui,
@@ -302,7 +132,7 @@ fn main() -> io::Result<()> {
         let all_collection_data =
             sync::Arc::new(sync::Mutex::new(CollectionData { nr_found_songs: 0 }));
 
-        all_pathes.par_iter().enumerate().for_each(|(index, elem)| {
+        &ui_paths.par_iter().enumerate().for_each(|(index, elem)| {
             let sender_loop = synced_to_ui_messages.clone();
             let collection_data_in_iterator = collection_protected.clone();
             let single_path_collection_data = search_in_single_path(
