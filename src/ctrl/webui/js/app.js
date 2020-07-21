@@ -176,16 +176,16 @@ function gracefullyClose() {
 
 function netButtonClick(guid, peer) {
     // if exists go back
-    if ($("#peer_" + peer).length)
+    if ($("#frame_" + peer).length)
         return
 
     // get frame (table id)
     let identificator_frame = guid.split("_")[1];
 
     // collapse old entry
-    $("#peer_"+identificator_frame).collapse('toggle');
+    $("#frame_"+identificator_frame).collapse('toggle');
 
-    let new_foreign_row = '<div><div class="link rounded">Foreign: ' + peer
+    let new_foreign_row = '<div id="frame_' + peer + '"><div class="link rounded">Foreign: ' + peer
                         + '</div><div class="submenu"></div></div>';
     $("#accordion").append(new_foreign_row);
 }
