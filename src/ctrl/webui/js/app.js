@@ -45,23 +45,13 @@ function APPStart() {
             alert("WebSocket NOT supported by your Browser!");
         }
 
-        // program checks if led_state button was clicked
-        $('#state').click(function() {
-            alert ("click");
-            // changes local led state
-            if (led_state == true){
-                $('#on').hide();
-                $('#off').show();
-                state = false;
-                ws.send("ON");
-            }
-            else{
-                $('#off').hide();
-                $('#on').show();
-                state = true;
-                ws.send("OFF");
-            }
-        });
+        // dynamic added content
+        // https://www.tutorialrepublic.com/faq/how-to-bind-click-event-to-dynamically-added-elements-in-jquery.php
+        // for buttons
+//        $("#found_peers").on("click", ".nettd", function(event) {
+//            console.log("that should have been the way: ",JSON.stringify(event,null, 4));
+//        });
+
     });
 }
 
@@ -120,6 +110,7 @@ function updateNetView(data) {
         let addresses = data.cnt.addr;
 
         let obj_id =  "host_obj_" + peer_id;
+        // tooltip is the multi-address for that peer
         let tooltip = "";
         for(let i = 0; i < addresses.length; i++){
             tooltip += "=" + addresses[i] + "=";
@@ -130,8 +121,12 @@ function updateNetView(data) {
                          + "data-toggle='tooltip' data-placement='bottom' data-html='true' "
                          + "title='Adresses: "
                          + tooltip
-                         + "'><td class='col-xs-3'>"
+                         + "'><td class='nettd col-xs-3'>"
+                         + "<button id='netbutton_" + guid_id + "' class='btn btn-light' "
+                         + "value='" + peer_id + "'"
+                         + "onClick='netButtonClick(this.id, this.value)'>"
                          + peer_id
+                         + "</button>"
                          + "</td></tr>";
         new_el = $.parseHTML(new_el_html);
         // append it as an object
@@ -162,3 +157,40 @@ function gracefullyClose() {
       $('#statusMessage').text("not connected");
       document.getElementById("overlay").style.display = "block";
 }
+
+function netButtonClick(guid, peer) {
+    // if exists go back
+    if ($("#peer_" + peer).length)
+        return
+
+    // get frame (table id)
+    let identificator_frame = guid.split("_")[1];
+
+    // collapse old entry
+    $("#peer_"+identificator_frame).collapse('toggle');
+
+
+
+    let new_foreign_row = '<tr><td class="align-top"><table class="table table-fixed">'
+                        + '<thead><tr><td class="w-100 text-right text-white" style="background-color: #74A5ED">'
+                        + '    <button'
+                        + '    class="text-white btn btn-primary"'
+                        + '    type="button"'
+                        + '    style="background-color: #74A5ED"'
+                        + '    data-toggle="collapse"'
+                        + '    data-target="#peer_' + peer + '">Foreign: ' + peer + '</button>'
+                        + '</td></tr></thead>'
+                        + '<tbody style="height: 40vh;">'
+                        + '  <tr><td style="border-top-width: 0px;padding: 0px 0px 0px 0px;">'
+                        + '     <div id="peer_' + peer + '"'
+                        + '          class="collapse show"'
+                        + '           style="border: 2px solid #74A5ED; padding: 0px 0.75em 0px 0.75em;">'
+                        + '     </div>'
+                        + ' </td></tr>'
+                        + '</tbody>'
+                        + '</table></td></tr>';
+    $("#peers_table_tbody").append(new_foreign_row);
+
+    alert("guid: " + identificator_frame + " Peer: " + peer);
+}
+
