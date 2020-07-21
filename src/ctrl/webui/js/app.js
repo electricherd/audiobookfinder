@@ -45,13 +45,29 @@ function APPStart() {
             alert("WebSocket NOT supported by your Browser!");
         }
 
-        // dynamic added content
-        // https://www.tutorialrepublic.com/faq/how-to-bind-click-event-to-dynamically-added-elements-in-jquery.php
-        // for buttons
-//        $("#found_peers").on("click", ".nettd", function(event) {
-//            console.log("that should have been the way: ",JSON.stringify(event,null, 4));
-//        });
+        var Accordion = function(el, multiple) {
+            this.el = el || {};
+            this.multiple = multiple || false;
 
+            var links = this.el.find('.link');
+
+            links.on('click', {el: this.el, multiple: this.multiple}, this.dropdown)
+        }
+
+        Accordion.prototype.dropdown = function(e) {
+            var $el = e.data.el;
+            $this = $(this),
+            $next = $this.next();
+
+            $next.slideToggle();
+            $this.parent().toggleClass('open');
+
+            if (!e.data.multiple) {
+                $el.find('.submenu').not($next).slideUp().parent().removeClass('open');
+            };
+        }
+
+        var accordion = new Accordion($('#accordion'), false);
     });
 }
 
@@ -169,28 +185,8 @@ function netButtonClick(guid, peer) {
     // collapse old entry
     $("#peer_"+identificator_frame).collapse('toggle');
 
-
-
-    let new_foreign_row = '<tr><td class="align-top"><table class="table table-fixed">'
-                        + '<thead><tr><td class="w-100 text-right text-white" style="background-color: #74A5ED">'
-                        + '    <button'
-                        + '    class="text-white btn btn-primary"'
-                        + '    type="button"'
-                        + '    style="background-color: #74A5ED"'
-                        + '    data-toggle="collapse"'
-                        + '    data-target="#peer_' + peer + '">Foreign: ' + peer + '</button>'
-                        + '</td></tr></thead>'
-                        + '<tbody style="height: 40vh;">'
-                        + '  <tr><td style="border-top-width: 0px;padding: 0px 0px 0px 0px;">'
-                        + '     <div id="peer_' + peer + '"'
-                        + '          class="collapse show"'
-                        + '           style="border: 2px solid #74A5ED; padding: 0px 0.75em 0px 0.75em;">'
-                        + '     </div>'
-                        + ' </td></tr>'
-                        + '</tbody>'
-                        + '</table></td></tr>';
-    $("#peers_table_tbody").append(new_foreign_row);
-
-    alert("guid: " + identificator_frame + " Peer: " + peer);
+    let new_foreign_row = '<div><div class="link rounded">Foreign: ' + peer
+                        + '</div><div class="submenu"></div></div>';
+    $("#accordion").append(new_foreign_row);
 }
 
