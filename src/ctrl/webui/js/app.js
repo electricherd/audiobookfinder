@@ -40,34 +40,38 @@ function APPStart() {
             window.onbeforeunload = function(event) {
                  socket.close();
             };
+
+
+            // dealing with accordion
+            var Accordion = function(el, multiple) {
+                this.el = el || {};
+                this.multiple = multiple || false;
+
+                var links = this.el.find('.link');
+
+                links.on('click', {el: this.el, multiple: this.multiple}, this.dropdown)
+            }
+            Accordion.prototype.dropdown = function(e) {
+                var $el = e.data.el;
+                $this = $(this),
+                $next = $this.next();
+
+                $next.slideToggle();
+                $this.parent().toggleClass('open');
+
+                if (!e.data.multiple) {
+                    $el.find('.submenu').not($next).slideUp().parent().removeClass('open');
+                };
+            }
+            var accordion = new Accordion($('#accordion'), false);
+
+            // click accordion.div.div to show first entry!!
+            $("#accordion div div").click();
+
         } else {
             // The browser doesn't support WebSocket
             alert("WebSocket NOT supported by your Browser!");
         }
-
-        var Accordion = function(el, multiple) {
-            this.el = el || {};
-            this.multiple = multiple || false;
-
-            var links = this.el.find('.link');
-
-            links.on('click', {el: this.el, multiple: this.multiple}, this.dropdown)
-        }
-
-        Accordion.prototype.dropdown = function(e) {
-            var $el = e.data.el;
-            $this = $(this),
-            $next = $this.next();
-
-            $next.slideToggle();
-            $this.parent().toggleClass('open');
-
-            if (!e.data.multiple) {
-                $el.find('.submenu').not($next).slideUp().parent().removeClass('open');
-            };
-        }
-
-        var accordion = new Accordion($('#accordion'), false);
     });
 }
 
@@ -191,6 +195,11 @@ function netButtonClick(guid, peer) {
     $("#accordion").append(new_foreign_row);
 
     // load foreign page
-    $("#page_" + peer).load("http://<!---WEBSOCKET_ADDR--->:8088/peer_page.html");
+    $("#page_" + peer).load("http://<!---WEBSOCKET_ADDR--->:8088/peer_page.html", function( response, status, xhr ) {
+      if ( status == "error" ) {
+        var msg = "Sorry but there was an error: ";
+        $( "#page_" + peer).html( msg + xhr.status + " " + xhr.statusText );
+      }
+    });
 }
 
