@@ -119,8 +119,9 @@
             <p class="lead">is a program to search for audio data on the local and on neighboring
             computers in your network, and everywhere a audiobookfinder client also currently runs. Below
             you see a list of the local paths which are being searched.</p>
-            <table id="peers_table" class="w-100"><tbody style="height: 55vh;"><tr><td class="align-top">
+            <table class="w-100"><tbody id="peers_table_tbody" style="height: 55vh;">
                 <!-- outter table -->
+                <tr><td class="align-top">
                 <table class="table table-fixed">
                 <thead><tr><td class="w-100 text-right text-white" style="background-color: #74A5ED">
                     <button
@@ -130,18 +131,18 @@
                      data-toggle="collapse"
                      data-target="#peer_<!---PEER_HASH--->">Host: <!---PEER_HASH---></button>
                 </td></tr></thead>
-                <tbody style="height: 40vh;">
+                <tbody id="peer_<!---PEER_HASH--->"
+                       class="collapse show"
+                       style="height: 40vh;">
                   <tr><td style="border-top-width: 0px;padding: 0px 0px 0px 0px;">
-                      <div id="peer_<!---PEER_HASH--->"
-                           class="collapse show"
-                           style="border: 2px solid #74A5ED; padding: 0px 0.75em 0px 0.75em;">
+                      <div style="border: 2px solid #74A5ED; padding: 0px 0.75em 0px 0.75em;">
                           <!---PEER_PAGE--->
                       </div>
                   </td></tr>
                 </tbody>
-                </table>
+                </table></td></tr>
                 <!-- outter table -->
-            </td></tr></tbody></table>
+            </tbody></table>
             <p class="lead mb-0">Have fun!</p>
         </div>
     </div>
