@@ -52,6 +52,58 @@
           background-size: cover;
           -o-background-size: cover;
         }
+
+        .accordion {
+            width: 100%;
+            margin: 30px auto 20px;
+            background: #FFF;
+            -webkit-border-radius: 4px;
+            -moz-border-radius: 4px;
+            border-radius: 0px
+        }
+        .accordion .link {
+            cursor: pointer;
+            display: block;
+            padding: 8px 8px 8px 8px;
+            margin: 5px 5px 5px 5px;
+            color: #FFFFFF;
+            background: #74A5ED;
+            /* font-size: 14px; */
+            font-weight: 700;
+            position: relative;
+            -webkit-transition: all 0.4s ease;
+            -o-transition: all 0.4s ease;
+            transition: all 0.4s ease
+        }
+        .accordion div:last-child .link {
+            border-bottom: 0
+        }
+
+        .accordion div {
+            /* right: 12px; */
+            left: auto;
+            /* font-size: 16px */
+        }
+
+        .accordion div.open .link {
+            color: #AA00FF
+        }
+
+        .accordion div.open i {
+            color: #AA00FF
+        }
+        .submenu {
+            display: none;
+        }
+        .submenu div {
+            border-bottom: 1px solid /* #4b4a5e */
+        }
+        .submenu a {
+            display: block;
+            -webkit-transition: all 0.25s ease;
+            -o-transition: all 0.25s ease;
+            transition: all 0.25s ease
+        }
         .list-group{
             margin-bottom: 10px;
             overflow:scroll;
@@ -119,30 +171,16 @@
             <p class="lead">is a program to search for audio data on the local and on neighboring
             computers in your network, and everywhere a audiobookfinder client also currently runs. Below
             you see a list of the local paths which are being searched.</p>
-            <table class="w-100"><tbody id="peers_table_tbody" style="height: 55vh;">
+            <div class="container" style="height: 60vh; overflow-y: scroll;">
+              <div id="accordion" class="accordion">
                 <!-- outter table -->
-                <tr><td class="align-top">
-                <table class="table table-fixed">
-                <thead><tr><td class="w-100 text-right text-white" style="background-color: #74A5ED">
-                    <button
-                     class="text-white btn btn-primary"
-                     type="button"
-                     style="background-color: #74A5ED"
-                     data-toggle="collapse"
-                     data-target="#peer_<!---PEER_HASH--->">Host: <!---PEER_HASH---></button>
-                </td></tr></thead>
-                <tbody id="peer_<!---PEER_HASH--->"
-                       class="collapse show"
-                       style="height: 40vh;">
-                  <tr><td style="border-top-width: 0px;padding: 0px 0px 0px 0px;">
-                      <div style="border: 2px solid #74A5ED; padding: 0px 0.75em 0px 0.75em;">
-                          <!---PEER_PAGE--->
-                      </div>
-                  </td></tr>
-                </tbody>
-                </table></td></tr>
+                <div>
+                <div class="link rounded">Host: <!---PEER_HASH---></div>
+                <div class="submenu"><!---PEER_PAGE---></div>
+                </div>
                 <!-- outter table -->
-            </tbody></table>
+              </div>
+            </div>
             <p class="lead mb-0">Have fun!</p>
         </div>
     </div>
