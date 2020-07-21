@@ -356,21 +356,35 @@ impl Ctrl {
         open_browser: bool,
         web_port: u16,
     ) -> io::Result<()> {
+        let mut wait_ui_sync_maybe_before = None;
         if open_browser {
             if webbrowser::open(
                 // todo: what if https
                 &["http://", config::net::WEB_ADDR, ":", &web_port.to_string()].concat(),
             )
-            .is_err()
+            .is_ok()
             {
+                // it's clear this browser will take websocket start
+                wait_ui_sync_maybe_before = Some(wait_ui_sync);
+            } else {
+                // todo: have to do something
                 error!("Could not open browser!");
             }
+        } else {
+            // important:
+            // if no open browser the other threads don't depend on
+            // sync with this, so release the wait for sync with other threads and
+            // continue.
+            wait_ui_sync.wait();
+            wait_ui_sync_maybe_before = None;
         }
 
         task::block_on(async move {
             info!("spawning webui async thread");
             let webui = WebUI::new(peer_representation, net_support, paths);
-            webui.run(webui_receiver, wait_ui_sync, web_port).await
+            webui
+                .run(webui_receiver, wait_ui_sync_maybe_before, web_port)
+                .await
         })
     }
 

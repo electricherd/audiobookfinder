@@ -53,7 +53,7 @@ impl WebUI {
     pub async fn run(
         &self,
         receiver: Receiver<InternalUiMsg>,
-        wait_ui_sync: WaitGroup,
+        wait_ui_sync: Option<WaitGroup>,
         web_port: u16,
     ) -> io::Result<()> {
         let connection_count = Arc::new(Mutex::new(0));
@@ -81,11 +81,7 @@ impl WebUI {
         ));
 
         let sync_startup_actor = Arc::new(Mutex::new(
-            ActorSyncStartup::new(
-                Some(wait_ui_sync),
-                web_socket_handler.lock().unwrap().clone(),
-            )
-            .start(),
+            ActorSyncStartup::new(wait_ui_sync, web_socket_handler.lock().unwrap().clone()).start(),
         ));
 
         // take all local addresses and start if necessary
