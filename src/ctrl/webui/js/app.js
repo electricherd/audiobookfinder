@@ -185,8 +185,12 @@ function netButtonClick(guid, peer) {
     // collapse old entry
     $("#frame_"+identificator_frame).collapse('toggle');
 
+    // create entry
     let new_foreign_row = '<div id="frame_' + peer + '"><div class="link rounded">Foreign: ' + peer
-                        + '</div><div class="submenu"></div></div>';
+                        + '</div><div class="submenu" id="page_' + peer +  '"></div></div>';
     $("#accordion").append(new_foreign_row);
+
+    // load foreign page
+    $("#page_" + peer).load("http://<!---WEBSOCKET_ADDR--->:8088/peer_page.html");
 }
 
