@@ -42,6 +42,7 @@ __It's crossplatform now!__
 It is an inline [CI](https://travis-ci.org/electricherd/audiobookfinder/) generated documentation which can be found [here](https://electricherd.github.io/audiobookfinder/audiobookfinder/index.html)! Rust does a nice job here as well!
 
 ### Changes
+* webui changes, option added for with or without automatic browser opening, bump
 * state machine was added, wrapped in a layer of a custom net behaviour in the libp2p swarm ([architecture design]((#architecture)) updated)
 * my unfortunately now unused [observer pattern](../../wiki/Observer-pattern) was added to wiki - a better version of what
  could be found in internet (Rust is very restrictive, some patterns don't work that well).
@@ -52,11 +53,11 @@ It is an inline [CI](https://travis-ci.org/electricherd/audiobookfinder/) genera
 * fixed webui behavior, now crossplatform (after cursive backend change, taglib replaced by id3)
 * pretty webui design, net messages as good as tui now, fixed thread termination issues to be mostly graceful
 * webui is in sync now, prepare net messages for webui to maybe replace tui
-* back to many threads, but synced and working just fine - webui must be able to replace tui at some time
 
 <details>
   <summary>click for older changes</summary>
 
+    * back to many threads, but synced and working just fine - webui must be able to replace tui at some time
     * fixed up many older problems, yet ready for libp2p migration for communication over net
     * cleaned up yet inactivated parts: former ssh connection, state machine replacement
     * introducing a nice way to sync threads on startup by creating a channel, send its sender to main thread and block own thread until sender is sent back to self controlled receiver.
