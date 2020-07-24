@@ -5,9 +5,11 @@
 pub mod tui; // todo: pub is not recommended, I use it for doctest
 mod webui;
 
-use self::tui::Tui;
-use self::webui::WebUI;
-use super::config;
+use self::{tui::Tui, webui::WebUI};
+use super::{
+    config,
+    net::peer_representation::{self, PeerRepresentation},
+};
 
 use async_std::task;
 use crossbeam::sync::WaitGroup;
@@ -22,8 +24,6 @@ use std::{
     },
     thread,
 };
-
-type PeerRepresentation = u64;
 
 /// alive Signal for path from collector
 /// or net search alive
@@ -278,7 +278,7 @@ impl Ctrl {
         // lock block
         {
             let unlocker = this.lock().unwrap();
-            title = peer_hash(&unlocker.peer_id);
+            title = peer_representation::peer_to_hash_string(&unlocker.peer_id);
             paths = unlocker.paths.clone();
             with_net = unlocker.with_net.clone();
         }
@@ -451,10 +451,4 @@ impl Ctrl {
             true
         }
     }
-}
-
-pub fn peer_hash(peer_id: &PeerId) -> String {
-    let mut hasher = DefaultHasher::default();
-    hasher.write(peer_id.as_ref());
-    std::format!("{:x?}", hasher.finish())
 }

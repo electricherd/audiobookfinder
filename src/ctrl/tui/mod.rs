@@ -1,6 +1,13 @@
 //! The TUI parts, greatly using [Cursive](https://gyscos.github.io/Cursive/cursive/index.html)
 //! showing table, the paths being searched, an alive for that, also the mDNS search performed
 //! and later status of the connection to the found clients.
+
+use super::super::{
+    config,
+    ctrl::{self, CollectionPathAlive, ForwardNetMessage, InternalUiMsg, NetMessages, Status},
+    net::peer_representation,
+};
+
 use async_std::task;
 use cursive::{
     align,
@@ -15,11 +22,6 @@ use std::{
     iter::Iterator,
     sync::mpsc::{Receiver, Sender},
     time::Duration,
-};
-
-use super::super::{
-    config,
-    ctrl::{self, CollectionPathAlive, ForwardNetMessage, InternalUiMsg, NetMessages, Status},
 };
 
 #[derive(Clone)]
@@ -132,7 +134,9 @@ impl Tui {
                     ForwardNetMessage::Add(ui_peer) => {
                         if let Some(mut host_list) = self.handle.find_name::<ListView>(VIEW_LIST_ID)
                         {
-                            let content = TextContent::new(ctrl::peer_hash(&ui_peer.id));
+                            let content = TextContent::new(
+                                peer_representation::peer_to_hash_string(&ui_peer.id),
+                            );
                             host_list.add_child("", TextView::new_with_content(content));
                         } else {
                             error!("View {} could not be found!", VIEW_LIST_ID);
@@ -149,7 +153,10 @@ impl Tui {
                                         if let Some(textview) = view.downcast_ref::<TextView>() {
                                             let found_text =
                                                 textview.get_content().source().to_string();
-                                            let search_text = ctrl::peer_hash(&ui_peer_to_delete);
+                                            let search_text =
+                                                peer_representation::peer_to_hash_string(
+                                                    &ui_peer_to_delete,
+                                                );
                                             if found_text == search_text {
                                                 host_list.remove_child(i);
                                                 break;

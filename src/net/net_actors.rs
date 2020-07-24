@@ -12,8 +12,11 @@
 /// The noise protocol to be used
 /// (http://noiseprotocol.org/)
 ///
-use super::sm_behaviour::{SMBehaviour, SMOutEvents};
-use super::IPC;
+use super::{
+    super::net::peer_representation::{self, PeerRepresentation},
+    sm_behaviour::{SMBehaviour, SMOutEvents},
+    IPC,
+};
 
 use async_std::io;
 use bincode;
@@ -40,7 +43,7 @@ use std::{error::Error, time::Duration};
 #[allow(non_camel_case_types)]
 #[derive(Serialize, Deserialize, Clone, Debug)]
 enum MkadKeys {
-    KeyForAllPeerFinished,
+    KeyForPeerFinished(PeerRepresentation),
     KeyForIPC,
 }
 
@@ -206,7 +209,7 @@ impl AdbfBehavior {
         warn!("..............................................");
         if let Ok(fits_mkad_keys) = Self::key_reader(&key) {
             match fits_mkad_keys {
-                MkadKeys::KeyForAllPeerFinished => (),
+                MkadKeys::KeyForPeerFinished(peer_hash) => (),
                 MkadKeys::KeyForIPC => info!("ipc message came up!"),
             }
         } else {
@@ -224,9 +227,10 @@ impl AdbfBehavior {
         bincode::deserialize(key_record.as_ref())
     }
 
-    fn add_myself_to_peers_done(&mut self) {
+    fn add_myself_to_peers_done(&mut self, peer_id: &PeerId) {
         // see if I am already in there
-        let query_key = Self::key_writer(MkadKeys::KeyForAllPeerFinished);
+        let peer_hash = peer_representation::peer_to_hash(peer_id);
+        let query_key = Self::key_writer(MkadKeys::KeyForPeerFinished(peer_hash));
         let kad_record = self.kademlia.get_record(&query_key, Quorum::Majority);
     }
 }

@@ -7,8 +7,8 @@ mod json;
 mod pages;
 
 use super::{
-    super::{config, ctrl::InternalUiMsg},
-    CollectionPathAlive, PeerRepresentation,
+    super::{config, ctrl::InternalUiMsg, net::peer_representation::PeerRepresentation},
+    CollectionPathAlive,
 };
 use actors::{ActorSyncStartup, ActorWSServerMonitor, ActorWebSocket, MRegisterWSClient};
 // external
