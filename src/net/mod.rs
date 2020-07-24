@@ -4,6 +4,7 @@
 mod data;
 pub mod key_keeper;
 mod net_actors;
+pub mod peer_representation;
 mod sm;
 mod sm_behaviour;
 mod ui_data;
