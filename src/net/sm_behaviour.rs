@@ -19,7 +19,9 @@ use std::{
 
 use super::{
     super::data::ipc::IPC,
-    sm::{self, AdbfStateChart, Error as SMError, Events, Events::*, NewPeerData, States},
+    sm::{
+        self, AdbfStateChart, Error as SMError, Events, Events::*, NewPeerData, States, UpdateData,
+    },
     ui_data::UiData,
 };
 
@@ -40,18 +42,24 @@ pub enum SMOutEvents {
 //#[derive(Clone, Default)]
 pub struct SMBehaviour {
     sm: sm::StateMachine<AdbfStateChart>,
+    own_peer: PeerId,
     send_buffer: VecDeque<SMOutEvents>,
     ipc_receiver: Receiver<IPC>,
 }
 impl SMBehaviour {
     pub fn new(ipc_receiver: Receiver<IPC>, own_peer: PeerId, ui_data: UiData) -> Self {
         Self {
-            sm: AdbfStateChart::init(AdbfStateChart::new(own_peer, ui_data)),
+            sm: AdbfStateChart::init(AdbfStateChart::new(own_peer.clone(), ui_data)),
+            own_peer,
             send_buffer: VecDeque::new(),
             ipc_receiver,
         }
     }
+    pub fn own_peer(&self) -> PeerId {
+        self.own_peer.clone()
+    }
 
+    // mdns actions
     pub fn mdns_new_peer(&mut self, peer_id: &PeerId, multi_addr: &Multiaddr) {
         let new_peer_event = GotANewPeer(NewPeerData {
             id: peer_id.clone(),
@@ -63,6 +71,15 @@ impl SMBehaviour {
     pub fn mdns_remove(&mut self, peer_id: &PeerId) {
         let remove_peer_event = HaveToRemovePeer(peer_id.clone());
         self.process_and_react(remove_peer_event);
+    }
+
+    pub fn update_peer_data(&mut self, peer_id: &PeerId, count: u32) {
+        let to_update_peer = UpdatePeer(UpdateData {
+            id: peer_id.clone(),
+            count,
+        });
+        // todo: this later will be a referenced data (as in SM example on webside)
+        self.process_and_react(to_update_peer);
     }
 
     fn process_and_react(&mut self, event: Events) {

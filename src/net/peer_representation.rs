@@ -12,3 +12,7 @@ pub fn peer_to_hash(peer_id: &PeerId) -> PeerRepresentation {
 pub fn peer_to_hash_string(peer_id: &PeerId) -> String {
     std::format!("{:x?}", peer_to_hash(peer_id))
 }
+
+pub fn peer_hash_to_string(peer: &PeerRepresentation) -> String {
+    std::format!("{:x?}", peer)
+}

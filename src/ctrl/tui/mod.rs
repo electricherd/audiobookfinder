@@ -4,7 +4,7 @@
 
 use super::super::{
     config,
-    ctrl::{self, CollectionPathAlive, ForwardNetMessage, InternalUiMsg, NetMessages, Status},
+    ctrl::{CollectionPathAlive, ForwardNetMessage, InternalUiMsg, NetMessages, Status},
     net::peer_representation,
 };
 
@@ -240,6 +240,9 @@ impl Tui {
                                 error!("when does this happen???")
                             });
                     }
+                }
+                InternalUiMsg::PeerSearchFinished(peer, count) => {
+                    //
                 }
                 InternalUiMsg::Terminate => {
                     self.handle.quit();

@@ -44,7 +44,6 @@ use std::{error::Error, time::Duration};
 #[derive(Serialize, Deserialize, Clone, Debug)]
 enum MkadKeys {
     KeyForPeerFinished(PeerRepresentation),
-    KeyForIPC,
 }
 
 /// The swarm injected behavior is the key element for the whole communication
@@ -60,9 +59,16 @@ impl NetworkBehaviourEventProcess<MdnsEvent> for AdbfBehavior {
     fn inject_event(&mut self, event: MdnsEvent) {
         match event {
             MdnsEvent::Discovered(list) => {
+                // most probably not the same PeerId ;-) but since it is multiaddress
+                // its almost impossible to have 4 times the same random multiaddress
+                let mut old_display_peer = PeerId::random();
                 for (peer_id, multiaddr) in list {
                     self.sm_behaviour.mdns_new_peer(&peer_id, &multiaddr);
                     self.kademlia.add_address(&peer_id, multiaddr);
+                    if old_display_peer != peer_id {
+                        self.check_peer_actions(&peer_id);
+                        old_display_peer = peer_id.clone();
+                    }
                 }
             }
             MdnsEvent::Expired(expired_addresses) => {
@@ -97,9 +103,12 @@ impl NetworkBehaviourEventProcess<KademliaEvent> for AdbfBehavior {
                     Ok(PutRecordOk { key }) => {
                         let raw_key = Self::key_reader(&key);
                         match raw_key {
-                            Ok(deserialized) => {
-                                trace!("Successfully put record key {:?}", deserialized);
-                            }
+                            Ok(deserialized) => match deserialized {
+                                MkadKeys::KeyForPeerFinished(peer_hash) => info!(
+                                    "Successfully put record key KeyForPeerFinished for peer {:?}",
+                                    peer_representation::peer_hash_to_string(&peer_hash)
+                                ),
+                            },
                             Err(_) => {
                                 error!("key could not be verified!");
                             }
@@ -130,8 +139,10 @@ impl NetworkBehaviourEventProcess<SMOutEvents> for AdbfBehavior {
                 match ipc_event {
                     IPC::DoneSearching(nr) => {
                         info!("forward ipc {:?}", ipc_event);
+                        let own_peer =
+                            peer_representation::peer_to_hash(&self.sm_behaviour.own_peer());
 
-                        let bin_key = Self::key_writer(MkadKeys::KeyForIPC);
+                        let bin_key = Self::key_writer(MkadKeys::KeyForPeerFinished(own_peer));
 
                         // try to read old value
                         let mut value_to_send = nr;
@@ -143,8 +154,13 @@ impl NetworkBehaviourEventProcess<SMOutEvents> for AdbfBehavior {
                                 });
                             value_to_send += found;
                         } else {
-                            trace!("this key was not yet set in the kademlia store!");
+                            trace!(
+                                "this key was not yet set in the kademlia store with value {}!",
+                                nr
+                            );
                         }
+                        // for provider later
+                        let provider_key = bin_key.clone();
 
                         let bin_message =
                             bincode::serialize(&IPC::DoneSearching(value_to_send)).unwrap();
@@ -155,10 +171,16 @@ impl NetworkBehaviourEventProcess<SMOutEvents> for AdbfBehavior {
                             publisher: None,
                             expires: None,
                         };
+
                         // write out
                         self.kademlia
                             .put_record(record, Quorum::One)
                             .expect("Failed to store record locally.");
+                        // and be the provider for that key
+                        match self.kademlia.start_providing(provider_key) {
+                            Ok(query_id) => (), //trace!("providing worked"),
+                            Err(e) => error!("providing failed"),
+                        }
                     }
                 }
             }
@@ -209,8 +231,10 @@ impl AdbfBehavior {
         warn!("..............................................");
         if let Ok(fits_mkad_keys) = Self::key_reader(&key) {
             match fits_mkad_keys {
-                MkadKeys::KeyForPeerFinished(peer_hash) => (),
-                MkadKeys::KeyForIPC => info!("ipc message came up!"),
+                MkadKeys::KeyForPeerFinished(peer_hash) => {
+                    //
+                    info!("key for peer finished: {}!", peer_hash);
+                }
             }
         } else {
             error!("unknown MkadKeys format");
@@ -227,10 +251,43 @@ impl AdbfBehavior {
         bincode::deserialize(key_record.as_ref())
     }
 
+    fn get_key_finished(&mut self, key: MkadKeys) -> Result<u32, ()> {
+        let serialized_key = Self::key_writer(key);
+        match self.kademlia.store_mut().get(&serialized_key) {
+            Some(good_query) => {
+                let found: u32 =
+                    bincode::deserialize(good_query.value.as_ref()).unwrap_or_else(|_| {
+                        error!("value in store is not what expected!");
+                        0
+                    });
+                Ok(found)
+            }
+            None => Err(()),
+        }
+    }
+
+    fn check_if_peer_finished(&mut self, peer_id: &PeerId) -> Result<u32, ()> {
+        let peer_hash = peer_representation::peer_to_hash(peer_id);
+        let query_key = MkadKeys::KeyForPeerFinished(peer_hash);
+        self.get_key_finished(query_key)
+    }
+
     fn add_myself_to_peers_done(&mut self, peer_id: &PeerId) {
         // see if I am already in there
         let peer_hash = peer_representation::peer_to_hash(peer_id);
         let query_key = Self::key_writer(MkadKeys::KeyForPeerFinished(peer_hash));
         let kad_record = self.kademlia.get_record(&query_key, Quorum::Majority);
+    }
+
+    fn check_peer_actions(&mut self, peer_id: &PeerId) {
+        if *peer_id == self.sm_behaviour.own_peer() {
+            trace!("own instance finished ... not interesting");
+        } else {
+            let display_peer = peer_representation::peer_to_hash_string(&peer_id);
+            if let Ok(count) = self.check_if_peer_finished(&peer_id) {
+                trace!("yes, peer {} finished already", display_peer);
+                self.sm_behaviour.update_peer_data(&peer_id, count);
+            }
+        }
     }
 }
