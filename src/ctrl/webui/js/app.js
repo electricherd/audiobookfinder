@@ -142,7 +142,7 @@ function updateNetView(data) {
                          + "title='Adresses: "
                          + tooltip
                          + "'><td class='nettd col-xs-3'>"
-                         + "<button id='netbutton_" + guid_id + "' class='btn btn-light' "
+                         + "<button id='netbutton_" + guid_id + "' class='btn btn-light text-monospace' "
                          + "value='" + peer_id + "'"
                          + "onClick='netButtonClick(this.id, this.value)'>"
                          + peer_id
