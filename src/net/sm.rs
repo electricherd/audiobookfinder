@@ -17,10 +17,17 @@ pub struct NewPeerData {
     pub addr: Multiaddr,
 }
 
+#[derive(PartialEq)]
+pub struct UpdateData {
+    pub id: PeerId,
+    pub count: u32,
+}
+
 statemachine! {
     *Start + Go = WaitingForPeerAction,
     WaitingForPeerAction + GotANewPeer(NewPeerData) [ not_known ] / process_new_peer = WaitingForPeerAction,
     WaitingForPeerAction + HaveToRemovePeer(PeerId) [ known ] / remove_peer = WaitingForPeerAction,
+    WaitingForPeerAction + UpdatePeer(UpdateData) [ is_allowed ] / update_peer = WaitingForPeerAction
 }
 
 pub struct AdbfStateChart {
@@ -44,15 +51,19 @@ impl AdbfStateChart {
 }
 
 impl StateMachineContext for AdbfStateChart {
-    // guards
+    // 1) guards
     fn not_known(&mut self, event_data: &NewPeerData) -> bool {
         !self.ui_data.has_peer(&event_data.id)
     }
     fn known(&mut self, event_data: &PeerId) -> bool {
         self.ui_data.has_peer(&event_data)
     }
+    fn is_allowed(&mut self, _event_data: &UpdateData) -> bool {
+        // for now always true
+        true
+    }
 
-    // actions
+    // 2) actions
     fn process_new_peer(&mut self, peer_data: &NewPeerData) {
         let ref peer_id = peer_data.id;
         let multiaddr = peer_data.addr.clone();
@@ -61,5 +72,9 @@ impl StateMachineContext for AdbfStateChart {
 
     fn remove_peer(&mut self, peer_id: &PeerId) {
         self.ui_data.unregister_address(&peer_id);
+    }
+
+    fn update_peer(&mut self, update_data: &UpdateData) {
+        self.ui_data.update_peer_data(update_data);
     }
 }

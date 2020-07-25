@@ -6,6 +6,7 @@ use std::{collections::HashMap, sync::mpsc::Sender};
 use super::super::{
     ctrl::{self, ForwardNetMessage, UiPeer, UiUpdateMsg},
     net::peer_representation,
+    net::sm::*,
 };
 
 pub struct UiData {
@@ -68,6 +69,25 @@ impl UiData {
             }
         } else {
             warn!("Trying to remove something which wasn't there ...");
+        }
+    }
+
+    pub fn update_peer_data(&mut self, update_data: &UpdateData) {
+        // todo: of course not only u32 but more data and not only finish message
+        if self.has_peer(&update_data.id) {
+            if let Some(ctrl_sender) = &self.sender {
+                ctrl_sender
+                    .send(ctrl::UiUpdateMsg::PeerSearchFinished(
+                        update_data.id.clone(),
+                        update_data.count,
+                    ))
+                    .unwrap_or_else(|e| error!("use one: {}", e));
+            }
+        } else {
+            warn!(
+                "Peer {} is not known!",
+                peer_representation::peer_to_hash_string(&update_data.id)
+            );
         }
     }
 }

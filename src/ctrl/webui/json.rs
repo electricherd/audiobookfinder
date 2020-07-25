@@ -2,7 +2,7 @@
 ///
 use super::{
     super::super::{
-        ctrl::{self, ForwardNetMessage, NetMessages, Status},
+        ctrl::{ForwardNetMessage, NetMessages, Status},
         net::peer_representation,
     },
     CollectionPathAlive, InternalUiMsg,
@@ -52,6 +52,12 @@ pub fn convert_internal_message(internal_msg: &InternalUiMsg) -> Result<WSJsonOu
             }
             CollectionPathAlive::HostSearch => Ok(WSJsonOut::refresh(RefreshData::net)),
         },
+        InternalUiMsg::PeerSearchFinished(peer, count) => {
+            Ok(WSJsonOut::update(NetData::count(FinishPeer {
+                peer: peer_representation::peer_to_hash_string(peer),
+                count: *count,
+            })))
+        }
         InternalUiMsg::Terminate => Err("terminate is not really of interest, is it?".to_string()),
     }
 }
@@ -121,10 +127,18 @@ pub struct PeerJson {
 
 #[allow(non_camel_case_types)]
 #[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct FinishPeer {
+    peer: String,
+    count: u32,
+}
+
+#[allow(non_camel_case_types)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(tag = "view", content = "cnt")]
 pub enum NetData {
     add(PeerJson),
     remove(String),
+    count(FinishPeer),
 }
 
 // This is the critical part here, "event" and "data" to work with

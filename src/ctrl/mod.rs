@@ -64,6 +64,7 @@ pub enum InternalUiMsg {
     Update(ForwardNetMessage),
     StartAnimate(CollectionPathAlive, Status),
     StepAndAnimate(CollectionPathAlive),
+    PeerSearchFinished(PeerId, u32),
     Terminate,
 }
 
@@ -71,6 +72,7 @@ pub enum InternalUiMsg {
 pub enum UiUpdateMsg {
     NetUpdate(ForwardNetMessage),
     CollectionUpdate(CollectionPathAlive, Status),
+    PeerSearchFinished(PeerId, u32),
     StopUI,
 }
 
@@ -434,6 +436,19 @@ impl Ctrl {
                     for forward_sender in multiplex_send {
                         forward_sender
                             .send(InternalUiMsg::StartAnimate(signal.clone(), on_off.clone()))
+                            .unwrap_or_else(|_| {
+                                warn!("forwarding message cancelled probably due to quitting!");
+                            });
+                    }
+                    true
+                }
+                UiUpdateMsg::PeerSearchFinished(peer_representation, count) => {
+                    for forward_sender in multiplex_send {
+                        forward_sender
+                            .send(InternalUiMsg::PeerSearchFinished(
+                                peer_representation.clone(),
+                                count.clone(),
+                            ))
                             .unwrap_or_else(|_| {
                                 warn!("forwarding message cancelled probably due to quitting!");
                             });
