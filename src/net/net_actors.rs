@@ -20,7 +20,6 @@ use super::{
 
 use async_std::io;
 use bincode;
-use bincode::deserialize;
 use libp2p::{
     kad::{
         record,
@@ -263,20 +262,11 @@ impl AdbfBehavior {
         self.get_key_finished(query_key)
     }
 
-    fn add_myself_to_peers_done(&mut self, peer_id: &PeerId) {
-        // see if I am already in there
-        let peer_hash = peer_representation::peer_to_hash(peer_id);
-        let query_key = Self::key_writer(MkadKeys::KeyForPeerFinished(peer_hash));
-        let kad_record = self.kademlia.get_record(&query_key, Quorum::Majority);
-    }
-
     fn check_peer_actions(&mut self, peer_id: &PeerId) {
         if *peer_id == self.sm_behaviour.own_peer() {
-            trace!("own instance finished ... not interesting");
+            warn!("own instance finished ... not interesting, should not happen!");
         } else {
-            let display_peer = peer_representation::peer_to_hash_string(&peer_id);
             if let Ok(count) = self.check_if_peer_finished(&peer_id) {
-                trace!("yes, peer {} finished already", display_peer);
                 self.sm_behaviour.update_peer_data(&peer_id, count);
             }
         }

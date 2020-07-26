@@ -142,11 +142,15 @@ function updateNetView(data) {
                          + "title='Adresses: "
                          + tooltip
                          + "'><td class='nettd col-xs-3'>"
-                         + "<button id='netbutton_" + guid_id + "' class='btn btn-light text-monospace' "
-                         + "value='" + peer_id + "'"
+                         + "<button id='netbutton_" + peer_id + "' class='btn btn-light text-monospace' "
+                         + "value='" + guid_id + "'"
                          + "onClick='netButtonClick(this.id, this.value)'>"
                          + peer_id
                          + "</button>"
+                         + "</td><td id='count_" + peer_id + "'>"
+                         + "<div class='spinner-border spinner-border-sm text-success' role='status'>"
+                         + " <span class='sr-only'></span>"
+                         + "</div>"
                          + "</td></tr>";
         new_el = $.parseHTML(new_el_html);
         // append it as an object
@@ -159,7 +163,16 @@ function updateNetView(data) {
 
         let obj_id =  "host_obj_" + peer_id;
         $('#' + obj_id).fadeOut(1500).remove();
-    } else {
+    }
+    else if (data.view === 'count') {
+        // delete object
+        let peer_id = data.cnt.peer;
+        let count = data.cnt.count;
+
+        let new_text = "<div>[" + count + "]</div>";
+        $('#count_' + peer_id + ' div').replaceWith(new_text);
+    }
+    else {
         console.log("The view '" + data.view + "' is not implemented yet!");
     }
 }
@@ -178,16 +191,17 @@ function gracefullyClose() {
       document.getElementById("overlay").style.display = "block";
 }
 
-function netButtonClick(guid, peer) {
+function netButtonClick(button_peer, guid) {
+    // get frame (table id)
+    let peer = button_peer.split("_")[1];
+
     // if exists go back
     if ($("#frame_" + peer).length)
         return
 
-    // get frame (table id)
-    let identificator_frame = guid.split("_")[1];
 
     // collapse old entry
-    $("#frame_"+identificator_frame).collapse('toggle');
+    $("#frame_"+peer).collapse('toggle');
 
     // create entry
     let new_foreign_row = '<div id="frame_' + peer + '"><div class="link rounded">Foreign: ' + peer
