@@ -31,12 +31,11 @@ statemachine! {
 }
 
 pub struct AdbfStateChart {
-    own_peer: PeerId,
     ui_data: UiData,
 }
 impl AdbfStateChart {
-    pub fn new(own_peer: PeerId, ui_data: UiData) -> Self {
-        Self { own_peer, ui_data }
+    pub fn new(ui_data: UiData) -> Self {
+        Self { ui_data }
     }
 }
 impl AdbfStateChart {
