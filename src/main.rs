@@ -190,6 +190,9 @@ fn main() -> io::Result<()> {
             drop(net_thread);
         } else {
             // if didn't have ui, net_thread will continue running
+            println!(
+                "Search is finished, but net thread is kept running!\nTo stop send break command (ctrl-c)!"
+            );
             net_thread
                 .and_then(|running_thread| Ok(running_thread.join()))
                 .unwrap_or_else(|_| {
