@@ -49,7 +49,7 @@ pub struct SMBehaviour {
 impl SMBehaviour {
     pub fn new(ipc_receiver: Receiver<IPC>, own_peer: PeerId, ui_data: UiData) -> Self {
         Self {
-            sm: AdbfStateChart::init(AdbfStateChart::new(own_peer.clone(), ui_data)),
+            sm: AdbfStateChart::init(AdbfStateChart::new(ui_data)),
             own_peer,
             send_buffer: VecDeque::new(),
             ipc_receiver,
