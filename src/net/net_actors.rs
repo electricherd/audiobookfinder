@@ -159,11 +159,7 @@ impl NetworkBehaviourEventProcess<SMOutEvents> for AdbfBehavior {
                                 nr
                             );
                         }
-                        // for provider later
-                        let provider_key = bin_key.clone();
-
-                        let bin_message =
-                            bincode::serialize(&IPC::DoneSearching(value_to_send)).unwrap();
+                        let bin_message = bincode::serialize(&value_to_send).unwrap();
 
                         let record = Record {
                             key: bin_key,
@@ -176,11 +172,6 @@ impl NetworkBehaviourEventProcess<SMOutEvents> for AdbfBehavior {
                         self.kademlia
                             .put_record(record, Quorum::One)
                             .expect("Failed to store record locally.");
-                        // and be the provider for that key
-                        match self.kademlia.start_providing(provider_key) {
-                            Ok(query_id) => (), //trace!("providing worked"),
-                            Err(e) => error!("providing failed"),
-                        }
                     }
                 }
             }
