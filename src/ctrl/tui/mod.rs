@@ -241,8 +241,10 @@ impl Tui {
                             });
                     }
                 }
-                InternalUiMsg::PeerSearchFinished(peer, count) => {
-                    //
+                InternalUiMsg::PeerSearchFinished(_peer, _count) => {
+                    // todo: finding id or handle of peer is text dependent still,
+                    //       chaning and then removing of peer is difficult!!
+                    //       fix row identification when cursive gets better
                 }
                 InternalUiMsg::Terminate => {
                     self.handle.quit();
