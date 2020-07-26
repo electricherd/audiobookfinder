@@ -18,26 +18,9 @@ use tree_magic;
 static TOLERANCE: usize = 5;
 static TIME_TOLERANCE_SEC: usize = 4;
 
-#[allow(dead_code)]
-/// # File info
-/// All info on a audio files
-/// (let's see how info we need,
-/// its size vs necessary info)
-struct FileInfo {
-    path: PathBuf,
-    size: u64,
-    permissions: Permissions,
-}
-
 struct AudioInfo {
     duration: u32,
     album: String,
-}
-
-/// # Album information
-/// General info
-struct InfoAlbum {
-    reference_path: Vec<FileInfo>,
 }
 
 #[allow(dead_code)]
@@ -202,18 +185,6 @@ impl Collection {
 
                 self.stats.files.analyzed += 1;
                 file_stats.analyzed += 1;
-
-                let path_buffer = cb.to_path_buf();
-
-                let metadata = fs::metadata(cb).unwrap();
-                let filesize = metadata.len();
-                let permissions = metadata.permissions();
-
-                let possible_entry = FileInfo {
-                    path: path_buffer,
-                    size: filesize,
-                    permissions: permissions,
-                };
 
                 // artist + song name is key for bktree
                 let key = [artist, title].join(" ");
