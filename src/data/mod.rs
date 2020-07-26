@@ -1,17 +1,22 @@
 //! The oldest module, the data module stores all the data needed to collect.
+pub mod bktree;
 pub mod ipc;
 
 use super::config;
+use bktree::BKTree;
+
 use id3::Tag;
 use libp2p_core::PeerId;
 use std::{
-    cmp,                                     //max
-    collections::hash_map::{Entry, HashMap}, // my main item uses a hash map
-    fs::{self, DirEntry, Permissions},       // directory
-    io,                                      // reading files
+    fs::{self, DirEntry, Permissions}, // directory
+    io,                                // reading files
     path::{Path, PathBuf},
-}; // path, clear
+    sync::Arc,
+};
 use tree_magic;
+
+static TOLERANCE: usize = 5;
+static TIME_TOLERANCE_SEC: usize = 4;
 
 #[allow(dead_code)]
 /// # File info
@@ -22,6 +27,11 @@ struct FileInfo {
     path: PathBuf,
     size: u64,
     permissions: Permissions,
+}
+
+struct AudioInfo {
+    duration: u32,
+    album: String,
 }
 
 /// # Album information
@@ -57,7 +67,7 @@ impl Worker {
 pub struct Collection {
     /// This collection contains all data
     who: Worker,
-    collection: HashMap<String, Box<InfoAlbum>>,
+    bk_tree: BKTree<String, Box<AudioInfo>>,
     stats: Stats,
 }
 /// Only some statistics
@@ -82,14 +92,7 @@ impl FilesStat {
 
 struct Stats {
     files: FilesStat,
-    audio: Audio,
     threads: usize,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-struct Audio {
-    albums: u32,
-    max_songs: usize,
 }
 
 type FileFn = dyn Fn(&mut Collection, &DirEntry, &mut FilesStat) -> io::Result<()>;
@@ -99,17 +102,13 @@ impl Collection {
     pub fn new(peer_id: &PeerId, num_threads: usize) -> Collection {
         Collection {
             who: Worker::new(peer_id.clone(), num_threads),
-            collection: HashMap::new(),
+            bk_tree: BKTree::new(),
             stats: Stats {
                 files: FilesStat {
                     analyzed: 0,
                     faulty: 0,
                     searched: 0,
                     other: 0,
-                },
-                audio: Audio {
-                    albums: 0,
-                    max_songs: 0,
                 },
                 threads: num_threads,
             },
@@ -196,7 +195,10 @@ impl Collection {
     fn visit_audio_files(&mut self, cb: &Path, file_stats: &mut FilesStat) -> Result<(), ()> {
         Tag::read_from_path(cb.to_str().unwrap())
             .and_then(|tag| {
-                let artist = tag.artist().unwrap_or("unknown");
+                let artist = tag.artist().unwrap_or("");
+                let title = tag.title().unwrap_or("");
+                let duration = tag.duration().unwrap_or(0);
+                let album = tag.album().unwrap_or("");
 
                 self.stats.files.analyzed += 1;
                 file_stats.analyzed += 1;
@@ -213,22 +215,36 @@ impl Collection {
                     permissions: permissions,
                 };
 
-                match self.collection.entry(String::from(artist)) {
-                    Entry::Occupied(mut entry) => {
-                        entry.get_mut().reference_path.push(possible_entry);
+                // artist + song name is key for bktree
+                let key = [artist, title].join(" ");
 
-                        let this_albums_length = entry.get().reference_path.len();
-                        self.stats.audio.max_songs =
-                            cmp::max(self.stats.audio.max_songs, this_albums_length);
+                let (vec_k, vec_c) = self.bk_tree.find(&key, TOLERANCE);
+                if !vec_c.is_empty() {
+                    let mut vec_similar = vec![];
+                    for (index, similar) in vec_k.iter().enumerate() {
+                        let time_distance = similar.duration as i32 - duration as i32;
+                        if time_distance.abs() < TIME_TOLERANCE_SEC as i32 {
+                            vec_similar.push(vec_c[index]);
+                        }
                     }
-                    Entry::Vacant(entry) => {
-                        let this_album: InfoAlbum = InfoAlbum {
-                            reference_path: vec![possible_entry],
-                        };
-                        entry.insert(Box::new(this_album));
-                        self.stats.audio.albums += 1;
+                    if !vec_similar.is_empty() {
+                        trace!(
+                            "close: {:?} to {:?}, {} similar",
+                            &vec_similar,
+                            &key,
+                            &vec_k.len()
+                        );
                     }
                 }
+
+                // todo: decide when to not add and insert then
+                self.bk_tree.insert(
+                    key.clone(),
+                    Box::new(AudioInfo {
+                        duration,
+                        album: album.to_string(),
+                    }),
+                );
                 Ok(())
             })
             .or_else(|_| {
@@ -242,8 +258,6 @@ impl Collection {
         let output_string = format!(
             "This client's id     : {id:}\n\
              pathes/threads       : {nr_pathes:>width$}\n\
-             albums found         : {albums_found:>width$}\n\
-             most songs per album : {max_p_album:>width$}\n\
              ----------------------     \n\
              analyzed files       : {files_analyzed:>width$}\n\
              searched files       : {files_searched:>width$}\n\
@@ -251,8 +265,6 @@ impl Collection {
              faulty files         : {files_faulty:>width$}\n",
             id = self.who.peer_id.to_string().to_uppercase(),
             nr_pathes = self.stats.threads,
-            albums_found = self.stats.audio.albums,
-            max_p_album = self.stats.audio.max_songs,
             files_analyzed = self.stats.files.analyzed,
             files_searched = self.stats.files.searched,
             files_irrelevant = self.stats.files.other,
