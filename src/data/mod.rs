@@ -49,6 +49,8 @@ pub fn search_in_single_path(
 
     // do it: main task here is to visit and dive deep
     //        into the subfolders of this folder
+    // todo: in some time, check if path a subpath of another also being searched
+    //       super-path (which I use for testing for duplicates), and exclude the subpath!
     match locked_collection.visit_path(
         collection_data,
         Path::new(elem),
