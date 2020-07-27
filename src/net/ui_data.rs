@@ -1,7 +1,7 @@
 /// a very small mod just for ui data send by net. It is important to
 /// not send all discovery blindly (e.g. duplicates)
 use libp2p_core::{Multiaddr, PeerId};
-use std::{collections::HashMap, sync::mpsc::Sender};
+use std::{collections::HashSet, sync::mpsc::Sender};
 
 use super::super::{
     ctrl::{self, ForwardNetMessage, UiPeer, UiUpdateMsg},
@@ -11,14 +11,13 @@ use super::super::{
 
 pub struct UiData {
     sender: Option<Sender<UiUpdateMsg>>,
-    // todo: use, fill () with some nice data for webui functionality, etc.
-    ui_shown_peers: HashMap<PeerId, ()>,
+    ui_shown_peers: HashSet<PeerId>,
 }
 impl UiData {
     pub fn new(sender: Option<Sender<UiUpdateMsg>>) -> Self {
         Self {
             sender,
-            ui_shown_peers: HashMap::new(),
+            ui_shown_peers: HashSet::new(),
         }
     }
 
@@ -31,7 +30,7 @@ impl UiData {
         let ref mut collection = self.ui_shown_peers;
         if collection.get(peer_id).is_none() {
             // add
-            collection.insert(peer_id.clone(), ());
+            collection.insert(peer_id.clone());
             trace!(
                 "found new peer {}",
                 peer_representation::peer_to_hash_string(peer_id)
@@ -55,7 +54,7 @@ impl UiData {
     }
     pub fn unregister_address(&mut self, peer_id: &PeerId) {
         let ref mut collection = self.ui_shown_peers;
-        if collection.remove(peer_id).is_some() {
+        if collection.remove(peer_id) {
             trace!(
                 "removed peer {}",
                 peer_representation::peer_to_hash_string(peer_id)
