@@ -42,6 +42,8 @@ __It's crossplatform now!__
 It is an inline [CI](https://travis-ci.org/electricherd/audiobookfinder/) generated documentation which can be found [here](https://electricherd.github.io/audiobookfinder/audiobookfinder/index.html)! Rust does a nice job here as well!
 
 ### Changes
+* debugging messages for collection, now collection is a bktree
+* webui shows search ongoing on other peers, and then result (number of audio files)
 * webui changes, option added for with or without automatic browser opening, bump
 * state machine was added, wrapped in a layer of a custom net behaviour in the libp2p swarm ([architecture design]((#architecture)) updated)
 * my unfortunately now unused [observer pattern](../../wiki/Observer-pattern) was added to wiki - a better version of what
@@ -51,12 +53,12 @@ It is an inline [CI](https://travis-ci.org/electricherd/audiobookfinder/) genera
 * using libp2p network swarm, replacing single-on mdsn with it, but having same functionality
 * releases for ubuntu, windows, raspberry (20LTS had a upx packing problem due to changed compiler flags, I suppose)
 * fixed webui behavior, now crossplatform (after cursive backend change, taglib replaced by id3)
-* pretty webui design, net messages as good as tui now, fixed thread termination issues to be mostly graceful
-* webui is in sync now, prepare net messages for webui to maybe replace tui
 
 <details>
   <summary>click for older changes</summary>
 
+    * pretty webui design, net messages as good as tui now, fixed thread termination issues to be mostly graceful
+    * webui is in sync now, prepare net messages for webui to maybe replace tui
     * back to many threads, but synced and working just fine - webui must be able to replace tui at some time
     * fixed up many older problems, yet ready for libp2p migration for communication over net
     * cleaned up yet inactivated parts: former ssh connection, state machine replacement
@@ -93,16 +95,15 @@ It is an inline [CI](https://travis-ci.org/electricherd/audiobookfinder/) genera
 </details>
 
 ### ToDo
-* let state machine *talk* (as ipc) with data collection via [crossbeam](https://github.com/crossbeam-rs/crossbeam) (first only the finish search status)
+* clean up, refactor data's mod and collection
+* add a nice way to collect data (string distance + time, maybe 2nd duration hash set?, filter empty tags)
+* add memory consumption monitoring for collection
 * look into state and extra data usage of already used [smlang-rs](https://github.com/korken89/smlang-rs/blob/master/examples/event_with_reference_data.rs)
 * think of a protocol what adbf clients agree on and exchange (e.g. still searching, files found, etc) 
-* add ui data from swarm peer (timeout)
-* fix collection of data - right now it's just dumb, and just counts files
+* ~~let state machine *talk* (as ipc) with data collection via [crossbeam](https://github.com/crossbeam-rs/crossbeam) (first only the finish search status)~~
 * ~~make div from html page to extra single file for later multiple clients on one page~~
 * ~~let client/server talk a little~~
 * ~~update jquery and bootstrap~~
-* ~~fix ForwardNetMessage and NetMessage, non-sense and not-usable data into a proper structure~~
-* ~~add ui data from swarm peer (timeout, another representation, other info)~~
 
 ### Architecture
 ![Diagram](diag_architecture_general.svg)
