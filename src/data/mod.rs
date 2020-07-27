@@ -8,10 +8,10 @@ use bktree::BKTree;
 use id3::Tag;
 use libp2p_core::PeerId;
 use std::{
-    fs::{self, DirEntry, Permissions}, // directory
-    io,                                // reading files
-    path::{Path, PathBuf},
-    sync::Arc,
+    fs::{self, DirEntry}, // directory
+    io,                   // reading files
+    path::Path,
+    sync::{Arc as SArc, Mutex as SMutex},
 };
 use tree_magic;
 
@@ -47,10 +47,20 @@ impl Worker {
     }
 }
 
-pub struct Collection {
-    /// This collection contains all data
-    who: Worker,
+pub struct Container {
     bk_tree: BKTree<String, Box<AudioInfo>>,
+}
+impl Container {
+    pub fn new() -> Self {
+        Self {
+            bk_tree: BKTree::new(),
+        }
+    }
+}
+
+pub struct Collection {
+    who: Worker,
+    /// This collection contains all data
     stats: Stats,
 }
 /// Only some statistics
@@ -78,14 +88,14 @@ struct Stats {
     threads: usize,
 }
 
-type FileFn = dyn Fn(&mut Collection, &DirEntry, &mut FilesStat) -> io::Result<()>;
+type FileFn =
+    dyn Fn(&mut Collection, SArc<SMutex<Container>>, &DirEntry, &mut FilesStat) -> io::Result<()>;
 
 impl Collection {
     /// Sets up the whole collection that books all threads.
     pub fn new(peer_id: &PeerId, num_threads: usize) -> Collection {
         Collection {
             who: Worker::new(peer_id.clone(), num_threads),
-            bk_tree: BKTree::new(),
             stats: Stats {
                 files: FilesStat {
                     analyzed: 0,
@@ -99,7 +109,12 @@ impl Collection {
     }
 
     /// The function that runs from a certain path
-    pub fn visit_path(&mut self, dir: &Path, cb: &FileFn) -> io::Result<FilesStat> {
+    pub fn visit_path(
+        &mut self,
+        container: SArc<SMutex<Container>>,
+        dir: &Path,
+        cb: &FileFn,
+    ) -> io::Result<FilesStat> {
         let mut file_stats = FilesStat {
             analyzed: 0,
             faulty: 0,
@@ -114,13 +129,15 @@ impl Collection {
                 let entry = entry?;
                 let path = entry.path();
                 if path.is_dir() {
-                    let file_stats_loop = self.visit_path(&path, cb)?;
+                    let file_stats_loop = self.visit_path(container.clone(), &path, cb)?;
                     loop_file_stats.add(&file_stats_loop);
                 } else {
-                    cb(self, &entry, &mut loop_file_stats).or_else(|io_error| {
-                        warn!("{:?}", io_error);
-                        Err(io_error)
-                    })?
+                    cb(self, container.clone(), &entry, &mut loop_file_stats).or_else(
+                        |io_error| {
+                            warn!("{:?}", io_error);
+                            Err(io_error)
+                        },
+                    )?
                 }
             }
         }
@@ -130,6 +147,7 @@ impl Collection {
     /// the function to check all files separately
     pub fn visit_files(
         col: &mut Collection,
+        data: SArc<SMutex<Container>>,
         cb: &DirEntry,
         file_stats: &mut FilesStat,
     ) -> io::Result<()> {
@@ -150,12 +168,13 @@ impl Collection {
                         file_stats.other += 1;
                         Ok(())
                     } else {
-                        col.visit_audio_files(&cb.path(), file_stats).or_else(|_| {
-                            col.stats.files.faulty += 1;
-                            file_stats.faulty += 1;
-                            error!("ts: {:?}", filetype);
-                            Err(io::Error::new(io::ErrorKind::Other, "unknown audio file!"))
-                        })
+                        col.visit_audio_files(data, &cb.path(), file_stats)
+                            .or_else(|_| {
+                                col.stats.files.faulty += 1;
+                                file_stats.faulty += 1;
+                                error!("ts: {:?}", filetype);
+                                Err(io::Error::new(io::ErrorKind::Other, "unknown audio file!"))
+                            })
                     }
                 } else {
                     col.stats.files.faulty += 1;
@@ -175,7 +194,12 @@ impl Collection {
     }
 
     /// Check the file and retrieve the meta-data info
-    fn visit_audio_files(&mut self, cb: &Path, file_stats: &mut FilesStat) -> Result<(), ()> {
+    fn visit_audio_files(
+        &mut self,
+        data: SArc<SMutex<Container>>,
+        cb: &Path,
+        file_stats: &mut FilesStat,
+    ) -> Result<(), ()> {
         Tag::read_from_path(cb.to_str().unwrap())
             .and_then(|tag| {
                 let artist = tag.artist().unwrap_or("");
@@ -189,7 +213,8 @@ impl Collection {
                 // artist + song name is key for bktree
                 let key = [artist, title].join(" ");
 
-                let (vec_k, vec_c) = self.bk_tree.find(&key, TOLERANCE);
+                let ref mut locked_bktree = data.lock().unwrap().bk_tree;
+                let (vec_k, vec_c) = locked_bktree.find(&key, TOLERANCE);
                 if !vec_c.is_empty() {
                     let mut vec_similar = vec![];
                     for (index, similar) in vec_k.iter().enumerate() {
@@ -209,7 +234,7 @@ impl Collection {
                 }
 
                 // todo: decide when to not add and insert then
-                self.bk_tree.insert(
+                locked_bktree.insert(
                     key.clone(),
                     Box::new(AudioInfo {
                         duration,

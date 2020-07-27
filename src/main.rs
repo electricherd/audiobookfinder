@@ -6,6 +6,14 @@
 extern crate adbflib;
 extern crate rayon;
 
+use adbflib::{
+    command_line,
+    ctrl::{CollectionPathAlive, Ctrl, ForwardNetMessage, NetMessages, Status, UiUpdateMsg},
+    data::{self, ipc::IPC, Collection, Container},
+    logit,
+    net::{key_keeper, Net},
+};
+
 use async_std::task;
 use crossbeam::{channel::unbounded, sync::WaitGroup};
 use log::{error, info, trace, warn};
@@ -14,18 +22,9 @@ use std::{
     io::{self, Error},
     path::Path, // path, clear
     sync::{
-        self,
         mpsc::{channel, Sender},
-        Arc, Mutex,
+        Arc as SArc, Mutex as SMutex,
     },
-};
-
-use adbflib::{
-    command_line,
-    ctrl::{CollectionPathAlive, Ctrl, ForwardNetMessage, NetMessages, Status, UiUpdateMsg},
-    data::{self, ipc::IPC, Collection},
-    logit,
-    net::{key_keeper, Net},
 };
 
 fn main() -> io::Result<()> {
@@ -53,7 +52,7 @@ fn main() -> io::Result<()> {
     let tx_net = tx.clone();
 
     // for now this will stay wrapped
-    let tx_from_collector_to_ui = Arc::new(Mutex::new(tx.clone()));
+    let tx_from_collector_to_ui = SArc::new(SMutex::new(tx.clone()));
 
     // start the logging
     logit::Logit::init(logit::Log::File);
@@ -127,16 +126,17 @@ fn main() -> io::Result<()> {
 
         // start the parallel search threads with rayon, each path its own
         let init_collection = Collection::new(&key_keeper::get_p2p_server_id(), max_threads);
-        let collection_protected = sync::Arc::new(sync::Mutex::new(init_collection));
+        let collection_protected = SArc::new(SMutex::new(init_collection));
 
-        let all_collection_data =
-            sync::Arc::new(sync::Mutex::new(CollectionData { nr_found_songs: 0 }));
+        let output_data = SArc::new(SMutex::new(CollectionData { nr_found_songs: 0 }));
+        let handle_container = SArc::new(SMutex::new(Container::new()));
 
         &ui_paths.par_iter().enumerate().for_each(|(index, elem)| {
             let sender_loop = synced_to_ui_messages.clone();
             let collection_data_in_iterator = collection_protected.clone();
             let single_path_collection_data = search_in_single_path(
                 has_ui,
+                handle_container.clone(),
                 collection_data_in_iterator,
                 sender_loop,
                 index,
@@ -144,7 +144,7 @@ fn main() -> io::Result<()> {
             );
             // short lock to accumulate data
             {
-                all_collection_data.lock().unwrap().nr_found_songs +=
+                output_data.lock().unwrap().nr_found_songs +=
                     single_path_collection_data.nr_found_songs;
             }
         });
@@ -157,7 +157,7 @@ fn main() -> io::Result<()> {
                 .unwrap_or(())
         }
         if has_net {
-            let to_send = all_collection_data.lock().unwrap().nr_found_songs;
+            let to_send = output_data.lock().unwrap().nr_found_songs;
             ipc_send
                 .send(IPC::DoneSearching(to_send))
                 .unwrap_or_else(|_| {
@@ -219,8 +219,9 @@ struct CollectionData {
 
 fn search_in_single_path(
     has_ui: bool,
-    collection_protected: sync::Arc<sync::Mutex<Collection>>,
-    mutex_to_ui_msg: sync::Arc<sync::Mutex<Sender<UiUpdateMsg>>>,
+    collection_data: SArc<SMutex<Container>>,
+    collection_protected: SArc<SMutex<Collection>>,
+    mutex_to_ui_msg: SArc<SMutex<Sender<UiUpdateMsg>>>,
     index: usize,
     elem: &str,
 ) -> CollectionData {
@@ -243,11 +244,16 @@ fn search_in_single_path(
             })
             .unwrap_or_else(|_| error!("... that should not happen here at start"));
     }
+    // todo: crap : unlock here is stupid!
     let locked_collection = &mut *collection_protected.lock().unwrap();
 
     // do it: main task here is to visit and dive deep
     //        into the subfolders of this folder
-    match locked_collection.visit_path(Path::new(elem), &data::Collection::visit_files) {
+    match locked_collection.visit_path(
+        collection_data,
+        Path::new(elem),
+        &data::Collection::visit_files,
+    ) {
         Ok(local_stats) => {
             if has_ui {
                 // send stop animation for that path
