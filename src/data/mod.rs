@@ -44,7 +44,7 @@ pub fn search_in_single_path(
             })
             .unwrap_or_else(|_| error!("... that should not happen here at start"));
     }
-    // todo: crap : unlock here is stupid!
+    // this collection lock is fine, it's not the main Container, only some data
     let locked_collection = &mut *collection_protected.lock().unwrap();
 
     // do it: main task here is to visit and dive deep
