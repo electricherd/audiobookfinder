@@ -12,7 +12,6 @@ use std::{
 use tree_magic;
 
 static TOLERANCE: usize = 5;
-static TIME_TOLERANCE_SEC: usize = 4;
 
 struct AudioInfo {
     duration: u32,
@@ -214,33 +213,39 @@ impl Collection {
                 let key = [artist, title].join(" ");
 
                 let ref mut locked_bktree = data.lock().unwrap().bk_tree;
-                let (vec_k, vec_c) = locked_bktree.find(&key, TOLERANCE);
-                if !vec_c.is_empty() {
-                    let mut vec_similar = vec![];
-                    for (index, similar) in vec_k.iter().enumerate() {
-                        let time_distance = similar.duration as i32 - duration as i32;
-                        if time_distance.abs() < TIME_TOLERANCE_SEC as i32 {
-                            vec_similar.push(vec_c[index]);
+                let (vec_exact_match, vec_similarities) = locked_bktree.find(&key, TOLERANCE);
+                if !vec_similarities.is_empty() {
+                    trace!("close: {:?} to {:?},", &vec_similarities, &key);
+                }
+                // if exact match, don't insert!!
+                if vec_exact_match.is_empty() {
+                    // todo: also decide when to not add and insert then
+                    locked_bktree.insert(
+                        key.clone(),
+                        Box::new(AudioInfo {
+                            duration,
+                            album: album.to_string(),
+                        }),
+                    );
+                } else {
+                    // exact match with certain AudioInfo
+                    trace!(
+                        "for {:?}, {} exact matches found!",
+                        &key,
+                        vec_exact_match.len()
+                    );
+                    for audio_info in vec_exact_match {
+                        let time_distance = audio_info.duration as i32 - duration as i32;
+                        if time_distance.abs() > 0 {
+                            trace!(
+                                "same: but time differs {} seconds with album name old '{}' and new: '{}'!",
+                                time_distance,
+                                audio_info.album,
+                                album
+                            );
                         }
                     }
-                    if !vec_similar.is_empty() {
-                        trace!(
-                            "close: {:?} to {:?}, {} similar",
-                            &vec_similar,
-                            &key,
-                            &vec_k.len()
-                        );
-                    }
                 }
-
-                // todo: decide when to not add and insert then
-                locked_bktree.insert(
-                    key.clone(),
-                    Box::new(AudioInfo {
-                        duration,
-                        album: album.to_string(),
-                    }),
-                );
                 Ok(())
             })
             .or_else(|_| {
