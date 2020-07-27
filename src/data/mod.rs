@@ -1,273 +1,115 @@
-//! The oldest module, the data module stores all the data needed to collect.
+//! The oldest module, the data module stores all the data needed to collect
+//! and also the search, dir algorithms
 pub mod bktree;
+pub mod collection;
 pub mod ipc;
 
-use super::config;
-use bktree::BKTree;
+use super::ctrl::{CollectionPathAlive, ForwardNetMessage, NetMessages, Status, UiUpdateMsg};
+use collection::{Collection, Container};
 
-use id3::Tag;
-use libp2p_core::PeerId;
 use std::{
-    fs::{self, DirEntry}, // directory
-    io,                   // reading files
-    path::Path,
-    sync::{Arc as SArc, Mutex as SMutex},
+    path::Path, // path, clear
+    sync::{mpsc::Sender, Arc as SArc, Mutex as SMutex},
 };
-use tree_magic;
 
-static TOLERANCE: usize = 5;
-static TIME_TOLERANCE_SEC: usize = 4;
-
-struct AudioInfo {
-    duration: u32,
-    album: String,
+// todo: hide it
+pub struct CollectionOutputData {
+    pub nr_found_songs: u32,
 }
 
-#[allow(dead_code)]
-struct Worker {
-    /// identify them.
-    peer_id: PeerId,
-    max_threads: usize,
-}
-
-/// # Worker
-/// the worker is supposed to be running on different machines
-/// with one server and many clients
-impl Worker {
-    /// # Just new
-    /// To identify how to comment
-    /// # Arguments
-    /// * 'id' - the identification (each will create an own hash)
-    /// * 'max_threads' - how many threads can the worker create
-    pub fn new(peer_id: PeerId, max_threads: usize) -> Worker {
-        Worker {
-            peer_id: peer_id,
-            max_threads: max_threads,
-        }
+pub fn search_in_single_path(
+    has_ui: bool,
+    collection_data: SArc<SMutex<Container>>,
+    collection_protected: SArc<SMutex<Collection>>,
+    mutex_to_ui_msg: SArc<SMutex<Sender<UiUpdateMsg>>>,
+    index: usize,
+    elem: &str,
+) -> CollectionOutputData {
+    if !has_ui {
+        println!("[{:?}] looking into path {:?}", index, elem);
+    } else {
+        // send start animation for that path
+        mutex_to_ui_msg
+            .lock()
+            .and_then(|locked_to_start_ui_message| {
+                trace!("send startAnimation for path {:?}", index);
+                locked_to_start_ui_message
+                    .send(UiUpdateMsg::CollectionUpdate(
+                        CollectionPathAlive::BusyPath(index),
+                        Status::ON,
+                    ))
+                    .unwrap_or_else(|_| warn!("... lost start animation for index {:?}", index));
+                trace!("start busy animation");
+                Ok(())
+            })
+            .unwrap_or_else(|_| error!("... that should not happen here at start"));
     }
-}
+    // todo: crap : unlock here is stupid!
+    let locked_collection = &mut *collection_protected.lock().unwrap();
 
-pub struct Container {
-    bk_tree: BKTree<String, Box<AudioInfo>>,
-}
-impl Container {
-    pub fn new() -> Self {
-        Self {
-            bk_tree: BKTree::new(),
-        }
-    }
-}
-
-pub struct Collection {
-    who: Worker,
-    /// This collection contains all data
-    stats: Stats,
-}
-/// Only some statistics
-pub struct FilesStat {
-    pub analyzed: u32,
-    pub faulty: u32,
-    pub searched: u32,
-    pub other: u32,
-}
-
-impl FilesStat {
-    /// Adds stats from one to the other,
-    /// used for combining different thread
-    /// results.
-    fn add(&mut self, other: &FilesStat) {
-        self.analyzed += other.analyzed;
-        self.faulty += other.faulty;
-        self.searched += other.searched;
-        self.other += other.other;
-    }
-}
-
-struct Stats {
-    files: FilesStat,
-    threads: usize,
-}
-
-type FileFn =
-    dyn Fn(&mut Collection, SArc<SMutex<Container>>, &DirEntry, &mut FilesStat) -> io::Result<()>;
-
-impl Collection {
-    /// Sets up the whole collection that books all threads.
-    pub fn new(peer_id: &PeerId, num_threads: usize) -> Collection {
-        Collection {
-            who: Worker::new(peer_id.clone(), num_threads),
-            stats: Stats {
-                files: FilesStat {
-                    analyzed: 0,
-                    faulty: 0,
-                    searched: 0,
-                    other: 0,
-                },
-                threads: num_threads,
-            },
-        }
-    }
-
-    /// The function that runs from a certain path
-    pub fn visit_path(
-        &mut self,
-        container: SArc<SMutex<Container>>,
-        dir: &Path,
-        cb: &FileFn,
-    ) -> io::Result<FilesStat> {
-        let mut file_stats = FilesStat {
-            analyzed: 0,
-            faulty: 0,
-            searched: 0,
-            other: 0,
-        };
-
-        if dir.is_dir() {
-            for entry in fs::read_dir(dir)? {
-                let mut loop_file_stats = &mut file_stats;
-
-                let entry = entry?;
-                let path = entry.path();
-                if path.is_dir() {
-                    let file_stats_loop = self.visit_path(container.clone(), &path, cb)?;
-                    loop_file_stats.add(&file_stats_loop);
-                } else {
-                    cb(self, container.clone(), &entry, &mut loop_file_stats).or_else(
-                        |io_error| {
-                            warn!("{:?}", io_error);
-                            Err(io_error)
-                        },
-                    )?
-                }
-            }
-        }
-        Ok(file_stats)
-    }
-
-    /// the function to check all files separately
-    pub fn visit_files(
-        col: &mut Collection,
-        data: SArc<SMutex<Container>>,
-        cb: &DirEntry,
-        file_stats: &mut FilesStat,
-    ) -> io::Result<()> {
-        // count stats
-        col.stats.files.searched += 1;
-        file_stats.searched += 1;
-
-        let filetype = tree_magic::from_filepath(&cb.path());
-        let prefix = filetype.split("/").nth(0);
-        match prefix {
-            Some("audio") => {
-                if let Some(suffix) = filetype.split("/").last() {
-                    if config::data::IGNORE_AUDIO_FORMATS
-                        .iter()
-                        .any(|&s| s == suffix)
-                    {
-                        col.stats.files.other += 1;
-                        file_stats.other += 1;
+    // do it: main task here is to visit and dive deep
+    //        into the subfolders of this folder
+    match locked_collection.visit_path(
+        collection_data,
+        Path::new(elem),
+        &collection::Collection::visit_files,
+    ) {
+        Ok(local_stats) => {
+            if has_ui {
+                // send stop animation for that path
+                trace!("send stopAnimation for path {:?}", index);
+                mutex_to_ui_msg
+                    .lock()
+                    .and_then(|locked_to_stop_ui_message| {
+                        locked_to_stop_ui_message
+                            .send(UiUpdateMsg::CollectionUpdate(
+                                CollectionPathAlive::BusyPath(index),
+                                Status::OFF,
+                            ))
+                            .unwrap_or_else(|_| warn!("... lost stop animation for {:?}", index));
+                        trace!("stop busy animation");
                         Ok(())
-                    } else {
-                        col.visit_audio_files(data, &cb.path(), file_stats)
-                            .or_else(|_| {
-                                col.stats.files.faulty += 1;
-                                file_stats.faulty += 1;
-                                error!("ts: {:?}", filetype);
-                                Err(io::Error::new(io::ErrorKind::Other, "unknown audio file!"))
-                            })
-                    }
-                } else {
-                    col.stats.files.faulty += 1;
-                    file_stats.faulty += 1;
-                    Ok(())
-                }
+                    })
+                    .unwrap_or_else(|_| {
+                        error!("... that should not happen here at stop");
+                    });
+            } else {
+                let text = format!(
+                    "\n\
+                             analyzed: {an:>width$}, faulty: {fa:>width$}\n\
+                             searched: {se:>width$}, other: {ot:>width$}",
+                    an = local_stats.analyzed,
+                    fa = local_stats.faulty,
+                    se = local_stats.searched,
+                    ot = local_stats.other,
+                    width = 3
+                );
+                println!("[{:?}] done {}", index, text);
             }
-            // FIXME: video in taglib holds also oga which are audio indeed ...
-            Some("text") | Some("application") | Some("image") | Some("video") => Ok(()),
-            _ => {
-                error!("[{:?}]{:?}", prefix, cb.path());
-                col.stats.files.other += 1;
-                file_stats.other += 1;
-                Ok(())
+            // return this here
+            CollectionOutputData {
+                nr_found_songs: local_stats.analyzed,
             }
         }
-    }
-
-    /// Check the file and retrieve the meta-data info
-    fn visit_audio_files(
-        &mut self,
-        data: SArc<SMutex<Container>>,
-        cb: &Path,
-        file_stats: &mut FilesStat,
-    ) -> Result<(), ()> {
-        Tag::read_from_path(cb.to_str().unwrap())
-            .and_then(|tag| {
-                let artist = tag.artist().unwrap_or("");
-                let title = tag.title().unwrap_or("");
-                let duration = tag.duration().unwrap_or(0);
-                let album = tag.album().unwrap_or("");
-
-                self.stats.files.analyzed += 1;
-                file_stats.analyzed += 1;
-
-                // artist + song name is key for bktree
-                let key = [artist, title].join(" ");
-
-                let ref mut locked_bktree = data.lock().unwrap().bk_tree;
-                let (vec_k, vec_c) = locked_bktree.find(&key, TOLERANCE);
-                if !vec_c.is_empty() {
-                    let mut vec_similar = vec![];
-                    for (index, similar) in vec_k.iter().enumerate() {
-                        let time_distance = similar.duration as i32 - duration as i32;
-                        if time_distance.abs() < TIME_TOLERANCE_SEC as i32 {
-                            vec_similar.push(vec_c[index]);
-                        }
-                    }
-                    if !vec_similar.is_empty() {
-                        trace!(
-                            "close: {:?} to {:?}, {} similar",
-                            &vec_similar,
-                            &key,
-                            &vec_k.len()
-                        );
-                    }
-                }
-
-                // todo: decide when to not add and insert then
-                locked_bktree.insert(
-                    key.clone(),
-                    Box::new(AudioInfo {
-                        duration,
-                        album: album.to_string(),
-                    }),
-                );
-                Ok(())
-            })
-            .or_else(|_| {
-                self.stats.files.faulty += 1;
-                file_stats.faulty += 1;
-                Ok(())
-            })
-    }
-
-    pub fn print_stats(&self) {
-        let output_string = format!(
-            "This client's id     : {id:}\n\
-             pathes/threads       : {nr_pathes:>width$}\n\
-             ----------------------     \n\
-             analyzed files       : {files_analyzed:>width$}\n\
-             searched files       : {files_searched:>width$}\n\
-             irrelevant files     : {files_irrelevant:>width$}\n\
-             faulty files         : {files_faulty:>width$}\n",
-            id = self.who.peer_id.to_string().to_uppercase(),
-            nr_pathes = self.stats.threads,
-            files_analyzed = self.stats.files.analyzed,
-            files_searched = self.stats.files.searched,
-            files_irrelevant = self.stats.files.other,
-            files_faulty = self.stats.files.faulty, // awesome, really
-            width = 5
-        );
-
-        info!("{}", output_string);
+        Err(_e) => {
+            let text = format!("An error has occurred in search path [{}]!!", index);
+            if has_ui {
+                mutex_to_ui_msg
+                    .lock()
+                    .and_then(|locked_update_message| {
+                        locked_update_message
+                            .send(UiUpdateMsg::NetUpdate(ForwardNetMessage::Stats(
+                                NetMessages::Debug(text),
+                            )))
+                            .unwrap();
+                        Ok(())
+                    })
+                    .unwrap();
+            } else {
+                println!("{:?}", text);
+            }
+            // return this here
+            CollectionOutputData { nr_found_songs: 0 }
+        }
     }
 }
