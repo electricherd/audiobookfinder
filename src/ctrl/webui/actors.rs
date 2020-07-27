@@ -91,7 +91,8 @@ impl Actor for ActorWSServerMonitor {
         trace!("server monitor got started");
 
         // todo: this is crap of course, polling in 20ms and try_recv on a receiver
-        //       but for now it's fine!!!
+        //       but for now it's fine!!! look at general Poll::, since libp2p uses
+        //       just like actix here tokio, and Polling is used there!
         ctx.run_interval(Duration::from_millis(20), |act, _| {
             if let Ok(internal_message) = act.receiver.try_recv() {
                 match internal_message {
@@ -133,7 +134,9 @@ impl Handler<MDoneSyncStartup> for ActorWSServerMonitor {
     fn handle(&mut self, _msg: MDoneSyncStartup, _ctx: &mut Context<Self>) {
         trace!("sending init!");
         // todo: init shall be sent of course for each(!) new connecting websocket
-        //       and this is going to ALL not matter if they did receive already
+        //       and this is going to ALL not matter if they did receive already.
+        //       It can be a browser issues, since browser security prevents a lot of
+        //       things, even to start cross-side javascript connection.
         let cloned_paths = self.paths.clone();
         for ws in &self.listeners {
             let answer = Json(json::generate_init_data(&cloned_paths.clone()));

@@ -19,6 +19,9 @@ struct AudioInfo {
     album: String,
 }
 
+// todo: think over this, peer and max threads ... kick it out
+//       threads are interesting to fill in unused threads in path
+//       for string distance with rayon!
 #[allow(dead_code)]
 struct Worker {
     /// identify them.
@@ -119,6 +122,7 @@ impl Collection {
         };
 
         if dir.is_dir() {
+            // todo: go with free threads in the search with rayon
             for entry in fs::read_dir(dir)? {
                 let mut loop_file_stats = &mut file_stats;
 

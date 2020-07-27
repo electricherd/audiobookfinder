@@ -27,13 +27,9 @@ use std::{self, error::Error, sync::mpsc::Sender};
 /// The Net component keeps control about everything from net.
 ///
 /// # Arguments
-/// * 'peer_id' - the own peer id (to not talk to much with itself ;-))
-/// * 'clients_connected' - All clients that are connected
 /// * 'has_ui' - if there is an ui present, that would need update messages///
 /// * 'ui_sender' - to send out update ui messages
 pub struct Net {
-    // todo: don't forget, that there are peer methods and life time for this list entries, it
-    //       may be not a good idea to keep it like this, even though it's their ids!
     has_ui: bool,
     ui_sender: Sender<ctrl::UiUpdateMsg>,
 }

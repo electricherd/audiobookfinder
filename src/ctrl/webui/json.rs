@@ -88,8 +88,6 @@ pub fn generate_init_data(paths: &Vec<String>) -> WSJsonOut {
 //////////////////////////////////////////////////////////////////////
 // help on that here https://serde.rs/enum-representations.html
 
-// todo: recreate InternalUiMessages as well to use more structs rather than enums, just like here
-
 #[allow(non_camel_case_types)]
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(tag = "type", content = "cnt")]
