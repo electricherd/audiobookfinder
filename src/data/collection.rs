@@ -13,7 +13,7 @@ use std::{
     sync::{Arc as SArc, Mutex as SMutex},
     time::Duration,
 };
-use tree_magic;
+use tree_magic_mini;
 
 static TOLERANCE: usize = 5;
 /// distance of Levenshtein-algorithm
@@ -180,41 +180,45 @@ impl Collection {
         col.stats.files.searched += 1;
         file_stats.searched += 1;
 
-        let filetype = tree_magic::from_filepath(&cb.path());
-        let prefix = filetype.split("/").nth(0);
-        match prefix {
-            // some audio files have video-mimetype
-            Some("audio") | Some("video") => {
-                if let Some(suffix) = filetype.split("/").last() {
-                    if config::data::IGNORE_AUDIO_FORMATS
-                        .iter()
-                        .any(|&s| s == suffix)
-                    {
-                        col.stats.files.other += 1;
-                        file_stats.other += 1;
-                        Ok(())
+        if let Some(mime_type) = tree_magic_mini::from_filepath(&cb.path()) {
+            let prefix = mime_type.split("/").nth(0);
+            match prefix {
+                // some audio files have video-mimetype
+                Some("audio") | Some("video") => {
+                    if let Some(suffix) = mime_type.split("/").last() {
+                        if config::data::IGNORE_AUDIO_FORMATS
+                            .iter()
+                            .any(|&s| s == suffix)
+                        {
+                            col.stats.files.other += 1;
+                            file_stats.other += 1;
+                            Ok(())
+                        } else {
+                            col.visit_audio_files(data, &cb.path(), file_stats)
+                                .or_else(|_| {
+                                    col.stats.files.faulty += 1;
+                                    file_stats.faulty += 1;
+                                    error!("ts: {:?}", mime_type);
+                                    Err(io::Error::new(io::ErrorKind::Other, "unknown audio file!"))
+                                })
+                        }
                     } else {
-                        col.visit_audio_files(data, &cb.path(), file_stats)
-                            .or_else(|_| {
-                                col.stats.files.faulty += 1;
-                                file_stats.faulty += 1;
-                                error!("ts: {:?}", filetype);
-                                Err(io::Error::new(io::ErrorKind::Other, "unknown audio file!"))
-                            })
+                        col.stats.files.faulty += 1;
+                        file_stats.faulty += 1;
+                        Ok(())
                     }
-                } else {
-                    col.stats.files.faulty += 1;
-                    file_stats.faulty += 1;
+                }
+                Some("text") | Some("application") | Some("image") => Ok(()),
+                _ => {
+                    error!("[{:?}]{:?}", prefix, cb.path());
+                    col.stats.files.other += 1;
+                    file_stats.other += 1;
                     Ok(())
                 }
             }
-            Some("text") | Some("application") | Some("image") => Ok(()),
-            _ => {
-                error!("[{:?}]{:?}", prefix, cb.path());
-                col.stats.files.other += 1;
-                file_stats.other += 1;
-                Ok(())
-            }
+        } else {
+            // not readable mime-type is no error
+            Ok(())
         }
     }
 
