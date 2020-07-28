@@ -22,6 +22,7 @@ use adbflib::{
 use async_std::task;
 use crossbeam::{channel::unbounded, sync::WaitGroup};
 use log::{error, info, trace};
+use num_cpus;
 use rayon::prelude::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator};
 use std::{
     io::{self, Error},
@@ -32,12 +33,23 @@ fn main() -> io::Result<()> {
     // get start values from the input parser!!!
     let (ui_paths, has_tui, has_webui, has_net, keep_alive, open_browser, web_port, has_ui) =
         command_line::get_start_values();
-
     // clone as ro
     let ui_path_ro = ui_paths.clone();
 
-    // rayon threads for heavy cpu usage for fast results in collection search
-    let max_threads = rayon::current_num_threads();
+    // define collection thread pool
+    let assumed_number_of_threads_used =
+        if has_webui { 1 } else { 0 } + if has_tui { 1 } else { 0 } + if has_net { 1 } else { 0 };
+    let nr_cpus = num_cpus::get();
+    let nr_threads_for_collection = if assumed_number_of_threads_used >= nr_cpus {
+        1
+    } else {
+        nr_cpus - assumed_number_of_threads_used
+    };
+    rayon::ThreadPoolBuilder::new()
+        .thread_name(|nr| format!("col_{}", nr))
+        .num_threads(nr_threads_for_collection)
+        .build_global()
+        .unwrap();
 
     // for synced start of different threads
     let wait_collector = WaitGroup::new();
@@ -126,7 +138,8 @@ fn main() -> io::Result<()> {
         let synced_to_ui_messages = tx_from_collector_to_ui.clone();
 
         // start the parallel search threads with rayon, each path its own
-        let init_collection = Collection::new(&key_keeper::get_p2p_server_id(), max_threads);
+        let init_collection =
+            Collection::new(&key_keeper::get_p2p_server_id(), nr_threads_for_collection);
         let collection_protected = SArc::new(SMutex::new(init_collection));
 
         let output_data = SArc::new(SMutex::new(CollectionOutputData { nr_found_songs: 0 }));
