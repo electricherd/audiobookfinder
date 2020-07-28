@@ -15,8 +15,10 @@ use std::{
 };
 use tree_magic;
 
-static TOLERANCE: usize = 5;       //! distance of Levenshtein-algorithm
-static ID3_CAPACITY: usize = 1024; //! capacity to read small portion of file
+static TOLERANCE: usize = 5;
+/// distance of Levenshtein-algorithm
+static ID3_CAPACITY: usize = 1024;
+/// capacity to read small portion of file
 
 struct AudioInfo {
     duration: Duration,
