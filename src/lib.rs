@@ -38,7 +38,6 @@ extern crate id3;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
-extern crate tree_magic; // mime types
 
 // net
 extern crate dirs;
