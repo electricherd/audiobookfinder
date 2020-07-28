@@ -49,6 +49,7 @@ futures = "0.3"     ####   # futures, used in state machine yet (and in many oth
 futures-util = "0.3"
 
 tree_magic = "0.2"  # for fast file tree operations
+mp4ameta = "0.3.0"  # for mp4 audio metadata
 id3 = "0.5"         # id3 tags
 
 num_cpus = "1.13"   # addition to rayon for cpu count

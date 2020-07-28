@@ -1,21 +1,23 @@
 //! The collection keeps and maintains all audio data.
 use super::{super::config, bktree::BKTree};
 
-use id3::Tag;
+use id3::Tag as id3tag;
 use libp2p_core::PeerId;
+use mp4ameta::Tag as mp4tag;
 use std::{
     fs::{self, DirEntry}, // directory
     io,                   // reading files
     mem,
     path::Path,
     sync::{Arc as SArc, Mutex as SMutex},
+    time::Duration,
 };
 use tree_magic;
 
 static TOLERANCE: usize = 5;
 
 struct AudioInfo {
-    duration: u32,
+    duration: Duration,
     album: String,
     path: String,
     //computer: String,
@@ -70,6 +72,21 @@ pub struct FilesStat {
     pub faulty: u32,
     pub searched: u32,
     pub other: u32,
+}
+
+#[allow(dead_code)]
+struct CommonAudioInfo<'a> {
+    title: &'a str,
+    artist: &'a str,
+    duration: Duration,
+    album: Option<&'a str>,
+    track: Option<u32>,
+    album_artist: Option<&'a str>,
+    genre: Option<&'a str>,
+    disc: Option<u32>,
+    total_discs: Option<u32>,
+    total_tracks: Option<u32>,
+    year: Option<i32>,
 }
 
 impl FilesStat {
@@ -162,7 +179,8 @@ impl Collection {
         let filetype = tree_magic::from_filepath(&cb.path());
         let prefix = filetype.split("/").nth(0);
         match prefix {
-            Some("audio") => {
+            // some audio files have video-mimetype
+            Some("audio") | Some("video") => {
                 if let Some(suffix) = filetype.split("/").last() {
                     if config::data::IGNORE_AUDIO_FORMATS
                         .iter()
@@ -186,8 +204,7 @@ impl Collection {
                     Ok(())
                 }
             }
-            // FIXME: video in taglib holds also oga which are audio indeed ...
-            Some("text") | Some("application") | Some("image") | Some("video") => Ok(()),
+            Some("text") | Some("application") | Some("image") => Ok(()),
             _ => {
                 error!("[{:?}]{:?}", prefix, cb.path());
                 col.stats.files.other += 1;
@@ -204,89 +221,63 @@ impl Collection {
         cb: &Path,
         file_stats: &mut FilesStat,
     ) -> Result<(), ()> {
-        Tag::read_from_path(cb.to_str().unwrap())
+        let file_name = cb.to_str().unwrap();
+        // todo: only one file handle for all libs, no read_from_path, etc but one and then handle
+        id3tag::read_from_path(file_name)
             .and_then(|tag| {
-                let artist = tag.artist().unwrap_or("");
-                let title = tag.title().unwrap_or("");
-                let duration = tag.duration().unwrap_or(0);
-
-                // audio book genre set is a strong indicator
-                let _genre = tag.genre().unwrap_or("");                
-                //
-                let album = tag.album().unwrap_or("");
-                let _album_artist = tag.album_artist().unwrap_or("");
-                // many discs and total discs is a strong indicator
-                let _disc = tag.disc().unwrap_or(0);
-                let _total_discs = tag.total_discs().unwrap_or(0);
-                //
-                // having a good path pattern is a strong indicator: cb.to_str().unwrap()
-
-                let _total_tracks = tag.total_tracks().unwrap_or(0);
-                let _track = tag.track().unwrap_or(0);
-                let _year = tag.year().unwrap_or(0);
-
-
-                self.stats.files.analyzed += 1;
-                file_stats.analyzed += 1;
-
-                let mut has_enough_information = true;
-
-                // artist + song name is key for bktree
-                if artist.is_empty() && title.is_empty() {
-                    has_enough_information = false;
-                }
-
-                if has_enough_information {
-                    let key = [artist, title].join(" ");
-
-                    // a) filter numbers / remove
-                    // b) use album name / substract it?
-
-                    // todo: bktree and levenshtein distance, use cosine similarity instead
-                    let ref mut locked_container = data.lock().unwrap();
-                    let (vec_exact_match, vec_similarities) = locked_container.bk_tree.find(&key, TOLERANCE);
-                    if !vec_similarities.is_empty() {
-                        trace!("close: {:?} to {:?},", &vec_similarities, &key);
-                    }
-                    // if exact match, don't insert!!
-                    if vec_exact_match.is_empty() {
-                        // todo: also decide when to not add and insert then
-
-                        let key = key.clone();
-                        let value = Box::new(AudioInfo {
-                            duration,
-                            album: album.to_string(),
-                            path: cb.to_str().unwrap().to_string()
-                        });
-                        let mem_size = mem::size_of_val(&key) + mem::size_of_val(&value);
-                        locked_container.bk_tree.insert(
-                            key,
-                            value,
-                        );
-                        self.stats.memory += mem_size as u64;
-                    } else {
-                        // exact match with certain AudioInfo
-                        trace!(
-                            "for {:?}, {} exact matches found!",
-                            &key,
-                            vec_exact_match.len()
-                        );
-                        for audio_info in vec_exact_match {
-                            let time_distance = audio_info.duration as i32 - duration as i32;
-                            if time_distance.abs() > 0 {
-                                trace!(
-                                    "same: but time differs {} seconds with album name old '{}' and new: '{}'!",
-                                    time_distance,
-                                    audio_info.album,
-                                    album
-                                );
-                            }
-                        }
-                    }
-                }
+                // write into common audio info that can be analyzed
+                let id3tag = CommonAudioInfo {
+                    title: tag.title().unwrap_or(""),
+                    artist: tag.artist().unwrap_or(""),
+                    duration: Duration::from_secs(tag.duration().unwrap_or(0) as u64),
+                    album: tag.album(),
+                    track: tag.track(),
+                    album_artist: tag.album_artist(),
+                    genre: tag.genre(),
+                    disc: tag.disc(),
+                    total_discs: tag.total_discs(),
+                    total_tracks: tag.total_tracks(),
+                    year: tag.year(),
+                };
+                self.analyze_tag(data.clone(), file_stats, file_name.to_string(), id3tag);
                 Ok(())
             })
-            .or_else(|_| {
+            .or_else(|e| match mp4tag::read_from_path(file_name) {
+                Ok(tag) => {
+                    // track info need extra treatment in mp4ameta
+                    let try_track_info = tag.track_number();
+                    let (track, total_tracks) = match try_track_info {
+                        Some(good_track_info) => {
+                            let (track, total_tracks) = good_track_info;
+                            (Some(track as u32), Some(total_tracks as u32))
+                        }
+                        None => (None, None),
+                    };
+                    // year needs extra treatment
+                    let year = tag
+                        .year()
+                        .map_or(None, |good_string| good_string.parse::<i32>().ok());
+
+                    let mp4tag = CommonAudioInfo {
+                        title: tag.title().unwrap_or(""),
+                        artist: tag.artist().unwrap_or(""),
+                        duration: Duration::from_secs(tag.duration().unwrap_or(0.0) as u64),
+                        album: tag.album(),
+                        track,
+                        album_artist: tag.album_artist(),
+                        genre: tag.genre(),
+                        disc: None,        // no supported
+                        total_discs: None, // no supported
+                        total_tracks,
+                        year,
+                    };
+                    self.analyze_tag(data, file_stats, file_name.to_string(), mp4tag);
+                    trace!("found {}", tag.artist().unwrap_or("no good artist"));
+                    Ok(())
+                }
+                Err(err) => Err(err),
+            })
+            .or_else(|e| {
                 self.stats.files.faulty += 1;
                 file_stats.faulty += 1;
                 Ok(())
@@ -314,5 +305,72 @@ impl Collection {
         );
 
         info!("{}", output_string);
+    }
+
+    fn analyze_tag(
+        &mut self,
+        data: SArc<SMutex<Container>>,
+        file_stats: &mut FilesStat,
+        file_name: String,
+        audio_info: CommonAudioInfo,
+    ) {
+        self.stats.files.analyzed += 1;
+        file_stats.analyzed += 1;
+
+        // audio book genre set is a strong indicator
+        // many discs and total discs is a strong indicator
+        let mut has_enough_information = true;
+
+        // artist + song name is key for bktree
+        if audio_info.artist.is_empty() && audio_info.title.is_empty() {
+            has_enough_information = false;
+        }
+
+        if has_enough_information {
+            let key = [audio_info.artist, audio_info.title].join(" ");
+
+            // a) filter numbers / remove
+            // b) use album name / substract it?
+
+            // todo: bktree and levenshtein distance, use cosine similarity instead
+            let ref mut locked_container = data.lock().unwrap();
+            let (vec_exact_match, vec_similarities) =
+                locked_container.bk_tree.find(&key, TOLERANCE);
+            if !vec_similarities.is_empty() {
+                trace!("close: {:?} to {:?},", &vec_similarities, &key);
+            }
+            // if exact match, don't insert!!
+            if vec_exact_match.is_empty() {
+                // todo: also decide when to not add and insert then
+
+                let key = key.clone();
+                let value = Box::new(AudioInfo {
+                    duration: audio_info.duration,
+                    album: audio_info.album.unwrap_or("no album").to_string(),
+                    path: file_name.to_string(),
+                });
+                let mem_size = mem::size_of_val(&key) + mem::size_of_val(&value);
+                locked_container.bk_tree.insert(key, value);
+                self.stats.memory += mem_size as u64;
+            } else {
+                // exact match with certain AudioInfo
+                trace!(
+                    "for {:?}, {} exact matches found!",
+                    &key,
+                    vec_exact_match.len()
+                );
+                for new_audio_info in vec_exact_match {
+                    let time_distance = new_audio_info.duration - audio_info.duration;
+                    if time_distance > Duration::from_secs(0) {
+                        trace!(
+                            "same: but time differs {:?} seconds with album name old '{}' and new: '{}'!",
+                            time_distance,
+                            new_audio_info.album,
+                            audio_info.album.unwrap_or("no album").to_string()
+                        );
+                    }
+                }
+            }
+        }
     }
 }
