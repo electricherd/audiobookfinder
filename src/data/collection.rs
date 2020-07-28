@@ -6,6 +6,7 @@ use libp2p_core::PeerId;
 use std::{
     fs::{self, DirEntry}, // directory
     io,                   // reading files
+    mem,
     path::Path,
     sync::{Arc as SArc, Mutex as SMutex},
 };
@@ -16,6 +17,8 @@ static TOLERANCE: usize = 5;
 struct AudioInfo {
     duration: u32,
     album: String,
+    path: String,
+    //computer: String,
 }
 
 // todo: think over this, peer and max threads ... kick it out
@@ -82,6 +85,7 @@ impl FilesStat {
 }
 
 struct Stats {
+    memory: u64,
     files: FilesStat,
     threads: usize,
 }
@@ -95,6 +99,7 @@ impl Collection {
         Collection {
             who: Worker::new(peer_id.clone(), num_threads),
             stats: Stats {
+                memory: 0,
                 files: FilesStat {
                     analyzed: 0,
                     faulty: 0,
@@ -204,45 +209,78 @@ impl Collection {
                 let artist = tag.artist().unwrap_or("");
                 let title = tag.title().unwrap_or("");
                 let duration = tag.duration().unwrap_or(0);
+
+                // audio book genre set is a strong indicator
+                let _genre = tag.genre().unwrap_or("");                
+                //
                 let album = tag.album().unwrap_or("");
+                let _album_artist = tag.album_artist().unwrap_or("");
+                // many discs and total discs is a strong indicator
+                let _disc = tag.disc().unwrap_or(0);
+                let _total_discs = tag.total_discs().unwrap_or(0);
+                //
+                // having a good path pattern is a strong indicator: cb.to_str().unwrap()
+
+                let _total_tracks = tag.total_tracks().unwrap_or(0);
+                let _track = tag.track().unwrap_or(0);
+                let _year = tag.year().unwrap_or(0);
+
 
                 self.stats.files.analyzed += 1;
                 file_stats.analyzed += 1;
 
-                // artist + song name is key for bktree
-                let key = [artist, title].join(" ");
+                let mut has_enough_information = true;
 
-                let ref mut locked_bktree = data.lock().unwrap().bk_tree;
-                let (vec_exact_match, vec_similarities) = locked_bktree.find(&key, TOLERANCE);
-                if !vec_similarities.is_empty() {
-                    trace!("close: {:?} to {:?},", &vec_similarities, &key);
+                // artist + song name is key for bktree
+                if artist.is_empty() && title.is_empty() {
+                    has_enough_information = false;
                 }
-                // if exact match, don't insert!!
-                if vec_exact_match.is_empty() {
-                    // todo: also decide when to not add and insert then
-                    locked_bktree.insert(
-                        key.clone(),
-                        Box::new(AudioInfo {
+
+                if has_enough_information {
+                    let key = [artist, title].join(" ");
+
+                    // a) filter numbers / remove
+                    // b) use album name / substract it?
+
+                    // todo: bktree and levenshtein distance, use cosine similarity instead
+                    let ref mut locked_container = data.lock().unwrap();
+                    let (vec_exact_match, vec_similarities) = locked_container.bk_tree.find(&key, TOLERANCE);
+                    if !vec_similarities.is_empty() {
+                        trace!("close: {:?} to {:?},", &vec_similarities, &key);
+                    }
+                    // if exact match, don't insert!!
+                    if vec_exact_match.is_empty() {
+                        // todo: also decide when to not add and insert then
+
+                        let key = key.clone();
+                        let value = Box::new(AudioInfo {
                             duration,
                             album: album.to_string(),
-                        }),
-                    );
-                } else {
-                    // exact match with certain AudioInfo
-                    trace!(
-                        "for {:?}, {} exact matches found!",
-                        &key,
-                        vec_exact_match.len()
-                    );
-                    for audio_info in vec_exact_match {
-                        let time_distance = audio_info.duration as i32 - duration as i32;
-                        if time_distance.abs() > 0 {
-                            trace!(
-                                "same: but time differs {} seconds with album name old '{}' and new: '{}'!",
-                                time_distance,
-                                audio_info.album,
-                                album
-                            );
+                            path: cb.to_str().unwrap().to_string()
+                        });
+                        let mem_size = mem::size_of_val(&key) + mem::size_of_val(&value);
+                        locked_container.bk_tree.insert(
+                            key,
+                            value,
+                        );
+                        self.stats.memory += mem_size as u64;
+                    } else {
+                        // exact match with certain AudioInfo
+                        trace!(
+                            "for {:?}, {} exact matches found!",
+                            &key,
+                            vec_exact_match.len()
+                        );
+                        for audio_info in vec_exact_match {
+                            let time_distance = audio_info.duration as i32 - duration as i32;
+                            if time_distance.abs() > 0 {
+                                trace!(
+                                    "same: but time differs {} seconds with album name old '{}' and new: '{}'!",
+                                    time_distance,
+                                    audio_info.album,
+                                    album
+                                );
+                            }
                         }
                     }
                 }
@@ -259,6 +297,7 @@ impl Collection {
         let output_string = format!(
             "This client's id     : {id:}\n\
              pathes/threads       : {nr_pathes:>width$}\n\
+             memory               : {mem:>width$}kb\n\
              ----------------------     \n\
              analyzed files       : {files_analyzed:>width$}\n\
              searched files       : {files_searched:>width$}\n\
@@ -266,6 +305,7 @@ impl Collection {
              faulty files         : {files_faulty:>width$}\n",
             id = self.who.peer_id.to_string().to_uppercase(),
             nr_pathes = self.stats.threads,
+            mem = self.stats.memory / 1000,
             files_analyzed = self.stats.files.analyzed,
             files_searched = self.stats.files.searched,
             files_irrelevant = self.stats.files.other,
