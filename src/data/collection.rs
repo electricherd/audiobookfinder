@@ -15,7 +15,8 @@ use std::{
 };
 use tree_magic;
 
-static TOLERANCE: usize = 5;
+static TOLERANCE: usize = 5;       //! distance of Levenshtein-algorithm
+static ID3_CAPACITY: usize = 1024; //! capacity to read small portion of file
 
 struct AudioInfo {
     duration: Duration,
@@ -226,7 +227,7 @@ impl Collection {
         // fixme: fix unwraps
         let file_name = cb.to_str().unwrap();
         let file = std::fs::File::open(file_name).unwrap();
-        let mut file_buffer = BufReader::new(file);
+        let mut file_buffer = BufReader::with_capacity(ID3_CAPACITY, file);
 
         // todo: use more of tree-magic info to avoid wrong first reads
         id3tag::read_from(file_buffer.get_mut())
