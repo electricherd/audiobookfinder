@@ -275,9 +275,13 @@ impl Collection {
                     trace!("found {}", tag.artist().unwrap_or("no good artist"));
                     Ok(())
                 }
-                Err(err) => Err(err),
+                Err(err) => Err((e, err)),
             })
             .or_else(|e| {
+                let (id3tag_error, mp4ameta_error) = e;
+                error!("path: {}", file_name);
+                error!("id3tag  : {:?}", id3tag_error);
+                error!("mp4ameta: {:?}", mp4ameta_error);
                 self.stats.files.faulty += 1;
                 file_stats.faulty += 1;
                 Ok(())
