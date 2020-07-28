@@ -4,6 +4,7 @@ use super::{super::config, bktree::BKTree};
 use id3::Tag as id3tag;
 use libp2p_core::PeerId;
 use mp4ameta::Tag as mp4tag;
+use std::io::BufReader;
 use std::{
     fs::{self, DirEntry}, // directory
     io,                   // reading files
@@ -221,9 +222,14 @@ impl Collection {
         cb: &Path,
         file_stats: &mut FilesStat,
     ) -> Result<(), ()> {
+        // open file only once
+        // fixme: fix unwraps
         let file_name = cb.to_str().unwrap();
-        // todo: only one file handle for all libs, no read_from_path, etc but one and then handle
-        id3tag::read_from_path(file_name)
+        let file = std::fs::File::open(file_name).unwrap();
+        let mut file_buffer = BufReader::new(file);
+
+        // todo: use more of tree-magic info to avoid wrong first reads
+        id3tag::read_from(file_buffer.get_mut())
             .and_then(|tag| {
                 // write into common audio info that can be analyzed
                 let id3tag = CommonAudioInfo {
@@ -242,7 +248,7 @@ impl Collection {
                 self.analyze_tag(data.clone(), file_stats, file_name.to_string(), id3tag);
                 Ok(())
             })
-            .or_else(|e| match mp4tag::read_from_path(file_name) {
+            .or_else(|e_id3tag| match mp4tag::read_from(file_buffer.get_mut()) {
                 Ok(tag) => {
                     // track info need extra treatment in mp4ameta
                     let try_track_info = tag.track_number();
@@ -275,7 +281,7 @@ impl Collection {
                     trace!("found {}", tag.artist().unwrap_or("no good artist"));
                     Ok(())
                 }
-                Err(err) => Err((e, err)),
+                Err(e_mp4tag) => Err((e_id3tag, e_mp4tag)),
             })
             .or_else(|e| {
                 let (id3tag_error, mp4ameta_error) = e;
@@ -291,7 +297,7 @@ impl Collection {
     pub fn print_stats(&self) {
         let output_string = format!(
             "This client's id     : {id:}\n\
-             pathes/threads       : {nr_pathes:>width$}\n\
+             paths/threads        : {nr_pathes:>width$}\n\
              memory               : {mem:>width$}kb\n\
              ----------------------     \n\
              analyzed files       : {files_analyzed:>width$}\n\
