@@ -1,35 +1,23 @@
 //! The collection keeps and maintains all audio data.
 use super::{super::config, bktree::BKTree};
 
-<<<<<<< HEAD
 use id3::Tag as id3tag;
 use libp2p_core::PeerId;
 use mp4ameta::Tag as mp4tag;
-=======
-use id3::Tag;
-use libp2p_core::PeerId;
->>>>>>> ada03fd151b74cd8222b0972ef2b83263fae9ee4
 use std::{
     fs::{self, DirEntry}, // directory
     io,                   // reading files
     mem,
     path::Path,
     sync::{Arc as SArc, Mutex as SMutex},
-<<<<<<< HEAD
     time::Duration,
-=======
->>>>>>> ada03fd151b74cd8222b0972ef2b83263fae9ee4
 };
 use tree_magic;
 
 static TOLERANCE: usize = 5;
 
 struct AudioInfo {
-<<<<<<< HEAD
     duration: Duration,
-=======
-    duration: u32,
->>>>>>> ada03fd151b74cd8222b0972ef2b83263fae9ee4
     album: String,
     path: String,
     //computer: String,
@@ -86,7 +74,6 @@ pub struct FilesStat {
     pub other: u32,
 }
 
-<<<<<<< HEAD
 #[allow(dead_code)]
 struct CommonAudioInfo<'a> {
     title: &'a str,
@@ -102,8 +89,6 @@ struct CommonAudioInfo<'a> {
     year: Option<i32>,
 }
 
-=======
->>>>>>> ada03fd151b74cd8222b0972ef2b83263fae9ee4
 impl FilesStat {
     /// Adds stats from one to the other,
     /// used for combining different thread
@@ -194,12 +179,8 @@ impl Collection {
         let filetype = tree_magic::from_filepath(&cb.path());
         let prefix = filetype.split("/").nth(0);
         match prefix {
-<<<<<<< HEAD
             // some audio files have video-mimetype
             Some("audio") | Some("video") => {
-=======
-            Some("audio") => {
->>>>>>> ada03fd151b74cd8222b0972ef2b83263fae9ee4
                 if let Some(suffix) = filetype.split("/").last() {
                     if config::data::IGNORE_AUDIO_FORMATS
                         .iter()
@@ -223,12 +204,7 @@ impl Collection {
                     Ok(())
                 }
             }
-<<<<<<< HEAD
             Some("text") | Some("application") | Some("image") => Ok(()),
-=======
-            // FIXME: video in taglib holds also oga which are audio indeed ...
-            Some("text") | Some("application") | Some("image") | Some("video") => Ok(()),
->>>>>>> ada03fd151b74cd8222b0972ef2b83263fae9ee4
             _ => {
                 error!("[{:?}]{:?}", prefix, cb.path());
                 col.stats.files.other += 1;
@@ -245,7 +221,6 @@ impl Collection {
         cb: &Path,
         file_stats: &mut FilesStat,
     ) -> Result<(), ()> {
-<<<<<<< HEAD
         let file_name = cb.to_str().unwrap();
         // todo: only one file handle for all libs, no read_from_path, etc but one and then handle
         id3tag::read_from_path(file_name)
@@ -303,91 +278,6 @@ impl Collection {
                 Err(err) => Err(err),
             })
             .or_else(|e| {
-=======
-        Tag::read_from_path(cb.to_str().unwrap())
-            .and_then(|tag| {
-                let artist = tag.artist().unwrap_or("");
-                let title = tag.title().unwrap_or("");
-                let duration = tag.duration().unwrap_or(0);
-
-                // audio book genre set is a strong indicator
-                let _genre = tag.genre().unwrap_or("");                
-                //
-                let album = tag.album().unwrap_or("");
-                let _album_artist = tag.album_artist().unwrap_or("");
-                // many discs and total discs is a strong indicator
-                let _disc = tag.disc().unwrap_or(0);
-                let _total_discs = tag.total_discs().unwrap_or(0);
-                //
-                // having a good path pattern is a strong indicator: cb.to_str().unwrap()
-
-                let _total_tracks = tag.total_tracks().unwrap_or(0);
-                let _track = tag.track().unwrap_or(0);
-                let _year = tag.year().unwrap_or(0);
-
-
-                self.stats.files.analyzed += 1;
-                file_stats.analyzed += 1;
-
-                let mut has_enough_information = true;
-
-                // artist + song name is key for bktree
-                if artist.is_empty() && title.is_empty() {
-                    has_enough_information = false;
-                }
-
-                if has_enough_information {
-                    let key = [artist, title].join(" ");
-
-                    // a) filter numbers / remove
-                    // b) use album name / substract it?
-
-                    // todo: bktree and levenshtein distance, use cosine similarity instead
-                    let ref mut locked_container = data.lock().unwrap();
-                    let (vec_exact_match, vec_similarities) = locked_container.bk_tree.find(&key, TOLERANCE);
-                    if !vec_similarities.is_empty() {
-                        trace!("close: {:?} to {:?},", &vec_similarities, &key);
-                    }
-                    // if exact match, don't insert!!
-                    if vec_exact_match.is_empty() {
-                        // todo: also decide when to not add and insert then
-
-                        let key = key.clone();
-                        let value = Box::new(AudioInfo {
-                            duration,
-                            album: album.to_string(),
-                            path: cb.to_str().unwrap().to_string()
-                        });
-                        let mem_size = mem::size_of_val(&key) + mem::size_of_val(&value);
-                        locked_container.bk_tree.insert(
-                            key,
-                            value,
-                        );
-                        self.stats.memory += mem_size as u64;
-                    } else {
-                        // exact match with certain AudioInfo
-                        trace!(
-                            "for {:?}, {} exact matches found!",
-                            &key,
-                            vec_exact_match.len()
-                        );
-                        for audio_info in vec_exact_match {
-                            let time_distance = audio_info.duration as i32 - duration as i32;
-                            if time_distance.abs() > 0 {
-                                trace!(
-                                    "same: but time differs {} seconds with album name old '{}' and new: '{}'!",
-                                    time_distance,
-                                    audio_info.album,
-                                    album
-                                );
-                            }
-                        }
-                    }
-                }
-                Ok(())
-            })
-            .or_else(|_| {
->>>>>>> ada03fd151b74cd8222b0972ef2b83263fae9ee4
                 self.stats.files.faulty += 1;
                 file_stats.faulty += 1;
                 Ok(())
@@ -416,7 +306,6 @@ impl Collection {
 
         info!("{}", output_string);
     }
-<<<<<<< HEAD
 
     fn analyze_tag(
         &mut self,
@@ -484,6 +373,4 @@ impl Collection {
             }
         }
     }
-=======
->>>>>>> ada03fd151b74cd8222b0972ef2b83263fae9ee4
 }
