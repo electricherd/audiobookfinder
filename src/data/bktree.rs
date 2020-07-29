@@ -229,3 +229,80 @@ fn osa_distance(a: &str, b: &str) -> usize {
 
     current_distances[b_len]
 }
+
+use nalgebra::DVector;
+
+// https://bergvca.github.io/2017/10/14/super-fast-string-matching.html
+fn cos_sim(a: &DVector<f32>, b: &DVector<f32>) -> f32 {
+    let dot_product = a.dot(&b);
+    let norm_a = a.norm();
+    let norm_b = b.norm();
+    dot_product / (norm_a * norm_b)
+}
+
+fn cos_sim_as_str<'a>(first: &'a str, second: &'a str) -> f32 {
+    let filled_first;
+    let filled_second;
+    let diff: i16 = first.chars().count() as i16 - second.chars().count() as i16;
+    if diff == 0 {
+        filled_first = first.to_string();
+        filled_second = second.to_string();
+    } else {
+        if diff < 0 {
+            filled_second = second.to_string();
+            filled_first = first.to_string() + &" ".repeat(-diff as usize);
+        } else {
+            filled_first = first.to_string();
+            filled_second = second.to_string() + &" ".repeat(diff as usize);
+        }
+    }
+
+    let converter_string = |arr: &str| -> DVector<f32> {
+        let new_vec: Vec<f32> = arr.chars().map(|a| (a as u32) as f32).collect();
+        DVector::from_row_slice(&new_vec)
+    };
+    let vec_first = converter_string(&filled_first);
+    let vec_second = converter_string(&filled_second);
+
+    cos_sim(&vec_first, &vec_second)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn cosine_similarity_some_values() {
+        assert_eq!(
+            0.9099716,
+            cos_sim_as_str("AMERICAN SCRAP PROCESSING INC", "SCRAP PROCESSING INC")
+        );
+        assert_eq!(
+            0.9511214,
+            cos_sim_as_str("ACP ACQUISITION CORP", "CP ACQUISITION CORP")
+        );
+        assert_eq!(
+            0.9636469,
+            cos_sim_as_str("ADAMANT TECHNOLOGIES", "NT TECHNOLOGIES, INC.")
+        );
+    }
+
+    #[test]
+    fn cosine_similarity_utf8() {
+        assert_eq!(0.85936946, cos_sim_as_str("zehn", "fünfzehn"));
+        assert_eq!(
+            0.96889335,
+            cos_sim_as_str(
+                "Genesis - The Carpet Crawlers",
+                "Genesys - The carpett craulers"
+            )
+        );
+        assert_eq!(
+            0.9465689,
+            cos_sim_as_str(
+                "Genesis - (The Lamb Lies Down on Broadway) The Carpet Crawlers",
+                "Genesys - (The Lamb Lies Down on Broadway) The Chamber of 32 Doors"
+            )
+        );
+    }
+}
