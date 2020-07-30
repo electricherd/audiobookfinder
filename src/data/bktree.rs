@@ -25,7 +25,7 @@
 // https://github.com/tempor1s/bktree-rs
 use std::char;
 use std::cmp::min;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 /// BKTree structure that is used to store word like structures
 /// and perform "fuzzy" search on them to implement "do you mean"
@@ -230,79 +230,41 @@ fn osa_distance(a: &str, b: &str) -> usize {
     current_distances[b_len]
 }
 
-use nalgebra::DVector;
-
-// https://bergvca.github.io/2017/10/14/super-fast-string-matching.html
-fn cos_sim(a: &DVector<f32>, b: &DVector<f32>) -> f32 {
-    let dot_product = a.dot(&b);
-    let norm_a = a.norm();
-    let norm_b = b.norm();
-    dot_product / (norm_a * norm_b)
-}
-
-fn cos_sim_as_str<'a>(first: &'a str, second: &'a str) -> f32 {
-    let filled_first;
-    let filled_second;
-    let diff: i16 = first.chars().count() as i16 - second.chars().count() as i16;
-    if diff == 0 {
-        filled_first = first.to_string();
-        filled_second = second.to_string();
-    } else {
-        if diff < 0 {
-            filled_second = second.to_string();
-            filled_first = first.to_string() + &" ".repeat(-diff as usize);
-        } else {
-            filled_first = first.to_string();
-            filled_second = second.to_string() + &" ".repeat(diff as usize);
-        }
-    }
-
-    let converter_string = |arr: &str| -> DVector<f32> {
-        let new_vec: Vec<f32> = arr.chars().map(|a| (a as u32) as f32).collect();
-        DVector::from_row_slice(&new_vec)
-    };
-    let vec_first = converter_string(&filled_first);
-    let vec_second = converter_string(&filled_second);
-
-    cos_sim(&vec_first, &vec_second)
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    #[test]
-    fn cosine_similarity_some_values() {
-        assert_eq!(
-            0.9099716,
-            cos_sim_as_str("AMERICAN SCRAP PROCESSING INC", "SCRAP PROCESSING INC")
-        );
-        assert_eq!(
-            0.9511214,
-            cos_sim_as_str("ACP ACQUISITION CORP", "CP ACQUISITION CORP")
-        );
-        assert_eq!(
-            0.9636469,
-            cos_sim_as_str("ADAMANT TECHNOLOGIES", "NT TECHNOLOGIES, INC.")
-        );
-    }
+    static TEST_DATA: [(&'static str, &'static str); 7] = [
+        ("AMERICAN SCRAP PROCESSING INC", "SCRAP PROCESSING INC"), // 0
+        ("ACP ACQUISITION CORP", "CP ACQUISITION CORP"),           // 1
+        ("ADAMANT TECHNOLOGIES", "NT TECHNOLOGIES, INC."),         // 2
+        ("zehn", "fünfzehn"),                                     // 3
+        (
+            // 4
+            "Genesis - The Carpet Crawlers",
+            "Genesys - The carpett craulers",
+        ),
+        (
+            // 5
+            "Genesis - (The Lamb Lies Down on Broadway) The Carpet Crawlers",
+            "Genesys - (The Lamb Lies Down on Broadway) The Chamber of 32 Doors",
+        ),
+        (
+            // 6
+            "Genesis - (The Lamb Lies Down on Broadway) The Lamia",
+            "Genesis - The Lamia",
+        ),
+    ];
 
     #[test]
-    fn cosine_similarity_utf8() {
-        assert_eq!(0.85936946, cos_sim_as_str("zehn", "fünfzehn"));
-        assert_eq!(
-            0.96889335,
-            cos_sim_as_str(
-                "Genesis - The Carpet Crawlers",
-                "Genesys - The carpett craulers"
-            )
-        );
-        assert_eq!(
-            0.9465689,
-            cos_sim_as_str(
-                "Genesis - (The Lamb Lies Down on Broadway) The Carpet Crawlers",
-                "Genesys - (The Lamb Lies Down on Broadway) The Chamber of 32 Doors"
-            )
-        );
+    fn osa_1() {
+        assert_eq!(0, osa_distance(TEST_DATA[0].0, TEST_DATA[0].0));
+        assert_eq!(9, osa_distance(TEST_DATA[0].0, TEST_DATA[0].1));
+        assert_eq!(1, osa_distance(TEST_DATA[1].0, TEST_DATA[1].1));
+        assert_eq!(11, osa_distance(TEST_DATA[2].0, TEST_DATA[2].1));
+        assert_eq!(4, osa_distance(TEST_DATA[3].0, TEST_DATA[3].1));
+        assert_eq!(5, osa_distance(TEST_DATA[4].0, TEST_DATA[4].1));
+        assert_eq!(14, osa_distance(TEST_DATA[5].0, TEST_DATA[5].1));
+        assert_eq!(33, osa_distance(TEST_DATA[6].0, TEST_DATA[6].1));
     }
 }
