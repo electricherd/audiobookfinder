@@ -2,19 +2,31 @@
 //! and parses them.
 use super::config;
 
-static INPUT_FOLDERS: &str = "folders";
 static APP_TITLE: &str = concat!("The audiobook finder (", env!("CARGO_PKG_NAME"), ")");
+/// Juhuu, the app title for command line info
 static ARG_NET: &str = "net";
+/// command line abbreviation for net usage
 static ARG_TUI: &str = "tui";
+/// command line abbreviation for terminal ui
 static ARG_WEBUI: &str = "webui";
+/// command line abbreviation for webui start
 static ARG_KEEP_ALIVE: &str = "keep";
+/// command line abbreviation for keeping application running
 static ARG_BROWSER: &str = "browser";
+/// command line abbreviation for browser with webui start
 static ARG_BROWSER_PORT: &str = "port";
+/// command line abbreviation for port used for webui
+static INPUT_FOLDERS: &str = "folders";
+/// command line abbreviation for folder input
 
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
+/// Version taken from .toml config
 const AUTHORS: &'static str = env!("CARGO_PKG_AUTHORS");
+/// author taken from .toml config
 const HOMEPAGE: &'static str = env!("CARGO_PKG_HOMEPAGE");
+/// homepage taken from .toml config
 const DESCRIPTION: &'static str = env!("CARGO_PKG_DESCRIPTION");
+/// homepage taken from .toml description
 
 pub fn get_start_values() -> (Vec<String>, bool, bool, bool, bool, bool, u16, bool) {
     let parse_args = clap::App::new(APP_TITLE)

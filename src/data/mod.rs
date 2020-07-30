@@ -19,6 +19,7 @@ pub struct CollectionOutputData {
     pub nr_found_songs: u32,
 }
 
+/// The collection search! Searches on the file system a concrete, single path.
 pub fn search_in_single_path(
     has_ui: bool,
     collection_data: SArc<SMutex<Container>>,

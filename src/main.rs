@@ -29,6 +29,8 @@ use std::{
     sync::{mpsc::channel, Arc as SArc, Mutex as SMutex},
 };
 
+/// The main application which is central part of communicating with
+/// the adbflib, which is closely connected.
 fn main() -> io::Result<()> {
     // get start values from the input parser!!!
     let (ui_paths, has_tui, has_webui, has_net, keep_alive, open_browser, web_port, has_ui) =
