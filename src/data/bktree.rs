@@ -25,7 +25,7 @@
 // https://github.com/tempor1s/bktree-rs
 use std::char;
 use std::cmp::min;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 /// BKTree structure that is used to store word like structures
 /// and perform "fuzzy" search on them to implement "do you mean"
