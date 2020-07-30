@@ -1,9 +1,11 @@
 //! The collection keeps and maintains all audio data.
-use super::{super::config, bktree::BKTree};
+use super::{
+    super::config,
+    bktree::BKTree,
+    tag_readers::{CommonAudioInfo, ID3TagReader, MP4TagReader},
+};
 
-use id3::Tag as id3tag;
 use libp2p_core::PeerId;
-use mp4ameta::Tag as mp4tag;
 use std::io::BufReader;
 use std::{
     fs::{self, DirEntry}, // directory
@@ -76,21 +78,6 @@ pub struct FilesStat {
     pub faulty: u32,
     pub searched: u32,
     pub other: u32,
-}
-
-#[allow(dead_code)]
-struct CommonAudioInfo<'a> {
-    title: &'a str,
-    artist: &'a str,
-    duration: Duration,
-    album: Option<&'a str>,
-    track: Option<u32>,
-    album_artist: Option<&'a str>,
-    genre: Option<&'a str>,
-    disc: Option<u32>,
-    total_discs: Option<u32>,
-    total_tracks: Option<u32>,
-    year: Option<i32>,
 }
 
 impl FilesStat {
@@ -181,11 +168,13 @@ impl Collection {
         file_stats.searched += 1;
 
         if let Some(mime_type) = tree_magic_mini::from_filepath(&cb.path()) {
-            let prefix = mime_type.split("/").nth(0);
-            match prefix {
-                // some audio files have video-mimetype
-                Some("audio") | Some("video") => {
-                    if let Some(suffix) = mime_type.split("/").last() {
+            trace!("mime-type: {}", mime_type);
+            let vec_type: Vec<&str> = mime_type.split("/").collect();
+            if vec_type.len() == 2 {
+                let (prefix, suffix) = (vec_type[0], vec_type[1]);
+                match prefix {
+                    // some audio files have video-mimetype
+                    "audio" | "video" => {
                         if config::data::IGNORE_AUDIO_FORMATS
                             .iter()
                             .any(|&s| s == suffix)
@@ -194,7 +183,7 @@ impl Collection {
                             file_stats.other += 1;
                             Ok(())
                         } else {
-                            col.visit_audio_files(data, &cb.path(), file_stats)
+                            col.visit_audio_files(data, suffix, &cb.path(), file_stats)
                                 .or_else(|_| {
                                     col.stats.files.faulty += 1;
                                     file_stats.faulty += 1;
@@ -202,19 +191,19 @@ impl Collection {
                                     Err(io::Error::new(io::ErrorKind::Other, "unknown audio file!"))
                                 })
                         }
-                    } else {
-                        col.stats.files.faulty += 1;
-                        file_stats.faulty += 1;
+                    }
+                    "text" | "application" | "image" => Ok(()),
+                    _ => {
+                        error!("[{:?}]{:?}", prefix, cb.path());
+                        col.stats.files.other += 1;
+                        file_stats.other += 1;
                         Ok(())
                     }
                 }
-                Some("text") | Some("application") | Some("image") => Ok(()),
-                _ => {
-                    error!("[{:?}]{:?}", prefix, cb.path());
-                    col.stats.files.other += 1;
-                    file_stats.other += 1;
-                    Ok(())
-                }
+            } else {
+                col.stats.files.faulty += 1;
+                file_stats.faulty += 1;
+                Ok(())
             }
         } else {
             // not readable mime-type is no error
@@ -223,82 +212,47 @@ impl Collection {
     }
 
     /// Check the file and retrieve the meta-data info
-    fn visit_audio_files(
+    fn visit_audio_files<'a>(
         &mut self,
         data: SArc<SMutex<Container>>,
+        suffix: &'a str,
         cb: &Path,
         file_stats: &mut FilesStat,
     ) -> Result<(), ()> {
         // open file only once
-        // fixme: fix unwraps
+        // fixme: fix unwraps here
         let file_name = cb.to_str().unwrap();
         let file = std::fs::File::open(file_name).unwrap();
         let mut file_buffer = BufReader::with_capacity(ID3_CAPACITY, file);
 
+        let mut processed = false;
         // todo: use more of tree-magic info to avoid wrong first reads
-        id3tag::read_from(file_buffer.get_mut())
-            .and_then(|tag| {
-                // write into common audio info that can be analyzed
-                let id3tag = CommonAudioInfo {
-                    title: tag.title().unwrap_or(""),
-                    artist: tag.artist().unwrap_or(""),
-                    duration: Duration::from_secs(tag.duration().unwrap_or(0) as u64),
-                    album: tag.album(),
-                    track: tag.track(),
-                    album_artist: tag.album_artist(),
-                    genre: tag.genre(),
-                    disc: tag.disc(),
-                    total_discs: tag.total_discs(),
-                    total_tracks: tag.total_tracks(),
-                    year: tag.year(),
-                };
-                self.analyze_tag(data.clone(), file_stats, file_name.to_string(), id3tag);
-                Ok(())
-            })
-            .or_else(|e_id3tag| match mp4tag::read_from(file_buffer.get_mut()) {
-                Ok(tag) => {
-                    // track info need extra treatment in mp4ameta
-                    let try_track_info = tag.track_number();
-                    let (track, total_tracks) = match try_track_info {
-                        Some(good_track_info) => {
-                            let (track, total_tracks) = good_track_info;
-                            (Some(track as u32), Some(total_tracks as u32))
-                        }
-                        None => (None, None),
-                    };
-                    // year needs extra treatment
-                    let year = tag
-                        .year()
-                        .map_or(None, |good_string| good_string.parse::<i32>().ok());
+        if vec!["mp4"].iter().any(|&s| s == suffix) {
+            if let Ok(mp4_audio_data) = MP4TagReader::read_tag_from(&mut file_buffer) {
+                self.analyze_tag(
+                    data.clone(),
+                    file_stats,
+                    file_name.to_string(),
+                    &mp4_audio_data,
+                );
+                processed = true;
+            }
+        }
+        if !processed {
+            if let Ok(id3_audio_data) = ID3TagReader::read_tag_from(&mut file_buffer) {
+                self.analyze_tag(data, file_stats, file_name.to_string(), &id3_audio_data);
+                processed = true;
+            }
+        }
 
-                    let mp4tag = CommonAudioInfo {
-                        title: tag.title().unwrap_or(""),
-                        artist: tag.artist().unwrap_or(""),
-                        duration: Duration::from_secs(tag.duration().unwrap_or(0.0) as u64),
-                        album: tag.album(),
-                        track,
-                        album_artist: tag.album_artist(),
-                        genre: tag.genre(),
-                        disc: None,        // no supported
-                        total_discs: None, // no supported
-                        total_tracks,
-                        year,
-                    };
-                    self.analyze_tag(data, file_stats, file_name.to_string(), mp4tag);
-                    trace!("found {}", tag.artist().unwrap_or("no good artist"));
-                    Ok(())
-                }
-                Err(e_mp4tag) => Err((e_id3tag, e_mp4tag)),
-            })
-            .or_else(|e| {
-                let (id3tag_error, mp4ameta_error) = e;
-                error!("path: {}", file_name);
-                error!("id3tag  : {:?}", id3tag_error);
-                error!("mp4ameta: {:?}", mp4ameta_error);
-                self.stats.files.faulty += 1;
-                file_stats.faulty += 1;
-                Ok(())
-            })
+        if !processed {
+            error!("path: {}", file_name);
+            // error!("id3tag  : {:?}", id3tag_error);
+            // error!("mp4ameta: {:?}", mp4ameta_error);
+            self.stats.files.faulty += 1;
+            file_stats.faulty += 1;
+        }
+        Ok(())
     }
 
     pub fn print_stats(&self) {
@@ -324,12 +278,12 @@ impl Collection {
         info!("{}", output_string);
     }
 
-    fn analyze_tag(
+    fn analyze_tag<'a>(
         &mut self,
         data: SArc<SMutex<Container>>,
         file_stats: &mut FilesStat,
         file_name: String,
-        audio_info: CommonAudioInfo,
+        audio_info: &'a CommonAudioInfo,
     ) {
         self.stats.files.analyzed += 1;
         file_stats.analyzed += 1;
@@ -344,12 +298,11 @@ impl Collection {
         }
 
         if has_enough_information {
-            let key = [audio_info.artist, audio_info.title].join(" ");
+            let key = format!("{} {}", audio_info.artist, &audio_info.title);
 
             // a) filter numbers / remove
             // b) use album name / substract it?
 
-            // todo: bktree and levenshtein distance, use cosine similarity instead
             let ref mut locked_container = data.lock().unwrap();
             let (vec_exact_match, vec_similarities) =
                 locked_container.bk_tree.find(&key, TOLERANCE);
@@ -363,7 +316,11 @@ impl Collection {
                 let key = key.clone();
                 let value = Box::new(AudioInfo {
                     duration: audio_info.duration,
-                    album: audio_info.album.unwrap_or("no album").to_string(),
+                    album: audio_info
+                        .album
+                        .as_ref()
+                        .unwrap_or(&"no album".to_string())
+                        .to_string(),
                     path: file_name.to_string(),
                 });
                 let mem_size = mem::size_of_val(&key) + mem::size_of_val(&value);
@@ -383,8 +340,12 @@ impl Collection {
                             "same: but time differs {:?} seconds with album name old '{}' and new: '{}'!",
                             time_distance,
                             new_audio_info.album,
-                            audio_info.album.unwrap_or("no album").to_string()
-                        );
+                            audio_info
+                                .album
+                                .as_ref()
+                                .unwrap_or(&"no album".to_string())
+                                .to_string(),
+                       );
                     }
                 }
             }
