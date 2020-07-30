@@ -39,9 +39,13 @@ __It's crossplatform now!__
 
 
 ### Documentation
-It is an inline [CI](https://travis-ci.org/electricherd/audiobookfinder/) generated documentation which can be found [here](https://electricherd.github.io/audiobookfinder/audiobookfinder/index.html)! Rust does a nice job here as well!
+
+[Documentation](https://electricherd.github.io/audiobookfinder/audiobookfinder/index.html)
+
+It is an inline documentation from [CI](https://travis-ci.org/electricherd/audiobookfinder/) generated documentation - Rust does a nice job here as well!
 
 ### Changes
+* defined a trait for tag information, now: id3, mp4, flac but no awesomeness ...
 * debugging messages for collection, now collection is a bktree
 * webui shows search ongoing on other peers, and then result (number of audio files)
 * webui changes, option added for with or without automatic browser opening, bump
@@ -52,11 +56,11 @@ It is an inline [CI](https://travis-ci.org/electricherd/audiobookfinder/) genera
 * peers in webui can now deregister because of e.g. timeout
 * using libp2p network swarm, replacing single-on mdsn with it, but having same functionality
 * releases for ubuntu, windows, raspberry (20LTS had a upx packing problem due to changed compiler flags, I suppose)
-* fixed webui behavior, now crossplatform (after cursive backend change, taglib replaced by id3)
 
 <details>
   <summary>click for older changes</summary>
 
+    * fixed webui behavior, now crossplatform (after cursive backend change, taglib replaced by id3)
     * pretty webui design, net messages as good as tui now, fixed thread termination issues to be mostly graceful
     * webui is in sync now, prepare net messages for webui to maybe replace tui
     * back to many threads, but synced and working just fine - webui must be able to replace tui at some time
@@ -95,9 +99,9 @@ It is an inline [CI](https://travis-ci.org/electricherd/audiobookfinder/) genera
 </details>
 
 ### ToDo
-* clean up, refactor data's mod and collection
+* clean up, refactor data's mod and collection - still a bit to do
 * add a nice way to collect data (string distance + time, maybe 2nd duration hash set?, filter empty tags)
-* add memory consumption monitoring for collection
+* add memory consumption monitoring for collection - started for BKTree
 * look into state and extra data usage of already used [smlang-rs](https://github.com/korken89/smlang-rs/blob/master/examples/event_with_reference_data.rs)
 * think of a protocol what adbf clients agree on and exchange (e.g. still searching, files found, etc) 
 * ~~let state machine *talk* (as ipc) with data collection via [crossbeam](https://github.com/crossbeam-rs/crossbeam) (first only the finish search status)~~
@@ -164,9 +168,13 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
 
 ### Tools
 * Editors:
-  * [IntelliJ IDEA](https://intellij-rust.github.io/install.html) [download with snaps](https://blog.jetbrains.com/idea/2017/11/install-intellij-idea-with-snaps/), and then Rust plug-in: easy, refactoring, spell-check, nice, first choice now, because of easy type look-up, and other good features 
+  * [IntelliJ IDEA](https://intellij-rust.github.io/install.html), and then Rust plug-in: easy, refactoring, spell-check, nice, first choice now, because of easy type look-up, and other good features
   * [sublime text](https://www.sublimetext.com) is good and fast, setup was ok, using it now, works very well
   * [atom](https://atom.io/) was for a long time my choice for development, on my Eee Pc [sublime](https://www.sublimetext.com), because of small footprint and performance, but now that is too slow though I really like the Git feature of it, has README.md syntax
+* Logging:
+  * [glogg](https://glogg.bonnefon.org/) a good logger on linux - since log has a coloring problem it still works pretty good
+* Git:
+  * [gitahead](https://gitahead.github.io/gitahead.com/) I like that
 
 ### Useful links
 * https://jsfiddle.net/boilerplate/jquery : for people who don't really like js but need it:
