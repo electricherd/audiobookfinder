@@ -2,7 +2,7 @@
 use super::{
     super::config,
     bktree::BKTree,
-    tag_readers::{CommonAudioInfo, ID3TagReader, MP4TagReader},
+    tag_readers::{CommonAudioInfo, FlacTagReader, ID3TagReader, MP4TagReader},
 };
 
 use libp2p_core::PeerId;
@@ -168,7 +168,6 @@ impl Collection {
         file_stats.searched += 1;
 
         if let Some(mime_type) = tree_magic_mini::from_filepath(&cb.path()) {
-            trace!("mime-type: {}", mime_type);
             let vec_type: Vec<&str> = mime_type.split("/").collect();
             if vec_type.len() == 2 {
                 let (prefix, suffix) = (vec_type[0], vec_type[1]);
@@ -226,8 +225,11 @@ impl Collection {
         let mut file_buffer = BufReader::with_capacity(ID3_CAPACITY, file);
 
         let mut processed = false;
-        // todo: use more of tree-magic info to avoid wrong first reads
-        if vec!["mp4"].iter().any(|&s| s == suffix) {
+
+        // cosy little helper (capturing suffix)
+        let suffix_has = |v: Vec<&str>| v.iter().any(|&s| s == suffix);
+        // mp4
+        if suffix_has(MP4TagReader::known_suffixes()) {
             if let Ok(mp4_audio_data) = MP4TagReader::read_tag_from(&mut file_buffer) {
                 self.analyze_tag(
                     data.clone(),
@@ -238,17 +240,33 @@ impl Collection {
                 processed = true;
             }
         }
+        // flac
         if !processed {
-            if let Ok(id3_audio_data) = ID3TagReader::read_tag_from(&mut file_buffer) {
-                self.analyze_tag(data, file_stats, file_name.to_string(), &id3_audio_data);
-                processed = true;
+            if suffix_has(FlacTagReader::known_suffixes()) {
+                if let Ok(id3_audio_data) = FlacTagReader::read_tag_from(&mut file_buffer) {
+                    self.analyze_tag(
+                        data.clone(),
+                        file_stats,
+                        file_name.to_string(),
+                        &id3_audio_data,
+                    );
+                    processed = true;
+                }
+            }
+        }
+        // id3 mp3
+        if !processed {
+            if suffix_has(ID3TagReader::known_suffixes()) {
+                if let Ok(id3_audio_data) = ID3TagReader::read_tag_from(&mut file_buffer) {
+                    self.analyze_tag(data, file_stats, file_name.to_string(), &id3_audio_data);
+                    processed = true;
+                }
             }
         }
 
         if !processed {
+            trace!("mime-type suffix: {}", suffix);
             error!("path: {}", file_name);
-            // error!("id3tag  : {:?}", id3tag_error);
-            // error!("mp4ameta: {:?}", mp4ameta_error);
             self.stats.files.faulty += 1;
             file_stats.faulty += 1;
         }
