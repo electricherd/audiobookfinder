@@ -25,9 +25,8 @@ As a C++ developer, I know some C++11/14/17 enhancements, and some don't convinc
 6. [Goals](#goals)
 7. [Dependencies](#dependencies)
 8. [Issues](#issues)
-9. [Yet in plan](#yet-in-plan)
-10. [Tools](#tools)
-11. [Useful links](#useful-links)
+9. [Tools](#tools)
+10. [Useful links](#useful-links)
 
 ## My first program in Rust
 I planned to do something useful for myself. The program collects information about audio books on different devices/clients, stores it and then processes it, e.g. showing stats, finding duplicates, aggregating everything at one place by a button click.
@@ -100,10 +99,14 @@ It is an inline documentation from [CI](https://travis-ci.org/electricherd/audio
 
 ### ToDo
 * clean up, refactor data's mod and collection - still a bit to do
+* change webui to be started without collection start, to be able use path selection from within webui later
+* a good and fast data collection with few more further lifetimes optimizations
 * add a nice way to collect data (string distance + time, maybe 2nd duration hash set?, filter empty tags)
 * add memory consumption monitoring for collection - started for BKTree
 * look into state and extra data usage of already used [smlang-rs](https://github.com/korken89/smlang-rs/blob/master/examples/event_with_reference_data.rs)
-* think of a protocol what adbf clients agree on and exchange (e.g. still searching, files found, etc) 
+* think of a protocol what adbf clients agree on and exchange (e.g. still searching, files found, etc)
+* maybe a little AI layer on determining audio books duplicates/same author by similar spelling, etc.
+* internationalization (which is not really supported yet by Rust)
 * ~~let state machine *talk* (as ipc) with data collection via [crossbeam](https://github.com/crossbeam-rs/crossbeam) (first only the finish search status)~~
 * ~~make div from html page to extra single file for later multiple clients on one page~~
 * ~~let client/server talk a little~~
@@ -158,13 +161,6 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
 
 ### Issues
 * AppVeyor deployment is stuck, it builds but the deployment by git tags is not well documented, and different to Travis.
-
-
-### Yet in plan
-* further lifetimes optimizations
-* internationalization (which is not really supported yet by Rust)
-* a good and fast data collection
-* maybe a little AI layer on determining audio books duplicates/same author by similar spelling, etc.
 
 ### Tools
 * Editors:
