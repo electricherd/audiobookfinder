@@ -129,10 +129,10 @@ impl FlacTagReader {
                                 album_artist: take_first_or_option(tag.album_artist()),
                                 genre: take_first_or_option(tag.genre()),
                                 disc: Some(0), // tag.disc(),
-                                // todo: discs, total discs, total tracks, year somewhere else??
-                                total_discs: Some(0),  // tag.total_discs(),
-                                total_tracks: Some(0), // tag.total_tracks()
-                                year: Some(0),         //tag.year(),
+                                // todo: discs, total discs, year somewhere else??
+                                total_discs: Some(0), // tag.total_discs(),
+                                total_tracks: tag.total_tracks(),
+                                year: Some(0), //tag.year(),
                             });
                         }
                         _ => (),
