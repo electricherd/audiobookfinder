@@ -48,9 +48,9 @@ cache: cargo
 # problem of caching problem within few days
 # idea used from:
 # https://github.com/rust-analyzer/rust-analyzer/blob/9a7db8fa009c612168ef16f6ed72315b5406ed09/.travis.yml#L2-L4
-before_cache:
-  - find ./target/debug -type f -maxdepth 1 -delete
-  - rm -f ./target/debug/deps/*ra_*
+#before_cache:
+#  - find ./target/debug -type f -maxdepth 1 -delete
+#  - rm -f ./target/debug/deps/*ra_*
 
 before_install:
   - set -e
