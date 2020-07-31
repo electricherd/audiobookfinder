@@ -13,7 +13,7 @@ main() {
     # compile
     case $TARGET in
       x86_64-unknown-linux-gnu|i686-unknown-linux-gnu|arm-unknown-linux-gnueabi|aarch64-unknown-linux-gnu|x86_64-apple-darwin)
-         xargo build --target $TARGET --release
+         cargo build --target $TARGET --release
       ;;
       armv7-unknown-linux-gnueabihf)
          docker run --volume "$PWD:/home/cross/project" ragnaroek/rust-raspberry:1.43.1

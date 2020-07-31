@@ -110,4 +110,5 @@ ignore:
   - README-release.md
   - diag_architecture_general.svg
   - diag_architecture_general.xml
+  - ci/
 
