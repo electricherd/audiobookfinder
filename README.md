@@ -142,7 +142,7 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
 - [x] easy command-line (always was looking for that, nice: [clap](https://github.com/kbknapp/clap-rs))
 - [x] channel/thread communication control with [crossbeam](https://github.com/crossbeam-rs/crossbeam) *Waitgroup* instead of std barrier 
 - [x] high level networking, client/server authorization/management from libp2p2 (mdns, swarm, noise-protocol transport layer) 
-- [ ] use the test feature of Rust (one mod only yet), also with example test being tested! - it's in but very few and in the *to-be-removed* modules cursive aka tui
+- [x] use the test feature of Rust: that is just very, very nice, even an usage example can be done as a running test!!
 - [ ] traits: getting better with unfortunately unused [observer pattern](../../wiki/Observer-pattern) 
 - [x] thread-pool: a simple self written but nice to use implemention :blush: but not needed any more
 - [x] simple timers: inside async: super easy
@@ -155,6 +155,7 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
 - [x] using a Boost-SML style [state machine](https://github.com/korken89/smlang-rs) now, nice one!
 - [ ] learning and understanding rust macros (some day)
 - [x] exchange of data over all kinds of boundaries (net, thread) via de-/serialization using [serde](https://docs.serde.rs/serde/) and its json feature for webui
+- [ ] have the Rust frontend/backend as IOS and/or Android app, with a small glue code (because beside the tui it's a html5 webapp frontend). [WASM](https://www.rust-lang.org/what/wasm) is not reachable since it uses `no_std`
 
 ### Dependencies
 * no non-Rust libraries, it's crossplatform now

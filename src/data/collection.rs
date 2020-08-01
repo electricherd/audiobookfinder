@@ -56,6 +56,9 @@ impl Worker {
     }
 }
 
+/// The container keeps the collection data. It currently consists of a BKTree
+/// (https://en.wikipedia.org/wiki/BK-tree), because key is a string of lexical
+/// data.
 pub struct Container {
     bk_tree: BKTree<String, Box<AudioInfo>>,
 }
@@ -67,6 +70,7 @@ impl Container {
     }
 }
 
+/// Collection keeps control and result data of the build-up of the container.
 pub struct Collection {
     who: Worker,
     /// This collection contains all data
@@ -79,7 +83,6 @@ pub struct FilesStat {
     pub searched: u32,
     pub other: u32,
 }
-
 impl FilesStat {
     /// Adds stats from one to the other,
     /// used for combining different thread
@@ -119,7 +122,7 @@ impl Collection {
         }
     }
 
-    /// The function that runs from a certain path
+    /// The function that runs from a given path
     pub fn visit_path(
         &mut self,
         container: SArc<SMutex<Container>>,

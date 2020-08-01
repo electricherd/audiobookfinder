@@ -1,9 +1,9 @@
 //! The oldest module, the data module stores all the data needed to collect
 //! and also the search, dir algorithms
-pub mod bktree;
+mod bktree;
 pub mod collection;
 pub mod ipc;
-pub mod tag_readers;
+mod tag_readers;
 // todo: is pub needed?
 
 use super::ctrl::{CollectionPathAlive, ForwardNetMessage, NetMessages, Status, UiUpdateMsg};

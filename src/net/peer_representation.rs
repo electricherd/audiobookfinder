@@ -1,3 +1,6 @@
+/// Holds the peer representation, which is a hash of the PeerId
+/// which is also a hash or the public key inside.
+/// It's for convenience and smaller footprint.
 use libp2p_core::PeerId;
 use std::{collections::hash_map::DefaultHasher, hash::Hasher};
 
@@ -9,10 +12,11 @@ pub fn peer_to_hash(peer_id: &PeerId) -> PeerRepresentation {
     hasher.write(peer_id.as_ref());
     hasher.finish()
 }
+/// return a hex string hash representation of PeerId
 pub fn peer_to_hash_string(peer_id: &PeerId) -> String {
     std::format!("{:x?}", peer_to_hash(peer_id))
 }
-
+/// return a hex string hash reprentation of pure peer representation
 pub fn peer_hash_to_string(peer: &PeerRepresentation) -> String {
     std::format!("{:x?}", peer)
 }

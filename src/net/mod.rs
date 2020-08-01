@@ -34,13 +34,16 @@ pub struct Net {
     ui_sender: Sender<ctrl::UiUpdateMsg>,
 }
 
+/// Creat a new Net component.
 impl Net {
     pub fn new(has_ui: bool, ui_sender: Sender<ctrl::UiUpdateMsg>) -> Self {
         Net { has_ui, ui_sender }
     }
 
-    /// Lookup yet is the start of the networking.
-    /// It looks for possible mDNS clients and spawns eventually
+    /// Lookup yet is the start of the networking. It looks for possible mDNS clients and spawns eventually
+    ///
+    /// # Arguments
+    /// * 'ipc_receiver' - message receiver for internal mass message (called IPC)
     pub async fn lookup(&mut self, ipc_receiver: Receiver<IPC>) {
         let has_ui = self.has_ui.clone();
 
@@ -56,6 +59,12 @@ impl Net {
 
     /// Discovers mdns on the net and should have a whole
     /// process with discovered clients to share data.
+    ///
+    /// # Arguments
+    /// * 'own_peer_id' - peer id for display mainly
+    /// * 'ctrl_sender' - sender for ui update messages
+    /// * 'ipc_receiver' - passed on mass message receiver
+    /// * 'has_ui' - info on whether usage of ui
     async fn build_swarm_and_run(
         own_peer_id: &PeerId,
         ctrl_sender: &std::sync::mpsc::Sender<ctrl::UiUpdateMsg>,
