@@ -94,9 +94,9 @@ fn main() -> io::Result<()> {
             } else {
                 info!("no ui was created!");
                 drop(wait_ui);
-                Ok::<(), Error>(())
+                Ok::<(), std::io::Error>(())
             }
-        });
+        })?;
 
     let (ipc_send, ipc_receive) = unbounded::<IPC>();
 
@@ -126,7 +126,7 @@ fn main() -> io::Result<()> {
                 drop(wait_net);
                 Ok::<(), Error>(())
             }
-        });
+        })?;
 
     // the collector ... still a problem with threading and parse_args
     // borrowing?? but since rayon is used, using a separate thread is not really
@@ -185,15 +185,10 @@ fn main() -> io::Result<()> {
     // look for keeping alive argument if that was chosen
     if keep_alive {
         ui_thread
-            .and_then(|running_thread| Ok(running_thread.join()))
+            .join()
             .unwrap_or_else(|_| {
                 // it doesn't matter because we will terminate anyway
                 error!("this should be result of ui thread!!");
-                Ok(Ok(()))
-            })
-            .unwrap_or_else(|_| {
-                // it doesn't matter because we will terminate anyway
-                error!("is this normal when joining ui thread???");
                 Ok(())
             })
             .unwrap();
@@ -210,14 +205,12 @@ fn main() -> io::Result<()> {
                 "Search is finished, but net thread is kept running!\nTo stop send break command (ctrl-c)!"
             );
             net_thread
-                .and_then(|running_thread| Ok(running_thread.join()))
+                .join()
                 .unwrap_or_else(|_| {
                     // it doesn't matter because we will terminate anyway
                     error!("is this normal when joining net thread???");
-                    Ok(Ok(()))
+                    Ok(())
                 })
-                // todo: honestly ... fix this here!!!!!! unwrap TWICE!!!
-                .unwrap()
                 .unwrap();
             info!("Stopped net thread");
         }
