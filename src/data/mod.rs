@@ -4,7 +4,6 @@ mod bktree;
 pub mod collection;
 pub mod ipc;
 mod tag_readers;
-// todo: is pub needed?
 
 use super::ctrl::{CollectionPathAlive, ForwardNetMessage, NetMessages, Status, UiUpdateMsg};
 use collection::{Collection, Container};
