@@ -131,6 +131,7 @@ pub fn get_start_values() -> (Vec<String>, bool, bool, bool, bool, bool, u16, bo
     let has_tui = has_arg(ARG_TUI);
     let has_webui = has_arg(ARG_WEBUI);
     let has_net = has_arg(ARG_NET);
+    let has_port = has_arg(ARG_BROWSER_PORT);
     let keep_alive = has_arg(ARG_KEEP_ALIVE);
     let open_browser = has_arg(ARG_BROWSER);
 
@@ -142,7 +143,7 @@ pub fn get_start_values() -> (Vec<String>, bool, bool, bool, bool, bool, u16, bo
         let parsed_value = parse_args
             .value_of(ARG_BROWSER_PORT)
             .unwrap_or_else(|| {
-                if has_to_write_console {
+                if has_to_write_console && has_port {
                     println!(
                         "Port argument was bad, using default port {}!",
                         config::net::WEB_ADDR
@@ -152,7 +153,7 @@ pub fn get_start_values() -> (Vec<String>, bool, bool, bool, bool, bool, u16, bo
             })
             .parse::<u16>()
             .unwrap_or_else(|_| {
-                if has_to_write_console {
+                if has_to_write_console && has_port {
                     println!(
                         "Invalid port input, using default port {}!",
                         &web_default_string
