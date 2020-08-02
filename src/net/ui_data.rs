@@ -72,7 +72,6 @@ impl UiData {
     }
 
     pub fn update_peer_data(&mut self, update_data: &UpdateData) {
-        // todo: of course not only u32 but more data and not only finish message
         if self.has_peer(&update_data.id) {
             if let Some(ctrl_sender) = &self.sender {
                 ctrl_sender
