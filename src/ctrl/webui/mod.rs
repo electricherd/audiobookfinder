@@ -10,6 +10,7 @@ use super::{
     super::{config, ctrl::InternalUiMsg, net::peer_representation::PeerRepresentation},
     CollectionPathAlive,
 };
+
 use actors::{ActorSyncStartup, ActorWSServerMonitor, ActorWebSocket, MRegisterWSClient};
 // external
 use actix::{prelude::Addr, Actor};
@@ -71,6 +72,10 @@ impl WebUI {
         // whatever ... is UP!!!
         let sys = actix::System::new("http-server");
 
+        // fixme: the start of web_socket_handler causes a panice if no
+        //        webserver can start up ... because it uses a not
+        //        correctly start up system. This start has to be moved
+        //        downwards after http server could be created correctly
         let web_socket_handler = Arc::new(Mutex::new(
             ActorWSServerMonitor {
                 receiver,
@@ -79,10 +84,12 @@ impl WebUI {
             }
             .start(),
         ));
-
         let sync_startup_actor = Arc::new(Mutex::new(
             ActorSyncStartup::new(wait_ui_sync, web_socket_handler.lock().unwrap().clone()).start(),
         ));
+
+        // count bindings
+        let mut nr_bindings: usize = 0;
 
         // take all local addresses and start if necessary
         // one server with multiple binds
@@ -154,15 +161,33 @@ impl WebUI {
                             IpAddr::V6(ipv6) => format!("{}:{:?}", ipv6.to_string(), web_port),
                         };
                         let try_bind = webserver.bind(bind_format.clone()).map_err(|error| {
-                            error!("On IP ({:?}): {:?}", bind_format, error);
+                            error!("binding with ip ({:?}): {:?}", bind_format, error);
                             error
                         })?;
+                        nr_bindings += 1;
                         Ok(try_bind)
                     })
                 },
             );
-        web_server?.run();
-        sys.run()
+
+        if nr_bindings > 0 {
+            web_server
+                .map_err(|error| {
+                    // clean up
+                    actix::System::current().stop();
+                    error!("webserver could not start up");
+                    error
+                })?
+                .run();
+            sys.run()
+        } else {
+            // no bindings, no nothing
+            error!("No bindings to any http addresses!");
+            Err(io::Error::new(
+                io::ErrorKind::Other,
+                format!("no bindings to port {}", &web_port),
+            ))
+        }
     }
 
     async fn websocket_answer(

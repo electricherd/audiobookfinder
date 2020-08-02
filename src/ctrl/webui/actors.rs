@@ -2,8 +2,10 @@
 use super::super::super::ctrl::InternalUiMsg;
 use super::json::{self, WSJsonIn, WSJsonOut};
 // external
-use actix::prelude::{StreamHandler, *};
-use actix::{Actor, ActorContext, AsyncContext, Context, Handler};
+use actix::{
+    prelude::{StreamHandler, *},
+    Actor, ActorContext, AsyncContext, Context, Handler,
+};
 use actix_web::web::Json;
 use actix_web_actors::ws;
 use crossbeam::sync::WaitGroup;
@@ -90,9 +92,14 @@ impl Actor for ActorWSServerMonitor {
     fn started(&mut self, ctx: &mut Self::Context) {
         trace!("server monitor got started");
 
+        // when failing during startup this is important
         // todo: this is crap of course, polling in 20ms and try_recv on a receiver
         //       but for now it's fine!!! look at general Poll::, since libp2p uses
         //       just like actix here tokio, and Polling is used there!
+        // fixme: part 2 ... cannot use actix functions to prevent run_interval to
+        //        run even if actix is not correctly running, fix is at webui to
+        //        not start ActorWSServerMonitor when there is no running http server
+        //        (this happens when binding fails ... but it is already too late then)
         ctx.run_interval(Duration::from_millis(20), |act, _| {
             if let Ok(internal_message) = act.receiver.try_recv() {
                 match internal_message {
