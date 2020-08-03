@@ -1,7 +1,8 @@
 ///! All actors from webui are represented here
-use super::super::super::ctrl::InternalUiMsg;
-use super::json::{self, WSJsonIn, WSJsonOut};
-// external
+use super::{
+    super::super::ctrl::InternalUiMsg,
+    json::{self, WSJsonIn, WSJsonOut},
+};
 use actix::{
     prelude::{StreamHandler, *},
     Actor, ActorContext, AsyncContext, Context, Handler,

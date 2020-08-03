@@ -1,3 +1,4 @@
+/// Module with interface to different tag readers
 use id3::Tag as id3tag;
 use metaflac::{block::Block, Tag as flactag};
 use mp4ameta::Tag as mp4tag;

@@ -17,7 +17,6 @@ use super::{
     sm_behaviour::{SMBehaviour, SMOutEvents},
     IPC,
 };
-
 use async_std::io;
 use bincode;
 use libp2p::{

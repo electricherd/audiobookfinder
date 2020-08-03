@@ -7,7 +7,6 @@ use super::super::{
     ctrl::{CollectionPathAlive, ForwardNetMessage, InternalUiMsg, NetMessages, Status},
     net::peer_representation,
 };
-
 use async_std::task;
 use cursive::{
     align,

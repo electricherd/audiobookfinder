@@ -2,6 +2,13 @@
 //! the embedded state machine (and inner ui), also back to net services:
 //! currently kademlia, mdns
 //! https://docs.rs/libp2p/0.21.1/libp2p/swarm/struct.DummyBehaviour.html
+use super::{
+    super::data::ipc::IPC,
+    sm::{
+        self, AdbfStateChart, Error as SMError, Events, Events::*, NewPeerData, States, UpdateData,
+    },
+    ui_data::UiData,
+};
 use crossbeam::channel::Receiver;
 use libp2p::swarm::{
     protocols_handler, NetworkBehaviour,
@@ -15,14 +22,6 @@ use libp2p_core::{
 use std::{
     collections::vec_deque::VecDeque,
     task::{Context, Poll},
-};
-
-use super::{
-    super::data::ipc::IPC,
-    sm::{
-        self, AdbfStateChart, Error as SMError, Events, Events::*, NewPeerData, States, UpdateData,
-    },
-    ui_data::UiData,
 };
 
 #[allow(non_camel_case_types)]

@@ -4,12 +4,10 @@ use super::{
     bktree::BKTree,
     tag_readers::{CommonAudioInfo, FlacTagReader, ID3TagReader, MP4TagReader},
 };
-
 use libp2p_core::PeerId;
-use std::io::BufReader;
 use std::{
-    fs::{self, DirEntry}, // directory
-    io,                   // reading files
+    fs::{self, DirEntry},
+    io::{self, BufReader},
     mem,
     path::Path,
     sync::{Arc as SArc, Mutex as SMutex},

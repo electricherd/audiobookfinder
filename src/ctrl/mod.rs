@@ -1,7 +1,6 @@
 //! The ctrl module should be the general controller of the program.
 //! Right now, most controlling is in the net module, and here
 //! is only a light facade to the tui messages.
-
 pub mod tui; // todo: pub is not recommended, I use it for doctest
 mod webui;
 
@@ -10,7 +9,6 @@ use super::{
     config,
     net::peer_representation::{self, PeerRepresentation},
 };
-
 use async_std::task;
 use crossbeam::sync::WaitGroup;
 use libp2p_core::PeerId;

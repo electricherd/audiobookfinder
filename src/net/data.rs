@@ -1,7 +1,6 @@
 //! The data view of the ssh communication, exchange between mainly client and server.
 use libp2p_core::PeerId;
-use std::string::String;
-use std::vec::Vec;
+use std::{string::String, vec::Vec};
 
 type VersionType = [u8; 3];
 

@@ -1,7 +1,7 @@
 //! The StateChart for the server ...
 //! StateMachine type/struct is created inside here by macros I suppose, so using it
 //! needs to "reimport" this file/mod
-use crate::net::ui_data::UiData;
+use super::super::net::ui_data::UiData;
 use libp2p::core::{Multiaddr, PeerId};
 use smlang::statemachine;
 

@@ -1,13 +1,12 @@
 /// a very small mod just for ui data send by net. It is important to
 /// not send all discovery blindly (e.g. duplicates)
-use libp2p_core::{Multiaddr, PeerId};
-use std::{collections::HashSet, sync::mpsc::Sender};
-
 use super::super::{
     ctrl::{self, ForwardNetMessage, UiPeer, UiUpdateMsg},
     net::peer_representation,
     net::sm::*,
 };
+use libp2p_core::{Multiaddr, PeerId};
+use std::{collections::HashSet, sync::mpsc::Sender};
 
 pub struct UiData {
     sender: Option<Sender<UiUpdateMsg>>,

@@ -7,46 +7,18 @@
 pub mod command_line;
 pub mod config;
 pub mod ctrl;
+pub mod data;
 pub mod logit;
+pub mod net;
 
 //logger
 #[macro_use]
 extern crate log;
-extern crate env_logger;
-extern crate flexi_logger;
-extern crate syslog;
-
-pub mod data;
-extern crate clap;
-
-// ctrl
-// ctrl/tui
-extern crate crossbeam;
-extern crate cursive;
-// ctrl/webui
-extern crate actix;
-extern crate actix_files;
-extern crate actix_web;
-extern crate actix_web_actors;
-extern crate bincode;
-extern crate get_if_addrs;
-extern crate hostname;
-extern crate webbrowser;
 
 // data
-extern crate id3;
-extern crate serde;
 #[macro_use]
 extern crate serde_derive;
 
-// net
-extern crate dirs;
-
-// com_client.rs com_server.rs
-extern crate futures;
-extern crate futures_util;
-
+// config
 #[macro_use]
 extern crate lazy_static;
-
-pub mod net;

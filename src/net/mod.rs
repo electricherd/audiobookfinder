@@ -9,10 +9,8 @@ mod sm;
 mod sm_behaviour;
 mod ui_data;
 
+use self::{sm_behaviour::SMBehaviour, ui_data::UiData};
 use super::{ctrl, data::ipc::IPC};
-use sm_behaviour::SMBehaviour;
-use ui_data::UiData;
-
 use async_std::task::{self, Context, Poll};
 use crossbeam::channel::Receiver;
 use futures::prelude::*;

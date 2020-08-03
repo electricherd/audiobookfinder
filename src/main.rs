@@ -3,9 +3,6 @@
 //! find duplicates (later trying to solve the problem, also including their permissions,
 //! different names, but same albums, etc, get all stats about it).
 //! It acts as a wrapper around adbflib, which holds major parts of the implemention.
-extern crate adbflib;
-extern crate rayon;
-
 use adbflib::{
     command_line,
     ctrl::{Ctrl, UiUpdateMsg},

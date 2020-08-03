@@ -10,7 +10,6 @@ use super::{
     super::{config, ctrl::InternalUiMsg, net::peer_representation::PeerRepresentation},
     CollectionPathAlive,
 };
-
 use actors::{ActorSyncStartup, ActorWSServerMonitor, ActorWebSocket, MRegisterWSClient};
 // external
 use actix::{prelude::Addr, Actor};

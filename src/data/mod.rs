@@ -5,8 +5,8 @@ pub mod collection;
 pub mod ipc;
 mod tag_readers;
 
+use self::collection::{Collection, Container};
 use super::ctrl::{CollectionPathAlive, ForwardNetMessage, NetMessages, Status, UiUpdateMsg};
-use collection::{Collection, Container};
 
 use std::{
     path::Path, // path, clear
