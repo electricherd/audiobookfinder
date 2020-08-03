@@ -18,11 +18,14 @@ use adbflib::{
 
 use async_std::task;
 use crossbeam::{channel::unbounded, sync::WaitGroup};
+use ctrlc;
+use exitcode;
 use log::{error, info, trace};
 use num_cpus;
 use rayon::prelude::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator};
 use std::{
     io::{self, Error},
+    process,
     sync::{mpsc::channel, Arc as SArc, Mutex as SMutex},
 };
 
@@ -36,8 +39,11 @@ fn main() -> io::Result<()> {
     let ui_path_ro = ui_paths.clone();
 
     // define collection thread pool
-    let assumed_number_of_threads_used =
-        if has_webui { 1 } else { 0 } + if has_tui { 1 } else { 0 } + if has_net { 1 } else { 0 };
+    let ctrlc_thread = 1;
+    let assumed_number_of_threads_used = if has_webui { 1 } else { 0 }
+        + if has_tui { 1 } else { 0 }
+        + if has_net { 1 } else { 0 }
+        + ctrlc_thread;
     let nr_cpus = num_cpus::get();
     let nr_threads_for_collection = if assumed_number_of_threads_used >= nr_cpus {
         1
@@ -124,6 +130,22 @@ fn main() -> io::Result<()> {
                 Ok::<(), Error>(())
             }
         })?;
+
+    // CTRL-C exit handler (is wrapped inside a thread)
+    ctrlc::set_handler(move || {
+        println!("'{}' was manually exited!!!", env!("CARGO_PKG_NAME"));
+        process::exit(exitcode::SOFTWARE);
+    })
+    .map_err(|error| {
+        std::io::Error::new(
+            std::io::ErrorKind::Other,
+            format!(
+                "{} terminate signal invokation doesn't work!({:?})",
+                env!("CARGO_PKG_NAME"),
+                error
+            ),
+        )
+    })?;
 
     // the collector ... still a problem with threading and parse_args
     // borrowing?? but since rayon is used, using a separate thread is not really

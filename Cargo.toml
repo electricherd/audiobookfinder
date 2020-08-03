@@ -33,6 +33,8 @@ async-std = "1.6"     # great async
 crossbeam = "0.7"     # a mpmc library also with Workgroup instead of std::thread::barrier
 serde = "1.0"         # serialize anything, awesome for communication items
 serde_derive = "1.0"  # macro usage from serde
+ctrlc = "3.1"         # ctrl-c break events in main
+exitcode = "1.1"      # for ctrlc exit codes
 
 clap = "2.33"         # for the command line parsing
 dirs = "3.0"          # to browse dirs fast in taglib

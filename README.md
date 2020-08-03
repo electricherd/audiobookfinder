@@ -98,7 +98,6 @@ It is an inline documentation from [CI](https://travis-ci.org/electricherd/audio
 </details>
 
 ### ToDo
-* add [ctrlc](http://detegr.github.io/doc/ctrlc/) functionality for signal handling in main
 * clean up, refactor data's mod and collection - still a bit to do
 * change webui to be started without collection start, to be able use path selection from within webui later
 * a good and fast data collection with few more further lifetimes optimizations
@@ -108,10 +107,9 @@ It is an inline documentation from [CI](https://travis-ci.org/electricherd/audio
 * think of a protocol what adbf clients agree on and exchange (e.g. still searching, files found, etc)
 * maybe a little AI layer on determining audio books duplicates/same author by similar spelling, etc.
 * internationalization (which is not really supported yet by Rust)
+* ~~add [ctrlc](http://detegr.github.io/doc/ctrlc/) functionality for signal handling in main~~
 * ~~let state machine *talk* (as ipc) with data collection via [crossbeam](https://github.com/crossbeam-rs/crossbeam) (first only the finish search status)~~
 * ~~make div from html page to extra single file for later multiple clients on one page~~
-* ~~let client/server talk a little~~
-* ~~update jquery and bootstrap~~
 
 ### Architecture
 ![Diagram](diag_architecture_general.svg)
