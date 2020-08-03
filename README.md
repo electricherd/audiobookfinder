@@ -98,6 +98,7 @@ It is an inline documentation from [CI](https://travis-ci.org/electricherd/audio
 </details>
 
 ### ToDo
+* look for other tag libraries (e.g. symphonia-metadata [symphonia](https://github.com/pdeljanov/Symphonia))
 * clean up, refactor data's mod and collection - still a bit to do
 * change webui to be started without collection start, to be able use path selection from within webui later
 * a good and fast data collection with few more further lifetimes optimizations
