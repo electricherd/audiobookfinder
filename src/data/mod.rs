@@ -16,6 +16,7 @@ use std::{
 // todo: hide it
 pub struct CollectionOutputData {
     pub nr_found_songs: u32,
+    pub nr_duplicates: u32,
 }
 
 /// The collection search! Searches on the file system a concrete, single path.
@@ -81,9 +82,11 @@ pub fn search_in_single_path(
                 let text = format!(
                     "\n\
                              analyzed: {an:>width$}, faulty: {fa:>width$}\n\
+                             duplicates: {du:>width$}\n\
                              searched: {se:>width$}, other: {ot:>width$}",
                     an = local_stats.analyzed,
                     fa = local_stats.faulty,
+                    du = local_stats.duplicates,
                     se = local_stats.searched,
                     ot = local_stats.other,
                     width = 3
@@ -93,6 +96,7 @@ pub fn search_in_single_path(
             // return this here
             CollectionOutputData {
                 nr_found_songs: local_stats.analyzed,
+                nr_duplicates: local_stats.duplicates,
             }
         }
         Err(_e) => {
@@ -113,7 +117,10 @@ pub fn search_in_single_path(
                 println!("{:?}", text);
             }
             // return this here
-            CollectionOutputData { nr_found_songs: 0 }
+            CollectionOutputData {
+                nr_found_songs: 0,
+                nr_duplicates: 0,
+            }
         }
     }
 }

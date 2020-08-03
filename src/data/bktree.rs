@@ -49,6 +49,7 @@ where
     /// Create a new tree from the items in a Vector.
     /// Useful for inserting a lot of items from a file etc.
     /// Vector requires a Vec of tuples of K, V pairs where K implements Distance trait
+    #[allow(dead_code)]
     pub fn new_from_vec(items: Vec<(K, V)>) -> BKTree<K, V> {
         let mut tree = BKTree { root: None };
 

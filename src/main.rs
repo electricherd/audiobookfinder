@@ -163,7 +163,10 @@ fn main() -> io::Result<()> {
             Collection::new(&key_keeper::get_p2p_server_id(), nr_threads_for_collection);
         let collection_protected = SArc::new(SMutex::new(init_collection));
 
-        let output_data = SArc::new(SMutex::new(CollectionOutputData { nr_found_songs: 0 }));
+        let output_data = SArc::new(SMutex::new(CollectionOutputData {
+            nr_found_songs: 0,
+            nr_duplicates: 0,
+        }));
         let handle_container = SArc::new(SMutex::new(Container::new()));
 
         &ui_paths.par_iter().enumerate().for_each(|(index, elem)| {
@@ -179,8 +182,9 @@ fn main() -> io::Result<()> {
             );
             // short lock to accumulate data
             {
-                output_data.lock().unwrap().nr_found_songs +=
-                    single_path_collection_data.nr_found_songs;
+                let mut locker = output_data.lock().unwrap();
+                locker.nr_found_songs += single_path_collection_data.nr_found_songs;
+                locker.nr_duplicates += single_path_collection_data.nr_duplicates;
             }
         });
 

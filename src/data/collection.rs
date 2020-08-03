@@ -80,6 +80,7 @@ pub struct FilesStat {
     pub faulty: u32,
     pub searched: u32,
     pub other: u32,
+    pub duplicates: u32,
 }
 impl FilesStat {
     /// Adds stats from one to the other,
@@ -114,6 +115,7 @@ impl Collection {
                     faulty: 0,
                     searched: 0,
                     other: 0,
+                    duplicates: 0,
                 },
                 threads: num_threads,
             },
@@ -132,6 +134,7 @@ impl Collection {
             faulty: 0,
             searched: 0,
             other: 0,
+            duplicates: 0,
         };
 
         if dir.is_dir() {
@@ -226,6 +229,7 @@ impl Collection {
         let mut file_buffer = BufReader::with_capacity(ID3_CAPACITY, file);
 
         let mut processed = false;
+        let mut all_known_suffixes = vec![];
 
         // cosy little helper (capturing suffix)
         let suffix_has = |v: Vec<&str>| v.iter().any(|&s| s == suffix);
@@ -241,6 +245,8 @@ impl Collection {
                 processed = true;
             }
         }
+        all_known_suffixes.append(&mut MP4TagReader::known_suffixes());
+
         // flac
         if !processed {
             if suffix_has(FlacTagReader::known_suffixes()) {
@@ -255,6 +261,8 @@ impl Collection {
                 }
             }
         }
+        all_known_suffixes.append(&mut FlacTagReader::known_suffixes());
+
         // id3 mp3
         if !processed {
             if suffix_has(ID3TagReader::known_suffixes()) {
@@ -264,10 +272,15 @@ impl Collection {
                 }
             }
         }
+        all_known_suffixes.append(&mut ID3TagReader::known_suffixes());
 
         if !processed {
-            trace!("mime-type suffix: {}", suffix);
-            error!("path: {}", file_name);
+            if suffix_has(all_known_suffixes) {
+                warn!(
+                    "though known, could not process mime-type suffix: {} - path: {}",
+                    suffix, file_name
+                );
+            }
             self.stats.files.faulty += 1;
             file_stats.faulty += 1;
         }
@@ -282,6 +295,7 @@ impl Collection {
              ----------------------     \n\
              analyzed files       : {files_analyzed:>width$}\n\
              searched files       : {files_searched:>width$}\n\
+             duplicate files      : {files_duplicate:>width$}\n\
              irrelevant files     : {files_irrelevant:>width$}\n\
              faulty files         : {files_faulty:>width$}\n",
             id = self.who.peer_id.to_string().to_uppercase(),
@@ -289,6 +303,7 @@ impl Collection {
             mem = self.stats.memory / 1000,
             files_analyzed = self.stats.files.analyzed,
             files_searched = self.stats.files.searched,
+            files_duplicate = self.stats.files.duplicates,
             files_irrelevant = self.stats.files.other,
             files_faulty = self.stats.files.faulty, // awesome, really
             width = 5
@@ -347,11 +362,7 @@ impl Collection {
                 self.stats.memory += mem_size as u64;
             } else {
                 // exact match with certain AudioInfo
-                trace!(
-                    "for {:?}, {} exact matches found!",
-                    &key,
-                    vec_exact_match.len()
-                );
+                self.stats.files.duplicates += vec_exact_match.len() as u32;
                 for new_audio_info in vec_exact_match {
                     let time_distance = new_audio_info.duration - audio_info.duration;
                     if time_distance > Duration::from_secs(0) {
