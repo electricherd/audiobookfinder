@@ -133,7 +133,7 @@ fn main() -> io::Result<()> {
 
     // CTRL-C exit handler (is wrapped inside a thread)
     ctrlc::set_handler(move || {
-        println!("'{}' was manually exited!!!", env!("CARGO_PKG_NAME"));
+        println!("\n'{}' was manually exited!!!", env!("CARGO_PKG_NAME"));
         process::exit(exitcode::SOFTWARE);
     })
     .map_err(|error| {

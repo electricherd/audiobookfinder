@@ -2,11 +2,11 @@
 use super::{
     super::config,
     bktree::BKTree,
-    tag_readers::{CommonAudioInfo, FlacTagReader, ID3TagReader, MP4TagReader},
+    tag_readers::{CommonAudioInfo, FlacTagReader, ID3TagReader, MP3TagReader, MP4TagReader},
 };
 use libp2p_core::PeerId;
 use std::{
-    fs::{self, DirEntry},
+    fs::{self, DirEntry, File},
     io::{self, BufReader},
     mem,
     path::Path,
@@ -233,53 +233,46 @@ impl Collection {
 
         // cosy little helper (capturing suffix)
         let suffix_has = |v: Vec<&str>| v.iter().any(|&s| s == suffix);
+
+        // 2nd cosy helper
+        let mut analyze =
+            |fn0: fn() -> Vec<&'a str>,
+             fn1: fn(&mut BufReader<File>) -> Result<CommonAudioInfo, String>| {
+                if !processed {
+                    if suffix_has(fn0()) {
+                        if let Ok(tag_data) = fn1(&mut file_buffer) {
+                            self.analyze_tag(
+                                data.clone(),
+                                file_stats,
+                                file_name.to_string(),
+                                &tag_data,
+                            );
+                            processed = true;
+                        }
+                    }
+                }
+                all_known_suffixes.append(&mut fn0());
+            };
+
+        // todo: they are all the same trait but anonymous functions (non-member)
+        //       don't know yet how to use trait correctly here
         // mp4
-        if suffix_has(MP4TagReader::known_suffixes()) {
-            if let Ok(mp4_audio_data) = MP4TagReader::read_tag_from(&mut file_buffer) {
-                self.analyze_tag(
-                    data.clone(),
-                    file_stats,
-                    file_name.to_string(),
-                    &mp4_audio_data,
-                );
-                processed = true;
-            }
-        }
-        all_known_suffixes.append(&mut MP4TagReader::known_suffixes());
-
+        analyze(MP4TagReader::known_suffixes, MP4TagReader::read_tag_from);
         // flac
-        if !processed {
-            if suffix_has(FlacTagReader::known_suffixes()) {
-                if let Ok(id3_audio_data) = FlacTagReader::read_tag_from(&mut file_buffer) {
-                    self.analyze_tag(
-                        data.clone(),
-                        file_stats,
-                        file_name.to_string(),
-                        &id3_audio_data,
-                    );
-                    processed = true;
-                }
-            }
-        }
-        all_known_suffixes.append(&mut FlacTagReader::known_suffixes());
-
+        analyze(FlacTagReader::known_suffixes, FlacTagReader::read_tag_from);
         // id3 mp3
-        if !processed {
-            if suffix_has(ID3TagReader::known_suffixes()) {
-                if let Ok(id3_audio_data) = ID3TagReader::read_tag_from(&mut file_buffer) {
-                    self.analyze_tag(data, file_stats, file_name.to_string(), &id3_audio_data);
-                    processed = true;
-                }
-            }
-        }
-        all_known_suffixes.append(&mut ID3TagReader::known_suffixes());
+        analyze(ID3TagReader::known_suffixes, ID3TagReader::read_tag_from);
+        // id3 mp3
+        analyze(MP3TagReader::known_suffixes, MP3TagReader::read_tag_from);
 
         if !processed {
             if suffix_has(all_known_suffixes) {
                 warn!(
-                    "though known, could not process mime-type suffix: {} - path: {}",
+                    "though known, could not process mime-type suffix: {} - path: {}!",
                     suffix, file_name
                 );
+            } else {
+                warn!("this suffix {} has no tag reader yet!", suffix);
             }
             self.stats.files.faulty += 1;
             file_stats.faulty += 1;
