@@ -1,6 +1,7 @@
 /// Module with interface to different tag readers
 use id3::Tag as id3tag;
 use metaflac::{block::Block, Tag as flactag};
+use mp3_metadata;
 use mp4ameta::Tag as mp4tag;
 use std::{fs::File, io::BufReader, time::Duration};
 
@@ -146,6 +147,41 @@ impl FlacTagReader {
     }
 
     pub fn known_suffixes<'a>() -> Vec<&'a str> {
-        vec!["flac"]
+        vec!["flac", "x-vorbis+ogg"]
+    }
+}
+
+pub struct MP3TagReader;
+impl MP3TagReader {
+    pub fn read_tag_from(file_buffer: &mut BufReader<File>) -> Result<CommonAudioInfo, String> {
+        match mp3_metadata::read_from_slice(file_buffer.buffer()) {
+            Ok(metadata) => {
+                match metadata.tag {
+                    Some(tag) => {
+                        // write into common audio info that can be analyzed
+                        let info = CommonAudioInfo {
+                            title: tag.title,
+                            artist: tag.artist,
+                            duration: Duration::from_secs(0),
+                            album: Some(tag.album),
+                            track: None,
+                            album_artist: None,
+                            genre: Some(format!("{:?}", tag.genre)),
+                            disc: None,
+                            total_discs: None,
+                            total_tracks: None,
+                            year: Some(tag.year as i32),
+                        };
+                        Ok(info)
+                    }
+                    None => Err("no audio tag found".to_string()),
+                }
+            }
+            Err(e) => Err(format!("{:?}", e)),
+        }
+    }
+
+    pub fn known_suffixes<'a>() -> Vec<&'a str> {
+        vec!["mpeg", "mp3"]
     }
 }
