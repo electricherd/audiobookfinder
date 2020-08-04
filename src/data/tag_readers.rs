@@ -23,13 +23,13 @@ pub struct CommonAudioInfo {
 
 /// Trait to ensure same calls
 pub trait TagReader<'a> {
-    fn read_tag_from(file: &mut BufReader<File>) -> Result<CommonAudioInfo, String>;
-    fn known_suffixes() -> Vec<&'a str>;
+    fn read_tag_from(&self, file: &mut BufReader<File>) -> Result<CommonAudioInfo, String>;
+    fn known_suffixes(&self) -> Vec<&'a str>;
 }
 
 pub struct MP4TagReader;
-impl MP4TagReader {
-    pub fn read_tag_from(file_buffer: &mut BufReader<File>) -> Result<CommonAudioInfo, String> {
+impl<'a> TagReader<'a> for MP4TagReader {
+    fn read_tag_from(&self, file_buffer: &mut BufReader<File>) -> Result<CommonAudioInfo, String> {
         match mp4tag::read_from(file_buffer.get_mut()) {
             Ok(tag) => {
                 // track info need extra treatment in mp4ameta
@@ -65,14 +65,14 @@ impl MP4TagReader {
         }
     }
 
-    pub fn known_suffixes<'a>() -> Vec<&'a str> {
+    fn known_suffixes(&self) -> Vec<&'a str> {
         vec!["mp4"]
     }
 }
 
 pub struct ID3TagReader;
-impl ID3TagReader {
-    pub fn read_tag_from(file_buffer: &mut BufReader<File>) -> Result<CommonAudioInfo, String> {
+impl<'a> TagReader<'a> for ID3TagReader {
+    fn read_tag_from(&self, file_buffer: &mut BufReader<File>) -> Result<CommonAudioInfo, String> {
         match id3tag::read_from(file_buffer.get_mut()) {
             Ok(tag) => {
                 // write into common audio info that can be analyzed
@@ -95,14 +95,14 @@ impl ID3TagReader {
         }
     }
 
-    pub fn known_suffixes<'a>() -> Vec<&'a str> {
+    fn known_suffixes(&self) -> Vec<&'a str> {
         vec!["mpeg"]
     }
 }
 
 pub struct FlacTagReader;
-impl FlacTagReader {
-    pub fn read_tag_from(file_buffer: &mut BufReader<File>) -> Result<CommonAudioInfo, String> {
+impl<'a> TagReader<'a> for FlacTagReader {
+    fn read_tag_from(&self, file_buffer: &mut BufReader<File>) -> Result<CommonAudioInfo, String> {
         match flactag::read_from(file_buffer) {
             Ok(tag_block) => {
                 // try the first block
@@ -146,14 +146,14 @@ impl FlacTagReader {
         }
     }
 
-    pub fn known_suffixes<'a>() -> Vec<&'a str> {
+    fn known_suffixes(&self) -> Vec<&'a str> {
         vec!["flac", "x-vorbis+ogg"]
     }
 }
 
 pub struct MP3TagReader;
-impl MP3TagReader {
-    pub fn read_tag_from(file_buffer: &mut BufReader<File>) -> Result<CommonAudioInfo, String> {
+impl<'a> TagReader<'a> for MP3TagReader {
+    fn read_tag_from(&self, file_buffer: &mut BufReader<File>) -> Result<CommonAudioInfo, String> {
         match mp3_metadata::read_from_slice(file_buffer.buffer()) {
             Ok(metadata) => {
                 match metadata.tag {
@@ -181,7 +181,7 @@ impl MP3TagReader {
         }
     }
 
-    pub fn known_suffixes<'a>() -> Vec<&'a str> {
+    fn known_suffixes(&self) -> Vec<&'a str> {
         vec!["mpeg", "mp3"]
     }
 }
