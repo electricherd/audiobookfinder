@@ -164,6 +164,31 @@
     </div>
 </nav>
 
+<!-- Button trigger modal -->
+<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#exampleModalCenter">
+    demo modal
+</button>
+
+<!-- Modal -->
+<div class="modal fade" id="exampleModalCenter" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLongTitle">Select local path(s) to process</h5>
+            </div>
+            <div class="modal-body">
+                <!-- this table is filled dynamicall, 1 at start -->
+                <table class="table table-fixed" id='modal_path_table'><tr><td>
+                </td></tr></table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary">Run with path(s) selected!</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 <!-- Page Content -->
 <div class="container">
     <div class="card border-0 shadow my-5">

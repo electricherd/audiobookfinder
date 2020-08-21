@@ -85,6 +85,11 @@ pub fn generate_init_data(paths: &Vec<String>) -> WSJsonOut {
     })
 }
 
+/// generate the REST dir paths to output json
+pub fn rest_dirs(dirs: &Vec<String>) -> WSJsonOut {
+    WSJsonOut::rest_dirs(dirs.to_vec())
+}
+
 //////////////////////////////////////////////////////////////////////
 // help on that here https://serde.rs/enum-representations.html
 
@@ -149,6 +154,7 @@ pub enum WSJsonOut {
     searching(AnimateData),
     init(InitData),
     update(NetData),
+    rest_dirs(Vec<String>),
     nothing(),
 }
 
@@ -165,4 +171,5 @@ impl fmt::Display for WSJsonOut {
 #[allow(non_camel_case_types)]
 pub enum WSJsonIn {
     start,
+    rest_dir(String),
 }

@@ -2,6 +2,7 @@
 use super::{
     super::super::ctrl::InternalUiMsg,
     json::{self, WSJsonIn, WSJsonOut},
+    rest_filebrowser,
 };
 use actix::{
     prelude::{StreamHandler, *},
@@ -203,6 +204,12 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ActorWebSocket {
                                 WSJsonIn::start => {
                                     trace!("ready from Browser received!");
                                     self.starter.do_send(MSyncStartup {})
+                                }
+                                WSJsonIn::rest_dir(path) => {
+                                    trace!("REST request received!");
+                                    let dir = rest_filebrowser::return_directory(path);
+                                    let ustream = json::rest_dirs(&dir);
+                                    ctx.text(ustream.to_string());
                                 }
                             },
                             Err(wrong_message) => {
