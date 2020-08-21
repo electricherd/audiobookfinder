@@ -40,7 +40,7 @@ function APPStart() {
             });
 
             ws.bind('rest_dirs', function(data){
-               alert("rest_dirs");
+               onRESTDir(data);
             });
 
 
@@ -78,12 +78,15 @@ function APPStart() {
             // add first entry for modal path dialog
             addModalPathSelector();
 
-
             $(".dirButton" ).click( function() {
                 let splitter = this.name.split("_")[1];
                 let nr = parseInt(splitter);
                 ws.send('rest_dir', modal_dirs[nr]);
             } );
+
+            $('.dropdown').click(function(){
+              $('.dropdown-menu').toggleClass('show');
+            });
 
         } else {
             // The browser doesn't support WebSocket
@@ -231,14 +234,42 @@ function addModalPathSelector() {
     modal_dirs[path_ui_nr] = "";
     let path_string = ('0' + path_ui_nr).slice(-2);
     let new_selector =  '<tr><td>'
-                      + '  <input type="text" class="form-control" id="dir_'+ path_string +'"'
-                      + '   placeholder=" ... ">'
+                      + '  <div class="btn-group dropright">'
+                      + '   <button class="btn btn-secondary dropdown-toggle" type="button"'
+                      + '           data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">'
+                      + '        Dropdown Example'
+                      + '   </button>'
+                      + '   <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">'
+                      + '     <a class="dropdown-item" href="#">HTML</a>'
+                      + '     <a class="dropdown-item" href="#">CSS</a>'
+                      + '     <a class="dropdown-item" href="#">JavaScript</a>'
+                      + '   </div>'
+                      + '  </div>'
+
                       + '</td>'
                       + '<td>'
                       + '  <input type="button" class="btn btn-light text-monospace dirButton"'
                       + '          value="Select Path' + path_string + '"'
                       + '          name="btn_' + path_ui_nr + '">'
                       + '</td></tr>';
+    // <div class="dropdown-divider"></div>
     $("#modal_path_table").append(new_selector);
     path_ui_nr += 1;
+}
+
+function onRESTDir(data) {
+  // stop path spinners
+  let dirs_len = data.length;
+
+  const extractLastDir = (dir_path) => {
+     const dirs_array = dir_path.split("/");
+     const last_index = dirs_array.length - 1;
+     return dirs_array[last_index];
+  };
+
+  let paths = "";
+  for (let i=0; i < dirs_len; i++) {
+      paths = paths + extractLastDir(data[i]) + " | ";
+  }
+  alert(paths);
 }
