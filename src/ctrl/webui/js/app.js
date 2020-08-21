@@ -81,10 +81,13 @@ function APPStart() {
             $(".dirButton" ).click( function() {
                 let splitter = this.name.split("_")[1];
                 let nr = parseInt(splitter);
-                ws.send('rest_dir', modal_dirs[nr]);
+                ws.send('rest_dir', {'nr': nr, 'dir': modal_dirs[nr]});
             } );
 
             $('.dropdown').click(function(){
+              let splitter = this.name.split("_")[1];
+              let nr = parseInt(splitter);
+              ws.send('rest_dir', {'nr': nr, 'dir': modal_dirs[nr]});
               $('.dropdown-menu').toggleClass('show');
             });
 
@@ -234,18 +237,14 @@ function addModalPathSelector() {
     modal_dirs[path_ui_nr] = "";
     let path_string = ('0' + path_ui_nr).slice(-2);
     let new_selector =  '<tr><td>'
-                      + '  <div class="btn-group dropright">'
+                      + '  <div class="dropdown">'
                       + '   <button class="btn btn-secondary dropdown-toggle" type="button"'
-                      + '           data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">'
-                      + '        Dropdown Example'
-                      + '   </button>'
-                      + '   <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">'
-                      + '     <a class="dropdown-item" href="#">HTML</a>'
-                      + '     <a class="dropdown-item" href="#">CSS</a>'
-                      + '     <a class="dropdown-item" href="#">JavaScript</a>'
+                      + '           data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"'
+                      + '   >HOME</button>'
+                      + '   <div id="dropdown_' + path_string + '" class="dropdown-menu" aria-labelledby="dropdownMenuButton">'
+                      + '     <div class="dropdown-divider"></div>'
                       + '   </div>'
                       + '  </div>'
-
                       + '</td>'
                       + '<td>'
                       + '  <input type="button" class="btn btn-light text-monospace dirButton"'
@@ -259,7 +258,8 @@ function addModalPathSelector() {
 
 function onRESTDir(data) {
   // stop path spinners
-  let dirs_len = data.length;
+  let nr = data.nr;
+  let dirs_len = data.dirs.length;
 
   const extractLastDir = (dir_path) => {
      const dirs_array = dir_path.split("/");
@@ -268,8 +268,13 @@ function onRESTDir(data) {
   };
 
   let paths = "";
+  let path_string = ('0' + nr).slice(-2);
+  let dropdown_menu = $("#dropdown_" + path_string);
+
   for (let i=0; i < dirs_len; i++) {
-      paths = paths + extractLastDir(data[i]) + " | ";
+      let new_link = '     <a class="dropdown-item" href="#">' + extractLastDir(data.dirs[i]) + '</a>';
+      dropdown_menu.append(new_link);
+      paths = paths + extractLastDir(data.dirs[i]) + " | ";
   }
   alert(paths);
 }

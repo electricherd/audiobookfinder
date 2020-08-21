@@ -205,10 +205,12 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ActorWebSocket {
                                     trace!("ready from Browser received!");
                                     self.starter.do_send(MSyncStartup {})
                                 }
-                                WSJsonIn::rest_dir(path) => {
+                                WSJsonIn::rest_dir(dir_in) => {
+                                    let nr = dir_in.nr;
+                                    let path = dir_in.dir;
                                     trace!("REST request received!");
                                     let dir = rest_filebrowser::return_directory(path);
-                                    let ustream = json::rest_dirs(&dir);
+                                    let ustream = json::rest_dirs(nr, &dir);
                                     ctx.text(ustream.to_string());
                                 }
                             },

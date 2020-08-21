@@ -86,8 +86,11 @@ pub fn generate_init_data(paths: &Vec<String>) -> WSJsonOut {
 }
 
 /// generate the REST dir paths to output json
-pub fn rest_dirs(dirs: &Vec<String>) -> WSJsonOut {
-    WSJsonOut::rest_dirs(dirs.to_vec())
+pub fn rest_dirs(nr: usize, dirs: &Vec<String>) -> WSJsonOut {
+    WSJsonOut::rest_dirs(DirOut {
+        nr,
+        dirs: dirs.to_vec(),
+    })
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -144,6 +147,13 @@ pub enum NetData {
     count(FinishPeer),
 }
 
+#[allow(non_camel_case_types)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct DirOut {
+    pub nr: usize,
+    pub dirs: Vec<String>,
+}
+
 // This is the critical part here, "event" and "data" to work with
 // "ws_events_dispatcher.js" !!!!!!!!
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -154,7 +164,7 @@ pub enum WSJsonOut {
     searching(AnimateData),
     init(InitData),
     update(NetData),
-    rest_dirs(Vec<String>),
+    rest_dirs(DirOut),
     nothing(),
 }
 
@@ -164,6 +174,12 @@ impl fmt::Display for WSJsonOut {
     }
 }
 
+#[allow(non_camel_case_types)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct DirIn {
+    pub nr: usize,
+    pub dir: String,
+}
 // This is the critical part here, "event" and "data" to work with
 // "ws_events_dispatcher.js" !!!!!!!!
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -171,5 +187,5 @@ impl fmt::Display for WSJsonOut {
 #[allow(non_camel_case_types)]
 pub enum WSJsonIn {
     start,
-    rest_dir(String),
+    rest_dir(DirIn),
 }
