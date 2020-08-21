@@ -1,12 +1,7 @@
 ///! A helper to make local computer browsing of file paths possible
 ///! on smarter devices a dialog would do it ....
 use dirs;
-use std::{
-    fs::{self, DirEntry},
-    path::Path,
-    string::String,
-    vec::Vec,
-};
+use std::{fs, path::Path, string::String, vec::Vec};
 
 pub fn return_directory(given: String) -> Vec<String> {
     let trying_path = if given.is_empty() {
