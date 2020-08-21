@@ -23,7 +23,12 @@ pub fn return_directory(given: String) -> Vec<String> {
                     if entry.is_err() {
                         continue;
                     }
-                    let entry = entry.unwrap().path();
+                    let entry = entry.unwrap();
+                    // filter out ".dirs"
+                    if entry.file_name().to_str().unwrap_or("").starts_with(".") {
+                        continue;
+                    }
+                    let entry = entry.path();
                     if entry.is_dir() {
                         if let Some(unicode_str) = entry.to_str() {
                             return_vec.push(unicode_str.to_string());
