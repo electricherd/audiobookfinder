@@ -5,6 +5,7 @@
 mod actors;
 mod json;
 mod pages;
+mod rest_filebrowser;
 
 use super::{
     super::{config, ctrl::InternalUiMsg, net::peer_representation::PeerRepresentation},

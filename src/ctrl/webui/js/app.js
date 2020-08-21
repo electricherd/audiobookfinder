@@ -1,6 +1,8 @@
 window.onload = APPStart;
 
 var known_paths = [];
+var path_ui_nr = 0;
+var modal_dirs = [];
 
 // Page onload event handler
 function APPStart() {
@@ -37,6 +39,11 @@ function APPStart() {
                updateNetView(data);
             });
 
+            ws.bind('rest_dirs', function(data){
+               alert("rest_dirs");
+            });
+
+
             window.onbeforeunload = function(event) {
                  socket.close();
             };
@@ -67,6 +74,16 @@ function APPStart() {
 
             // click accordion.div.div to show first entry!!
             $("#accordion div div").click();
+
+            // add first entry for modal path dialog
+            addModalPathSelector();
+
+
+            $(".dirButton" ).click( function() {
+                let splitter = this.name.split("_")[1];
+                let nr = parseInt(splitter);
+                ws.send('rest_dir', modal_dirs[nr]);
+            } );
 
         } else {
             // The browser doesn't support WebSocket
@@ -209,3 +226,19 @@ function netButtonClick(button_peer, guid) {
     $("#accordion").append(new_foreign_row);
 }
 
+function addModalPathSelector() {
+    // increase counter for new selector
+    modal_dirs[path_ui_nr] = "";
+    let path_string = ('0' + path_ui_nr).slice(-2);
+    let new_selector =  '<tr><td>'
+                      + '  <input type="text" class="form-control" id="dir_'+ path_string +'"'
+                      + '   placeholder=" ... ">'
+                      + '</td>'
+                      + '<td>'
+                      + '  <input type="button" class="btn btn-light text-monospace dirButton"'
+                      + '          value="Select Path' + path_string + '"'
+                      + '          name="btn_' + path_ui_nr + '">'
+                      + '</td></tr>';
+    $("#modal_path_table").append(new_selector);
+    path_ui_nr += 1;
+}
