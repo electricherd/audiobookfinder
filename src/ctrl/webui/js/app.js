@@ -8,6 +8,7 @@ var modal_dirs = [];
 function APPStart() {
     state = false;
     guid_id = "<!---PEER_HASH--->";
+    max_paths = <!---PATHS_MAX--->;
 
     $(document).ready(function(){
         // keep it for later with different id
@@ -43,9 +44,8 @@ function APPStart() {
                onRESTDir(data);
             });
 
-
             window.onbeforeunload = function(event) {
-                 socket.close();
+               socket.close();
             };
 
 
@@ -84,11 +84,16 @@ function APPStart() {
                 ws.send('rest_dir', {'nr': nr, 'dir': modal_dirs[nr]});
             } );
 
-            $('.dropdown').click(function(){
-              let splitter = this.name.split("_")[1];
+            $('.dirDropper').click(function(){
+              let splitter = this.id.split("_")[1];
               let nr = parseInt(splitter);
               ws.send('rest_dir', {'nr': nr, 'dir': modal_dirs[nr]});
               $('.dropdown-menu').toggleClass('show');
+            });
+            $('.dirDropper').change(function(){
+              let splitter = this.name.split("_")[1];
+              let nr = parseInt(splitter);
+              alert("huhn");
             });
 
         } else {
@@ -238,8 +243,8 @@ function addModalPathSelector() {
     let path_string = ('0' + path_ui_nr).slice(-2);
     let new_selector =  '<tr><td>'
                       + '  <div class="dropdown">'
-                      + '   <button class="btn btn-secondary dropdown-toggle" type="button"'
-                      + '           data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"'
+                      + '   <button class="btn btn-secondary dropdown-toggle dirDropper" id="dropmenu_' + path_string + '"'
+                      + '           data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" type="button" '
                       + '   >HOME</button>'
                       + '   <div id="dropdown_' + path_string + '" class="dropdown-menu" aria-labelledby="dropdownMenuButton">'
                       + '     <div class="dropdown-divider"></div>'
@@ -276,5 +281,4 @@ function onRESTDir(data) {
       dropdown_menu.append(new_link);
       paths = paths + extractLastDir(data.dirs[i]) + " | ";
   }
-  alert(paths);
 }

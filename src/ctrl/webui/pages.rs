@@ -124,7 +124,7 @@ fn replace_static_content(html_in: &str, id: &PeerRepresentation, port: u16) -> 
         .into_string()
         .unwrap_or(String::from("undefined"));
 
-    let changers: [ReplaceStatic; 7] = [
+    let changers: [ReplaceStatic; 8] = [
         ReplaceStatic {
             r: config::net::HTML_REPLACE_STATIC_URL_SOURCE,
             c: config::net::HTML_URL_SOURCE.to_string(),
@@ -152,6 +152,10 @@ fn replace_static_content(html_in: &str, id: &PeerRepresentation, port: u16) -> 
         ReplaceStatic {
             r: config::webui::HTML_REPLACE_PEER_PAGE,
             c: config::webui::PEER_PAGE.to_string(),
+        },
+        ReplaceStatic {
+            r: config::webui::HTML_REPLACE_PATHS_MAX,
+            c: config::data::PATHS_MAX.to_string(),
         },
     ];
     linear_LUT_replacer(html_in, &changers)

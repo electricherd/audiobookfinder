@@ -108,10 +108,13 @@ pub mod webui {
     pub static HTML_REPLACE_HOSTNAME: &str = "HOSTNAME";
     pub static HTML_REPLACE_WEBSOCKET: &str = "WEBSOCKET";
     pub static HTML_REPLACE_PEER_PAGE: &str = "PEER_PAGE";
+    pub static HTML_REPLACE_PATHS_MAX: &str = "PATHS_MAX";
 }
 
 /// The data related configurations of a more general purpose
 pub mod data {
     /// ignore those tree_magic extensions. like m3u
     pub static IGNORE_AUDIO_FORMATS: [&str; 1] = ["x-mpegurl"];
+    /// max of paths to be used by program todo: use it everywhere it needs to be
+    pub static PATHS_MAX: usize = 10;
 }
