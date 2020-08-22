@@ -88,7 +88,7 @@ function APPStart() {
               let splitter = this.id.split("_")[1];
               let nr = parseInt(splitter);
               ws.send('rest_dir', {'nr': nr, 'dir': modal_dirs[nr]});
-              $('.dropdown-menu').toggleClass('show');
+              //$('.dropdown-menu').toggleClass('show');
             });
             $('.dirDropper').change(function(){
               let splitter = this.name.split("_")[1];
@@ -245,18 +245,11 @@ function addModalPathSelector() {
                       + '  <div class="dropdown">'
                       + '   <button class="btn btn-secondary dropdown-toggle dirDropper" id="dropmenu_' + path_string + '"'
                       + '           data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" type="button" '
-                      + '   >HOME</button>'
+                      + '   >HOME<span class="caret"></span></button>'
                       + '   <div id="dropdown_' + path_string + '" class="dropdown-menu" aria-labelledby="dropdownMenuButton">'
-                      + '     <div class="dropdown-divider"></div>'
                       + '   </div>'
                       + '  </div>'
-                      + '</td>'
-                      + '<td>'
-                      + '  <input type="button" class="btn btn-light text-monospace dirButton"'
-                      + '          value="Select Path' + path_string + '"'
-                      + '          name="btn_' + path_ui_nr + '">'
                       + '</td></tr>';
-    // <div class="dropdown-divider"></div>
     $("#modal_path_table").append(new_selector);
     path_ui_nr += 1;
 }
@@ -266,19 +259,47 @@ function onRESTDir(data) {
   let nr = data.nr;
   let dirs_len = data.dirs.length;
 
-  const extractLastDir = (dir_path) => {
-     const dirs_array = dir_path.split("/");
-     const last_index = dirs_array.length - 1;
-     return dirs_array[last_index];
-  };
-
-  let paths = "";
   let path_string = ('0' + nr).slice(-2);
   let dropdown_menu = $("#dropdown_" + path_string);
 
   for (let i=0; i < dirs_len; i++) {
-      let new_link = '     <a class="dropdown-item" href="#">' + extractLastDir(data.dirs[i]) + '</a>';
+      let name = "";
+      if (i == 0) {
+         // first entry can be the ".." directory
+         if (dirs_len > 1) {
+            // if 1st is completly contained in the 2nd, then it's the ".."
+            if (data.dirs[1].includes(data.dirs[1])) {
+                // hide parent as ".."
+                name = "..";
+            } else {
+                // it's not the ".."
+                name = helper_extractLastDir(data.dirs[i]);
+            }
+         } else {
+            // whatever this is it should be the pure entry
+            name = helper_extractLastDir(data.dirs[i]);
+         }
+      } else {
+         name = helper_extractLastDir(data.dirs[i]);
+      }
+      let new_link = '     <a class="dropdown-item" href="#"'
+                    + '       onClick="uiUpdateDropMenu(' + nr + ',\'' + data.dirs[i] + '\');"'
+                    +'      >' + name + '</a>';
       dropdown_menu.append(new_link);
-      paths = paths + extractLastDir(data.dirs[i]) + " | ";
   }
+}
+
+function uiUpdateDropMenu(nr, new_dir) {
+    let path_string = ('0' + nr).slice(-2);
+    // update title
+    $("#dropmenu_" + path_string).html(helper_extractLastDir(new_dir) + '<span class="caret"></span>');
+    modal_dirs[nr] = new_dir;
+    // remove old entries
+    $("#dropdown_" + path_string).children().remove();
+}
+
+function helper_extractLastDir(dir_path) {
+    const dirs_array = dir_path.split("/");
+    const last_index = dirs_array.length - 1;
+    return dirs_array[last_index];
 }

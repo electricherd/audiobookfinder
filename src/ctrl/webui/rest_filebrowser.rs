@@ -14,6 +14,14 @@ pub fn return_directory(given: String) -> Vec<String> {
         Some(try_as_dir) => {
             if let Ok(good_dir) = fs::read_dir(&try_as_dir) {
                 let mut return_vec = vec![];
+
+                // add parent if possible, which js can turn into ".."
+                if let Some(parent) = try_as_dir.parent() {
+                    if let Some(parent_unicode_str) = parent.to_str() {
+                        return_vec.push(parent_unicode_str.to_string());
+                    }
+                }
+
                 for entry in good_dir {
                     if entry.is_err() {
                         continue;
