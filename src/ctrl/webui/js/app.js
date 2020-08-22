@@ -79,12 +79,13 @@ function APPStart() {
             addModalPathSelector();
 
             // modal button events
-            //$(".dirDropper").click(function(){ table.table > tr > td > div.dropdown >
-            //$(document).on("click", "div.dropdown > button.dirDropper",  function(){
-            $("div.dropdown > button.dirDropper").click(function(){
+            $('#modal_path_table').on('click', 'tr > td > div > button.dirDropper',  function(event){
+              //event.preventDefault();
+              event.stopPropagation();
               let splitter = this.id.split("_")[1];
               let nr = parseInt(splitter);
               ws.send('rest_dir', {'nr': nr, 'dir': modal_dirs[nr]});
+              this.dropdown('dispose');
             });
             $('#modal_add').click(function(){
                 if (path_ui_nr < max_paths) {
@@ -239,8 +240,8 @@ function addModalPathSelector() {
     let new_selector =  '<tr><td>'
                       + '  <div class="dropdown">'
                       + '   <button class="btn btn-secondary dropdown-toggle dirDropper" id="dropmenu_' + path_string + '"'
-                      + '           data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" type="button" '
-                      + '   >HOME<span class="caret"></span></button>'
+                      + '           data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"'
+                      + '   ><i>home</i><span class="caret"></span></button>'
                       + '   <div id="dropdown_' + path_string + '" class="dropdown-menu" aria-labelledby="dropdownMenuButton">'
                       + '   </div>'
                       + '  </div>'
@@ -284,6 +285,8 @@ function onRESTDir(data) {
                     + '       onClick="uiUpdateDropMenu(' + nr + ',\'' + data.dirs[i] + '\');"'
                     +'      >' + name + '</a>';
       dropdown_menu.append(new_link);
+      dropdown_menu.dropdown('update');
+      dropdown_menu.dropdown('toggle');
   }
 }
 
