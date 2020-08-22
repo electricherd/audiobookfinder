@@ -78,22 +78,11 @@ function APPStart() {
             // add first entry for modal path dialog
             addModalPathSelector();
 
-            $(".dirButton" ).click( function() {
-                let splitter = this.name.split("_")[1];
-                let nr = parseInt(splitter);
-                ws.send('rest_dir', {'nr': nr, 'dir': modal_dirs[nr]});
-            } );
-
+            // modal button events
             $('.dirDropper').click(function(){
               let splitter = this.id.split("_")[1];
               let nr = parseInt(splitter);
               ws.send('rest_dir', {'nr': nr, 'dir': modal_dirs[nr]});
-              //$('.dropdown-menu').toggleClass('show');
-            });
-            $('.dirDropper').change(function(){
-              let splitter = this.name.split("_")[1];
-              let nr = parseInt(splitter);
-              alert("huhn");
             });
 
         } else {
@@ -112,7 +101,6 @@ function spinPath(data) {
        if (on_off === true) {
            spinner.removeClass('d-none');
        } else {
-           //spinner.removeClass('d-none');
            setTimeout(_ => spinner.addClass('d-none'), 100);
        }
     } else {
@@ -268,16 +256,19 @@ function onRESTDir(data) {
          // first entry can be the ".." directory
          if (dirs_len > 1) {
             // if 1st is completly contained in the 2nd, then it's the ".."
-            if (data.dirs[1].includes(data.dirs[1])) {
+            if (data.dirs[1].includes(data.dirs[0])) {
                 // hide parent as ".."
                 name = "..";
             } else {
-                // it's not the ".."
-                name = helper_extractLastDir(data.dirs[i]);
+                name = helper_extractLastDir(data.dirs[0]);
             }
          } else {
-            // whatever this is it should be the pure entry
-            name = helper_extractLastDir(data.dirs[i]);
+            // it's not always the ".."
+            if (modal_dirs[nr].includes(data.dirs[0])) {
+                name = "..";
+            } else {
+                name = helper_extractLastDir(data.dirs[0]);
+            }
          }
       } else {
          name = helper_extractLastDir(data.dirs[i]);
