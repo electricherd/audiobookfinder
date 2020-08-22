@@ -87,10 +87,10 @@ pub fn generate_init_data(paths: &Vec<String>) -> WSJsonOut {
 
 /// generate the REST dir paths to output json
 pub fn rest_dirs(nr: usize, dirs: &Vec<String>) -> WSJsonOut {
-    WSJsonOut::rest_dirs(DirOut {
-        nr,
-        dirs: dirs.to_vec(),
-    })
+    // sort before sending
+    let mut dirs = dirs.to_vec();
+    dirs.sort();
+    WSJsonOut::rest_dirs(DirOut { nr, dirs })
 }
 
 //////////////////////////////////////////////////////////////////////
