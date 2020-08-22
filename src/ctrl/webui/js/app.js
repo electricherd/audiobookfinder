@@ -79,10 +79,17 @@ function APPStart() {
             addModalPathSelector();
 
             // modal button events
-            $('.dirDropper').click(function(){
+            //$(".dirDropper").click(function(){ table.table > tr > td > div.dropdown >
+            //$(document).on("click", "div.dropdown > button.dirDropper",  function(){
+            $("div.dropdown > button.dirDropper").click(function(){
               let splitter = this.id.split("_")[1];
               let nr = parseInt(splitter);
               ws.send('rest_dir', {'nr': nr, 'dir': modal_dirs[nr]});
+            });
+            $('#modal_add').click(function(){
+                if (path_ui_nr < max_paths) {
+                    addModalPathSelector();
+                }
             });
 
         } else {
