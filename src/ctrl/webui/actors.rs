@@ -1,6 +1,7 @@
 ///! All actors from webui are represented here
 use super::{
     super::super::ctrl::InternalUiMsg,
+    config::data::PATHS_MAX,
     json::{self, WSJsonIn, WSJsonOut},
     rest_filebrowser,
 };
@@ -207,11 +208,15 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ActorWebSocket {
                                 }
                                 WSJsonIn::rest_dir(dir_in) => {
                                     let nr = dir_in.nr;
-                                    let path = dir_in.dir;
-                                    trace!("REST request received!");
-                                    let dir = rest_filebrowser::return_directory(path);
-                                    let ustream = json::rest_dirs(nr, &dir);
-                                    ctx.text(ustream.to_string());
+                                    if nr < PATHS_MAX {
+                                        let path = dir_in.dir;
+                                        trace!("REST request received!");
+                                        let dir = rest_filebrowser::return_directory(path);
+                                        let ustream = json::rest_dirs(nr, &dir);
+                                        ctx.text(ustream.to_string());
+                                    } else {
+                                        error!("Some hacking ... there is a paths limit");
+                                    }
                                 }
                             },
                             Err(wrong_message) => {
