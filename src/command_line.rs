@@ -111,7 +111,14 @@ pub fn get_start_values() -> (Vec<String>, bool, bool, bool, bool, bool, u16, bo
         )
         .arg(
             clap::Arg::with_name(INPUT_FOLDERS)
-                .help("Sets multiple input folder(s) to be searched for audio files.")
+                .help(
+                    &[
+                        "Sets multiple input folder(s) to be searched for audio files. (Max ",
+                        &config::data::PATHS_MAX.to_string(),
+                        " input folders will be used!)",
+                    ]
+                    .concat(),
+                )
                 .multiple(true)
                 .required(false),
         )
@@ -188,7 +195,13 @@ pub fn get_start_values() -> (Vec<String>, bool, bool, bool, bool, bool, u16, bo
 
     // either one will have a ui, representing data and error messages
     let has_ui = has_tui || has_webui;
-    let ui_paths = all_pathes.iter().map(|s| s.to_string()).collect();
+    let ui_paths = all_pathes
+        .iter()
+        .map(|s| s.to_string())
+        .enumerate()
+        .filter(|(i, el)| i < &config::data::PATHS_MAX)
+        .map(|(_i, el)| el)
+        .collect();
     (
         ui_paths,
         has_tui,
