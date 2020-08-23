@@ -1,6 +1,8 @@
 # audiobookfinder (adbf)
 An example program to learn [Rust](https://www.rust-lang.org/) and meet its concepts by: find audio books on different machines.
 
+![Minimum rustc version](https://img.shields.io/badge/rustc-1.32.0+-green.svg)
+
 ### Why Rust?
 Rust is an awesome but difficult to learn programming language using different approaches and concepts to solve the current main software development issues for system programming:
  * Secure Programming Concepts: let the computer/compiler do what it can do better than a programmer: safe threading, error-concepts, forbid everything non-safe by default
@@ -98,6 +100,7 @@ It is an inline documentation from [CI](https://travis-ci.org/electricherd/audio
 </details>
 
 ### ToDo
+* try [crate vfs](https://github.com/manuel-woelker/rust-vfs) for unit test with files!! interesting and needed!
 * look for other tag libraries (e.g. symphonia-metadata [symphonia](https://github.com/pdeljanov/Symphonia))
 * clean up, refactor data's mod and collection - still a bit to do
 * change webui to be started without collection start, to be able use path selection from within webui later
