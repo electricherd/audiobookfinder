@@ -3,7 +3,7 @@ use super::{
     super::super::ctrl::InternalUiMsg,
     config::data::PATHS_MAX,
     json::{self, WSJsonIn, WSJsonOut},
-    rest_filebrowser,
+    rest_mod,
 };
 use actix::{
     prelude::{StreamHandler, *},
@@ -211,7 +211,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ActorWebSocket {
                                     if nr < PATHS_MAX {
                                         let path = dir_in.dir;
                                         trace!("REST request received!");
-                                        let dir = rest_filebrowser::return_directory(path);
+                                        let dir = rest_mod::return_directory(path);
                                         let ustream = json::rest_dirs(nr, &dir);
                                         ctx.text(ustream.to_string());
                                     } else {
