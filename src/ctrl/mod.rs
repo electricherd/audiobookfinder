@@ -8,6 +8,7 @@ use self::{tui::Tui, webui::WebUI};
 use super::{
     config,
     net::peer_representation::{self, PeerRepresentation},
+    paths::SearchPath,
 };
 use async_std::task;
 use crossbeam::sync::WaitGroup;
@@ -87,7 +88,7 @@ enum Finisher {
 
 pub struct Ctrl {
     peer_id: PeerId,
-    paths: Vec<String>,
+    paths: Arc<Mutex<SearchPath>>,
     with_net: bool,
 }
 
@@ -100,7 +101,7 @@ impl Ctrl {
     /// * 'receiver' - The receiver that takes incoming ctrl messages
     /// * 'with_net' - If ctrl should consider net messages
     /// * 'sync_sender' - For start up that main can be informed, "I'm ready"
-    pub fn new(new_id: PeerId, paths: &Vec<String>, with_net: bool) -> Self {
+    pub fn new(new_id: PeerId, paths: Arc<Mutex<SearchPath>>, with_net: bool) -> Self {
         Self {
             peer_id: new_id,
             paths: paths.clone(),
@@ -110,7 +111,7 @@ impl Ctrl {
 
     pub fn run(
         new_id: PeerId,
-        paths: &Vec<String>,
+        paths: Arc<Mutex<SearchPath>>,
         receiver: Receiver<UiUpdateMsg>,
         with_net: bool,
         wait_main: WaitGroup,
@@ -292,7 +293,8 @@ impl Ctrl {
                 trace!("tui starts");
                 // do finally the necessary
                 // this blocks this async future
-                Self::run_tui(title, paths, with_net, receiver, resender).map_err(
+                let fix_path = paths.lock().unwrap().read();
+                Self::run_tui(title, fix_path, with_net, receiver, resender).map_err(
                     |error_text| std::io::Error::new(std::io::ErrorKind::Other, error_text),
                 )?;
                 info!("stopped tui");
@@ -351,7 +353,7 @@ impl Ctrl {
         webui_receiver: Receiver<InternalUiMsg>,
         net_support: bool,
         peer_representation: PeerRepresentation,
-        paths: Vec<String>,
+        paths: Arc<Mutex<SearchPath>>,
         wait_ui_sync: WaitGroup,
         open_browser: bool,
         web_port: u16,

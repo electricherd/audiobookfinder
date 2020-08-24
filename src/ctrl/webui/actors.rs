@@ -1,6 +1,6 @@
 ///! All actors from webui are represented here
 use super::{
-    super::super::ctrl::InternalUiMsg,
+    super::super::{ctrl::InternalUiMsg, paths::SearchPath},
     config::data::PATHS_MAX,
     json::{self, WSJsonIn, WSJsonOut},
     rest_mod,
@@ -12,7 +12,11 @@ use actix::{
 use actix_web::web::Json;
 use actix_web_actors::ws;
 use crossbeam::sync::WaitGroup;
-use std::{string::String, sync::mpsc::Receiver, time::Duration, vec::Vec};
+use std::{
+    sync::{mpsc::Receiver, Arc, Mutex},
+    time::Duration,
+    vec::Vec,
+};
 
 #[derive(Message)]
 #[rtype(result = "()")]
@@ -80,7 +84,7 @@ pub struct MServerEvent {
 pub struct ActorWSServerMonitor {
     pub receiver: Receiver<InternalUiMsg>,
     pub listeners: Vec<Addr<ActorWebSocket>>,
-    pub paths: Vec<String>,
+    pub paths: Arc<Mutex<SearchPath>>,
 }
 impl ActorWSServerMonitor {
     fn register(&mut self, listener: MRegisterWSClient) {
@@ -147,7 +151,7 @@ impl Handler<MDoneSyncStartup> for ActorWSServerMonitor {
         //       and this is going to ALL not matter if they did receive already.
         //       It can be a browser issues, since browser security prevents a lot of
         //       things, even to start cross-side javascript connection.
-        let cloned_paths = self.paths.clone();
+        let cloned_paths = self.paths.lock().unwrap().read();
         for ws in &self.listeners {
             let answer = Json(json::generate_init_data(&cloned_paths.clone()));
             ws.do_send(MServerEvent { event: answer });
