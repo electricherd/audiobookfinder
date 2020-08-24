@@ -211,8 +211,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ActorWebSocket {
                                     trace!("ready from Browser received!");
                                     // send paths
                                     let current_paths = self.paths.lock().unwrap().read();
-                                    let reveal_paths = WSJsonOut::start_paths(current_paths);
-                                    trace!("sending: {:?}", reveal_paths);
+                                    let reveal_paths = WSJsonOut::init_paths(current_paths);
                                     ctx.text(reveal_paths.to_string())
                                 }
                                 WSJsonIn::rest_dir(dir_in) => {
@@ -232,7 +231,6 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ActorWebSocket {
                                 }
                                 WSJsonIn::start(dirs) => {
                                     if dirs.len() < PATHS_MAX {
-                                        info!("received paths: {:?}", dirs);
                                         self.starter.do_send(MSyncStartup {});
                                     } else {
                                         error!("Starting but ... there is a paths limit");
