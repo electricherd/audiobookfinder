@@ -13,7 +13,22 @@ use std::{
 };
 
 /// Clean paths checks that paths exists and that intersection
-/// paths are exluded! E.g. todo: if FS_UP then write document_test
+/// paths are exluded, also down-up-climbing of existing paths
+/// hierarchy are working!
+///
+/// E.g. given:
+///     "/home/user/Music/audiobooks/E-F"
+///     "/home/user/Music/audiobooks/E-F/George Orwell"
+///     "/home/user/Music/audiobooks/A-D/../../audiobooks/A-D"
+///     "/home/user/Music/audiobooks/A-D"
+///     "/home/user/Music/audiobooks/E-F/George Orwell/Animal Farm"
+///
+/// will lead to:
+///     "/home/user/Music/audiobooks/E-F"
+///     "/home/user/Music/audiobooks/A-D"
+///
+///
+/// todo: implement vfs then write document_test
 pub fn clean_paths(unchecked_paths: &Vec<String>) -> Vec<String> {
     let mut checked_paths: Vec<String> = vec![];
     for unchecked in unchecked_paths {
@@ -23,7 +38,8 @@ pub fn clean_paths(unchecked_paths: &Vec<String>) -> Vec<String> {
                     let mut is_add_worthy = true;
                     let path_string = path_str.to_string();
                     for checked in checked_paths.iter_mut() {
-                        //
+                        // check all already checked path, if there is
+                        // no reason to not add it, add it.
                         let path_len = path_str.len();
                         let checked_len = checked.len();
                         if path_len < checked_len {
@@ -42,7 +58,7 @@ pub fn clean_paths(unchecked_paths: &Vec<String>) -> Vec<String> {
                             }
                         }
                     }
-                    //
+                    // add it if there is no reason not to
                     if is_add_worthy {
                         checked_paths.push(path_str.to_string());
                     }

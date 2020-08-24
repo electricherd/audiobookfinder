@@ -198,7 +198,7 @@ pub fn get_start_values() -> (Vec<String>, bool, bool, bool, bool, bool, u16, bo
 
     // 1) convert to strings
     let unchecked_strings = all_pathes.iter().map(|s| s.to_string()).collect();
-    // 2) clean-up
+    // 2) clean-up and straighten
     let cleaned_paths = data::clean_paths(&unchecked_strings);
     if cleaned_paths.len() != unchecked_strings.len() && !has_tui && !has_webui && !open_browser {
         println!("Some paths/folders intersect and will not be used!");
