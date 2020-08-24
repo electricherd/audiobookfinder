@@ -43,8 +43,9 @@ fn main() -> io::Result<()> {
         println!("Some paths/folders intersect and will not be used!");
     }
 
-    // clone as ro
-    let ui_path_ro = cleaned_paths.read();
+    // only use the arc
+    let search_path = SArc::new(SMutex::new(cleaned_paths));
+    let search_path_ui = search_path.clone();
 
     // define collection thread pool
     let ctrlc_thread = 1;
@@ -93,7 +94,7 @@ fn main() -> io::Result<()> {
             if has_ui {
                 Ctrl::run(
                     key_keeper::get_p2p_server_id(),
-                    &ui_path_ro,
+                    search_path_ui,
                     rx,
                     has_net,
                     wait_ui,
@@ -155,9 +156,7 @@ fn main() -> io::Result<()> {
         )
     })?;
 
-    // the collector ... still a problem with threading and parse_args
-    // borrowing?? but since rayon is used, using a separate thread is not really
-    // important
+    // the collector
     // but yet this simple bracket to enclose this a little
     {
         trace!("syncing with 2 other threads");
@@ -177,24 +176,28 @@ fn main() -> io::Result<()> {
         }));
         let handle_container = SArc::new(SMutex::new(Container::new()));
 
-        &ui_paths.par_iter().enumerate().for_each(|(index, elem)| {
-            let sender_loop = synced_to_ui_messages.clone();
-            let collection_data_in_iterator = collection_protected.clone();
-            let single_path_collection_data = data::search_in_single_path(
-                has_ui,
-                handle_container.clone(),
-                collection_data_in_iterator,
-                sender_loop,
-                index,
-                elem,
-            );
-            // short lock to accumulate data
-            {
-                let mut locker = output_data.lock().unwrap();
-                locker.nr_found_songs += single_path_collection_data.nr_found_songs;
-                locker.nr_duplicates += single_path_collection_data.nr_duplicates;
-            }
-        });
+        let current_search_path = search_path.lock().unwrap().read();
+        &current_search_path
+            .par_iter()
+            .enumerate()
+            .for_each(|(index, elem)| {
+                let sender_loop = synced_to_ui_messages.clone();
+                let collection_data_in_iterator = collection_protected.clone();
+                let single_path_collection_data = data::search_in_single_path(
+                    has_ui,
+                    handle_container.clone(),
+                    collection_data_in_iterator,
+                    sender_loop,
+                    index,
+                    elem,
+                );
+                // short lock to accumulate data
+                {
+                    let mut locker = output_data.lock().unwrap();
+                    locker.nr_found_songs += single_path_collection_data.nr_found_songs;
+                    locker.nr_duplicates += single_path_collection_data.nr_duplicates;
+                }
+            });
 
         info!("collector finished!!");
         if !has_ui {

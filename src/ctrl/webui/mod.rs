@@ -8,25 +8,25 @@ mod pages;
 mod rest_mod;
 
 use super::{
-    super::{config, ctrl::InternalUiMsg, net::peer_representation::PeerRepresentation},
+    super::{
+        config, ctrl::InternalUiMsg, net::peer_representation::PeerRepresentation,
+        paths::SearchPath,
+    },
     CollectionPathAlive,
 };
-use actors::{ActorSyncStartup, ActorWSServerMonitor, ActorWebSocket, MRegisterWSClient};
-// external
 use actix::{prelude::Addr, Actor};
 use actix_web::{
     web::{self, HttpResponse},
     App, Error, HttpRequest, HttpServer,
 };
 use actix_web_actors::ws;
+use actors::{ActorSyncStartup, ActorWSServerMonitor, ActorWebSocket, MRegisterWSClient};
 use crossbeam::sync::WaitGroup;
 use get_if_addrs;
 use std::{
     io,
     net::IpAddr,
-    string::String,
     sync::{mpsc::Receiver, Arc, Mutex},
-    vec::Vec,
 };
 
 pub struct WebServerState {
@@ -39,11 +39,11 @@ pub struct WebUI {
     id: PeerRepresentation,
     #[allow(dead_code)]
     serve_others: bool,
-    paths: Vec<String>,
+    paths: Arc<Mutex<SearchPath>>,
 }
 
 impl WebUI {
-    pub fn new(id: PeerRepresentation, serve_others: bool, paths: Vec<String>) -> Self {
+    pub fn new(id: PeerRepresentation, serve_others: bool, paths: Arc<Mutex<SearchPath>>) -> Self {
         Self {
             id,
             serve_others,
