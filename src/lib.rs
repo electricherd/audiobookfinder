@@ -10,6 +10,7 @@ pub mod ctrl;
 pub mod data;
 pub mod logit;
 pub mod net;
+pub mod paths;
 
 //logger
 #[macro_use]
