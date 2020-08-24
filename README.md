@@ -2,6 +2,7 @@
 An example program to learn [Rust](https://www.rust-lang.org/) and meet its concepts by: find audio books on different machines.
 
 ![Minimum rustc version](https://img.shields.io/badge/rustc-1.32.0+-green.svg)
+[![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](https://lbesson.mit-license.org/)
 ![appveyor](https://appveyor-matrix-badges.herokuapp.com/repos/electricherd/audiobookfinder/branch/master/1)
 
 ### Why Rust?
@@ -20,16 +21,17 @@ As a C++ developer, I know some C++11/14/17 enhancements, and some don't convinc
 
 # Table of Contents
 0. [My first program in Rust](#my-first-program-in-rust)
-1. [Documentation](#documentation)
-2. [Changes](#changes)
-3. [ToDo](#todo)
-4. [Architecture](#architecture)
-5. [CI Continuous Integration](#CI)
-6. [Goals](#goals)
-7. [Dependencies](#dependencies)
-8. [Issues](#issues)
-9. [Tools](#tools)
-10. [Useful links](#useful-links)
+1. [Features](#features)
+2. [Screenshots](#screenshots)
+3. [Documentation](#documentation)
+4. [Changes](#changes)
+5. [ToDo](#todo)
+6. [Architecture](#architecture)
+7. [CI Continuous Integration](#CI)
+8. [Goals](#goals)
+9. [Dependencies](#dependencies)
+10. [Tools](#tools)
+11. [Useful links](#useful-links)
 
 ## My first program in Rust
 I planned to do something useful for myself. The program collects information about audio books on different devices/clients, stores it and then processes it, e.g. showing stats, finding duplicates, aggregating everything at one place by a button click.
@@ -39,10 +41,22 @@ There is the [Architectural Design in UML](#architecture).
 
 __It's crossplatform now!__
 
+### Features
+* no [unsafe](https://doc.rust-lang.org/book/ch19-01-unsafe-rust.html) Rust / no lib dependancies
+* crossplatform (Linux/Windows tested) 
+* [http-server](https://actix.rs/docs/server/) with [websocket](https://en.wikipedia.org/wiki/WebSocket) communication to act as web ui client
+* multi-client via [libp2p](https://libp2p.io): [mDNS](https://en.wikipedia.org/wiki/Multicast_DNS), [kademlia](https://en.wikipedia.org/wiki/Kademlia) communication over [noise protocol](http://noiseprotocol.org/)
+* [tui](https://en.wikipedia.org/wiki/Text-based_user_interface) and [web ui](https://en.wikipedia.org/wiki/Web_application)
+* build-in [documentation](https://electricherd.github.io/audiobookfinder/audiobookfinder/index.html)
+* [appveyor](#CI) and [travis](#CI) CI
+* build-in unit-testing the right way
+
+### Screenshots
+... soon
 
 ### Documentation
 
-[Documentation](https://electricherd.github.io/audiobookfinder/audiobookfinder/index.html)
+[Documentation](https://electricherd.github.io/audiobookfinder/audiobookfinder/index.html) is generated.
 
 It is an inline documentation from [CI](https://travis-ci.org/electricherd/audiobookfinder/) generated documentation - Rust does a nice job here as well!
 
@@ -102,6 +116,7 @@ It is an inline documentation from [CI](https://travis-ci.org/electricherd/audio
 </details>
 
 ### ToDo
+* show more of current search results, etc. let's see more!! Screenshots :grin:
 * implement as android/ios app using [flutterust](https://github.com/electricherd/flutterust)
 * try [crate vfs](https://github.com/manuel-woelker/rust-vfs) for unit test with files!! interesting and needed!
 * look for other tag libraries (e.g. symphonia-metadata [symphonia](https://github.com/pdeljanov/Symphonia))
@@ -119,7 +134,7 @@ It is an inline documentation from [CI](https://travis-ci.org/electricherd/audio
 
 ### Architecture
 ![Diagram](diag_architecture_general.svg)
-(still early version of drawing, and directly [editable](https://www.draw.io/?mode=github))
+
 
 ### CI
 The Continuous Integration is done on 2 services, Travis and AppVeyor but will probably once completely moved to AppVeyor because Travis recently only had old LTS 16.04 images, and no possible Windows compilation (they are working on it), so there is:
@@ -134,6 +149,7 @@ The Continuous Integration is done on 2 services, Travis and AppVeyor but will p
 
 ### Goals
 The primary goal is to learn Rust and to cover various aspects of the language, of which some of I already used inside the program, such as:
+- [ ] have the Rust frontend/backend as IOS and/or Android app, with a small glue code (because beside the tui it's a html5 webapp frontend). [WASM](https://www.rust-lang.org/what/wasm) is not reachable since it uses `no_std`
 - [x] borrowing: the borrow checker, some issues but I am fine with it now
 - [ ] async/await: almost there
 - [x] shared-data over different threads (not yet lifetime optimized)
@@ -160,13 +176,9 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
 - [x] using a Boost-SML style [state machine](https://github.com/korken89/smlang-rs) now, nice one!
 - [ ] learning and understanding rust macros (some day)
 - [x] exchange of data over all kinds of boundaries (net, thread) via de-/serialization using [serde](https://docs.serde.rs/serde/) and its json feature for webui
-- [ ] have the Rust frontend/backend as IOS and/or Android app, with a small glue code (because beside the tui it's a html5 webapp frontend). [WASM](https://www.rust-lang.org/what/wasm) is not reachable since it uses `no_std`
 
 ### Dependencies
-* no non-Rust libraries, it's crossplatform now
-
-### Issues
-* AppVeyor deployment is stuck, it builds but the deployment by git tags is not well documented, and different to Travis.
+* no non-Rust libraries, it's crossplatform now :blush:
 
 ### Tools
 * Editors:
