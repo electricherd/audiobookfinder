@@ -28,13 +28,13 @@ function APPStart() {
                 gracefullyClose();
             });
 
-            ws.bind('start_paths', function(data){
+            ws.bind('init_paths', function(data){
                for(let i = 0; i < data.length; i++){
                   addModalPathSelector(data[i]);
                }
             });
 
-            ws.bind('init', function(data){
+            ws.bind('start', function(data){
                showPath(data);
             });
 
@@ -80,12 +80,6 @@ function APPStart() {
 
             // click accordion.div.div to show first entry!!
             $("#accordion div div").click();
-
-            // add first entry for modal path dialog if there
-            // haven't been generated before
-            if (modal_dirs.length == 0) {
-            //    addModalPathSelector("");
-            }
 
             // modal button events
             $('#modal_add').click(function(){

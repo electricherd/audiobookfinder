@@ -73,7 +73,7 @@ pub fn convert_external_message(input_data: &str) -> Result<WSJsonIn, String> {
 }
 
 pub fn generate_init_data(paths: &Vec<String>) -> WSJsonOut {
-    WSJsonOut::init(InitData {
+    WSJsonOut::start(StartData {
         paths: paths
             .iter()
             .enumerate()
@@ -121,7 +121,7 @@ pub struct PathData {
 
 #[allow(non_camel_case_types)]
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct InitData {
+pub struct StartData {
     paths: Vec<PathData>,
 }
 
@@ -163,10 +163,10 @@ pub struct DirOut {
 pub enum WSJsonOut {
     refresh(RefreshData),
     searching(AnimateData),
-    init(InitData),
+    start(StartData),
     update(NetData),
     rest_dirs(DirOut),
-    start_paths(Vec<String>),
+    init_paths(Vec<String>),
     nothing(),
 }
 
