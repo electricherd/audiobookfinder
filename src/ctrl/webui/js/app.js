@@ -21,7 +21,7 @@ function APPStart() {
             // the usual suspects
             ws.bind('open', function(){
                 $('#statusMessage').text("connected");
-                ws.send('start');
+                ws.send('ready');
                 // register hash UUID
             });
             ws.bind('close', function(){
@@ -94,7 +94,8 @@ function APPStart() {
                         paths += " | ";
                     }
                 }
-                alert("process: " + paths);
+                //alert("process: " + paths);
+                ws.send('start', modal_dirs);
             });
             // dynamic content problem
             $('#modal_path_table').on('click', 'tr > td > div > button.dirDropper',  function(event){
@@ -105,6 +106,9 @@ function APPStart() {
               ws.send('rest_dir', {'nr': nr, 'dir': modal_dirs[nr]});
               this.dropdown('dispose');
             });
+
+            // STARTUP with modal
+            $('#modal_dir_chooser').modal('show');
 
         } else {
             // The browser doesn't support WebSocket
