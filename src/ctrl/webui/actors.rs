@@ -163,6 +163,7 @@ impl Handler<MDoneSyncStartup> for ActorWSServerMonitor {
 /// to handle with an actor
 pub struct ActorWebSocket {
     pub starter: Addr<ActorSyncStartup>,
+    pub paths: Arc<Mutex<SearchPath>>,
 }
 
 impl Actor for ActorWebSocket {
@@ -208,6 +209,11 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ActorWebSocket {
                             Ok(incoming) => match incoming {
                                 WSJsonIn::ready => {
                                     trace!("ready from Browser received!");
+                                    // send paths
+                                    let current_paths = self.paths.lock().unwrap().read();
+                                    let reveal_paths = WSJsonOut::start_paths(current_paths);
+                                    trace!("sending: {:?}", reveal_paths);
+                                    ctx.text(reveal_paths.to_string())
                                 }
                                 WSJsonIn::rest_dir(dir_in) => {
                                     let nr = dir_in.nr;

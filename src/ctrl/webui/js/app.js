@@ -28,6 +28,12 @@ function APPStart() {
                 gracefullyClose();
             });
 
+            ws.bind('start_paths', function(data){
+               for(let i = 0; i < data.length; i++){
+                  addModalPathSelector(data[i]);
+               }
+            });
+
             ws.bind('init', function(data){
                showPath(data);
             });
@@ -75,26 +81,19 @@ function APPStart() {
             // click accordion.div.div to show first entry!!
             $("#accordion div div").click();
 
-            // add first entry for modal path dialog
-            addModalPathSelector();
+            // add first entry for modal path dialog if there
+            // haven't been generated before
+            if (modal_dirs.length == 0) {
+            //    addModalPathSelector("");
+            }
 
             // modal button events
             $('#modal_add').click(function(){
                 if (path_ui_nr < max_paths) {
-                    addModalPathSelector();
+                    addModalPathSelector("");
                 }
             });
             $('#modal_close').click(function(){
-                let paths = "";
-                let modal_len = modal_dirs.length;
-                for (let i=0; i < modal_len; i++) {
-                    //
-                    paths += modal_dirs[i];
-                    if (i < modal_len-1) {
-                        paths += " | ";
-                    }
-                }
-                //alert("process: " + paths);
                 ws.send('start', modal_dirs);
             });
             // dynamic content problem
@@ -250,20 +249,24 @@ function netButtonClick(button_peer, guid) {
     $("#accordion").append(new_foreign_row);
 }
 
-function addModalPathSelector() {
-    // increase counter for new selector
-    modal_dirs[path_ui_nr] = "";
+function addModalPathSelector(path_name) {
+    if (path_name === undefined) {
+        path_name = "";
+    }
+    modal_dirs[path_ui_nr] = path_name;
+    let name = helper_extractLastDir(path_name);
     let path_string = ('0' + path_ui_nr).slice(-2);
     let new_selector =  '<tr><td>'
                       + '  <div class="dropdown">'
                       + '   <button class="btn btn-secondary dropdown-toggle dirDropper" id="dropmenu_' + path_string + '"'
                       + '           data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"'
-                      + '   ><i>home</i><span class="caret"></span></button>'
+                      + '   ><i>' + name + '</i><span class="caret"></span></button>'
                       + '   <div id="dropdown_' + path_string + '" class="dropdown-menu" aria-labelledby="dropdownMenuButton">'
                       + '   </div>'
                       + '  </div>'
                       + '</td></tr>';
     $("#modal_path_table").append(new_selector);
+    // increase counter for new selector
     path_ui_nr += 1;
 }
 
@@ -277,7 +280,7 @@ function onRESTDir(data) {
 
   for (let i=0; i < dirs_len; i++) {
       let name = "";
-      if (i == 0) {
+      if (i === 0) {
          // first entry can be the ".." directory
          if (dirs_len > 1) {
             // if 1st is completly contained in the 2nd, then it's the ".."

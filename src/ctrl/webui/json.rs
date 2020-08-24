@@ -166,6 +166,7 @@ pub enum WSJsonOut {
     init(InitData),
     update(NetData),
     rest_dirs(DirOut),
+    start_paths(Vec<String>),
     nothing(),
 }
 

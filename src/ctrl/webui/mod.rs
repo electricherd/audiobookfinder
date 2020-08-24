@@ -58,6 +58,7 @@ impl WebUI {
         web_port: u16,
     ) -> io::Result<()> {
         let connection_count = Arc::new(Mutex::new(0));
+        let path_arc = self.paths.clone();
 
         let local_addresses = get_if_addrs::get_if_addrs().unwrap();
 
@@ -117,6 +118,7 @@ impl WebUI {
                         .data(initial_state.clone())
                         .data(web_socket_handler.clone())
                         .data(sync_startup_actor.clone())
+                        .data(path_arc.clone())
                         .service(web::resource("/app.js").to(pages::js_app))
                         .default_service(web::resource("").to(pages::single_page))
                         .service(web::resource("peer_page.html").to(|| {
@@ -195,11 +197,13 @@ impl WebUI {
         stream: web::Payload,
         data_monitor: web::Data<Arc<Mutex<Addr<ActorWSServerMonitor>>>>,
         data_sync: web::Data<Arc<Mutex<Addr<ActorSyncStartup>>>>,
+        data_path: web::Data<Arc<Mutex<SearchPath>>>,
     ) -> Result<HttpResponse, Error> {
         trace!("new websocket answered!");
         let (addr, res) = ws::start_with_addr(
             ActorWebSocket {
                 starter: data_sync.lock().unwrap().clone(),
+                paths: data_path.get_ref().clone(),
             },
             &req,
             stream,
