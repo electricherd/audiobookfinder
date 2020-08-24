@@ -200,6 +200,9 @@ pub fn get_start_values() -> (Vec<String>, bool, bool, bool, bool, bool, u16, bo
     let unchecked_strings = all_pathes.iter().map(|s| s.to_string()).collect();
     // 2) clean-up
     let cleaned_paths = data::clean_paths(&unchecked_strings);
+    if cleaned_paths.len() != unchecked_strings.len() && !has_tui && !has_webui && !open_browser {
+        println!("Some paths/folders intersect and will not be used!");
+    }
     // 3) and then cut-off unwanted parts (more paths input than PATHS_MAX)
     let ui_paths = cleaned_paths
         .into_iter()
