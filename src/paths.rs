@@ -20,6 +20,10 @@ impl SearchPath {
             .collect();
         Self { paths }
     }
+    pub fn update(&mut self, new_vec: Vec<String>) {
+        let cleaned_new = clean_paths(&new_vec);
+        self.paths = cleaned_new;
+    }
     pub fn read(&self) -> Vec<String> {
         self.paths.clone()
     }
