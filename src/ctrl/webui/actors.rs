@@ -231,6 +231,11 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ActorWebSocket {
                                 }
                                 WSJsonIn::start(dirs) => {
                                     if dirs.len() < PATHS_MAX {
+                                        // revaluate paths new
+                                        {
+                                            let mut old_paths_handle = self.paths.lock().unwrap();
+                                            old_paths_handle.update(dirs);
+                                        }
                                         self.starter.do_send(MSyncStartup {});
                                     } else {
                                         error!("Starting but ... there is a paths limit");

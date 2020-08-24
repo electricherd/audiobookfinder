@@ -2,6 +2,7 @@
 An example program to learn [Rust](https://www.rust-lang.org/) and meet its concepts by: find audio books on different machines.
 
 ![Minimum rustc version](https://img.shields.io/badge/rustc-1.32.0+-green.svg)
+![appveyor](https://appveyor-matrix-badges.herokuapp.com/repos/electricherd/audiobookfinder/branch/master/1)
 
 ### Why Rust?
 Rust is an awesome but difficult to learn programming language using different approaches and concepts to solve the current main software development issues for system programming:
@@ -46,6 +47,7 @@ __It's crossplatform now!__
 It is an inline documentation from [CI](https://travis-ci.org/electricherd/audiobookfinder/) generated documentation - Rust does a nice job here as well!
 
 ### Changes
+* webui now starts with a selection dialog where you can add/change preselected folders/dirs
 * defined a trait for tag information, now: id3, mp4, flac but no awesomeness ...
 * debugging messages for collection, now collection is a bktree
 * webui shows search ongoing on other peers, and then result (number of audio files)
@@ -56,11 +58,11 @@ It is an inline documentation from [CI](https://travis-ci.org/electricherd/audio
 * boostrap, jquery upgraded, some webui animation, better net communication struct, multiaddr on peer per webui tooltip
 * peers in webui can now deregister because of e.g. timeout
 * using libp2p network swarm, replacing single-on mdsn with it, but having same functionality
-* releases for ubuntu, windows, raspberry (20LTS had a upx packing problem due to changed compiler flags, I suppose)
 
 <details>
   <summary>click for older changes</summary>
 
+    * releases for ubuntu, windows, raspberry (20LTS had a upx packing problem due to changed compiler flags, I suppose)
     * fixed webui behavior, now crossplatform (after cursive backend change, taglib replaced by id3)
     * pretty webui design, net messages as good as tui now, fixed thread termination issues to be mostly graceful
     * webui is in sync now, prepare net messages for webui to maybe replace tui
@@ -100,10 +102,9 @@ It is an inline documentation from [CI](https://travis-ci.org/electricherd/audio
 </details>
 
 ### ToDo
+* implement as android/ios app using [flutterust](https://github.com/electricherd/flutterust)
 * try [crate vfs](https://github.com/manuel-woelker/rust-vfs) for unit test with files!! interesting and needed!
 * look for other tag libraries (e.g. symphonia-metadata [symphonia](https://github.com/pdeljanov/Symphonia))
-* clean up, refactor data's mod and collection - still a bit to do
-* change webui to be started without collection start, to be able use path selection from within webui later
 * a good and fast data collection with few more further lifetimes optimizations
 * add a nice way to collect data (string distance + time, maybe 2nd duration hash set?, filter empty tags)
 * add memory consumption monitoring for collection - started for BKTree
@@ -111,6 +112,7 @@ It is an inline documentation from [CI](https://travis-ci.org/electricherd/audio
 * think of a protocol what adbf clients agree on and exchange (e.g. still searching, files found, etc)
 * maybe a little AI layer on determining audio books duplicates/same author by similar spelling, etc.
 * internationalization (which is not really supported yet by Rust)
+* ~~change webui to be started without collection start, to be able use path selection from within webui later~~
 * ~~add [ctrlc](http://detegr.github.io/doc/ctrlc/) functionality for signal handling in main~~
 * ~~let state machine *talk* (as ipc) with data collection via [crossbeam](https://github.com/crossbeam-rs/crossbeam) (first only the finish search status)~~
 * ~~make div from html page to extra single file for later multiple clients on one page~~
