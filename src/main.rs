@@ -14,6 +14,7 @@ use adbflib::{
     },
     logit,
     net::{key_keeper, Net},
+    paths::SearchPath,
 };
 
 use async_std::task;
@@ -35,8 +36,15 @@ fn main() -> io::Result<()> {
     // get start values from the input parser!!!
     let (ui_paths, has_tui, has_webui, has_net, keep_alive, open_browser, web_port, has_ui) =
         command_line::get_start_values();
+
+    // read into paths
+    let cleaned_paths = SearchPath::new(&ui_paths);
+    if cleaned_paths.len() != ui_paths.len() && !has_tui && !has_webui && !open_browser {
+        println!("Some paths/folders intersect and will not be used!");
+    }
+
     // clone as ro
-    let ui_path_ro = ui_paths.clone();
+    let ui_path_ro = cleaned_paths.read();
 
     // define collection thread pool
     let ctrlc_thread = 1;

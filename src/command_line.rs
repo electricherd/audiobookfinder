@@ -1,6 +1,6 @@
 //! Command line modules: has one function which takes input parameters from commandline
 //! and parses them.
-use super::{config, data};
+use super::config;
 
 static APP_TITLE: &str = concat!("The audiobook finder (", env!("CARGO_PKG_NAME"), ")");
 
@@ -198,20 +198,8 @@ pub fn get_start_values() -> (Vec<String>, bool, bool, bool, bool, bool, u16, bo
 
     // 1) convert to strings
     let unchecked_strings = all_pathes.iter().map(|s| s.to_string()).collect();
-    // 2) clean-up and straighten
-    let cleaned_paths = data::clean_paths(&unchecked_strings);
-    if cleaned_paths.len() != unchecked_strings.len() && !has_tui && !has_webui && !open_browser {
-        println!("Some paths/folders intersect and will not be used!");
-    }
-    // 3) and then cut-off unwanted parts (more paths input than PATHS_MAX)
-    let ui_paths = cleaned_paths
-        .into_iter()
-        .enumerate()
-        .filter(|(i, _el)| i < &config::data::PATHS_MAX)
-        .map(|(_i, el)| el)
-        .collect();
     (
-        ui_paths,
+        unchecked_strings,
         has_tui,
         has_webui,
         has_net,
