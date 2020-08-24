@@ -79,6 +79,24 @@ function APPStart() {
             addModalPathSelector();
 
             // modal button events
+            $('#modal_add').click(function(){
+                if (path_ui_nr < max_paths) {
+                    addModalPathSelector();
+                }
+            });
+            $('#modal_close').click(function(){
+                let paths = "";
+                let modal_len = modal_dirs.length;
+                for (let i=0; i < modal_len; i++) {
+                    //
+                    paths += modal_dirs[i];
+                    if (i < modal_len-1) {
+                        paths += " | ";
+                    }
+                }
+                alert("process: " + paths);
+            });
+            // dynamic content problem
             $('#modal_path_table').on('click', 'tr > td > div > button.dirDropper',  function(event){
               //event.preventDefault();
               event.stopPropagation();
@@ -86,11 +104,6 @@ function APPStart() {
               let nr = parseInt(splitter);
               ws.send('rest_dir', {'nr': nr, 'dir': modal_dirs[nr]});
               this.dropdown('dispose');
-            });
-            $('#modal_add').click(function(){
-                if (path_ui_nr < max_paths) {
-                    addModalPathSelector();
-                }
             });
 
         } else {
