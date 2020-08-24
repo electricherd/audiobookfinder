@@ -187,6 +187,7 @@ pub struct DirIn {
 #[serde(tag = "event", content = "data")]
 #[allow(non_camel_case_types)]
 pub enum WSJsonIn {
-    start,
+    ready,
     rest_dir(DirIn),
+    start(Vec<String>),
 }

@@ -58,7 +58,7 @@ impl Handler<MSyncStartup> for ActorSyncStartup {
             trace!("webui: go");
             self.inform_to.do_send(MDoneSyncStartup {});
         } else {
-            error!("no, this should not used again!");
+            warn!("no, this can't be used again!");
         }
     }
 }
@@ -202,9 +202,8 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ActorWebSocket {
                         // /command
                         match json::convert_external_message(m) {
                             Ok(incoming) => match incoming {
-                                WSJsonIn::start => {
+                                WSJsonIn::ready => {
                                     trace!("ready from Browser received!");
-                                    self.starter.do_send(MSyncStartup {})
                                 }
                                 WSJsonIn::rest_dir(dir_in) => {
                                     let nr = dir_in.nr;
@@ -219,6 +218,14 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ActorWebSocket {
                                         ctx.text(ustream.to_string());
                                     } else {
                                         error!("Some hacking ... there is a paths limit");
+                                    }
+                                }
+                                WSJsonIn::start(dirs) => {
+                                    if dirs.len() < PATHS_MAX {
+                                        info!("received paths: {:?}", dirs);
+                                        self.starter.do_send(MSyncStartup {});
+                                    } else {
+                                        error!("Starting but ... there is a paths limit");
                                     }
                                 }
                             },
