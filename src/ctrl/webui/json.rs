@@ -86,7 +86,8 @@ pub fn generate_init_data(paths: &Vec<String>) -> WSJsonOut {
 }
 
 /// generate the REST dir paths to output json
-pub fn rest_dirs(nr: usize, dirs: &Vec<String>) -> WSJsonOut {
+#[allow(non_snake_case)]
+pub fn REST_dirs(nr: usize, dirs: &Vec<String>) -> WSJsonOut {
     // sort before sending
     let mut dirs = dirs.to_vec();
     dirs.sort();

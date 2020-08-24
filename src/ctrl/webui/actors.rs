@@ -208,11 +208,14 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ActorWebSocket {
                                 }
                                 WSJsonIn::rest_dir(dir_in) => {
                                     let nr = dir_in.nr;
+                                    // todo: build in ignore-timer for security measures, that
+                                    //       REST interface cannot be used for fast scanning of the
+                                    //       whole computer system.
                                     if nr < PATHS_MAX {
                                         let path = dir_in.dir;
                                         trace!("REST request received!");
                                         let dir = rest_mod::return_directory(path);
-                                        let ustream = json::rest_dirs(nr, &dir);
+                                        let ustream = json::REST_dirs(nr, &dir);
                                         ctx.text(ustream.to_string());
                                     } else {
                                         error!("Some hacking ... there is a paths limit");
