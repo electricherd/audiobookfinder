@@ -128,8 +128,9 @@ impl NetworkBehaviourEventProcess<SMOutEvents> for AdbfBehavior {
     fn inject_event(&mut self, event: SMOutEvents) {
         // send whole event
         match event {
-            SMOutEvents::ForwardSM(sm_event) => {
+            SMOutEvents::ForwardSM(_sm_event) => {
                 // there is none yet
+                // todo: add it!
             }
             SMOutEvents::ForwardIPC(ipc_event) => {
                 // the key is to avoid duplicate, so the key
@@ -216,12 +217,12 @@ pub fn build_noise_transport(
 }
 
 impl AdbfBehavior {
-    fn retrieve_record(&mut self, key: record::Key, value: Vec<u8>) {
+    fn retrieve_record(&mut self, key: record::Key, _value: Vec<u8>) {
         warn!("..............................................");
         if let Ok(fits_mkad_keys) = Self::key_reader(&key) {
             match fits_mkad_keys {
                 MkadKeys::KeyForPeerFinished(peer_hash) => {
-                    //
+                    // todo: continue here
                     info!("key for peer finished: {}!", peer_hash);
                 }
             }

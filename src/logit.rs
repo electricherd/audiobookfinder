@@ -1,4 +1,4 @@
-//! This module lets us be more flexible wiht logging.
+//! This module lets us be more flexible with logging.
 //! It provides different types of loggers for different purposes, if run in tui or
 //! somewhere (maybe a syslog log).
 use env_logger;

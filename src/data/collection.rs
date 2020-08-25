@@ -26,8 +26,9 @@ static ID3_CAPACITY: usize = 1024;
 struct AudioInfo {
     duration: Duration,
     album: String,
-    path: String,
-    //computer: String,
+    #[allow(dead_code)]
+    path: String, // todo: implement it if still needed
+                  //computer: String,
 }
 
 // todo: think over this, peer and max threads ... kick it out

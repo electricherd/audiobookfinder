@@ -99,14 +99,18 @@ pub fn get_start_values() -> (Vec<String>, bool, bool, bool, bool, bool, u16, bo
             clap::Arg::with_name(ARG_KEEP_ALIVE)
                 .short("k")
                 .long(ARG_KEEP_ALIVE)
-                .help("With keep alive process will continue even after search has been performed.")
+                .help(
+                    "With keep alive process will continue even after search has been performed.\
+                     This should be used and will be turned on automatically with net, webui\
+                     browser option.",
+                )
                 .takes_value(false),
         )
         .arg(
             clap::Arg::with_name(ARG_BROWSER)
                 .short("b")
                 .long(ARG_BROWSER)
-                .help("Shall browser be openend automatically (only works with webui).")
+                .help("Shall browser not be openend automatically (only works with webui).")
                 .takes_value(false),
         )
         .arg(
@@ -139,8 +143,17 @@ pub fn get_start_values() -> (Vec<String>, bool, bool, bool, bool, bool, u16, bo
     let has_webui = has_arg(ARG_WEBUI);
     let has_net = has_arg(ARG_NET);
     let has_port = has_arg(ARG_BROWSER_PORT);
-    let keep_alive = has_arg(ARG_KEEP_ALIVE);
-    let open_browser = has_arg(ARG_BROWSER);
+    let mut keep_alive = has_arg(ARG_KEEP_ALIVE);
+    let open_browser = !has_arg(ARG_BROWSER);
+
+    //
+    // section for better user experience
+    // todo: think it over
+    if has_webui || has_net {
+        keep_alive = true;
+    }
+    // not mutable
+    let keep_alive = keep_alive;
 
     let web_port = {
         let web_default_string = config::net::WEB_PORT_DEFAULT.to_string();
