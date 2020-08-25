@@ -175,8 +175,7 @@
                     <span aria-hidden="true">&plus;</span>
                 </button>
             </div>
-            <div class="modal-body">
-                <table class="table table-fixed" id='modal_path_table'></table>
+            <div class="modal-body" id='modal_path_table' style="max-height: 45vh; overflow-y: scroll;">
             </div>
             <div class="modal-footer">
                 <button id="modal_close" type="button" class="btn btn-primary" data-dismiss="modal">Run with path(s) selected!</button>
@@ -191,10 +190,9 @@
     <div class="card border-0 shadow my-5">
         <div class="card-body p-5">
             <h2 class="font-weight-light">audiobookfinder</h2>
-            <p class="lead">is a program to search for audio data on the local and on neighboring
-            computers in your network, and everywhere a audiobookfinder client also currently runs. Below
-            you see a list of the local paths which are being searched.</p>
-            <div class="container" style="height: 60vh; overflow-y: scroll;">
+            <small>searches for audio data on the local, and on other clients connected on the same network.
+                Below is list of the local paths searched:</small>
+            <div class="container" style="height: 52vh; overflow-y: scroll;">
               <div id="accordion" class="accordion">
                 <!-- outter table -->
                 <div id="frame_<!---PEER_HASH--->">
@@ -204,7 +202,7 @@
                 <!-- outter table -->
               </div>
             </div>
-            <p class="lead mb-0">Have fun!</p>
+            <small class="lead mb-0">Have fun!</small>
         </div>
     </div>
 </div>

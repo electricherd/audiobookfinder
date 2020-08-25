@@ -84,14 +84,14 @@ function APPStart() {
             // modal button events
             $('#modal_add').click(function(){
                 if (path_ui_nr < max_paths) {
-                    addModalPathSelector("");
+                    addModalPathSelector(undefined);
                 }
             });
             $('#modal_close').click(function(){
                 ws.send('start', modal_dirs);
             });
             // dynamic content problem
-            $('#modal_path_table').on('click', 'tr > td > div > button.dirDropper',  function(event){
+            $('#modal_path_table').on('click', 'div > button.dirDropper',  function(event){
               //event.preventDefault();
               event.stopPropagation();
               let splitter = this.id.split("_")[1];
@@ -244,21 +244,22 @@ function netButtonClick(button_peer, guid) {
 }
 
 function addModalPathSelector(path_name) {
+    let name = "home";
     if (path_name === undefined) {
         path_name = "";
+    } else {
+        name = helper_extractLastDir(path_name);
     }
     modal_dirs[path_ui_nr] = path_name;
-    let name = helper_extractLastDir(path_name);
     let path_string = ('0' + path_ui_nr).slice(-2);
-    let new_selector =  '<tr><td>'
-                      + '  <div class="dropdown">'
+    let new_selector =  '  <div class="dropdown" style="padding: 5px;">'
                       + '   <button class="btn btn-secondary dropdown-toggle dirDropper" id="dropmenu_' + path_string + '"'
                       + '           data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"'
-                      + '   ><i>' + name + '</i><span class="caret"></span></button>'
+                      + '           style="max-height:50vh; overflow-y:auto;"'
+                      + '   ><i>' + name + '</i><span class="sr-only">(current)</span></button>'
                       + '   <div id="dropdown_' + path_string + '" class="dropdown-menu" aria-labelledby="dropdownMenuButton">'
                       + '   </div>'
-                      + '  </div>'
-                      + '</td></tr>';
+                      + '  </div>';
     $("#modal_path_table").append(new_selector);
     // increase counter for new selector
     path_ui_nr += 1;
@@ -271,7 +272,9 @@ function onRESTDir(data) {
 
   let path_string = ('0' + nr).slice(-2);
   let dropdown_menu = $("#dropdown_" + path_string);
-
+  // trick: avoid that very first item often is above content
+  //        in a bit longer lists by adding a divider ;-)
+  dropdown_menu.append(' <div class="dropdown-divider"></div>')
   for (let i=0; i < dirs_len; i++) {
       let name = "";
       if (i === 0) {
@@ -314,7 +317,7 @@ function uiUpdateDropMenu(nr, new_dir) {
 }
 
 function helper_extractLastDir(dir_path) {
-    const dirs_array = dir_path.split("/");
-    const last_index = dirs_array.length - 1;
-    return dirs_array[last_index];
+    // should be platform independent, but's I can't check all,
+    // especially windows first "canonical" form is difficult
+    return dir_path.split(/.*[\/|\\]/)[1];
 }
