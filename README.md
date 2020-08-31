@@ -61,6 +61,7 @@ __It's crossplatform now!__
 It is an inline documentation from [CI](https://travis-ci.org/electricherd/audiobookfinder/) generated documentation - Rust does a nice job here as well!
 
 ### Changes
+* added `ADBF_LOG` env variable
 * webui now starts with a selection dialog where you can add/change preselected folders/dirs
 * defined a trait for tag information, now: id3, mp4, flac but no awesomeness ...
 * debugging messages for collection, now collection is a bktree
@@ -195,7 +196,7 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
 * https://thoughtbot.com/blog/json-event-based-convention-websockets : websockets to js commands
 * https://github.com/Ragnaroek/rust-on-raspberry-docker : headachefree compiling for raspberry pi locally with docker
 
-### 3rd party (excluding Rust crates)
+### 3rd party (excluding Rust crates), all [MIT](https://tldrlegal.com/license/mit-license) licenses
 * https://getbootstrap.com/docs/4.3/getting-started/introduction/
 * https://jquery.com/
 * https://gist.github.com/ismasan/299789

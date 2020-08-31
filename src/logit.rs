@@ -65,3 +65,13 @@ impl Logit {
         }
     }
 }
+
+/// Read env level given e.g. by command-line, environment variable
+pub fn read_env_level(level: &str) -> Log {
+    match level {
+        "console" => Log::Console,
+        "file" => Log::File,
+        "system" => Log::System,
+        _ => Log::System,
+    }
+}

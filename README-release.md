@@ -26,3 +26,15 @@ command line search with client net search
 search with web ui and client net search
 
 `audiobookfinder -wn <PATH_TO_YOUR_AUDIO_FILES>`
+
+
+#### Environment variables:
+`ADBF_LOG`  = `console`, `system`, `file` (default is `system`)
+
+use along with `RUST_LOG`, see at [env-logger](https://docs.rs/env_logger/0.7.1/env_logger/#enabling-logging).
+
+
+## Licenses, etc. 3rd party (excluding Rust crates) all [MIT](https://tldrlegal.com/license/mit-license) licenses: 
+* https://getbootstrap.com/docs/4.0/about/license/
+* https://jquery.org/license/
+* https://gist.github.com/ismasan/299789

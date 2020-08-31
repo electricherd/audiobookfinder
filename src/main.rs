@@ -3,6 +3,8 @@
 //! find duplicates (later trying to solve the problem, also including their permissions,
 //! different names, but same albums, etc, get all stats about it).
 //! It acts as a wrapper around adbflib, which holds major parts of the implemention.
+//!
+//! Use ADBF_LOG = console, system, file for enabling logging according to your likes.
 use adbflib::{
     command_line,
     ctrl::{Ctrl, UiUpdateMsg},
@@ -25,6 +27,7 @@ use log::{error, info, trace};
 use num_cpus;
 use rayon::prelude::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator};
 use std::{
+    env,
     io::{self, Error},
     process,
     sync::{mpsc::channel, Arc as SArc, Mutex as SMutex},
@@ -82,7 +85,9 @@ fn main() -> io::Result<()> {
     let tx_from_collector_to_ui = SArc::new(SMutex::new(tx.clone()));
 
     // start the logging
-    logit::Logit::init(logit::Log::File);
+    logit::Logit::init(logit::read_env_level(
+        &env::var("ADBF_LOG").unwrap_or("".into()),
+    ));
 
     // all optional components are wrapped into threads
     // 1 - UI         ui_thread   (optional)
