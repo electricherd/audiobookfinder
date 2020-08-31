@@ -201,7 +201,7 @@ pub fn get_start_values() -> (Vec<String>, bool, bool, bool, bool, bool, u16, bo
         println!(
             "Open http://{}:{} to start!",
             config::net::WEB_ADDR,
-            config::net::WEB_PORT_DEFAULT
+            web_port
         );
         println!("The webui needs to get the start signal from there");
     }
