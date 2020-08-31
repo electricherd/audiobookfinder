@@ -82,9 +82,9 @@ __It's crossplatform now!__
 * build-in unit-testing the right way
 
 ### Screenshots
-| <a href="https://github.com/electricherd/audiobookfinder/raw/master/docs/audiobookfinder-linux-v0.1.26-selection.png"><img src="docs/audiobookfinder-linux-v0.1.26-selection.png" width="20%" alt="Screenshot Linux Selection" /></a> | <a href="https://github.com/electricherd/audiobookfinder/raw/master/docs/audiobookfinder-linux-v0.1.26-running.png"><img src="docs/audiobookfinder-linux-v0.1.26-running.png" width="20%" alt="Screenshot Linux Running"/></a>|
-| --- | --- |
-| <a href="https://github.com/electricherd/audiobookfinder/raw/master/docs/audiobookfinder-windows-v0.1.26-selection.png"><img src="docs/audiobookfinder-windows-v0.1.26-selection.png" width="20%" alt="Screenshot Windows Selection" /></a> | <a href="https://github.com/electricherd/audiobookfinder/raw/master/docs/audiobookfinder-windows-v0.1.26-running.png"><img src="docs/audiobookfinder-windows-v0.1.26-running.png" width="20%" alt="Screenshot Windows Running"/></a> |
+| <a href="https://github.com/electricherd/audiobookfinder/raw/master/docs/audiobookfinder-linux-v0.1.26-selection.png"><img src="docs/audiobookfinder-linux-v0.1.26-selection.png" alt="Screenshot Linux Selection" /></a> | <a href="https://github.com/electricherd/audiobookfinder/raw/master/docs/audiobookfinder-linux-v0.1.26-running.png"><img src="docs/audiobookfinder-linux-v0.1.26-running.png" alt="Screenshot Linux Running"/></a>|
+| :------------------------------: | :------------------------------: |
+| <a href="https://github.com/electricherd/audiobookfinder/raw/master/docs/audiobookfinder-windows-v0.1.26-selection.png"><img src="docs/audiobookfinder-windows-v0.1.26-selection.png" alt="Screenshot Windows Selection" /></a> | <a href="https://github.com/electricherd/audiobookfinder/raw/master/docs/audiobookfinder-windows-v0.1.26-running.png"><img src="docs/audiobookfinder-windows-v0.1.26-running.png" alt="Screenshot Windows Running"/></a> |
 
 ### Documentation
 
