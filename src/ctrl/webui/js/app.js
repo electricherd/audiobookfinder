@@ -149,7 +149,7 @@ function showPath(data) {
         let obj_id =  "path_obj" + path_nr;
         // create obj
         let new_el_html = "<tr id='" + obj_id + "'><td class='col-xs-3 text-monospace' style='width: 90%'>"
-                         + paths[i].name + "</td><td>"
+                         + helper_win_canonical(paths[i].name) + "</td><td>"
                          +"<span class='d-none spinner-grow spinner-grow-sm col-xs-3 text-right' role='status' aria-hidden='true'></span>"
                          + "</td></tr>";
         new_el = $.parseHTML(new_el_html);
@@ -175,7 +175,7 @@ function updateNetView(data) {
                          + "data-toggle='tooltip' data-placement='bottom' data-html='true' "
                          + "title='Adresses: "
                          + tooltip
-                         + "'><td class='nettd col-xs-3'>"
+                         + "'><td class='col-xs-3'>"
                          + "<button id='netbutton_" + peer_id + "' class='btn btn-light text-monospace' "
                          + "value='" + guid_id + "'"
                          + "onClick='netButtonClick(this.id, this.value)'>"
@@ -320,4 +320,11 @@ function helper_extractLastDir(dir_path) {
     // should be platform independent, but's I can't check all,
     // especially windows first "canonical" form is difficult
     return dir_path.split(/.*[\/|\\]/)[1];
+}
+
+function helper_win_canonical(dir_path) {
+    // clear of \\?\ prefix in windows
+    // https://stackoverflow.com/questions/50322817/how-do-i-remove-the-prefix-from-a-canonical-windows-path
+    // from rust but to be displayed nicely
+    return dir_path.replace(/\\\\\?\\/g, '');
 }
