@@ -1,22 +1,46 @@
 # audiobookfinder (adbf)
-An example program to learn [Rust](https://www.rust-lang.org/) and meet its concepts by: find audio books on different machines.
+An example program to learn [Rust](https://www.rust-lang.org/) and meet its concepts by: find audio books on
+different clients/devices.
 
 ![Minimum rustc version](https://img.shields.io/badge/rustc-1.32.0+-green.svg)
-[![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](https://lbesson.mit-license.org/)
-![appveyor](https://appveyor-matrix-badges.herokuapp.com/repos/electricherd/audiobookfinder/branch/master/1)
+[![MIT license](https://img.shields.io/github/license/electricherd/audiobookfinder)](https://lbesson.mit-license.org/)
+[![AppVeyor Job branch](https://ci.appveyor.com/api/projects/status/github/electricherd/audiobookfinder?branch=master&svg=true)](https://ci.appveyor.com/project/electricherd/audiobookfinder)
+
+![shields top language](https://img.shields.io/github/languages/top/electricherd/audiobookfinder)
+![shields code size](https://img.shields.io/github/languages/code-size/electricherd/audiobookfinder)
+![shields commit date](https://img.shields.io/github/repo-size/electricherd/audiobookfinder)
+
+[![shields commit date](https://img.shields.io/github/last-commit/electricherd/audiobookfinder/master)](https://github.com/electricherd/audiobookfinder/commits?author=electricherd)
+[![shields issues](https://img.shields.io/github/issues/electricherd/audiobookfinder)](https://github.com/electricherd/audiobookfinder/issues)
+![shields language count](https://img.shields.io/github/languages/count/electricherd/audiobookfinder)
+
+
 
 ### Why Rust?
-Rust is an awesome but difficult to learn programming language using different approaches and concepts to solve the current main software development issues for system programming:
- * Secure Programming Concepts: let the computer/compiler do what it can do better than a programmer: safe threading, error-concepts, forbid everything non-safe by default
- * Quality: high level language concepts, easy to embed and include high quality external packages, which lets you implement more functionality in less code
- * Embedded: easy cross compiling, interfaces to C, becoming better to be stripped down to core system functions for the sake of minimum code footprint. async/await for non OS programs, `no_std` and the `async executors` (even own ones) will be important.
- * Parallelism and Concurrency: what else to do with multi-core cpu, we are not getting much faster anymore, and often cpus are idling due to blocking code. With async / await and futures Rust offers with its security features a very good way of dealing with it. 
- * Testing and Documentation: some build-in concepts
- * Crossplatform: many good Rust libraries are crossplatform, and building on top of that just works
+Rust is an awesome but difficult to learn programming language using different approaches and concepts to solve the
+current main software development issues for system programming:
+ * Secure Programming Concepts: let the computer/compiler do what it can do better than a programmer:
+   [safe threading](https://doc.rust-lang.org/book/ch16-00-concurrency.html),
+   [error-concepts](https://doc.rust-lang.org/book/ch09-00-error-handling.html), forbid everything non-safe by default
+ * Quality: high level language concepts, [easy to embed](https://doc.rust-lang.org/book/ch01-03-hello-cargo.html) and include high quality external packages, which lets you
+   implement more functionality in less code
+ * [Embedded](https://www.rust-lang.org/what/embedded): easy cross compiling, interfaces to C, becoming better to be stripped down to core system functions for the
+   sake of minimum code footprint. [async/await](https://rust-lang.github.io/async-book/) for non OS programs,
+   [`no_std`](https://docs.rust-embedded.org/embedonomicon/smallest-no-std.html) and the [`async executors`](https://ferrous-systems.com/blog/async-on-embedded/) (even own ones) will be important.
+ * Parallelism and [Concurrency](https://docs.rust-embedded.org/book/concurrency/): what else to do with multi-core cpu, we are not getting much faster anymore, and often
+   cpus are idling due to blocking code. With async / await and futures Rust offers with its security features a very
+   good way of dealing with it.
+ * [Testing](https://doc.rust-lang.org/rust-by-example/testing/unit_testing.html) and [Documentation](https://electricherd.github.io/audiobookfinder/audiobookfinder/index.html): really nice
+   build-in concepts, even [together](combined://doc.rust-lang.org/rust-by-example/testing/doc_testing.html)!!:wink:
+ * [Crossplatform](https://doc.rust-lang.org/nightly/rustc/platform-support.html): many good Rust [libraries](https://crates.io) are crossplatform, and building on top of that just works
 
-Especially for IoT: I want secure and thereby safe products at home which cannot be turned into zombie devices by buffer overflow and injection, always think of what can go wrong, and let the compiler tell you when you do a common mistake.
+Especially for IoT: I want secure and thereby safe products at home which cannot be turned into zombie devices by
+buffer overflow and injection, always think of what can go wrong, and let the compiler tell you when you do a
+common mistake.
 
-As a C++ developer, I know some C++11/14/17 enhancements, and some don't convince me at all, just look here about the "costs" you have and what it looks like in Simon Brand's ["How Rust gets polymorphism right"](https://www.youtube.com/watch?v=VSlBhAOLtFA).
+As a C++ developer, I know some C++11/14/17 enhancements, and some don't convince me at all, just look here about
+the "costs" you have and what it looks like in Simon Brand's
+["How Rust gets polymorphism right"](https://www.youtube.com/watch?v=VSlBhAOLtFA).
 
 
 # Table of Contents
@@ -34,8 +58,12 @@ As a C++ developer, I know some C++11/14/17 enhancements, and some don't convinc
 11. [Useful links](#useful-links)
 
 ## My first program in Rust
-I planned to do something useful for myself. The program collects information about audio books on different devices/clients, stores it and then processes it, e.g. showing stats, finding duplicates, aggregating everything at one place by a button click.
-The task of collecting audio book data can be exchanged with any other task, this basically leads to a local network agent approach with a libp2p swarm.
+I planned to do something useful for myself. The program collects information about audio books on different
+devices/clients, stores it and then processes it, e.g. showing stats, finding duplicates, aggregating everything
+at one place by a button click.
+
+The task of collecting audio book data can be exchanged with any other task, this basically leads to a local
+network agent approach with a libp2p swarm.
 
 There is the [Architectural Design in UML](#architecture).
 
@@ -44,15 +72,18 @@ __It's crossplatform now!__
 ### Features
 * no [unsafe](https://doc.rust-lang.org/book/ch19-01-unsafe-rust.html) Rust / no lib dependancies
 * crossplatform (Linux/Windows tested) 
-* [http-server](https://actix.rs/docs/server/) with [websocket](https://en.wikipedia.org/wiki/WebSocket) communication to act as web ui client
-* multi-client via [libp2p](https://libp2p.io): [mDNS](https://en.wikipedia.org/wiki/Multicast_DNS), [kademlia](https://en.wikipedia.org/wiki/Kademlia) communication over [noise protocol](http://noiseprotocol.org/)
+* [http-server](https://actix.rs/docs/server/) with [websocket](https://en.wikipedia.org/wiki/WebSocket) communication
+   to act as web ui client
+* multi-client via [libp2p](https://libp2p.io): [mDNS](https://en.wikipedia.org/wiki/Multicast_DNS),
+  [kademlia](https://en.wikipedia.org/wiki/Kademlia) communication over [noise protocol](http://noiseprotocol.org/)
 * [tui](https://en.wikipedia.org/wiki/Text-based_user_interface) and [web ui](https://en.wikipedia.org/wiki/Web_application)
 * build-in [documentation](https://electricherd.github.io/audiobookfinder/audiobookfinder/index.html)
 * [appveyor](#CI) and [travis](#CI) CI
 * build-in unit-testing the right way
 
 ### Screenshots
-... soon
+| ![Screenshot1](docs/audiobookfinder-linux-v0.1.26-selection.png){:height="20vw"} | ![Screenshot1](docs/audiobookfinder-linux-v0.1.26-running.png){:height="20vw"} |
+| ![Screenshot1](docs/audiobookfinder-windows-v0.1.26-selection.png){:height="20vw"} | ![Screenshot1](docs/audiobookfinder-windows-v0.1.26-running.png){:height="20vw"} |
 
 ### Documentation
 
@@ -134,13 +165,14 @@ It is an inline documentation from [CI](https://travis-ci.org/electricherd/audio
 * ~~make div from html page to extra single file for later multiple clients on one page~~
 
 ### Architecture
-![Diagram](diag_architecture_general.svg)
+![Diagram](docs/diag_architecture_general.svg)
 
 
 ### CI
 The Continuous Integration is done on 2 services, Travis and AppVeyor but will probably once completely moved to AppVeyor because Travis recently only had old LTS 16.04 images, and no possible Windows compilation (they are working on it), so there is:
-* On Appveyor
+* On Appveyor [![common appveyor](https://ci.appveyor.com/api/projects/status/github/electricherd/audiobookfinder?branch=master&svg=true)](https://ci.appveyor.com/project/electricherd/audiobookfinder)
     * [Audiobookfinder Build Windows](https://ci.appveyor.com/project/electricherd/audiobookfinder/) ![appveyor](https://appveyor-matrix-badges.herokuapp.com/repos/electricherd/audiobookfinder/branch/master/2)
+      ![AppVeyor Job branch](https://img.shields.io/appveyor/job/build/electricherd/audiobookfinder/2/master)
     * [Audiobookfinder Build Ubuntu 20.04](https://ci.appveyor.com/project/electricherd/audiobookfinder/) ![appveyor](https://appveyor-matrix-badges.herokuapp.com/repos/electricherd/audiobookfinder/branch/master/1)
     * [Audiobookfinder Build Ubuntu 18.04](https://ci.appveyor.com/project/electricherd/audiobookfinder/) ![appveyor](https://appveyor-matrix-badges.herokuapp.com/repos/electricherd/audiobookfinder/branch/master/3)
 * On Travis
@@ -195,6 +227,7 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
 * https://jsfiddle.net/boilerplate/jquery : for people who don't really like js but need it:
 * https://thoughtbot.com/blog/json-event-based-convention-websockets : websockets to js commands
 * https://github.com/Ragnaroek/rust-on-raspberry-docker : headachefree compiling for raspberry pi locally with docker
+* https://learning-rust.github.io/docs/a5.comments_and_documenting_the_code.html howto documentation
 
 ### 3rd party (excluding Rust crates), all [MIT](https://tldrlegal.com/license/mit-license) licenses
 * https://getbootstrap.com/docs/4.3/getting-started/introduction/
