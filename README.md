@@ -31,7 +31,7 @@ current main software development issues for system programming:
    cpus are idling due to blocking code. With async / await and futures Rust offers with its security features a very
    good way of dealing with it.
  * [Testing](https://doc.rust-lang.org/rust-by-example/testing/unit_testing.html) and [Documentation](https://electricherd.github.io/audiobookfinder/audiobookfinder/index.html): really nice
-   build-in concepts, even [together](combined://doc.rust-lang.org/rust-by-example/testing/doc_testing.html)!!:wink:
+   build-in concepts, even [combined](https://doc.rust-lang.org/rust-by-example/testing/doc_testing.html) !!:wink:
  * [Crossplatform](https://doc.rust-lang.org/nightly/rustc/platform-support.html): many good Rust [libraries](https://crates.io) are crossplatform, and building on top of that just works
 
 Especially for IoT: I want secure and thereby safe products at home which cannot be turned into zombie devices by
@@ -82,9 +82,9 @@ __It's crossplatform now!__
 * build-in unit-testing the right way
 
 ### Screenshots
-| <a href="docs/audiobookfinder-linux-v0.1.26-selection.png"><img src="docs/audiobookfinder-linux-v0.1.26-selection.png" alt="Screenshot Linux Selection" /></a> | <a href="docs/audiobookfinder-linux-v0.1.26-running.png"><img src="docs/audiobookfinder-linux-v0.1.26-running.png" alt="Screenshot Linux Running"/></a>|
+| <a href="docs/audiobookfinder-linux-v0.1.26-selection.png?raw=true"><img src="docs/audiobookfinder-linux-v0.1.26-selection.png" alt="Screenshot Linux Selection" /></a> | <a href="docs/audiobookfinder-linux-v0.1.26-running.png?raw=true"><img src="docs/audiobookfinder-linux-v0.1.26-running.png" alt="Screenshot Linux Running"/></a>|
 | :------: | :------: |
-| <a href="docs/audiobookfinder-windows-v0.1.26-selection.png"><img src="docs/audiobookfinder-windows-v0.1.26-selection.png" alt="Screenshot Windows Selection" /></a> | <a href="docs/audiobookfinder-windows-v0.1.26-running.png"><img src="docs/audiobookfinder-windows-v0.1.26-running.png" alt="Screenshot Windows Running"/></a> |
+| <a href="docs/audiobookfinder-windows-v0.1.26-selection.png?raw=true"><img src="docs/audiobookfinder-windows-v0.1.26-selection.png" alt="Screenshot Windows Selection" /></a> | <a href="docs/audiobookfinder-windows-v0.1.26-running.png?raw=true"><img src="docs/audiobookfinder-windows-v0.1.26-running.png" alt="Screenshot Windows Running"/></a> |
 
 ### Documentation
 

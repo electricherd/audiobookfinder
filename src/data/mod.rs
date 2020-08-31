@@ -6,14 +6,14 @@ pub mod ipc;
 mod tag_readers;
 
 use self::collection::{Collection, Container};
-use super::ctrl::{CollectionPathAlive, ForwardNetMessage, NetMessages, Status, UiUpdateMsg};
+use super::ctrl::{CollectionPathAlive, ForwardNetMsg, NetInfoMsg, Status, UiUpdateMsg};
 use std::{
     path::Path, // path, clear
     sync::{mpsc::Sender, Arc as SArc, Mutex as SMutex},
 };
 
-// todo: hide it
-pub struct CollectionOutputData {
+/// Interface of what collection output data will return
+pub struct InterfaceCollectionOutputData {
     pub nr_found_songs: u32,
     pub nr_duplicates: u32,
 }
@@ -26,7 +26,7 @@ pub fn search_in_single_path(
     mutex_to_ui_msg: SArc<SMutex<Sender<UiUpdateMsg>>>,
     index: usize,
     elem: &str,
-) -> CollectionOutputData {
+) -> InterfaceCollectionOutputData {
     if !has_ui {
         println!("[{:?}] looking into path {:?}", index, elem);
     } else {
@@ -91,7 +91,7 @@ pub fn search_in_single_path(
                 println!("[{:?}] done {}", index, text);
             }
             // return this here
-            CollectionOutputData {
+            InterfaceCollectionOutputData {
                 nr_found_songs: local_stats.analyzed,
                 nr_duplicates: local_stats.duplicates,
             }
@@ -103,8 +103,8 @@ pub fn search_in_single_path(
                     .lock()
                     .and_then(|locked_update_message| {
                         locked_update_message
-                            .send(UiUpdateMsg::NetUpdate(ForwardNetMessage::Stats(
-                                NetMessages::Debug(text),
+                            .send(UiUpdateMsg::NetUpdate(ForwardNetMsg::Stats(
+                                NetInfoMsg::Debug(text),
                             )))
                             .unwrap();
                         Ok(())
@@ -114,7 +114,7 @@ pub fn search_in_single_path(
                 println!("{:?}", text);
             }
             // return this here
-            CollectionOutputData {
+            InterfaceCollectionOutputData {
                 nr_found_songs: 0,
                 nr_duplicates: 0,
             }

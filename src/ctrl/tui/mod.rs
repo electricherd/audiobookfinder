@@ -4,7 +4,7 @@
 
 use super::super::{
     common::config,
-    ctrl::{CollectionPathAlive, ForwardNetMessage, InternalUiMsg, NetMessages, Status},
+    ctrl::{CollectionPathAlive, ForwardNetMsg, InternalUiMsg, NetInfoMsg, Status},
     net::peer_representation,
 };
 use async_std::task;
@@ -130,7 +130,7 @@ impl Tui {
         if let Ok(message) = tui_receiver.try_recv() {
             match message {
                 InternalUiMsg::Update(forward_net_message) => match forward_net_message {
-                    ForwardNetMessage::Add(ui_peer) => {
+                    ForwardNetMsg::Add(ui_peer) => {
                         if let Some(mut host_list) = self.handle.find_name::<ListView>(VIEW_LIST_ID)
                         {
                             let content = TextContent::new(
@@ -141,7 +141,7 @@ impl Tui {
                             error!("View {} could not be found!", VIEW_LIST_ID);
                         }
                     }
-                    ForwardNetMessage::Delete(ui_peer_to_delete) => {
+                    ForwardNetMsg::Delete(ui_peer_to_delete) => {
                         if let Some(mut host_list) = self.handle.find_name::<ListView>(VIEW_LIST_ID)
                         {
                             for i in 0..host_list.len() {
@@ -169,8 +169,8 @@ impl Tui {
                             error!("View {} could not be found!", VIEW_LIST_ID);
                         }
                     }
-                    ForwardNetMessage::Stats(net_message) => match net_message {
-                        NetMessages::ShowStats { show } => {
+                    ForwardNetMsg::Stats(net_message) => match net_message {
+                        NetInfoMsg::ShowStats { show } => {
                             let output = self.handle.find_name::<TextView>(ID_HOST_INDEX);
                             if let Some(mut found) = output {
                                 found.set_content(show.line.to_string());
@@ -178,7 +178,7 @@ impl Tui {
                                 error!("View {} could not be found!", ID_HOST_INDEX);
                             }
                         }
-                        NetMessages::Debug(text) => {
+                        NetInfoMsg::Debug(text) => {
                             if let Some(mut found) =
                                 self.handle.find_name::<TextView>(DEBUG_TEXT_ID)
                             {

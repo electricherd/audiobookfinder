@@ -1,7 +1,7 @@
 /// a very small mod just for ui data send by net. It is important to
 /// not send all discovery blindly (e.g. duplicates)
 use super::super::{
-    ctrl::{self, ForwardNetMessage, UiPeer, UiUpdateMsg},
+    ctrl::{self, ForwardNetMsg, UiClientPeer, UiUpdateMsg},
     net::peer_representation,
     net::sm::*,
 };
@@ -39,8 +39,8 @@ impl UiData {
                 let addr_as_string = multi_addresses.iter().map(|x| x.to_string()).collect();
 
                 ctrl_sender
-                    .send(ctrl::UiUpdateMsg::NetUpdate(ForwardNetMessage::Add(
-                        UiPeer {
+                    .send(ctrl::UiUpdateMsg::NetUpdate(ForwardNetMsg::Add(
+                        UiClientPeer {
                             id: peer_id.clone(),
                             addresses: addr_as_string,
                         },
@@ -60,7 +60,7 @@ impl UiData {
             );
             if let Some(ctrl_sender) = &self.sender {
                 ctrl_sender
-                    .send(ctrl::UiUpdateMsg::NetUpdate(ForwardNetMessage::Delete(
+                    .send(ctrl::UiUpdateMsg::NetUpdate(ForwardNetMsg::Delete(
                         peer_id.clone(),
                     )))
                     .unwrap_or_else(|e| error!("use one: {}", e));

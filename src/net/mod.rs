@@ -32,8 +32,8 @@ pub struct Net {
     ui_sender: Sender<ctrl::UiUpdateMsg>,
 }
 
-/// Creat a new Net component.
 impl Net {
+    /// Create a new Net component.    
     pub fn new(has_ui: bool, ui_sender: Sender<ctrl::UiUpdateMsg>) -> Self {
         Net { has_ui, ui_sender }
     }

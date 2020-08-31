@@ -2,7 +2,7 @@
 ///
 use super::{
     super::super::{
-        ctrl::{ForwardNetMessage, NetMessages, Status},
+        ctrl::{ForwardNetMsg, NetInfoMsg, Status},
         net::peer_representation,
     },
     CollectionPathAlive, InternalUiMsg,
@@ -16,17 +16,15 @@ use std::fmt;
 pub fn convert_internal_message(internal_msg: &InternalUiMsg) -> Result<WSJsonOut, String> {
     match internal_msg {
         InternalUiMsg::Update(ref forward_net_message) => match forward_net_message {
-            ForwardNetMessage::Stats(message) => match message {
-                NetMessages::Debug(_text) => Err("No debug messages".to_string()),
-                NetMessages::ShowStats { show: _stats } => Ok(WSJsonOut::nothing()),
+            ForwardNetMsg::Stats(message) => match message {
+                NetInfoMsg::Debug(_text) => Err("No debug messages".to_string()),
+                NetInfoMsg::ShowStats { show: _stats } => Ok(WSJsonOut::nothing()),
             },
-            ForwardNetMessage::Add(ui_peer_to_add) => {
-                Ok(WSJsonOut::update(NetData::add(PeerJson {
-                    id: peer_representation::peer_to_hash_string(&ui_peer_to_add.id),
-                    addr: ui_peer_to_add.addresses.clone(),
-                })))
-            }
-            ForwardNetMessage::Delete(ui_peer_id_to_add) => Ok(WSJsonOut::update(NetData::remove(
+            ForwardNetMsg::Add(ui_peer_to_add) => Ok(WSJsonOut::update(NetData::add(PeerJson {
+                id: peer_representation::peer_to_hash_string(&ui_peer_to_add.id),
+                addr: ui_peer_to_add.addresses.clone(),
+            }))),
+            ForwardNetMsg::Delete(ui_peer_id_to_add) => Ok(WSJsonOut::update(NetData::remove(
                 peer_representation::peer_to_hash_string(ui_peer_id_to_add),
             ))),
         },

@@ -15,7 +15,7 @@ use adbflib::{
         self,
         collection::{Collection, Container},
         ipc::IPC,
-        CollectionOutputData,
+        InterfaceCollectionOutputData,
     },
     net::{key_keeper, Net},
 };
@@ -175,7 +175,7 @@ fn main() -> io::Result<()> {
             Collection::new(&key_keeper::get_p2p_server_id(), nr_threads_for_collection);
         let collection_protected = SArc::new(SMutex::new(init_collection));
 
-        let output_data = SArc::new(SMutex::new(CollectionOutputData {
+        let output_data = SArc::new(SMutex::new(InterfaceCollectionOutputData {
             nr_found_songs: 0,
             nr_duplicates: 0,
         }));

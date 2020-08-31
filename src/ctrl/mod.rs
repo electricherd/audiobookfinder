@@ -23,59 +23,60 @@ use std::{
     thread,
 };
 
-/// alive Signal for path from collector
-/// or net search alive
+/// alive Signal for path from collector or net search alive
 #[derive(Clone, Serialize, Deserialize)]
 pub enum CollectionPathAlive {
     BusyPath(usize),
     HostSearch,
 }
-
+/// Turn on/off something
 #[derive(Clone, Serialize)]
 pub enum Status {
     ON,
     OFF,
 }
-
+/// Yet unimportant net messages todo: make it better!
 #[derive(Clone)]
-pub enum NetMessages {
+pub enum NetInfoMsg {
     Debug(String),
-    ShowStats { show: NetStats },
+    ShowStats { show: NetStatsMsg },
 }
-
+/// Peer string identificators
 #[derive(Clone)]
-pub struct UiPeer {
+pub struct UiClientPeer {
     //
     pub id: PeerId,
     pub addresses: Vec<String>,
 }
-
+/// Forwarding net messages
 #[derive(Clone)]
-pub enum ForwardNetMessage {
-    Add(UiPeer),
+pub enum ForwardNetMsg {
+    Add(UiClientPeer),
     Delete(PeerId),
-    Stats(NetMessages),
+    Stats(NetInfoMsg),
 }
 
-/// internal messages inside ui
+/// Internal messages inside UI
 pub enum InternalUiMsg {
-    Update(ForwardNetMessage),
+    Update(ForwardNetMsg),
     StartAnimate(CollectionPathAlive, Status),
     StepAndAnimate(CollectionPathAlive),
     PeerSearchFinished(PeerId, u32),
     Terminate,
 }
 
+/// UI updating messages
 #[derive(Clone)]
 pub enum UiUpdateMsg {
-    NetUpdate(ForwardNetMessage),
+    NetUpdate(ForwardNetMsg),
     CollectionUpdate(CollectionPathAlive, Status),
     PeerSearchFinished(PeerId, u32),
     StopUI,
 }
 
+/// NetStats message
 #[derive(Copy, Clone)]
-pub struct NetStats {
+pub struct NetStatsMsg {
     pub line: usize,
     pub max: usize,
 }
@@ -85,6 +86,9 @@ enum Finisher {
     WEBUI,
 }
 
+/// The controller holds user interfaces as webui, tui. It currently creates
+/// and runs the user interfaces, distributes messages and sends out messages
+/// to be used somewhere else.
 pub struct Ctrl {
     peer_id: PeerId,
     paths: Arc<Mutex<SearchPath>>,
@@ -97,17 +101,26 @@ impl Ctrl {
     /// # Arguments
     /// * 'peer_id' - The peer_id this client/server uses
     /// * 'paths' - The paths that will be searched
-    /// * 'receiver' - The receiver that takes incoming ctrl messages
     /// * 'with_net' - If ctrl should consider net messages
-    /// * 'sync_sender' - For start up that main can be informed, "I'm ready"
-    pub fn new(new_id: PeerId, paths: Arc<Mutex<SearchPath>>, with_net: bool) -> Self {
+    fn new(new_id: PeerId, paths: Arc<Mutex<SearchPath>>, with_net: bool) -> Self {
         Self {
             peer_id: new_id,
             paths: paths.clone(),
             with_net,
         }
     }
-
+    /// Create a new controller if everything fits.
+    ///
+    /// # Arguments
+    /// * 'new_id' - The peer_id this client/server uses
+    /// * 'paths' - The paths that will be searched
+    /// * 'receiver' - The paths that will be searched
+    /// * 'with_net' - If ctrl should consider net messages
+    /// * 'wait_main' - The main thread notifier
+    /// * 'has_webui' - If webui has to be considered
+    /// * 'has_tui' - If tui has to be considered
+    /// * 'open_browser' - If browser should be automatically opened
+    /// * 'web_port' - Browser, webui port to use
     pub fn run(
         new_id: PeerId,
         paths: Arc<Mutex<SearchPath>>,
@@ -400,22 +413,22 @@ impl Ctrl {
             match forward_sys_message {
                 UiUpdateMsg::NetUpdate(forward_net_message) => {
                     match forward_net_message {
-                        ForwardNetMessage::Stats(_net_message) => {
+                        ForwardNetMsg::Stats(_net_message) => {
                             // todo: implement stats here
                         }
-                        ForwardNetMessage::Add(peer_to_add) => {
+                        ForwardNetMsg::Add(peer_to_add) => {
                             for forward_sender in multiplex_send {
                                 forward_sender
-                                    .send(InternalUiMsg::Update( ForwardNetMessage::Add( peer_to_add.clone())))
+                                    .send(InternalUiMsg::Update( ForwardNetMsg::Add( peer_to_add.clone())))
                                     .unwrap_or_else(|_| {
                                         warn!("forwarding message cancelled probably due to quitting!");
                                     });
                             }
                         }
-                        ForwardNetMessage::Delete(peer_id_to_remove) => {
+                        ForwardNetMsg::Delete(peer_id_to_remove) => {
                             for forward_sender in multiplex_send {
                                 forward_sender
-                                    .send(InternalUiMsg::Update( ForwardNetMessage::Delete( peer_id_to_remove.clone())))
+                                    .send(InternalUiMsg::Update( ForwardNetMsg::Delete( peer_id_to_remove.clone())))
                                     .unwrap_or_else(|_| {
                                         warn!("forwarding message cancelled probably due to quitting!");
                                     });

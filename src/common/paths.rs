@@ -1,4 +1,4 @@
-//! holds common paths implementations
+//! Holds common search paths implementations
 use super::config::data::PATHS_MAX;
 use std::path::Path;
 
