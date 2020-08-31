@@ -82,9 +82,10 @@ __It's crossplatform now!__
 * build-in unit-testing the right way
 
 ### Screenshots
-| <a href="docs/audiobookfinder-linux-v0.1.26-selection.png?raw=true"><img src="docs/audiobookfinder-linux-v0.1.26-selection.png" alt="Screenshot Linux Selection" /></a> | <a href="docs/audiobookfinder-linux-v0.1.26-running.png?raw=true"><img src="docs/audiobookfinder-linux-v0.1.26-running.png" alt="Screenshot Linux Running"/></a>|
+<!-- the files are linked in issue section of https://github.com/electricherd/audiobookfinder/issues/28  -->
+| ![Screenshot Linux Selection](https://user-images.githubusercontent.com/31503071/91750242-1152a380-ebc3-11ea-8840-dc2576c47785.png?raw=true) | ![Screenshot Linux Running](https://user-images.githubusercontent.com/31503071/91750136-df414180-ebc2-11ea-8508-24c04e000ba9.png?raw=true)|
 | :------: | :------: |
-| <a href="docs/audiobookfinder-windows-v0.1.26-selection.png?raw=true"><img src="docs/audiobookfinder-windows-v0.1.26-selection.png" alt="Screenshot Windows Selection" /></a> | <a href="docs/audiobookfinder-windows-v0.1.26-running.png?raw=true"><img src="docs/audiobookfinder-windows-v0.1.26-running.png" alt="Screenshot Windows Running"/></a> |
+| ![Screenshot Windows Selection](https://user-images.githubusercontent.com/31503071/91750262-17488480-ebc3-11ea-97be-54005f012669.png?raw=true) | ![Screenshot Windows Running](https://user-images.githubusercontent.com/31503071/91750257-144d9400-ebc3-11ea-9cb6-93dc4f7225e5.png?raw=true)|
 
 ### Documentation
 
