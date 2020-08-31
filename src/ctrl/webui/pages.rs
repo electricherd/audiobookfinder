@@ -17,11 +17,6 @@ use std::{
 };
 
 /// dynamic development files
-//#[get("/app.js")]
-//fn app_js() -> Result<fs::NamedFile> {
-//Ok(fs::NamedFile::open("src/ctrl/webui/js/app.js")?)
-//}
-
 #[allow(dead_code)]
 pub async fn dyn_devel_html() -> impl Responder {
     fs::NamedFile::open("src/ctrl/webui/html/main_page.html")
@@ -34,7 +29,7 @@ pub async fn dyn_devel_js() -> impl Responder {
 
 pub async fn single_page(state: web::Data<Arc<Mutex<WebServerState>>>) -> impl Responder {
     // change state
-    let mut data = state.lock().unwrap();
+    let data = state.lock().unwrap();
     let id = data.id;
     *(data.nr_connections.lock().unwrap()) += 1;
     let port = data.web_port;
