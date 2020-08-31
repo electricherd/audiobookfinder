@@ -171,8 +171,7 @@ deploy:
 skip_commits:
   files:
     - ci/
+    - docs/
     - .travis.yml
     - README.md
     - README-release.md
-    - diag_architecture_general.svg
-    - diag_architecture_general.xml

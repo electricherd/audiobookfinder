@@ -82,8 +82,8 @@ __It's crossplatform now!__
 * build-in unit-testing the right way
 
 ### Screenshots
-| ![Screenshot1](docs/audiobookfinder-linux-v0.1.26-selection.png){:height="20vw"} | ![Screenshot1](docs/audiobookfinder-linux-v0.1.26-running.png){:height="20vw"} |
-| ![Screenshot1](docs/audiobookfinder-windows-v0.1.26-selection.png){:height="20vw"} | ![Screenshot1](docs/audiobookfinder-windows-v0.1.26-running.png){:height="20vw"} |
+| <img src="docs/audiobookfinder-linux-v0.1.26-selection.png" width="20vw" alt="Screenshot Linux Selection" width="250"/> | <img src="docs/audiobookfinder-linux-v0.1.26-running.png" width="20vw" alt="Screenshot Linux Running" width="250"/> |
+| <img src="docs/audiobookfinder-windows-v0.1.26-selection.png" width="20vw" alt="Screenshot Windows Selection" width="250"/> | <img src="docs/audiobookfinder-windows-v0.1.26-running.png" width="20vw" alt="Screenshot Windows Running" width="250"/> |
 
 ### Documentation
 
