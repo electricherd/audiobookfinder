@@ -1,6 +1,6 @@
 //! The collection keeps and maintains all audio data.
 use super::{
-    super::config,
+    super::common::config,
     bktree::BKTree,
     tag_readers::{
         CommonAudioInfo, FlacTagReader, ID3TagReader, MP3TagReader, MP4TagReader, TagReader,

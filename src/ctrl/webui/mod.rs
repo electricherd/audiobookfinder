@@ -9,8 +9,9 @@ mod rest_mod;
 
 use super::{
     super::{
-        config, ctrl::InternalUiMsg, net::peer_representation::PeerRepresentation,
-        paths::SearchPath,
+        common::{config, paths::SearchPath},
+        ctrl::InternalUiMsg,
+        net::peer_representation::PeerRepresentation,
     },
     CollectionPathAlive,
 };

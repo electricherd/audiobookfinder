@@ -3,7 +3,7 @@
 //! and later status of the connection to the found clients.
 
 use super::super::{
-    config,
+    common::config,
     ctrl::{CollectionPathAlive, ForwardNetMessage, InternalUiMsg, NetMessages, Status},
     net::peer_representation,
 };

@@ -1,6 +1,6 @@
 //! Command line modules: has one function which takes input parameters from commandline
 //! and parses them.
-use super::config;
+use adbflib::common::config;
 
 static APP_TITLE: &str = concat!("The audiobook finder (", env!("CARGO_PKG_NAME"), ")");
 

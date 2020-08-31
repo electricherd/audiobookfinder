@@ -4,13 +4,10 @@
 #![crate_name = "adbflib"]
 #![crate_type = "lib"]
 // ALL
-pub mod command_line;
-pub mod config;
+pub mod common;
 pub mod ctrl;
 pub mod data;
-pub mod logit;
 pub mod net;
-pub mod paths;
 
 //logger
 #[macro_use]

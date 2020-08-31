@@ -5,8 +5,11 @@
 //! It acts as a wrapper around adbflib, which holds major parts of the implemention.
 //!
 //! Use ADBF_LOG = console, system, file for enabling logging according to your likes.
+
+mod command_line;
+
 use adbflib::{
-    command_line,
+    common::{logit, paths::SearchPath},
     ctrl::{Ctrl, UiUpdateMsg},
     data::{
         self,
@@ -14,11 +17,8 @@ use adbflib::{
         ipc::IPC,
         CollectionOutputData,
     },
-    logit,
     net::{key_keeper, Net},
-    paths::SearchPath,
 };
-
 use async_std::task;
 use crossbeam::{channel::unbounded, sync::WaitGroup};
 use ctrlc;

@@ -6,9 +6,8 @@ mod webui;
 
 use self::{tui::Tui, webui::WebUI};
 use super::{
-    config,
+    common::{config, paths::SearchPath},
     net::peer_representation::{self, PeerRepresentation},
-    paths::SearchPath,
 };
 use async_std::task;
 use crossbeam::sync::WaitGroup;

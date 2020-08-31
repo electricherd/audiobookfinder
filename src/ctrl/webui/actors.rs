@@ -1,6 +1,6 @@
 ///! All actors from webui are represented here
 use super::{
-    super::super::{ctrl::InternalUiMsg, paths::SearchPath},
+    super::super::{common::paths::SearchPath, ctrl::InternalUiMsg},
     config::data::PATHS_MAX,
     json::{self, WSJsonIn, WSJsonOut},
     rest_mod,
