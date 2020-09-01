@@ -4,12 +4,10 @@ different clients/devices.
 
 ![Minimum rustc version](https://img.shields.io/badge/rustc-1.32.0+-green.svg)
 [![MIT license](https://img.shields.io/github/license/electricherd/audiobookfinder)](https://lbesson.mit-license.org/)
-[![AppVeyor Job branch](https://ci.appveyor.com/api/projects/status/github/electricherd/audiobookfinder?branch=master&svg=true)](https://ci.appveyor.com/project/electricherd/audiobookfinder)
-
+[![AppVeyor Job branch](https://ci.appveyor.com/api/projects/status/github/electricherd/audiobookfinder?branch=master&svg=true)](https://ci.appveyor.com/project/electricherd/audiobookfinder) <br/>
 ![shields top language](https://img.shields.io/github/languages/top/electricherd/audiobookfinder)
 ![shields code size](https://img.shields.io/github/languages/code-size/electricherd/audiobookfinder)
-![shields commit date](https://img.shields.io/github/repo-size/electricherd/audiobookfinder)
-
+![shields commit date](https://img.shields.io/github/repo-size/electricherd/audiobookfinder) <br/>
 [![shields commit date](https://img.shields.io/github/last-commit/electricherd/audiobookfinder/master)](https://github.com/electricherd/audiobookfinder/commits?author=electricherd)
 [![shields issues](https://img.shields.io/github/issues/electricherd/audiobookfinder)](https://github.com/electricherd/audiobookfinder/issues)
 ![shields language count](https://img.shields.io/github/languages/count/electricherd/audiobookfinder)
@@ -71,7 +69,7 @@ __It's crossplatform now!__
 
 ### Features
 * no [unsafe](https://doc.rust-lang.org/book/ch19-01-unsafe-rust.html) Rust / no lib dependancies
-* crossplatform (Linux/Windows tested) 
+* crossplatform (Linux/Windows tested - Windows limited, webui not usable, unfortunately :disappointed:)
 * [http-server](https://actix.rs/docs/server/) with [websocket](https://en.wikipedia.org/wiki/WebSocket) communication
    to act as web ui client
 * multi-client via [libp2p](https://libp2p.io): [mDNS](https://en.wikipedia.org/wiki/Multicast_DNS),
@@ -100,7 +98,7 @@ It is an inline documentation from [CI](https://travis-ci.org/electricherd/audio
 * debugging messages for collection, now collection is a bktree
 * webui shows search ongoing on other peers, and then result (number of audio files)
 * webui changes, option added for with or without automatic browser opening, bump
-* state machine was added, wrapped in a layer of a custom net behaviour in the libp2p swarm ([architecture design]((#architecture)) updated)
+* state machine was added, wrapped in a layer of a custom net behaviour in the libp2p swarm ([architecture design](#architecture) updated)
 * my unfortunately now unused [observer pattern](../../wiki/Observer-pattern) was added to wiki - a better version of what
  could be found in internet (Rust is very restrictive, some patterns don't work that well).
 * boostrap, jquery upgraded, some webui animation, better net communication struct, multiaddr on peer per webui tooltip
