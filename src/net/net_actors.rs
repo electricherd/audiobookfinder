@@ -1,17 +1,16 @@
-/// The net will be represented by a swarm as in libp2p
-/// https://docs.rs/libp2p/latest/libp2p/swarm/index.html.
-///
-/// Because swarm is the manager a state machine as before could be replaced, also the working
-/// Mdns Server/Client can just be transparently added used in the behavior of this network.
-/// As transport layer, an experimental but prospering protocol called "noise protocol" will
-/// be used.
-/// The network communication is basically an actor system just as used here in the webui
-/// with actix actor, which btw could maybe also replaced by the websocket protocol from
-/// libp2p, but for now it will stay in a nice, small http server.
-///
-/// The noise protocol to be used
-/// (http://noiseprotocol.org/)
-///
+//! The net will be represented by a swarm as in libp2p
+//! https://docs.rs/libp2p/latest/libp2p/swarm/index.html.
+//!
+//! Because swarm is the manager a state machine as before could be replaced, also the working
+//! Mdns Server/Client can just be transparently added used in the behavior of this network.
+//! As transport layer, an experimental but prospering protocol called "noise protocol" will
+//! be used.
+//! The network communication is basically an actor system just as used here in the webui
+//! with actix actor, which btw could maybe also replaced by the websocket protocol from
+//! libp2p, but for now it will stay in a nice, small http server.
+//!
+//! The noise protocol being used
+//! (http://noiseprotocol.org/)
 use super::{
     super::{
         data::audio_info::{AudioInfo, AudioInfoKey},
