@@ -1,9 +1,10 @@
 //! The net module is resonsible for the network related parts,
 //! the mDNS registering, mDNS search, communication server and client.
 //! It also let's us startup and perform everything in yet one step.
-mod net_actors;
+mod behavior;
 mod sm;
 mod sm_behaviour;
+mod storage;
 pub mod subs;
 mod ui_data;
 
@@ -71,7 +72,7 @@ impl Net {
         let local_peer_id = PeerId::from(local_key.public());
 
         // get the transporter
-        let transport = net_actors::build_noise_transport(
+        let transport = behavior::build_noise_transport(
             &*key_keeper::SERVER_KEY,
             Some(*key_keeper::PRESHARED_SECRET),
         );
@@ -86,7 +87,7 @@ impl Net {
                 None
             });
 
-            let behaviour = net_actors::AdbfBehavior {
+            let behaviour = behavior::AdbfBehavior {
                 kademlia,
                 mdns: Mdns::new()?,
                 sm_behaviour: SMBehaviour::new(ipc_receiver, own_peer_id.clone(), ui_data),
