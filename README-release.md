@@ -43,3 +43,4 @@ use along with `RUST_LOG`, see at [env-logger](https://docs.rs/env_logger/0.7.1/
 * https://getbootstrap.com/docs/4.0/about/license/
 * https://jquery.org/license/
 * https://gist.github.com/ismasan/299789
+* https://github.com/tempor1s/bktree-rs

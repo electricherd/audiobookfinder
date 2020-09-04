@@ -78,6 +78,7 @@ __It's crossplatform now!__
 * build-in [documentation](https://electricherd.github.io/audiobookfinder/audiobookfinder/index.html)
 * [appveyor](#CI) and [travis](#CI) CI
 * build-in unit-testing the right way
+* [BK-tree](https://en.wikipedia.org/wiki/BK-tree) data structure for approximate string matching
 
 ### Screenshots
 <!-- the files are linked in issue section of https://github.com/electricherd/audiobookfinder/issues/28  -->
@@ -172,7 +173,6 @@ It is an inline documentation from [CI](https://travis-ci.org/electricherd/audio
 The Continuous Integration is done on 2 services, Travis and AppVeyor but will probably once completely moved to AppVeyor because Travis recently only had old LTS 16.04 images, and no possible Windows compilation (they are working on it), so there is:
 * On Appveyor [![common appveyor](https://ci.appveyor.com/api/projects/status/github/electricherd/audiobookfinder?branch=master&svg=true)](https://ci.appveyor.com/project/electricherd/audiobookfinder)
     * [Audiobookfinder Build Windows](https://ci.appveyor.com/project/electricherd/audiobookfinder/) ![appveyor](https://appveyor-matrix-badges.herokuapp.com/repos/electricherd/audiobookfinder/branch/master/2)
-      ![AppVeyor Job branch](https://img.shields.io/appveyor/job/build/electricherd/audiobookfinder/2/master)
     * [Audiobookfinder Build Ubuntu 20.04](https://ci.appveyor.com/project/electricherd/audiobookfinder/) ![appveyor](https://appveyor-matrix-badges.herokuapp.com/repos/electricherd/audiobookfinder/branch/master/1)
     * [Audiobookfinder Build Ubuntu 18.04](https://ci.appveyor.com/project/electricherd/audiobookfinder/) ![appveyor](https://appveyor-matrix-badges.herokuapp.com/repos/electricherd/audiobookfinder/branch/master/3)
 * On Travis
@@ -233,3 +233,4 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
 * https://getbootstrap.com/docs/4.3/getting-started/introduction/
 * https://jquery.com/
 * https://gist.github.com/ismasan/299789
+* https://github.com/tempor1s/bktree-rs
