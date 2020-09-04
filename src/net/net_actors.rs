@@ -14,7 +14,7 @@
 use super::{
     super::{
         data::audio_info::{AudioInfo, AudioInfoKey},
-        net::peer_representation::{self, PeerRepresentation},
+        net::subs::peer_representation::{self, PeerRepresentation},
     },
     sm_behaviour::{SMBehaviour, SMOutEvents},
     IPC,

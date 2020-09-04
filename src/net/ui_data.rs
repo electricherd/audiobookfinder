@@ -2,8 +2,8 @@
 //! not send all discovery blindly (e.g. duplicates)
 use super::super::{
     ctrl::{self, ForwardNetMsg, UiClientPeer, UiUpdateMsg},
-    net::peer_representation,
     net::sm::*,
+    net::subs::peer_representation,
 };
 use libp2p_core::{Multiaddr, PeerId};
 use std::{collections::HashSet, sync::mpsc::Sender};

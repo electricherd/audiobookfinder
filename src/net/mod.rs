@@ -7,7 +7,7 @@ mod sm_behaviour;
 pub mod subs;
 mod ui_data;
 
-use self::{sm_behaviour::SMBehaviour, ui_data::UiData};
+use self::{sm_behaviour::SMBehaviour, subs::key_keeper, ui_data::UiData};
 use super::{ctrl, data::ipc::IPC};
 use async_std::task::{self, Context, Poll};
 use crossbeam::channel::Receiver;
@@ -19,7 +19,6 @@ use libp2p::{
     PeerId, Swarm,
 };
 use std::{self, error::Error, sync::mpsc::Sender};
-use subs::{key_keeper, peer_representation};
 
 /// The Net component keeps control about everything from net.
 ///
