@@ -1,7 +1,7 @@
 //! Taken from dummy behaviour to have a layer of communication which reacts with
 //! the embedded state machine (and inner ui), also back to net services:
 //! currently kademlia, mdns
-//! https://docs.rs/libp2p/0.21.1/libp2p/swarm/struct.DummyBehaviour.html
+//! https://docs.rs/libp2p/latest/libp2p/swarm/struct.DummyBehaviour.html
 use super::{
     super::data::ipc::IPC,
     sm::{
@@ -101,6 +101,7 @@ impl SMBehaviour {
 /// This is an almost empty SMBehaviour, but callable and with a return OutEvent
 /// and a queue that holds the Polling event, and can be influenced. It basically
 /// lacks all higher network behaviors, but that was just needed.
+/// todo: look how to handle #[behaviour(poll_method = "poll")]
 impl NetworkBehaviour for SMBehaviour {
     type ProtocolsHandler = protocols_handler::DummyProtocolsHandler;
     type OutEvent = SMOutEvents;
