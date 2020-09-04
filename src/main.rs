@@ -12,9 +12,7 @@ use adbflib::{
     common::{logit, paths::SearchPath},
     ctrl::{Ctrl, UiUpdateMsg},
     data::{
-        self,
-        collection::{Collection, Container},
-        ipc::IPC,
+        self, audio_info::Container, collection::Collection, ipc::IPC,
         InterfaceCollectionOutputData,
     },
     net::{key_keeper, Net},

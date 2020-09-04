@@ -1,12 +1,13 @@
 //! The collection keeps and maintains all audio data.
 use super::{
     super::common::config,
-    bktree::BKTree,
+    audio_info::{AudioInfo, Container},
     ipc::IPC,
     tag_readers::{
         CommonAudioInfo, FlacTagReader, ID3TagReader, MP3TagReader, MP4TagReader, TagReader,
     },
 };
+use crate::data::audio_info::AudioInfoKey;
 use crossbeam::channel::Sender as CrossbeamSender;
 use libp2p_core::PeerId;
 use std::{
@@ -24,14 +25,6 @@ static TOLERANCE: usize = 5;
 /// distance of Levenshtein-algorithm
 static ID3_CAPACITY: usize = 1024;
 /// capacity to read small portion of file
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct AudioInfo {
-    duration: Duration,
-    album: String,
-    pub file_name: String,
-    // todo: more information should be used
-}
 
 // todo: think over this, peer and max threads ... kick it out
 //       threads are interesting to fill in unused threads in path
@@ -56,20 +49,6 @@ impl Worker {
         Worker {
             peer_id: peer_id,
             max_threads: max_threads,
-        }
-    }
-}
-
-/// The container keeps the collection data. It currently consists of a BKTree
-/// (https://en.wikipedia.org/wiki/BK-tree), because key is a string of lexical
-/// data.
-pub struct Container {
-    bk_tree: BKTree<String, Box<AudioInfo>>,
-}
-impl Container {
-    pub fn new() -> Self {
-        Self {
-            bk_tree: BKTree::new(),
         }
     }
 }
@@ -352,14 +331,13 @@ impl Collection {
         }
 
         if has_enough_information {
-            let key = format!("{} {}", audio_info.artist, &audio_info.title);
+            let key = AudioInfoKey::new(&audio_info.artist, &audio_info.title);
 
             // a) filter numbers / remove
             // b) use album name / substract it?
 
             let ref mut locked_container = data.lock().unwrap();
-            let (vec_exact_match, vec_similarities) =
-                locked_container.bk_tree.find(&key, TOLERANCE);
+            let (vec_exact_match, vec_similarities) = locked_container.find(&key, TOLERANCE);
             if !vec_similarities.is_empty() {
                 trace!("close: {:?} to {:?},", &vec_similarities, &key);
             }
@@ -379,10 +357,10 @@ impl Collection {
                 };
                 let value = Box::new(audio_info.clone());
                 let mem_size = mem::size_of_val(&key) + mem::size_of_val(&value);
-                locked_container.bk_tree.insert(key, value);
+                locked_container.insert(key.clone(), value);
                 // send to ipc
                 ipc_sender
-                    .send(IPC::PublishSingleAudioDataRecord(audio_info))
+                    .send(IPC::PublishSingleAudioDataRecord(key, audio_info))
                     .unwrap_or_else(|e| warn!("something went very wrong {}!", e));
                 self.stats.memory += mem_size as u64;
             } else {
