@@ -115,6 +115,10 @@ fn main() -> io::Result<()> {
             }
         })?;
 
+    // create a crossbeam channel for massive data exchange
+    // with data I called IPC ...
+    // in contrast to normal channels crossbeam channels are
+    // n:m, so senders can be cloned as well!
     let (ipc_send, ipc_receive) = unbounded::<IPC>();
 
     // 2 - Net Future
@@ -161,6 +165,9 @@ fn main() -> io::Result<()> {
         )
     })?;
 
+    // finished ipc sender reserved before collector takes action
+    let ipc_send_finished = ipc_send.clone();
+
     // the collector
     // but yet this simple bracket to enclose this a little
     {
@@ -186,6 +193,7 @@ fn main() -> io::Result<()> {
             .par_iter()
             .enumerate()
             .for_each(|(index, elem)| {
+                let new_ipc_sender = ipc_send.clone();
                 let sender_loop = synced_to_ui_messages.clone();
                 let collection_data_in_iterator = collection_protected.clone();
                 let single_path_collection_data = data::search_in_single_path(
@@ -195,13 +203,12 @@ fn main() -> io::Result<()> {
                     sender_loop,
                     index,
                     elem,
+                    new_ipc_sender,
                 );
-                // short lock to accumulate data
-                {
-                    let mut locker = output_data.lock().unwrap();
-                    locker.nr_found_songs += single_path_collection_data.nr_found_songs;
-                    locker.nr_duplicates += single_path_collection_data.nr_duplicates;
-                }
+                // accumulate data
+                let mut locker = output_data.lock().unwrap();
+                locker.nr_found_songs += single_path_collection_data.nr_found_songs;
+                locker.nr_duplicates += single_path_collection_data.nr_duplicates;
             });
 
         info!("collector finished!!");
@@ -213,7 +220,7 @@ fn main() -> io::Result<()> {
         }
         if has_net {
             let to_send = output_data.lock().unwrap().nr_found_songs;
-            ipc_send
+            ipc_send_finished
                 .send(IPC::DoneSearching(to_send))
                 .unwrap_or_else(|_| {
                     error!("net has to be up and receiving this send!");

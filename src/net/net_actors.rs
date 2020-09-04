@@ -13,7 +13,10 @@
 /// (http://noiseprotocol.org/)
 ///
 use super::{
-    super::net::peer_representation::{self, PeerRepresentation},
+    super::{
+        data::collection::AudioInfo,
+        net::peer_representation::{self, PeerRepresentation},
+    },
     sm_behaviour::{SMBehaviour, SMOutEvents},
     IPC,
 };
@@ -42,6 +45,7 @@ use std::{error::Error, time::Duration};
 #[derive(Serialize, Deserialize, Clone, Debug)]
 enum MkadKeys {
     KeyForPeerFinished(PeerRepresentation),
+    SingleAudioRecord(AudioInfo),
 }
 
 /// The swarm injected behavior is the key element for the whole communication
@@ -64,7 +68,7 @@ impl NetworkBehaviourEventProcess<MdnsEvent> for AdbfBehavior {
                     self.sm_behaviour.mdns_new_peer(&peer_id, &multiaddr);
                     self.kademlia.add_address(&peer_id, multiaddr);
                     if old_display_peer != peer_id {
-                        self.check_peer_actions(&peer_id);
+                        self.check_new_peer_actions(&peer_id);
                         old_display_peer = peer_id.clone();
                     }
                 }
@@ -103,9 +107,12 @@ impl NetworkBehaviourEventProcess<KademliaEvent> for AdbfBehavior {
                         match raw_key {
                             Ok(deserialized) => match deserialized {
                                 MkadKeys::KeyForPeerFinished(peer_hash) => info!(
-                                    "Successfully put record key KeyForPeerFinished for peer {:?}",
+                                    "Successfully put record key KeyForPeerFinished for peer {:?}!",
                                     peer_representation::peer_hash_to_string(&peer_hash)
                                 ),
+                                MkadKeys::SingleAudioRecord(_audio_info) => {
+                                    info!("Successfully put record key SingleAudioRecord!")
+                                }
                             },
                             Err(_) => {
                                 error!("key could not be verified!");
@@ -135,22 +142,26 @@ impl NetworkBehaviourEventProcess<SMOutEvents> for AdbfBehavior {
             SMOutEvents::ForwardIPC(ipc_event) => {
                 // the key is to avoid duplicate, so the key
                 // is a hash of the message itself
-                match ipc_event {
-                    IPC::DoneSearching(nr) => {
-                        info!("forward ipc {:?}", ipc_event);
-                        let own_peer =
-                            peer_representation::peer_to_hash(&self.sm_behaviour.own_peer());
+                let own_peer = peer_representation::peer_to_hash(&self.sm_behaviour.own_peer());
 
-                        let bin_key = Self::key_writer(MkadKeys::KeyForPeerFinished(own_peer));
+                // must be used in each ipc-event
+                let bin_key;
+
+                let serialize_message = match ipc_event {
+                    IPC::DoneSearching(nr) => {
+                        bin_key = Self::key_writer(MkadKeys::KeyForPeerFinished(own_peer));
 
                         // try to read old value
                         let mut value_to_send = nr;
-                        if let Some(value_ipc) = self.kademlia.store_mut().get(&bin_key) {
-                            let found: u32 = bincode::deserialize(value_ipc.value.as_ref())
-                                .unwrap_or_else(|_| {
-                                    error!("value in store is not what expected!");
-                                    0
-                                });
+                        if let Some(already_peer_finished_record) =
+                            self.kademlia.store_mut().get(&bin_key)
+                        {
+                            let found: u32 =
+                                bincode::deserialize(already_peer_finished_record.value.as_ref())
+                                    .unwrap_or_else(|_| {
+                                        error!("value in store is not what expected!");
+                                        0
+                                    });
                             value_to_send += found;
                         } else {
                             trace!(
@@ -158,20 +169,48 @@ impl NetworkBehaviourEventProcess<SMOutEvents> for AdbfBehavior {
                                 nr
                             );
                         }
-                        let bin_message = bincode::serialize(&value_to_send).unwrap();
-
-                        let record = Record {
-                            key: bin_key,
-                            value: bin_message,
-                            publisher: None,
-                            expires: None,
-                        };
-
-                        // write out
-                        self.kademlia
-                            .put_record(record, Quorum::One)
-                            .expect("Failed to store record locally.");
+                        Some(bincode::serialize(&value_to_send).unwrap())
                     }
+                    IPC::PublishSingleAudioDataRecord(audio_info) => {
+                        // a single audio data
+                        bin_key = Self::key_writer(MkadKeys::SingleAudioRecord(audio_info.clone()));
+                        if let Some(already_audio_record) = self.kademlia.store_mut().get(&bin_key)
+                        {
+                            let already_audio_data: Result<AudioInfo, bincode::Error> =
+                                bincode::deserialize(already_audio_record.value.as_ref());
+                            if let Ok(found_and_deserializable) = already_audio_data {
+                                info!(
+                                    "This record was already found somewhere else, and put as {}!",
+                                    found_and_deserializable.file_name
+                                );
+                            } else {
+                                info!(
+                                    "This record was already there and not even de-serializable!"
+                                );
+                            }
+                            None
+                        } else {
+                            // that is new and should be put
+                            Some(bincode::serialize(&audio_info).unwrap())
+                        }
+                    }
+                };
+
+                // check if it is ok to send
+                if let Some(bin_message) = serialize_message {
+                    let record = Record {
+                        key: bin_key,
+                        value: bin_message,
+                        publisher: None,
+                        expires: None,
+                    };
+
+                    // write out
+                    self.kademlia
+                        .put_record(record, Quorum::One)
+                        .expect("Failed to store record in kademlia locally.");
+                } else {
+                    warn!("not possible to send IPC through kademlia!");
                 }
             }
         }
@@ -223,7 +262,13 @@ impl AdbfBehavior {
             match fits_mkad_keys {
                 MkadKeys::KeyForPeerFinished(peer_hash) => {
                     // todo: continue here
-                    info!("key for peer finished: {}!", peer_hash);
+                    info!("key for peer finished of '{}' retrieved!", peer_hash);
+                }
+                MkadKeys::SingleAudioRecord(audio_info) => {
+                    info!(
+                        "new audio data with name '{}' retrieved!",
+                        audio_info.file_name
+                    );
                 }
             }
         } else {
@@ -256,13 +301,15 @@ impl AdbfBehavior {
         }
     }
 
+    /// Looks into kademlia data and returns if already finished number
+    /// has been submitted.
     fn check_if_peer_finished(&mut self, peer_id: &PeerId) -> Result<u32, ()> {
         let peer_hash = peer_representation::peer_to_hash(peer_id);
         let query_key = MkadKeys::KeyForPeerFinished(peer_hash);
         self.get_key_finished(query_key)
     }
 
-    fn check_peer_actions(&mut self, peer_id: &PeerId) {
+    fn check_new_peer_actions(&mut self, peer_id: &PeerId) {
         if *peer_id == self.sm_behaviour.own_peer() {
             warn!("own instance finished ... not interesting, should not happen!");
         } else {

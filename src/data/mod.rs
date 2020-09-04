@@ -5,8 +5,12 @@ pub mod collection;
 pub mod ipc;
 mod tag_readers;
 
-use self::collection::{Collection, Container};
+use self::{
+    collection::{Collection, Container},
+    ipc::IPC,
+};
 use super::ctrl::{CollectionPathAlive, ForwardNetMsg, NetInfoMsg, Status, UiUpdateMsg};
+use crossbeam::channel::Sender as CrossbeamSender;
 use std::{
     path::Path, // path, clear
     sync::{mpsc::Sender, Arc as SArc, Mutex as SMutex},
@@ -26,6 +30,7 @@ pub fn search_in_single_path(
     mutex_to_ui_msg: SArc<SMutex<Sender<UiUpdateMsg>>>,
     index: usize,
     elem: &str,
+    ipc_sender: CrossbeamSender<IPC>,
 ) -> InterfaceCollectionOutputData {
     if !has_ui {
         println!("[{:?}] looking into path {:?}", index, elem);
@@ -55,6 +60,7 @@ pub fn search_in_single_path(
         collection_data,
         Path::new(elem),
         &collection::Collection::visit_files,
+        ipc_sender,
     ) {
         Ok(local_stats) => {
             if has_ui {

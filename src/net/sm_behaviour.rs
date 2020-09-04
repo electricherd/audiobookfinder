@@ -32,7 +32,7 @@ pub enum sm_to_net {
 
 /// Events going from StateMachine back to the net behavior
 #[allow(non_camel_case_types)]
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum SMOutEvents {
     ForwardSM(sm_to_net),
     ForwardIPC(IPC),
