@@ -1,14 +1,12 @@
 //! The oldest module, the data module stores all the data needed to collect
 //! and also the search, dir algorithms
+pub mod audio_info;
 mod bktree;
 pub mod collection;
 pub mod ipc;
 mod tag_readers;
 
-use self::{
-    collection::{Collection, Container},
-    ipc::IPC,
-};
+use self::{audio_info::Container, collection::Collection, ipc::IPC};
 use super::ctrl::{CollectionPathAlive, ForwardNetMsg, NetInfoMsg, Status, UiUpdateMsg};
 use crossbeam::channel::Sender as CrossbeamSender;
 use std::{

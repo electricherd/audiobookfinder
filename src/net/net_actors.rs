@@ -14,7 +14,7 @@
 ///
 use super::{
     super::{
-        data::collection::AudioInfo,
+        data::audio_info::{AudioInfo, AudioInfoKey},
         net::peer_representation::{self, PeerRepresentation},
     },
     sm_behaviour::{SMBehaviour, SMOutEvents},
@@ -45,7 +45,7 @@ use std::{error::Error, time::Duration};
 #[derive(Serialize, Deserialize, Clone, Debug)]
 enum MkadKeys {
     KeyForPeerFinished(PeerRepresentation),
-    SingleAudioRecord(AudioInfo),
+    SingleAudioRecord(AudioInfoKey),
 }
 
 /// The swarm injected behavior is the key element for the whole communication
@@ -171,9 +171,9 @@ impl NetworkBehaviourEventProcess<SMOutEvents> for AdbfBehavior {
                         }
                         Some(bincode::serialize(&value_to_send).unwrap())
                     }
-                    IPC::PublishSingleAudioDataRecord(audio_info) => {
+                    IPC::PublishSingleAudioDataRecord(audio_key, audio_info) => {
                         // a single audio data
-                        bin_key = Self::key_writer(MkadKeys::SingleAudioRecord(audio_info.clone()));
+                        bin_key = Self::key_writer(MkadKeys::SingleAudioRecord(audio_key));
                         if let Some(already_audio_record) = self.kademlia.store_mut().get(&bin_key)
                         {
                             let already_audio_data: Result<AudioInfo, bincode::Error> =
@@ -264,11 +264,8 @@ impl AdbfBehavior {
                     // todo: continue here
                     info!("key for peer finished of '{}' retrieved!", peer_hash);
                 }
-                MkadKeys::SingleAudioRecord(audio_info) => {
-                    info!(
-                        "new audio data with name '{}' retrieved!",
-                        audio_info.file_name
-                    );
+                MkadKeys::SingleAudioRecord(audio_key) => {
+                    info!("new audio data with key '{}' retrieved!", &audio_key.get());
                 }
             }
         } else {
