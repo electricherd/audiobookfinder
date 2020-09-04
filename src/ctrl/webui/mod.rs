@@ -11,7 +11,7 @@ use super::{
     super::{
         common::{config, paths::SearchPath},
         ctrl::InternalUiMsg,
-        net::peer_representation::PeerRepresentation,
+        net::subs::peer_representation::PeerRepresentation,
     },
     CollectionPathAlive,
 };

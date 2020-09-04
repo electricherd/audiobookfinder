@@ -15,7 +15,7 @@ use adbflib::{
         self, audio_info::Container, collection::Collection, ipc::IPC,
         InterfaceCollectionOutputData,
     },
-    net::{key_keeper, Net},
+    net::{subs::key_keeper, Net},
 };
 use async_std::task;
 use crossbeam::{channel::unbounded, sync::WaitGroup};

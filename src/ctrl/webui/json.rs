@@ -3,7 +3,7 @@
 use super::{
     super::super::{
         ctrl::{ForwardNetMsg, NetInfoMsg, Status},
-        net::peer_representation,
+        net::subs::peer_representation,
     },
     CollectionPathAlive, InternalUiMsg,
 };
