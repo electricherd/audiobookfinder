@@ -12,21 +12,13 @@
 //! The noise protocol being used
 //! (http://noiseprotocol.org/)
 use super::{
-    super::{
-        data::audio_info::{AudioInfo, AudioInfoKey},
-        net::subs::peer_representation::{self, PeerRepresentation},
-    },
     sm_behaviour::{SMBehaviour, SMOutEvents},
-    IPC,
+    storage,
+    subs::peer_representation,
 };
 use async_std::io;
-use bincode;
 use libp2p::{
-    kad::{
-        record,
-        store::{MemoryStore, RecordStore},
-        Kademlia, KademliaEvent, PeerRecord, PutRecordOk, QueryResult, Quorum, Record,
-    },
+    kad::{store::MemoryStore, Kademlia, KademliaEvent},
     mdns::{Mdns, MdnsEvent},
     pnet::{PnetConfig, PreSharedKey},
     swarm::NetworkBehaviourEventProcess,
@@ -39,13 +31,6 @@ use libp2p_core::{
 use libp2p_noise::{Keypair, NoiseConfig, X25519Spec};
 use libp2p_tcp::TcpConfig;
 use std::{error::Error, time::Duration};
-
-#[allow(non_camel_case_types)]
-#[derive(Serialize, Deserialize, Clone, Debug)]
-enum MkadKeys {
-    KeyForPeerFinished(PeerRepresentation),
-    SingleAudioRecord(AudioInfoKey),
-}
 
 /// The swarm injected behavior is the key element for the whole communication
 /// See https://docs.rs/libp2p/0.21.1/libp2p/swarm/trait.NetworkBehaviour.html for more
@@ -84,48 +69,7 @@ impl NetworkBehaviourEventProcess<MdnsEvent> for AdbfBehavior {
 impl NetworkBehaviourEventProcess<KademliaEvent> for AdbfBehavior {
     // Called when `kademlia` produces an event.
     fn inject_event(&mut self, message: KademliaEvent) {
-        match message {
-            KademliaEvent::QueryResult { result, .. } => match result {
-                QueryResult::GetRecord(get_record) => match get_record {
-                    Ok(ok) => {
-                        for PeerRecord {
-                            record: Record { key, value, .. },
-                            ..
-                        } in ok.records
-                        {
-                            self.retrieve_record(key, value);
-                        }
-                    }
-                    Err(err) => {
-                        error!("Failed to get record: {:?}", err);
-                    }
-                },
-                QueryResult::PutRecord(put_record) => match put_record {
-                    Ok(PutRecordOk { key }) => {
-                        let raw_key = Self::key_reader(&key);
-                        match raw_key {
-                            Ok(deserialized) => match deserialized {
-                                MkadKeys::KeyForPeerFinished(peer_hash) => info!(
-                                    "Successfully put record key KeyForPeerFinished for peer {:?}!",
-                                    peer_representation::peer_hash_to_string(&peer_hash)
-                                ),
-                                MkadKeys::SingleAudioRecord(_audio_info) => {
-                                    info!("Successfully put record key SingleAudioRecord!")
-                                }
-                            },
-                            Err(_) => {
-                                error!("key could not be verified!");
-                            }
-                        }
-                    }
-                    Err(err) => {
-                        error!("Failed to put record: {:?}", err);
-                    }
-                },
-                _ => trace!("other kademlie query results arrived?!"),
-            },
-            _ => (), // trace!("kademlie routing events occured!"),
-        }
+        storage::on_retrieve(message);
     }
 }
 
@@ -143,79 +87,14 @@ impl NetworkBehaviourEventProcess<SMOutEvents> for AdbfBehavior {
                 // is a hash of the message itself
                 let own_peer = peer_representation::peer_to_hash(&self.sm_behaviour.own_peer());
 
-                // must be used in each ipc-event
-                let bin_key;
-
-                let serialize_message = match ipc_event {
-                    IPC::DoneSearching(nr) => {
-                        bin_key = Self::key_writer(MkadKeys::KeyForPeerFinished(own_peer));
-
-                        // try to read old value
-                        let mut value_to_send = nr;
-                        if let Some(already_peer_finished_record) =
-                            self.kademlia.store_mut().get(&bin_key)
-                        {
-                            let found: u32 =
-                                bincode::deserialize(already_peer_finished_record.value.as_ref())
-                                    .unwrap_or_else(|_| {
-                                        error!("value in store is not what expected!");
-                                        0
-                                    });
-                            value_to_send += found;
-                        } else {
-                            trace!(
-                                "this key was not yet set in the kademlia store with value {}!",
-                                nr
-                            );
-                        }
-                        Some(bincode::serialize(&value_to_send).unwrap())
-                    }
-                    IPC::PublishSingleAudioDataRecord(audio_key, audio_info) => {
-                        // a single audio data
-                        bin_key = Self::key_writer(MkadKeys::SingleAudioRecord(audio_key));
-                        if let Some(already_audio_record) = self.kademlia.store_mut().get(&bin_key)
-                        {
-                            let already_audio_data: Result<AudioInfo, bincode::Error> =
-                                bincode::deserialize(already_audio_record.value.as_ref());
-                            if let Ok(found_and_deserializable) = already_audio_data {
-                                info!(
-                                    "This record was already found somewhere else, and put as {}!",
-                                    found_and_deserializable.file_name
-                                );
-                            } else {
-                                info!(
-                                    "This record was already there and not even de-serializable!"
-                                );
-                            }
-                            None
-                        } else {
-                            // that is new and should be put
-                            Some(bincode::serialize(&audio_info).unwrap())
-                        }
-                    }
-                };
-
-                // check if it is ok to send
-                if let Some(bin_message) = serialize_message {
-                    let record = Record {
-                        key: bin_key,
-                        value: bin_message,
-                        publisher: None,
-                        expires: None,
-                    };
-
-                    // write out
-                    self.kademlia
-                        .put_record(record, Quorum::One)
-                        .expect("Failed to store record in kademlia locally.");
-                } else {
-                    warn!("not possible to send IPC through kademlia!");
-                }
+                // write ipc message to net storage
+                storage::write_ipc(&mut self.kademlia, own_peer, ipc_event);
             }
         }
     }
 }
 
+/// Build up the transport layer
 pub fn build_noise_transport(
     key_pair: &identity::Keypair,
     psk: Option<PreSharedKey>,
@@ -255,61 +134,11 @@ pub fn build_noise_transport(
 }
 
 impl AdbfBehavior {
-    fn retrieve_record(&mut self, key: record::Key, _value: Vec<u8>) {
-        warn!("..............................................");
-        if let Ok(fits_mkad_keys) = Self::key_reader(&key) {
-            match fits_mkad_keys {
-                MkadKeys::KeyForPeerFinished(peer_hash) => {
-                    // todo: continue here
-                    info!("key for peer finished of '{}' retrieved!", peer_hash);
-                }
-                MkadKeys::SingleAudioRecord(audio_key) => {
-                    info!("new audio data with key '{}' retrieved!", &audio_key.get());
-                }
-            }
-        } else {
-            error!("unknown MkadKeys format");
-        }
-    }
-
-    fn key_writer(internal_key: MkadKeys) -> record::Key {
-        let bin_key = bincode::serialize(&internal_key).unwrap();
-        record::Key::new(&bin_key)
-    }
-    fn key_reader(
-        key_record: &record::Key,
-    ) -> Result<MkadKeys, std::boxed::Box<bincode::ErrorKind>> {
-        bincode::deserialize(key_record.as_ref())
-    }
-
-    fn get_key_finished(&mut self, key: MkadKeys) -> Result<u32, ()> {
-        let serialized_key = Self::key_writer(key);
-        match self.kademlia.store_mut().get(&serialized_key) {
-            Some(good_query) => {
-                let found: u32 =
-                    bincode::deserialize(good_query.value.as_ref()).unwrap_or_else(|_| {
-                        error!("value in store is not what expected!");
-                        0
-                    });
-                Ok(found)
-            }
-            None => Err(()),
-        }
-    }
-
-    /// Looks into kademlia data and returns if already finished number
-    /// has been submitted.
-    fn check_if_peer_finished(&mut self, peer_id: &PeerId) -> Result<u32, ()> {
-        let peer_hash = peer_representation::peer_to_hash(peer_id);
-        let query_key = MkadKeys::KeyForPeerFinished(peer_hash);
-        self.get_key_finished(query_key)
-    }
-
     fn check_new_peer_actions(&mut self, peer_id: &PeerId) {
         if *peer_id == self.sm_behaviour.own_peer() {
             warn!("own instance finished ... not interesting, should not happen!");
         } else {
-            if let Ok(count) = self.check_if_peer_finished(&peer_id) {
+            if let Ok(count) = storage::check_if_peer_finished(&mut self.kademlia, &peer_id) {
                 self.sm_behaviour.update_peer_data(&peer_id, count);
             }
         }
