@@ -1,5 +1,5 @@
-/// a very small mod just for ui data send by net. It is important to
-/// not send all discovery blindly (e.g. duplicates)
+//! a very small mod just for ui data send by net. It is important to
+//! not send all discovery blindly (e.g. duplicates)
 use super::super::{
     ctrl::{self, ForwardNetMsg, UiClientPeer, UiUpdateMsg},
     net::peer_representation,

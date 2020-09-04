@@ -44,6 +44,10 @@ pub struct AudioInfo {
 
 /// protect handling of AudioInfoKey
 impl AudioInfoKey {
+    /// Creates from the given input a key!
+    /// The idea is to get a as unique key to possibly identify
+    /// duplicates, but to give enough distance (hence a string
+    /// distance metric is used) to similar but other keys.
     pub fn new(artist: &String, title: &String) -> Self {
         Self {
             k: format!("{} {}", artist, title),

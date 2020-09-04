@@ -1,9 +1,10 @@
 //! The net module is resonsible for the network related parts,
 //! the mDNS registering, mDNS search, communication server and client.
 //! It also let's us startup and perform everything in yet one step.
-mod data;
+pub mod data;
 pub mod key_keeper;
 mod net_actors;
+pub mod net_subs;
 pub mod peer_representation;
 mod sm;
 mod sm_behaviour;
