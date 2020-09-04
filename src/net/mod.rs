@@ -1,13 +1,10 @@
 //! The net module is resonsible for the network related parts,
 //! the mDNS registering, mDNS search, communication server and client.
 //! It also let's us startup and perform everything in yet one step.
-pub mod data;
-pub mod key_keeper;
 mod net_actors;
-pub mod net_subs;
-pub mod peer_representation;
 mod sm;
 mod sm_behaviour;
+pub mod subs;
 mod ui_data;
 
 use self::{sm_behaviour::SMBehaviour, ui_data::UiData};
@@ -22,6 +19,7 @@ use libp2p::{
     PeerId, Swarm,
 };
 use std::{self, error::Error, sync::mpsc::Sender};
+use subs::{key_keeper, peer_representation};
 
 /// The Net component keeps control about everything from net.
 ///

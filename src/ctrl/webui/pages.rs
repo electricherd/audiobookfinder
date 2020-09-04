@@ -1,7 +1,7 @@
 ///! Mainly pages to be delivered and triggered from webui.
 ///! There are some static pages and few dynamical pages.
 use super::{
-    super::super::{common::config, net::peer_representation::PeerRepresentation},
+    super::super::{common::config, net::subs::peer_representation::PeerRepresentation},
     WebServerState,
 };
 use actix_files as fs;

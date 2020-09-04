@@ -5,7 +5,7 @@
 use super::super::{
     common::config,
     ctrl::{CollectionPathAlive, ForwardNetMsg, InternalUiMsg, NetInfoMsg, Status},
-    net::peer_representation,
+    net::subs::peer_representation,
 };
 use async_std::task;
 use cursive::{
