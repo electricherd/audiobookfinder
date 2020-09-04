@@ -8,7 +8,7 @@ mod storage;
 pub mod subs;
 mod ui_data;
 
-use self::{sm_behaviour::SMBehaviour, subs::key_keeper, ui_data::UiData};
+use self::{sm_behaviour::SMBehaviour, storage::NetStorage, subs::key_keeper, ui_data::UiData};
 use super::{ctrl, data::ipc::IPC};
 use async_std::task::{self, Context, Poll};
 use crossbeam::channel::Receiver;
@@ -91,6 +91,7 @@ impl Net {
                 kademlia,
                 mdns: Mdns::new()?,
                 sm_behaviour: SMBehaviour::new(ipc_receiver, own_peer_id.clone(), ui_data),
+                storage: NetStorage::new(),
             };
             Swarm::new(transport, behaviour, local_peer_id.clone())
         };

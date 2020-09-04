@@ -13,7 +13,7 @@
 //! (http://noiseprotocol.org/)
 use super::{
     sm_behaviour::{SMBehaviour, SMOutEvents},
-    storage,
+    storage::NetStorage,
     subs::peer_representation,
 };
 use async_std::io;
@@ -33,13 +33,17 @@ use libp2p_tcp::TcpConfig;
 use std::{error::Error, time::Duration};
 
 /// The swarm injected behavior is the key element for the whole communication
-/// See https://docs.rs/libp2p/0.21.1/libp2p/swarm/trait.NetworkBehaviour.html for more
+/// See https://docs.rs/libp2p/latest/libp2p/swarm/trait.NetworkBehaviour.html for more
 #[derive(NetworkBehaviour)]
 pub struct AdbfBehavior {
     pub kademlia: Kademlia<MemoryStore>,
     pub mdns: Mdns,
     pub sm_behaviour: SMBehaviour,
+    #[behaviour(ignore)]
+    pub storage: NetStorage,
 }
+
+/// MDns Part of AdbfBehavior
 impl NetworkBehaviourEventProcess<MdnsEvent> for AdbfBehavior {
     // Called when `mdns` produces an event.
     fn inject_event(&mut self, event: MdnsEvent) {
@@ -54,6 +58,7 @@ impl NetworkBehaviourEventProcess<MdnsEvent> for AdbfBehavior {
                     if old_display_peer != peer_id {
                         self.check_new_peer_actions(&peer_id);
                         old_display_peer = peer_id.clone();
+                        self.storage.inc();
                     }
                 }
             }
@@ -61,18 +66,22 @@ impl NetworkBehaviourEventProcess<MdnsEvent> for AdbfBehavior {
                 for (peer_id, multi_addr) in expired_addresses {
                     self.kademlia.remove_address(&peer_id, &multi_addr);
                     self.sm_behaviour.mdns_remove(&peer_id);
+                    self.storage.dec();
                 }
             }
         }
     }
 }
+
+/// Kademlia Part of AdbfBehavior
 impl NetworkBehaviourEventProcess<KademliaEvent> for AdbfBehavior {
     // Called when `kademlia` produces an event.
     fn inject_event(&mut self, message: KademliaEvent) {
-        storage::on_retrieve(message);
+        self.storage.on_retrieve(message);
     }
 }
 
+/// Own injected state machine (SMOutEvents) part of AdbfBehavior
 impl NetworkBehaviourEventProcess<SMOutEvents> for AdbfBehavior {
     // Called when SM produces an event.
     fn inject_event(&mut self, event: SMOutEvents) {
@@ -88,7 +97,8 @@ impl NetworkBehaviourEventProcess<SMOutEvents> for AdbfBehavior {
                 let own_peer = peer_representation::peer_to_hash(&self.sm_behaviour.own_peer());
 
                 // write ipc message to net storage
-                storage::write_ipc(&mut self.kademlia, own_peer, ipc_event);
+                self.storage
+                    .write_ipc(&mut self.kademlia, own_peer, ipc_event);
             }
         }
     }
@@ -138,7 +148,7 @@ impl AdbfBehavior {
         if *peer_id == self.sm_behaviour.own_peer() {
             warn!("own instance finished ... not interesting, should not happen!");
         } else {
-            if let Ok(count) = storage::check_if_peer_finished(&mut self.kademlia, &peer_id) {
+            if let Ok(count) = NetStorage::check_if_peer_finished(&mut self.kademlia, &peer_id) {
                 self.sm_behaviour.update_peer_data(&peer_id, count);
             }
         }
