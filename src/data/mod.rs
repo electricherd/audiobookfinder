@@ -10,7 +10,7 @@ use self::{audio_info::Container, collection::Collection, ipc::IPC};
 use super::ctrl::{CollectionPathAlive, ForwardNetMsg, NetInfoMsg, Status, UiUpdateMsg};
 use crossbeam::channel::Sender as CrossbeamSender;
 use std::{
-    path::Path, // path, clear
+    path::Path,
     sync::{mpsc::Sender, Arc as SArc, Mutex as SMutex},
 };
 
@@ -28,7 +28,6 @@ pub fn search_in_single_path(
     mutex_to_ui_msg: SArc<SMutex<Sender<UiUpdateMsg>>>,
     index: usize,
     elem: &str,
-    ipc_sender: CrossbeamSender<IPC>,
 ) -> InterfaceCollectionOutputData {
     if !has_ui {
         println!("[{:?}] looking into path {:?}", index, elem);
@@ -58,7 +57,6 @@ pub fn search_in_single_path(
         collection_data,
         Path::new(elem),
         &collection::Collection::visit_files,
-        ipc_sender,
     ) {
         Ok(local_stats) => {
             if has_ui {
@@ -123,5 +121,23 @@ pub fn search_in_single_path(
                 nr_duplicates: 0,
             }
         }
+    }
+}
+
+#[allow(dead_code)]
+pub fn publish_local_storage(
+    container_handle: SArc<SMutex<Container>>,
+    ipc_sender: CrossbeamSender<IPC>,
+) {
+    // send to ipc
+    //
+    let container = container_handle.lock().unwrap();
+    for (key, audio_info) in container.flush() {
+        ipc_sender
+            .send(IPC::PublishSingleAudioDataRecord(
+                key.clone(),
+                *audio_info.clone(),
+            ))
+            .unwrap_or_else(|e| warn!("something went very wrong {}!", e));
     }
 }

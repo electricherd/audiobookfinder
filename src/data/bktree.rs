@@ -85,6 +85,14 @@ where
             (vec![], vec![])
         };
     }
+
+    pub fn dfs(&self) -> Vec<(&K, &V)> {
+        let mut out = vec![];
+        if let Some(ref root) = self.root {
+            root.traverse(&mut out);
+        }
+        out
+    }
 }
 
 #[derive(Debug)]
@@ -151,6 +159,16 @@ where
         // return our vector of close and exact values
         return (exact, close);
     }
+
+    fn traverse<'a>(&'a self, mut out: &mut Vec<(&'a K, &'a V)>) {
+        if self.children.len() > 0 {
+            self.children
+                .iter()
+                .for_each(|(_, child)| child.traverse(&mut out));
+        } else {
+            out.push((&self.key, &self.value));
+        }
+    }
 }
 
 /// This trait is used by the BKTree to determine the distance between 2 objects
@@ -177,7 +195,7 @@ impl Distance for &str {
 
 // Manual implementation of this function. Did not want to include a seperate library.
 // https://docs.rs/strsim/0.9.2/src/strsim/lib.rs.html#263-307
-fn osa_distance(a: &str, b: &str) -> usize {
+pub fn osa_distance(a: &str, b: &str) -> usize {
     let a_len = a.chars().count();
     let b_len = b.chars().count();
 

@@ -93,6 +93,7 @@ __It's crossplatform now!__
 It is an inline documentation from [CI](https://travis-ci.org/electricherd/audiobookfinder/) generated documentation - Rust does a nice job here as well!
 
 ### Changes
+* moved direct connection to net via ipc out, `net` is the long running slow part, (local) `collection` is the fast part
 * added `ADBF_LOG` env variable
 * webui now starts with a selection dialog where you can add/change preselected folders/dirs
 * defined a trait for tag information, now: id3, mp4, flac but no awesomeness ...
@@ -149,6 +150,7 @@ It is an inline documentation from [CI](https://travis-ci.org/electricherd/audio
 </details>
 
 ### ToDo
+* interesting crate [cfg_if](https://github.com/alexcrichton/cfg-if) for platform dependent parts
 * show more of current search results, etc. let's see more!! Screenshots :grin:
 * implement as android/ios app using [flutterust](https://github.com/electricherd/flutterust)
 * try [crate vfs](https://github.com/manuel-woelker/rust-vfs) for unit test with files!! interesting and needed!

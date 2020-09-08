@@ -1,14 +1,11 @@
 //! The collection keeps and maintains all audio data.
 use super::{
     super::common::config,
-    audio_info::{AudioInfo, Container},
-    ipc::IPC,
+    audio_info::{AudioInfo, AudioInfoKey, Container},
     tag_readers::{
         CommonAudioInfo, FlacTagReader, ID3TagReader, MP3TagReader, MP4TagReader, TagReader,
     },
 };
-use crate::data::audio_info::AudioInfoKey;
-use crossbeam::channel::Sender as CrossbeamSender;
 use libp2p_core::PeerId;
 use std::{
     collections::HashSet,
@@ -26,36 +23,8 @@ static TOLERANCE: usize = 5;
 static ID3_CAPACITY: usize = 1024;
 /// capacity to read small portion of file
 
-// todo: think over this, peer and max threads ... kick it out
-//       threads are interesting to fill in unused threads in path
-//       for string distance with rayon!
-#[allow(dead_code)]
-struct Worker {
-    /// identify them.
-    peer_id: PeerId,
-    max_threads: usize,
-}
-
-/// # Worker
-/// the worker is supposed to be running on different machines
-/// with one server and many clients
-impl Worker {
-    /// # Just new
-    /// To identify how to comment
-    /// # Arguments
-    /// * 'id' - the identification (each will create an own hash)
-    /// * 'max_threads' - how many threads can the worker create
-    pub fn new(peer_id: PeerId, max_threads: usize) -> Worker {
-        Worker {
-            peer_id: peer_id,
-            max_threads: max_threads,
-        }
-    }
-}
-
 /// Collection keeps control and result data of the build-up of the container.
 pub struct Collection {
-    who: Worker,
     /// This collection contains all data
     stats: Stats,
 }
@@ -82,22 +51,15 @@ impl FilesStat {
 struct Stats {
     memory: u64,
     files: FilesStat,
-    threads: usize,
 }
 
-type FileFn = dyn Fn(
-    &mut Collection,
-    SArc<SMutex<Container>>,
-    &DirEntry,
-    CrossbeamSender<IPC>,
-    &mut FilesStat,
-) -> io::Result<()>;
+type FileFn =
+    dyn Fn(&mut Collection, SArc<SMutex<Container>>, &DirEntry, &mut FilesStat) -> io::Result<()>;
 
 impl Collection {
     /// Sets up the whole collection that books all threads.
-    pub fn new(peer_id: &PeerId, num_threads: usize) -> Collection {
+    pub fn new() -> Collection {
         Collection {
-            who: Worker::new(peer_id.clone(), num_threads),
             stats: Stats {
                 memory: 0,
                 files: FilesStat {
@@ -107,7 +69,6 @@ impl Collection {
                     other: 0,
                     duplicates: 0,
                 },
-                threads: num_threads,
             },
         }
     }
@@ -115,10 +76,9 @@ impl Collection {
     /// The function that runs from a given path
     pub fn visit_path(
         &mut self,
-        container: SArc<SMutex<Container>>,
+        container_handle: SArc<SMutex<Container>>,
         dir: &Path,
         cb: &FileFn,
-        ipc_sender: CrossbeamSender<IPC>,
     ) -> io::Result<FilesStat> {
         let mut file_stats = FilesStat {
             analyzed: 0,
@@ -131,27 +91,20 @@ impl Collection {
         if dir.is_dir() {
             // todo: go with free threads in the search with rayon
             for entry in fs::read_dir(dir)? {
-                let ipc_loop_sender = ipc_sender.clone();
                 let mut loop_file_stats = &mut file_stats;
 
                 let entry = entry?;
                 let path = entry.path();
                 if path.is_dir() {
-                    let file_stats_loop =
-                        self.visit_path(container.clone(), &path, cb, ipc_loop_sender)?;
+                    let file_stats_loop = self.visit_path(container_handle.clone(), &path, cb)?;
                     loop_file_stats.add(&file_stats_loop);
                 } else {
-                    cb(
-                        self,
-                        container.clone(),
-                        &entry,
-                        ipc_loop_sender,
-                        &mut loop_file_stats,
-                    )
-                    .or_else(|io_error| {
-                        warn!("{:?}", io_error);
-                        Err(io_error)
-                    })?
+                    cb(self, container_handle.clone(), &entry, &mut loop_file_stats).or_else(
+                        |io_error| {
+                            warn!("{:?}", io_error);
+                            Err(io_error)
+                        },
+                    )?
                 }
             }
         }
@@ -163,7 +116,6 @@ impl Collection {
         col: &mut Collection,
         data: SArc<SMutex<Container>>,
         cb: &DirEntry,
-        ipc_sender: CrossbeamSender<IPC>,
         file_stats: &mut FilesStat,
     ) -> io::Result<()> {
         // count stats
@@ -185,7 +137,7 @@ impl Collection {
                             file_stats.other += 1;
                             Ok(())
                         } else {
-                            col.visit_audio_files(data, suffix, &cb.path(), ipc_sender, file_stats)
+                            col.visit_audio_files(data, suffix, &cb.path(), file_stats)
                                 .or_else(|_| {
                                     col.stats.files.faulty += 1;
                                     file_stats.faulty += 1;
@@ -219,7 +171,6 @@ impl Collection {
         data: SArc<SMutex<Container>>,
         suffix: &'a str,
         cb: &Path,
-        ipc_sender: CrossbeamSender<IPC>,
         file_stats: &mut FilesStat,
     ) -> Result<(), ()> {
         // open file only once
@@ -231,17 +182,16 @@ impl Collection {
         let mut processed = false;
         let mut all_known_suffixes = HashSet::<&str>::new();
 
-        // cosy little helper (capturing suffix)
+        // cozy little helper (capturing suffix)
         let suffix_has = |v: Vec<&str>| v.iter().any(|&s| s == suffix);
 
-        // 2nd cosy helper
-        let mut analyze = |tag_reader: &Box<dyn TagReader<'static> + Sync>, ipc_loop_sender| {
+        // 2nd cozy helper
+        let mut analyze = |tag_reader: &Box<dyn TagReader<'static> + Sync>| {
             if !processed {
                 if suffix_has(tag_reader.known_suffixes()) {
                     if let Ok(tag_data) = tag_reader.read_tag_from(&mut file_buffer) {
                         self.analyze_tag(
                             data.clone(),
-                            ipc_loop_sender,
                             file_stats,
                             file_name.to_string(),
                             &tag_data,
@@ -263,7 +213,7 @@ impl Collection {
         }
         // analyze according to order
         for reader in ANALYZE_ORDER.iter().to_owned() {
-            analyze(reader, ipc_sender.clone());
+            analyze(reader);
             reader
                 .known_suffixes()
                 .iter_mut()
@@ -285,10 +235,10 @@ impl Collection {
         Ok(())
     }
 
-    pub fn print_stats(&self) {
+    pub fn print_stats(&self, peer_id: &PeerId, threads: usize) {
         let output_string = format!(
             "This client's id     : {id:}\n\
-             paths/threads        : {nr_pathes:>width$}\n\
+             paths/threads        : {nr_threads:>width$}\n\
              memory               : {mem:>width$}kb\n\
              ----------------------     \n\
              analyzed files       : {files_analyzed:>width$}\n\
@@ -296,8 +246,8 @@ impl Collection {
              duplicate files      : {files_duplicate:>width$}\n\
              irrelevant files     : {files_irrelevant:>width$}\n\
              faulty files         : {files_faulty:>width$}\n",
-            id = self.who.peer_id.to_string().to_uppercase(),
-            nr_pathes = self.stats.threads,
+            id = peer_id.to_string().to_uppercase(),
+            nr_threads = threads,
             mem = self.stats.memory / 1000,
             files_analyzed = self.stats.files.analyzed,
             files_searched = self.stats.files.searched,
@@ -313,7 +263,6 @@ impl Collection {
     fn analyze_tag<'a>(
         &mut self,
         data: SArc<SMutex<Container>>,
-        ipc_sender: CrossbeamSender<IPC>,
         file_stats: &mut FilesStat,
         file_name: String,
         audio_info: &'a CommonAudioInfo,
@@ -358,10 +307,6 @@ impl Collection {
                 let value = Box::new(audio_info.clone());
                 let mem_size = mem::size_of_val(&key) + mem::size_of_val(&value);
                 locked_container.insert(key.clone(), value);
-                // send to ipc
-                ipc_sender
-                    .send(IPC::PublishSingleAudioDataRecord(key, audio_info))
-                    .unwrap_or_else(|e| warn!("something went very wrong {}!", e));
                 self.stats.memory += mem_size as u64;
             } else {
                 // exact match with certain AudioInfo

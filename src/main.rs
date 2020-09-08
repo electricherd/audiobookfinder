@@ -176,8 +176,7 @@ fn main() -> io::Result<()> {
         let synced_to_ui_messages = tx_from_collector_to_ui.clone();
 
         // start the parallel search threads with rayon, each path its own
-        let init_collection =
-            Collection::new(&key_keeper::get_p2p_server_id(), nr_threads_for_collection);
+        let init_collection = Collection::new();
         let collection_protected = SArc::new(SMutex::new(init_collection));
 
         let output_data = SArc::new(SMutex::new(InterfaceCollectionOutputData {
@@ -191,7 +190,6 @@ fn main() -> io::Result<()> {
             .par_iter()
             .enumerate()
             .for_each(|(index, elem)| {
-                let new_ipc_sender = ipc_send.clone();
                 let sender_loop = synced_to_ui_messages.clone();
                 let collection_data_in_iterator = collection_protected.clone();
                 let single_path_collection_data = data::search_in_single_path(
@@ -201,7 +199,6 @@ fn main() -> io::Result<()> {
                     sender_loop,
                     index,
                     elem,
-                    new_ipc_sender,
                 );
                 // accumulate data
                 let mut locker = output_data.lock().unwrap();
@@ -213,7 +210,10 @@ fn main() -> io::Result<()> {
         if !has_ui {
             collection_protected
                 .lock()
-                .and_then(|locked_collection| Ok(locked_collection.print_stats()))
+                .and_then(|locked_collection| {
+                    Ok(locked_collection
+                        .print_stats(&key_keeper::get_p2p_server_id(), nr_threads_for_collection))
+                })
                 .unwrap_or(())
         }
         if has_net {
