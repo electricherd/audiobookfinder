@@ -74,10 +74,6 @@ impl WebUI {
         // whatever ... is UP!!!
         let sys = actix::System::new("http-server");
 
-        // fixme: the start of web_socket_handler causes a panice if no
-        //        webserver can start up ... because it uses a not
-        //        correctly start up system. This start has to be moved
-        //        downwards after http server could be created correctly
         let web_socket_handler = Arc::new(Mutex::new(
             ActorWSServerMonitor {
                 receiver,
@@ -86,9 +82,10 @@ impl WebUI {
             }
             .start(),
         ));
-        let sync_startup_actor = Arc::new(Mutex::new(
-            ActorSyncStartup::new(wait_ui_sync, web_socket_handler.lock().unwrap().clone()).start(),
-        ));
+
+        let address_for_sync_startup =
+            ActorSyncStartup::new(wait_ui_sync, web_socket_handler.lock().unwrap().clone()).start();
+        let startup_actor_handle = Arc::new(Mutex::new(address_for_sync_startup));
 
         // count bindings
         let mut nr_bindings: usize = 0;
@@ -118,7 +115,7 @@ impl WebUI {
                         // each server has an initial state (e.g. 0 connections)
                         .data(initial_state.clone())
                         .data(web_socket_handler.clone())
-                        .data(sync_startup_actor.clone())
+                        .data(startup_actor_handle.clone())
                         .data(path_arc.clone())
                         .service(web::resource("/app.js").to(pages::js_app))
                         .default_service(web::resource("").to(pages::single_page))
