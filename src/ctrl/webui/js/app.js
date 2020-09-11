@@ -82,10 +82,11 @@ function APPStart() {
             $("#accordion div div").click();
 
             // modal button events
-            $('#modal_add').click(function(){
-                if (path_ui_nr < max_paths) {
-                    addModalPathSelector(undefined);
-                }
+            $('#modal_add').click(function() {
+                handle_path_add_button();
+            });
+            $('#modal_sub').click(function(){
+                handle_path_sub_button();
             });
             $('#modal_close').click(function(){
                 ws.send('start', modal_dirs);
@@ -94,6 +95,7 @@ function APPStart() {
             $('#modal_path_table').on('click', 'div > button.dirDropper',  function(event){
               //event.preventDefault();
               event.stopPropagation();
+              // read nr from suffix
               let splitter = this.id.split("_")[1];
               let nr = parseInt(splitter);
               ws.send('rest_dir', {'nr': nr, 'dir': modal_dirs[nr]});
@@ -252,12 +254,14 @@ function addModalPathSelector(path_name) {
     }
     modal_dirs[path_ui_nr] = path_name;
     let path_string = ('0' + path_ui_nr).slice(-2);
-    let new_selector =  '  <div class="dropdown" style="padding: 5px;">'
+    let new_selector =  '  <div id="dropdowndiv_' + path_string + '" class="dropdown" style="padding: 5px;">'
                       + '   <button class="btn btn-secondary dropdown-toggle dirDropper" id="dropmenu_' + path_string + '"'
                       + '           data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"'
                       + '           style="max-height:50vh; overflow-y:auto;"'
                       + '   ><i>' + name + '</i><span class="sr-only">(current)</span></button>'
-                      + '   <div id="dropdown_' + path_string + '" class="dropdown-menu" aria-labelledby="dropdownMenuButton">'
+                      + '   <div id="dropdown_' + path_string + '"'
+                      + '        class="dropdown-menu" aria-labelled-by="dropdownMenuButton"'
+                      + '        style="transform: translate3d(0px,0px,0px);">'
                       + '   </div>'
                       + '  </div>';
     $("#modal_path_table").append(new_selector);
@@ -314,6 +318,31 @@ function uiUpdateDropMenu(nr, new_dir) {
     modal_dirs[nr] = new_dir;
     // remove old entries
     $("#dropdown_" + path_string).children().remove();
+}
+
+function handle_path_add_button() {
+    if (path_ui_nr < max_paths) {
+        addModalPathSelector(undefined);
+        // grey out if end is reached
+        if (path_ui_nr === max_paths) {
+            $('#modal_add').prop('disabled',true).css('opacity',0.5);
+        }
+        // validate sub button
+        $('#modal_sub').prop('disabled',false).css('opacity',1.0);
+    }
+}
+
+function handle_path_sub_button() {
+    if (path_ui_nr > 0) {
+        path_ui_nr -= 1;
+        modal_dirs.pop();
+        let path_string = ('0' + path_ui_nr).slice(-2);
+        $("#dropdowndiv_" + path_string).remove();
+        if (path_ui_nr === 1) {
+            $('#modal_sub').prop('disabled',true).css('opacity',0.5);
+        }
+        $('#modal_add').prop('disabled',false).css('opacity',1.0);
+    }
 }
 
 function helper_extractLastDir(dir_path) {

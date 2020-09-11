@@ -171,11 +171,12 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="modal_title">Select local path(s) to process</h5>
-                <button id="modal_add" type="button" class="border-primary">
-                    <span aria-hidden="true">&plus;</span>
-                </button>
+                <span aria-hidden="true">
+                <button id="modal_sub" type="button" class="border-primary">&minus;</button>
+                <button id="modal_add" type="button" class="border-primary">&plus;</button>
+                </span>
             </div>
-            <div class="modal-body" id='modal_path_table' style="max-height: 45vh; overflow-y: scroll;">
+            <div class="modal-body" id='modal_path_table' style="height: 45vh; overflow-y: scroll;">
             </div>
             <div class="modal-footer">
                 <button id="modal_close" type="button" class="btn btn-primary" data-dismiss="modal">Run with path(s) selected!</button>
