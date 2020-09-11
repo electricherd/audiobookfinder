@@ -8,24 +8,21 @@ Just run the binary file `audiobookfinder --help` to see all options.
 
 Examples:
 
-search with web ui
+command line search
 
 `audiobookfinder <PATH_TO_YOUR_AUDIO_FILES>`
 
-
-command line search
+search with web ui
 
 `audiobookfinder -w <PATH_TO_YOUR_AUDIO_FILES>`
-
-
-command line search with client net search
-
-`audiobookfinder -n <PATH_TO_YOUR_AUDIO_FILES>`
-
 
 search with web ui and client net search
 
 `audiobookfinder -wn <PATH_TO_YOUR_AUDIO_FILES>`
+
+command line search with client net search (background)
+
+`audiobookfinder -n <PATH_TO_YOUR_AUDIO_FILES>`
 
 
 #### Environment variables:

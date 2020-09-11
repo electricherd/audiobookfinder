@@ -93,6 +93,7 @@ __It's crossplatform now!__
 It is an inline documentation from [CI](https://travis-ci.org/electricherd/audiobookfinder/) generated documentation - Rust does a nice job here as well!
 
 ### Changes
+* improved webui path input dialog (also to test on windows, new version is released)
 * moved direct connection to net via ipc out, `net` is the long running slow part, (local) `collection` is the fast part
 * added `ADBF_LOG` env variable
 * webui now starts with a selection dialog where you can add/change preselected folders/dirs
@@ -104,12 +105,12 @@ It is an inline documentation from [CI](https://travis-ci.org/electricherd/audio
 * my unfortunately now unused [observer pattern](../../wiki/Observer-pattern) was added to wiki - a better version of what
  could be found in internet (Rust is very restrictive, some patterns don't work that well).
 * boostrap, jquery upgraded, some webui animation, better net communication struct, multiaddr on peer per webui tooltip
-* peers in webui can now deregister because of e.g. timeout
-* using libp2p network swarm, replacing single-on mdsn with it, but having same functionality
 
 <details>
   <summary>click for older changes</summary>
 
+    * peers in webui can now deregister because of e.g. timeout
+    * using libp2p network swarm, replacing single-on mdsn with it, but having same functionality
     * releases for ubuntu, windows, raspberry (20LTS had a upx packing problem due to changed compiler flags, I suppose)
     * fixed webui behavior, now crossplatform (after cursive backend change, taglib replaced by id3)
     * pretty webui design, net messages as good as tui now, fixed thread termination issues to be mostly graceful

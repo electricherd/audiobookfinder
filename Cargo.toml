@@ -1,13 +1,13 @@
 [package]
 edition = "2018"
 name = "audiobookfinder"
-version = "0.1.26"
+version = "0.1.27"
 authors = ["Sven Kroemeke <skroemeke@gmail.com>"]
 license = "MIT" # http://spdx.org/licenses/
 repository = "https://github.com/electricherd/audiobookfinder"
 readme = "README.md"
 documentation = "https://electricherd.github.io/audiobookfinder/audiobookfinder/"
-keywords = ["rust", "tui", "mdns", "libp2p", "webui", "websockets", "actix"]
+keywords = ["rust", "tui", "mdns", "libp2p", "webui", "websockets", "actix", "rayon", "id3tag", "http-server"]
 publish = false
 homepage = "https://github.com/electricherd/audiobookfinder"
 description = "A program to collect information from audio books, gathered from multiple clients."
