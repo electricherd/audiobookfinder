@@ -312,18 +312,28 @@ impl Collection {
                 // exact match with certain AudioInfo
                 self.stats.files.duplicates += vec_exact_match.len() as u32;
                 for new_audio_info in vec_exact_match {
-                    let time_distance = new_audio_info.duration - audio_info.duration;
-                    if time_distance > Duration::from_secs(0) {
-                        trace!(
-                            "same: but time differs {:?} seconds with album name old '{}' and new: '{}'!",
-                            time_distance,
-                            new_audio_info.album,
-                            audio_info
-                                .album
-                                .as_ref()
-                                .unwrap_or(&"no album".to_string())
-                                .to_string(),
-                       );
+                    let time_distance = new_audio_info.duration.checked_sub(audio_info.duration);
+                    if let Some(diff) = time_distance {
+                        if diff > Duration::from_secs(0) {
+                            trace!(
+                                "same: but time differs {:?} seconds with album name old '{}' and new: '{}'!",
+                                time_distance,
+                                new_audio_info.album,
+                                audio_info
+                                    .album
+                                    .as_ref()
+                                    .unwrap_or(&"no album".to_string())
+                                    .to_string(),
+                            );
+                        }
+                    } else {
+                        warn!("an interesting duration error was found and item with album name '{}' could not be included!",
+                              audio_info
+                                  .album
+                                  .as_ref()
+                                  .unwrap_or(&"no album".to_string())
+                                  .to_string(),
+                        )
                     }
                 }
             }
