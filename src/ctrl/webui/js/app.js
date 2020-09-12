@@ -302,9 +302,9 @@ function onRESTDir(data) {
       } else {
          name = helper_extractLastDir(data.dirs[i]);
       }
-      let new_link = '     <a class="dropdown-item" href="#"'
-                    + '       onClick="uiUpdateDropMenu(' + nr + ',\'' + data.dirs[i] + '\');"'
-                    +'      >' + name + '</a>';
+      let new_link =  '     <a class="dropdown-item" href="#"'
+                    + '       onClick="uiUpdateDropMenu(' + nr + ',\'' + encodeURIComponent(data.dirs[i]) + '\');"'
+                    + '      >' + name + '</a>';
       dropdown_menu.append(new_link);
       dropdown_menu.dropdown('update');
       dropdown_menu.dropdown('toggle');
@@ -313,9 +313,10 @@ function onRESTDir(data) {
 
 function uiUpdateDropMenu(nr, new_dir) {
     let path_string = ('0' + nr).slice(-2);
+    let decode_dir = decodeURIComponent(new_dir);
     // update title
-    $("#dropmenu_" + path_string).html(helper_extractLastDir(new_dir) + '<span class="caret"></span>');
-    modal_dirs[nr] = new_dir;
+    $("#dropmenu_" + path_string).html(helper_extractLastDir(decode_dir) + '<span class="caret"></span>');
+    modal_dirs[nr] = decode_dir;
     // remove old entries
     $("#dropdown_" + path_string).children().remove();
 }
