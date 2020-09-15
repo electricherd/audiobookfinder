@@ -35,6 +35,7 @@ serde = "1.0"         # serialize anything, awesome for communication items
 serde_derive = "1.0"  # macro usage from serde
 ctrlc = "3.1"         # ctrl-c break events in main
 exitcode = "1.1"      # for ctrlc exit codes
+regex = "1.3"         # for html replacement
 
 clap = "2.33"         # for the command line parsing
 dirs = "3.0"          # to browse dirs fast in taglib

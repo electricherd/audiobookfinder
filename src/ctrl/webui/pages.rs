@@ -10,6 +10,7 @@ use actix_web::{
     web::{self, HttpResponse},
     Responder,
 };
+use regex::{Captures, Regex, Replacer};
 use std::{
     ffi::OsString,
     string::String,
@@ -119,21 +120,21 @@ fn replace_static_content(html_in: &str, id: &PeerRepresentation, port: u16) -> 
         .into_string()
         .unwrap_or(String::from("undefined"));
 
-    let changers: [ReplaceStatic; 8] = [
+    let changers: [ReplaceStatic; 9] = [
         ReplaceStatic {
-            r: config::net::HTML_REPLACE_STATIC_URL_SOURCE,
-            c: config::net::HTML_URL_SOURCE.to_string(),
+            r: config::webui::HTML_REPLACE_STATIC_URL_SOURCE,
+            c: config::net::HOMEPAGE.to_string(),
         },
         ReplaceStatic {
-            r: config::net::HTML_REPLACE_STATIC_WEB_ADDR,
+            r: config::webui::HTML_REPLACE_STATIC_WEB_ADDR,
             c: config::net::WEB_ADDR.to_string(),
         },
         ReplaceStatic {
-            r: config::net::HTML_REPLACE_STATIC_WEB_PORT,
+            r: config::webui::HTML_REPLACE_STATIC_WEB_PORT,
             c: port.to_string(),
         },
         ReplaceStatic {
-            r: config::webui::HTML_REPLACE_WEBSOCKET,
+            r: config::webui::HTML_REPLACE_WEB_SOCKET,
             c: config::net::WEB_ADDR.to_string(),
         },
         ReplaceStatic {
@@ -152,6 +153,10 @@ fn replace_static_content(html_in: &str, id: &PeerRepresentation, port: u16) -> 
             r: config::webui::HTML_REPLACE_PATHS_MAX,
             c: config::data::PATHS_MAX.to_string(),
         },
+        ReplaceStatic {
+            r: config::webui::HTML_REPLACE_VERSION,
+            c: config::net::VERSION.to_string(),
+        },
     ];
     linear_LUT_replacer(html_in, &changers)
 }
@@ -163,35 +168,49 @@ struct ReplaceStatic<'a> {
 
 #[allow(non_snake_case)]
 fn linear_LUT_replacer(replace_this: &str, changers: &[ReplaceStatic]) -> String {
-    let left_bracket = config::webui::HTML_REPLACER_BEGIN;
-    let right_bracket = config::webui::HTML_REPLACER_END;
+    lazy_static! {
+        static ref RE_WINDOWS: Regex = Regex::new(
+            &[
+                config::webui::HTML_REPLACER_BEGIN,
+                "(?P<txt>([[:alnum:]]|_)+)",
+                config::webui::HTML_REPLACER_END
+            ]
+            .concat()
+        )
+        .unwrap();
+    }
+    let rep = HTMLReplacer::new(changers);
+    RE_WINDOWS.replace_all(replace_this, rep).to_string()
+}
 
-    let mut replace_this = replace_this.to_string();
+struct HTMLReplacer<'a> {
+    changers: &'a [ReplaceStatic<'a>],
+}
 
-    let mut begin = 0;
-    while let Some(found_pattern_begin) = replace_this[begin..].find(left_bracket) {
-        match &replace_this[found_pattern_begin..].find(right_bracket) {
-            None => break,
-            Some(pattern_end) => {
-                let mrange = std::ops::Range {
-                    start: begin + found_pattern_begin + left_bracket.len(),
-                    end: found_pattern_begin + pattern_end,
-                };
-                let part = &replace_this[mrange];
-                if let Some(good) = changers.iter().find(|el| el.r == part) {
-                    let erange = std::ops::Range {
-                        start: begin + found_pattern_begin,
-                        end: found_pattern_begin + pattern_end + right_bracket.len(),
-                    };
-                    replace_this.replace_range(erange, &good.c);
-                    begin += &good.c.len() + found_pattern_begin;
-                } else {
-                    begin += pattern_end;
-                }
-            }
+impl<'a> HTMLReplacer<'a> {
+    fn new(changers: &'a [ReplaceStatic<'a>]) -> Self {
+        Self {
+            changers: &changers,
         }
     }
-    replace_this
+}
+
+impl<'a> Replacer for HTMLReplacer<'a> {
+    fn replace_append(&mut self, caps: &Captures, dst: &mut String) {
+        let matched = caps.name("txt").unwrap();
+        dst.push_str(
+            &self
+                .changers
+                .iter()
+                .find(|r| r.r == matched.as_str())
+                .and_then(|s| Some(s.c.clone()))
+                .or_else(|| {
+                    warn!("This HTML-replacer is not defined '{}'", matched.as_str());
+                    Some("".to_string())
+                })
+                .unwrap(),
+        );
+    }
 }
 
 #[cfg(test)]
@@ -201,10 +220,10 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn quick_replace_LUT_tests() {
-        let changers: [ReplaceStatic; 5] = [
+        let changers: [ReplaceStatic; 6] = [
             ReplaceStatic {
-                r: config::net::HTML_REPLACE_STATIC_URL_SOURCE,
-                c: config::net::HTML_URL_SOURCE.to_string(),
+                r: config::webui::HTML_REPLACE_STATIC_URL_SOURCE,
+                c: config::net::HOMEPAGE.to_string(),
             },
             ReplaceStatic {
                 r: "CAT",
@@ -221,6 +240,10 @@ mod tests {
             ReplaceStatic {
                 r: "TABLE",
                 c: "table".to_string(),
+            },
+            ReplaceStatic {
+                r: config::webui::HTML_REPLACE_VERSION,
+                c: config::net::VERSION.to_string(),
             },
         ];
         let replace_this = "The <!---CAT---> <!---JUMP---><!---ON--->the <!---TABLE--->.";
@@ -241,6 +264,16 @@ mod tests {
         let replace_this = "<!--JUMP--><!---CAT---><!--- -->";
         let return_value = linear_LUT_replacer(replace_this, &changers);
         let expect = "<!--JUMP-->cat<!--- -->";
+        assert_eq!(return_value, expect);
+
+        let replace_this = [
+            "<!--JUMP--><!---",
+            &config::webui::HTML_REPLACE_VERSION,
+            "---><!--- -->",
+        ]
+        .concat();
+        let return_value = linear_LUT_replacer(&replace_this, &changers);
+        let expect = ["<!--JUMP-->", &config::net::VERSION, "<!--- -->"].concat();
         assert_eq!(return_value, expect);
     }
 }

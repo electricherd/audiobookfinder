@@ -10,11 +10,8 @@ pub mod net {
     pub static WEB_PORT_MAX: u16 = 8099;
     pub static WEB_PORT_MIN: u16 = 8080;
 
-    pub static HTML_REPLACE_STATIC_WEB_ADDR: &str = "WEBSOCKET_ADDR";
-    pub static HTML_REPLACE_STATIC_WEB_PORT: &str = "PORT_WEBSOCKET";
-    pub static HTML_REPLACE_STATIC_URL_SOURCE: &str = "URL_SOURCE";
-
-    pub static HTML_URL_SOURCE: &str = "https://github.com/electricherd/audiobookfinder";
+    pub static VERSION: &str = env!("CARGO_PKG_VERSION");
+    pub static HOMEPAGE: &str = env!("CARGO_PKG_HOMEPAGE");
 }
 
 /// The TUI related configurations of a more general purpose
@@ -102,13 +99,20 @@ pub mod webui {
         pub static ref FAVICON: &'static [u8] = include_bytes!("../ctrl/webui/gfx/favicon.png");
         pub static ref PIC_SHEEP: &'static str = include_str!("../ctrl/webui/gfx/sheep.svg");
     }
+
+    pub static HTML_REPLACE_STATIC_WEB_ADDR: &str = "WEBSOCKET_ADDR";
+    pub static HTML_REPLACE_STATIC_WEB_PORT: &str = "PORT_WEBSOCKET";
+    pub static HTML_REPLACE_STATIC_URL_SOURCE: &str = "URL_SOURCE";
+
     pub static HTML_REPLACER_BEGIN: &str = "<!---";
     pub static HTML_REPLACER_END: &str = "--->";
-    pub static HTML_REPLACE_PEER_HASH: &str = "PEER_HASH";
+
     pub static HTML_REPLACE_HOSTNAME: &str = "HOSTNAME";
-    pub static HTML_REPLACE_WEBSOCKET: &str = "WEBSOCKET";
-    pub static HTML_REPLACE_PEER_PAGE: &str = "PEER_PAGE";
     pub static HTML_REPLACE_PATHS_MAX: &str = "PATHS_MAX";
+    pub static HTML_REPLACE_PEER_HASH: &str = "PEER_HASH";
+    pub static HTML_REPLACE_PEER_PAGE: &str = "PEER_PAGE";
+    pub static HTML_REPLACE_VERSION: &str = "VERSION";
+    pub static HTML_REPLACE_WEB_SOCKET: &str = "WEB_SOCKET";
 }
 
 /// The data related configurations of a more general purpose

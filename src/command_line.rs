@@ -13,9 +13,7 @@ static ARG_BROWSER_PORT: &str = "port";
 
 static INPUT_FOLDERS: &str = "folders";
 
-const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 const AUTHORS: &'static str = env!("CARGO_PKG_AUTHORS");
-const HOMEPAGE: &'static str = env!("CARGO_PKG_HOMEPAGE");
 const DESCRIPTION: &'static str = env!("CARGO_PKG_DESCRIPTION");
 
 /// Get all start values which are passed from command line
@@ -31,7 +29,7 @@ const DESCRIPTION: &'static str = env!("CARGO_PKG_DESCRIPTION");
 /// has_ui,
 pub fn get_start_values() -> (Vec<String>, bool, bool, bool, bool, bool, u16, bool) {
     let parse_args = clap::App::new(APP_TITLE)
-        .version(VERSION)
+        .version(config::net::VERSION)
         .author(AUTHORS)
         .about(DESCRIPTION)
         .long_about::<&str>(
@@ -44,7 +42,7 @@ pub fn get_start_values() -> (Vec<String>, bool, bool, bool, bool, bool, u16, bo
                  different quality, different tags for same content (spelling, \
                  incompleteness).\n\
                  For documentation see: ",
-                &HOMEPAGE,
+                &config::net::HOMEPAGE,
                 "\n \
                  A program to learn, embrace, and love Rust! \n\
                  Have fun!",

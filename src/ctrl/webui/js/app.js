@@ -9,6 +9,7 @@ function APPStart() {
     state = false;
     guid_id = "<!---PEER_HASH--->";
     max_paths = <!---PATHS_MAX--->;
+    version_string = "<!---VERSION--->";
 
     $(document).ready(function(){
         // keep it for later with different id
