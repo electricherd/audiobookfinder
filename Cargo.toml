@@ -1,7 +1,7 @@
 [package]
 edition = "2018"
 name = "audiobookfinder"
-version = "0.1.27"
+version = "0.1.28"
 authors = ["Sven Kroemeke <skroemeke@gmail.com>"]
 license = "MIT" # http://spdx.org/licenses/
 repository = "https://github.com/electricherd/audiobookfinder"
@@ -59,10 +59,10 @@ metaflac = "0.2"
 num_cpus = "1.13"   # addition to rayon for cpu count
 rayon = "1.4"       # for multi-threading, very good
 
-actix = "0.9"         # basic for webserver
-actix-web = "2.0"     # for mini webserver and websocket
-actix-files = "0.2"
-actix-web-actors = "2.0"
+actix = "0.10"         # basic for webserver
+actix-web = "3.0"     # for mini webserver and websocket
+actix-files = "0.3"
+actix-web-actors = "3.0"
 
 webbrowser = "0.5"    # for opening webpage on machine
 get_if_addrs = "0.5"  # for range of localhosts

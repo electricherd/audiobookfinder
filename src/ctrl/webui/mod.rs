@@ -124,8 +124,6 @@ impl WebUI {
                                 .content_type("text/html; charset=utf-8")
                                 .body(*config::webui::PEER_PAGE)
                         }))
-                        //.default_service(web::resource("").to(static_pages::dyn_devel_html)) // only for devel
-                        //.service(web::resource("/app.js").to(static_pages::dyn_devel_js)) // only for devel
                         .service(web::resource("/jquery.min.js").to(|| {
                             HttpResponse::Ok()
                                 .content_type("application/javascript; charset=utf-8")

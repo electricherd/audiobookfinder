@@ -4,7 +4,6 @@ use super::{
     super::super::{common::config, net::subs::peer_representation::PeerRepresentation},
     WebServerState,
 };
-use actix_files as fs;
 use actix_web::{
     http::StatusCode,
     web::{self, HttpResponse},
@@ -16,17 +15,6 @@ use std::{
     string::String,
     sync::{Arc, Mutex},
 };
-
-/// dynamic development files
-#[allow(dead_code)]
-pub async fn dyn_devel_html() -> impl Responder {
-    fs::NamedFile::open("src/ctrl/webui/html/main_page.html")
-}
-
-#[allow(dead_code)]
-pub async fn dyn_devel_js() -> impl Responder {
-    fs::NamedFile::open("src/ctrl/webui/js/app.js")
-}
 
 pub async fn single_page(state: web::Data<Arc<Mutex<WebServerState>>>) -> impl Responder {
     // change state
@@ -42,7 +30,7 @@ pub async fn single_page(state: web::Data<Arc<Mutex<WebServerState>>>) -> impl R
         .body(id_page)
 }
 
-pub async fn bootstrap_css(path: web::Path<(String,)>) -> impl Responder {
+pub async fn bootstrap_css(path: web::Path<String>) -> impl Responder {
     let css = &*path.0;
     let output = match css {
         "bootstrap.css" => Some(*config::webui::bootstrap::CSS),
@@ -73,7 +61,7 @@ pub async fn bootstrap_css(path: web::Path<(String,)>) -> impl Responder {
     }
 }
 
-pub async fn bootstrap_js(path: web::Path<(String,)>) -> impl Responder {
+pub async fn bootstrap_js(path: web::Path<String>) -> impl Responder {
     let js = &*path.0;
     let output = match js {
         "bootstrap.js" => Some(*config::webui::bootstrap::JS),
