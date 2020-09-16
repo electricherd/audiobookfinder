@@ -158,6 +158,7 @@ fn replace_static_content(html_in: &str, id: &PeerRepresentation, port: u16) -> 
             c: config::net::VERSION.to_string(),
         },
     ];
+    // todo: look, how to optimize this ...
     linear_LUT_replacer(html_in, &changers)
 }
 
