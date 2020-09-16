@@ -1,7 +1,7 @@
 //! The StateChart for the server ...
 //! StateMachine type/struct is created inside here by macros I suppose, so using it
 //! needs to "reimport" this file/mod
-use super::super::net::ui_data::UiData;
+use super::super::{data::ipc::IFCollectionOutputData, net::ui_data::UiData};
 use libp2p::core::{Multiaddr, PeerId};
 use smlang::statemachine;
 
@@ -20,7 +20,7 @@ pub struct NewPeerData {
 #[derive(PartialEq)]
 pub struct UpdateData {
     pub id: PeerId,
-    pub count: u32,
+    pub data: IFCollectionOutputData,
 }
 
 statemachine! {

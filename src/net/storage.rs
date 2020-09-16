@@ -2,7 +2,7 @@
 use super::{
     super::data::{
         audio_info::{AudioInfo, AudioInfoKey},
-        ipc::IPC,
+        ipc::{IFCollectionOutputData, IPC},
     },
     subs::peer_representation::{self, PeerRepresentation},
 };
@@ -57,23 +57,23 @@ impl NetStorage {
         } else {
             let bin_key;
             let serialize_message = match ipc_event {
-                IPC::DoneSearching(nr) => {
+                IPC::DoneSearching(out_data) => {
                     bin_key = Self::key_writer(MkadKeys::KeyForPeerFinished(own_peer));
-
                     // try to read old value
-                    let mut value_to_send = nr;
+                    let value_to_send = out_data;
                     if let Some(already_peer_finished_record) = kademlia.store_mut().get(&bin_key) {
-                        let found: u32 =
-                            bincode::deserialize(already_peer_finished_record.value.as_ref())
-                                .unwrap_or_else(|_| {
-                                    error!("value in store is not what expected!");
-                                    0
-                                });
-                        value_to_send += found;
+                        let try_collection_output: Result<IFCollectionOutputData, bincode::Error> =
+                            bincode::deserialize(already_peer_finished_record.value.as_ref());
+                        if let Ok(found_and_deserializable) = try_collection_output {
+                            info!(
+                                "This record was already found somewhere else, and has {:?}!",
+                                found_and_deserializable
+                            );
+                        }
                     } else {
                         trace!(
-                            "this key was not yet set in the kademlia store with value {}!",
-                            nr
+                            "this key {:?} was not yet set in the kademlia store with value!",
+                            bin_key
                         );
                     }
                     Some(bincode::serialize(&value_to_send).unwrap())
@@ -124,10 +124,10 @@ impl NetStorage {
     pub fn check_if_peer_finished(
         kademlia: &mut Kademlia<MemoryStore>,
         peer_id: &PeerId,
-    ) -> Result<u32, ()> {
+    ) -> Result<IFCollectionOutputData, ()> {
         let peer_hash = peer_representation::peer_to_hash(peer_id);
         let query_key = MkadKeys::KeyForPeerFinished(peer_hash);
-        Self::get_key_finished(kademlia, query_key)
+        Self::get_data_finished(kademlia, query_key)
     }
 
     pub fn on_retrieve(&self, message: KademliaEvent) {
@@ -203,16 +203,16 @@ impl NetStorage {
         bincode::deserialize(key_record.as_ref())
     }
 
-    fn get_key_finished(kademlia: &mut Kademlia<MemoryStore>, key: MkadKeys) -> Result<u32, ()> {
+    fn get_data_finished(
+        kademlia: &mut Kademlia<MemoryStore>,
+        key: MkadKeys,
+    ) -> Result<IFCollectionOutputData, ()> {
         let serialized_key = Self::key_writer(key);
         match kademlia.store_mut().get(&serialized_key) {
             Some(good_query) => {
-                let found: u32 =
-                    bincode::deserialize(good_query.value.as_ref()).unwrap_or_else(|_| {
-                        error!("value in store is not what expected!");
-                        0
-                    });
-                Ok(found)
+                let value: Result<IFCollectionOutputData, bincode::Error> =
+                    bincode::deserialize(good_query.value.as_ref());
+                value.map_err(|_e| ())
             }
             None => Err(()),
         }

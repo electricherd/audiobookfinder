@@ -73,6 +73,11 @@ impl Collection {
         }
     }
 
+    /// Return memory usage
+    pub fn memory(&self) -> u64 {
+        self.stats.memory
+    }
+
     /// The function that runs from a given path
     pub fn visit_path(
         &mut self,

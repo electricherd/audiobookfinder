@@ -10,14 +10,36 @@ use self::{audio_info::Container, collection::Collection, ipc::IPC};
 use super::ctrl::{CollectionPathAlive, ForwardNetMsg, NetInfoMsg, Status, UiUpdateMsg};
 use crossbeam::channel::Sender as CrossbeamSender;
 use std::{
+    ops::Add,
     path::Path,
     sync::{mpsc::Sender, Arc as SArc, Mutex as SMutex},
 };
 
 /// Interface of what collection output data will return
-pub struct InterfaceCollectionOutputData {
+pub struct IFInternalCollectionOutputData {
+    pub nr_searched_files: u32,
     pub nr_found_songs: u32,
-    pub nr_duplicates: u32,
+    pub nr_internal_duplicates: u32,
+}
+impl Add for IFInternalCollectionOutputData {
+    type Output = Self;
+
+    fn add(self, other: Self) -> Self {
+        Self {
+            nr_searched_files: self.nr_searched_files + other.nr_searched_files,
+            nr_found_songs: self.nr_found_songs + other.nr_found_songs,
+            nr_internal_duplicates: self.nr_internal_duplicates + other.nr_internal_duplicates,
+        }
+    }
+}
+impl IFInternalCollectionOutputData {
+    pub fn new() -> Self {
+        Self {
+            nr_searched_files: 0,
+            nr_found_songs: 0,
+            nr_internal_duplicates: 0,
+        }
+    }
 }
 
 /// The collection search! Searches on the file system a concrete, single path.
@@ -28,7 +50,7 @@ pub fn search_in_single_path(
     mutex_to_ui_msg: SArc<SMutex<Sender<UiUpdateMsg>>>,
     index: usize,
     elem: &str,
-) -> InterfaceCollectionOutputData {
+) -> IFInternalCollectionOutputData {
     if !has_ui {
         println!("[{:?}] looking into path {:?}", index, elem);
     } else {
@@ -93,9 +115,10 @@ pub fn search_in_single_path(
                 println!("[{:?}] done {}", index, text);
             }
             // return this here
-            InterfaceCollectionOutputData {
+            IFInternalCollectionOutputData {
+                nr_searched_files: local_stats.searched,
                 nr_found_songs: local_stats.analyzed,
-                nr_duplicates: local_stats.duplicates,
+                nr_internal_duplicates: local_stats.duplicates,
             }
         }
         Err(_e) => {
@@ -116,9 +139,10 @@ pub fn search_in_single_path(
                 println!("{:?}", text);
             }
             // return this here
-            InterfaceCollectionOutputData {
+            IFInternalCollectionOutputData {
+                nr_searched_files: 0,
                 nr_found_songs: 0,
-                nr_duplicates: 0,
+                nr_internal_duplicates: 0,
             }
         }
     }

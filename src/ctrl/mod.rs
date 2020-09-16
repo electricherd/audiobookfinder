@@ -7,6 +7,7 @@ mod webui;
 use self::{tui::Tui, webui::WebUI};
 use super::{
     common::{config, paths::SearchPath},
+    data::ipc::IFCollectionOutputData,
     net::subs::peer_representation::{self, PeerRepresentation},
 };
 use async_std::task;
@@ -61,7 +62,7 @@ pub enum InternalUiMsg {
     Update(ForwardNetMsg),
     StartAnimate(CollectionPathAlive, Status),
     StepAndAnimate(CollectionPathAlive),
-    PeerSearchFinished(PeerId, u32),
+    PeerSearchFinished(PeerId, IFCollectionOutputData),
     Terminate,
 }
 
@@ -70,7 +71,7 @@ pub enum InternalUiMsg {
 pub enum UiUpdateMsg {
     NetUpdate(ForwardNetMsg),
     CollectionUpdate(CollectionPathAlive, Status),
-    PeerSearchFinished(PeerId, u32),
+    PeerSearchFinished(PeerId, IFCollectionOutputData),
     StopUI,
 }
 
@@ -454,12 +455,12 @@ impl Ctrl {
                     }
                     true
                 }
-                UiUpdateMsg::PeerSearchFinished(peer_representation, count) => {
+                UiUpdateMsg::PeerSearchFinished(peer_representation, data) => {
                     for forward_sender in multiplex_send {
                         forward_sender
                             .send(InternalUiMsg::PeerSearchFinished(
                                 peer_representation.clone(),
-                                count.clone(),
+                                data.clone(),
                             ))
                             .unwrap_or_else(|_| {
                                 warn!("forwarding message cancelled probably due to quitting!");

@@ -3,7 +3,7 @@
 //! currently kademlia, mdns
 //! https://docs.rs/libp2p/latest/libp2p/swarm/struct.DummyBehaviour.html
 use super::{
-    super::data::ipc::IPC,
+    super::data::ipc::{IFCollectionOutputData, IPC},
     sm::{
         self, AdbfStateChart, Error as SMError, Events, Events::*, NewPeerData, States, UpdateData,
     },
@@ -72,10 +72,10 @@ impl SMBehaviour {
         self.process_and_react(remove_peer_event);
     }
 
-    pub fn update_peer_data(&mut self, peer_id: &PeerId, count: u32) {
+    pub fn update_peer_data(&mut self, peer_id: &PeerId, data: IFCollectionOutputData) {
         let to_update_peer = UpdatePeer(UpdateData {
             id: peer_id.clone(),
-            count,
+            data: data.clone(),
         });
         // todo: this later will be a referenced data (as in SM example on webside)
         self.process_and_react(to_update_peer);

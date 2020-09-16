@@ -173,22 +173,21 @@ function updateNetView(data) {
             tooltip += "=" + addresses[i] + "=";
         }
         // create obj
-        let new_el_html = "<tr id='" + obj_id + "' "
-                        // todo: fix html tooltip
-                         + "data-toggle='tooltip' data-placement='bottom' data-html='true' "
-                         + "title='Adresses: "
+        let new_el_html =  '<tr id="' + obj_id + '" '
+                         + 'data-toggle="tooltip" data-placement="bottom" data-html="true" '
+                         + 'title="Adresses: '
                          + tooltip
-                         + "'><td class='col-xs-3'>"
-                         + "<button id='netbutton_" + peer_id + "' class='btn btn-light text-monospace' "
-                         + "value='" + guid_id + "'"
-                         + "onClick='netButtonClick(this.id, this.value)'>"
+                         + '"><td class="col-xs-3">'
+                         + '<button id="netbutton_' + peer_id + '" class="btn btn-light text-monospace" '
+                         + 'value="' + guid_id + '"'
+                         + 'onClick="netButtonClick(this.id, this.value)">'
                          + peer_id
-                         + "</button>"
-                         + "</td><td id='count_" + peer_id + "'>"
-                         + "<div class='spinner-border spinner-border-sm text-success' role='status'>"
-                         + " <span class='sr-only'></span>"
-                         + "</div>"
-                         + "</td></tr>";
+                         + '</button>'
+                         + '</td><td id="result_' + peer_id + '">'
+                         + '<div class="spinner-border spinner-border-sm text-success" role="status">'
+                         + ' <span class="sr-only"></span>'
+                         + '</div>'
+                         + '</td></tr>';
         new_el = $.parseHTML(new_el_html);
         // append it as an object
         $("#found_peers").append(new_el);
@@ -201,13 +200,23 @@ function updateNetView(data) {
         let obj_id =  "host_obj_" + peer_id;
         $('#' + obj_id).fadeOut(1500).remove();
     }
-    else if (data.view === 'count') {
-        // delete object
+    else if (data.view === 'finished') {
         let peer_id = data.cnt.peer;
-        let count = data.cnt.count;
-
-        let new_text = "<div>[" + count + "]</div>";
-        $('#count_' + peer_id + ' div').replaceWith(new_text);
+        if (peer_id === guid_id) {
+            // myself
+            let new_el = html_build_finished_peer(data.cnt.data);
+            // set text in peer_page
+            $('#own_finished').html(new_el);
+            // set tooltip
+            $('#own_header').attr('title',new_el);
+        } else {
+            // foreign peer results
+            let new_el = html_build_finished_peer(data.cnt.data);
+            let first_result = data.cnt.data.nr_found_songs;
+            let new_text =  '<div data-toggle="tooltip" data-placement="bottom" data-html="true"'
+                          + '     title="' + new_el + '">[' + first_result + '] audio files found </div>';
+            $('#result_' + peer_id + ' div').replaceWith(new_text);
+        }
     }
     else {
         console.log("The view '" + data.view + "' is not implemented yet!");
@@ -345,6 +354,18 @@ function handle_path_sub_button() {
         }
         $('#modal_add').prop('disabled',false).css('opacity',1.0);
     }
+}
+
+function html_build_finished_peer(data) {
+    let searched_files = data.nr_searched_files;
+    let found_audio = data.nr_found_songs;
+    let duplicates = data.nr_internal_duplicates;
+    let size_data = data.size_of_data_in_kb;
+    let html =   '<table>'
+               + ' <tr><td>files searched:</td><td>' + searched_files + '</td><td> audio files analyzed:</td><td>' + found_audio + ' </td></tr>'
+               + ' <tr><td>duplicates:</td><td>' + duplicates + '</td><td colspan=2>with ' + size_data + 'kb of data to send over network</td></tr>'
+               + '</table>';
+    return html;
 }
 
 function helper_extractLastDir(dir_path) {

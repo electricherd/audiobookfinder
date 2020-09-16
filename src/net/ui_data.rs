@@ -76,7 +76,7 @@ impl UiData {
                 ctrl_sender
                     .send(ctrl::UiUpdateMsg::PeerSearchFinished(
                         update_data.id.clone(),
-                        update_data.count,
+                        update_data.data.clone(),
                     ))
                     .unwrap_or_else(|e| error!("use one: {}", e));
             }

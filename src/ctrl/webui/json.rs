@@ -3,6 +3,7 @@
 use super::{
     super::super::{
         ctrl::{ForwardNetMsg, NetInfoMsg, Status},
+        data::ipc::IFCollectionOutputData,
         net::subs::peer_representation,
     },
     CollectionPathAlive, InternalUiMsg,
@@ -50,10 +51,10 @@ pub fn convert_internal_message(internal_msg: &InternalUiMsg) -> Result<WSJsonOu
             }
             CollectionPathAlive::HostSearch => Ok(WSJsonOut::refresh(RefreshData::net)),
         },
-        InternalUiMsg::PeerSearchFinished(peer, count) => {
-            Ok(WSJsonOut::update(NetData::count(FinishPeer {
+        InternalUiMsg::PeerSearchFinished(peer, data) => {
+            Ok(WSJsonOut::update(NetData::finished(FinishPeer {
                 peer: peer_representation::peer_to_hash_string(peer),
-                count: *count,
+                data: data.clone(),
             })))
         }
         InternalUiMsg::Terminate => Err("terminate is not really of interest, is it?".to_string()),
@@ -134,7 +135,7 @@ pub struct PeerJson {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct FinishPeer {
     peer: String,
-    count: u32,
+    data: IFCollectionOutputData,
 }
 
 #[allow(non_camel_case_types)]
@@ -143,7 +144,7 @@ pub struct FinishPeer {
 pub enum NetData {
     add(PeerJson),
     remove(String),
-    count(FinishPeer),
+    finished(FinishPeer),
 }
 
 #[allow(non_camel_case_types)]
