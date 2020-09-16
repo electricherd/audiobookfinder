@@ -103,9 +103,13 @@ function APPStart() {
               this.dropdown('dispose');
             });
 
+            // enable html tooltips
+            $('body').tooltip({
+                selector: '.html_tooltip'
+            });
+
             // STARTUP with modal
             $('#modal_dir_chooser').modal('show');
-
         } else {
             // The browser doesn't support WebSocket
             alert("WebSocket NOT supported by your Browser!");
@@ -184,7 +188,7 @@ function updateNetView(data) {
                          + peer_id
                          + '</button>'
                          + '</td><td id="result_' + peer_id + '">'
-                         + '<div class="spinner-border spinner-border-sm text-success" role="status">'
+                         + '<div class="spinner-border spinner-border-sm" role="status">'
                          + ' <span class="sr-only"></span>'
                          + '</div>'
                          + '</td></tr>';
@@ -213,8 +217,8 @@ function updateNetView(data) {
             // foreign peer results
             let new_el = html_build_finished_peer(data.cnt.data);
             let first_result = data.cnt.data.nr_found_songs;
-            let new_text =  '<div data-toggle="tooltip" data-placement="bottom" data-html="true"'
-                          + '     title="' + new_el + '">[' + first_result + '] audio files found </div>';
+            let new_text =  '<div class="col-xs-3 html_tooltip" data-toggle="tooltip" data-placement="right" data-html="true"'
+                          + '     title="' + new_el + '">' + first_result + ' audio files found </div>';
             $('#result_' + peer_id + ' div').replaceWith(new_text);
         }
     }
@@ -361,10 +365,11 @@ function html_build_finished_peer(data) {
     let found_audio = data.nr_found_songs;
     let duplicates = data.nr_internal_duplicates;
     let size_data = data.size_of_data_in_kb;
-    let html =   '<table>'
-               + ' <tr><td>files searched:</td><td>' + searched_files + '</td><td> audio files analyzed:</td><td>' + found_audio + ' </td></tr>'
-               + ' <tr><td>duplicates:</td><td>' + duplicates + '</td><td colspan=2>with ' + size_data + 'kb of data to send over network</td></tr>'
-               + '</table>';
+    let html =   'files searched      :<b>' + searched_files + '</b><br/>'
+               + 'audio files analyzed:<b>' + found_audio + '</b><br/>'
+               + 'duplicates          :<b>' + duplicates + '</b><br/>'
+               + '<b>' + size_data + ' kb</b> of data to network';
+//    let html =   '<div><b>files searched:</b>' + searched_files + '</div>';
     return html;
 }
 
