@@ -212,6 +212,7 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
 - [x] using a Boost-SML style [state machine](https://github.com/korken89/smlang-rs) now, nice one!
 - [ ] learning and understanding rust macros (some day)
 - [x] exchange of data over all kinds of boundaries (net, thread) via de-/serialization using [serde](https://docs.serde.rs/serde/) and its json feature for webui
+- [x] check regular expressions in Rust: it's badly documented, not intuitive
 
 ### Dependencies
 * no non-Rust libraries, it's crossplatform now :blush:
