@@ -153,7 +153,6 @@ It is an inline documentation from [CI](https://travis-ci.org/electricherd/audio
 
 ### ToDo
 * interesting crate [cfg_if](https://github.com/alexcrichton/cfg-if) for platform dependent parts
-* implement as android/ios app using [flutterust](https://github.com/electricherd/flutterust)
 * try [crate vfs](https://github.com/manuel-woelker/rust-vfs) for unit test with files!! interesting and needed!
 * look for other tag libraries (e.g. symphonia-metadata [symphonia](https://github.com/pdeljanov/Symphonia))
 * a good and fast data collection with few more further lifetimes optimizations
@@ -163,6 +162,7 @@ It is an inline documentation from [CI](https://travis-ci.org/electricherd/audio
 * think of a protocol what adbf clients agree on and exchange (e.g. still searching, files found, etc)
 * maybe a little AI layer on determining audio books duplicates/same author by similar spelling, etc.
 * internationalization (which is not really supported yet by Rust)
+* ~~implement as android/ios app using [flutterust](https://github.com/electricherd/flutterust).~~
 * ~~change webui to be started without collection start, to be able use path selection from within webui later~~
 * ~~add [ctrlc](http://detegr.github.io/doc/ctrlc/) functionality for signal handling in main~~
 * ~~let state machine *talk* (as ipc) with data collection via [crossbeam](https://github.com/crossbeam-rs/crossbeam) (first only the finish search status)~~
@@ -238,3 +238,4 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
 * https://jquery.com/
 * https://gist.github.com/ismasan/299789
 * https://github.com/tempor1s/bktree-rs
+* https://github.com/shekohex/flutterust
