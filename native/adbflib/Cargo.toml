@@ -1,6 +1,6 @@
 [package]
 edition = "2018"
-name = "audiobookfinder"
+name = "adbflib"
 version = "0.1.28"
 authors = ["Sven Kroemeke <skroemeke@gmail.com>"]
 license = "MIT" # http://spdx.org/licenses/
