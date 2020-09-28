@@ -115,8 +115,8 @@ build_script:
   - cmd: cargo build --bin %CRATE_NAME% --release --target %target%
 
 test_script:
-  - sh: cargo test
-  - cmd: cargo test
+  - sh: cargo test --bin $CRATE_NAME
+  - cmd: cargo test --bin %CRATE_NAME%
   - sh: ./target/$target/release/$CRATE_NAME -- testaudio
   - cmd: target\%target%\release\%CRATE_NAME%.exe -- testaudio
 
