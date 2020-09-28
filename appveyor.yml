@@ -111,8 +111,8 @@ install:
 build_script:
 # comment next line for quick build
 #  - cargo build
-  - sh: cargo build --release --target $target  
-  - cmd: cargo build --release --target %target%
+  - sh: cargo build --bin $CRATE_NAME --release --target $target
+  - cmd: cargo build --bin %CRATE_NAME% --release --target %target%
 
 test_script:
   - sh: cargo test
