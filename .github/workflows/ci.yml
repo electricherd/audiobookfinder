@@ -1,5 +1,8 @@
 on: [push, pull_request]
+# all from flutterust MIT licensed
+#
 
+# name is (urlencode) connected to README.md svg badge (change it there as well)
 name: CI (Android, iOS)
 
 jobs:

@@ -79,6 +79,7 @@ __It's crossplatform now!__
 * [appveyor](#CI) and [travis](#CI) CI
 * build-in unit-testing the right way
 * [BK-tree](https://en.wikipedia.org/wiki/BK-tree) data structure for approximate string matching
+* experimental simple mobile app based on [ffi](https://en.wikipedia.org/wiki/Foreign_function_interface) interface [Dart](https://dart.dev/) / [Flutter](https://flutter.dev/) / [flutterust](https://github.com/shekohex/flutterust)
 
 ### Screenshots
 <!-- the files are linked in issue section of https://github.com/electricherd/audiobookfinder/issues/28  -->
@@ -186,6 +187,8 @@ The Continuous Integration is done on 2 services, Travis and AppVeyor but will p
     * [Audiobookfinder Build Ubuntu 16.04](https://travis-ci.org/electricherd/audiobookfinder) ![travis](https://travis-matrix-badges.herokuapp.com/repos/electricherd/audiobookfinder/branches/master/1)
     * [Audiobookfinder Build Debian Buster Raspberry](https://travis-ci.org/electricherd/audiobookfinder) ![travis](https://travis-matrix-badges.herokuapp.com/repos/electricherd/audiobookfinder/branches/master/2)
     * only until version 0.1.18: Build Linux 14.04
+* On Github with Github Actions
+    * [![Actions Status](https://github.com/electricherd/audiobookfinder/workflows/CI%20%28Android%2C%20iOS%29/badge.svg)](https://github.com/electricherd/audiobookfinder/actions)
 
 ### Goals
 The primary goal is to learn Rust and to cover various aspects of the language, of which some of I already used inside the program, such as:
