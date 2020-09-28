@@ -152,7 +152,6 @@ It is an inline documentation from [CI](https://travis-ci.org/electricherd/audio
 </details>
 
 ### ToDo
-* interesting crate [cfg_if](https://github.com/alexcrichton/cfg-if) for platform dependent parts
 * try [crate vfs](https://github.com/manuel-woelker/rust-vfs) for unit test with files!! interesting and needed!
 * look for other tag libraries (e.g. symphonia-metadata [symphonia](https://github.com/pdeljanov/Symphonia))
 * a good and fast data collection with few more further lifetimes optimizations

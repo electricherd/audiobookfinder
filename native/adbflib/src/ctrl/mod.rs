@@ -372,13 +372,10 @@ impl Ctrl {
         web_port: u16,
     ) -> io::Result<()> {
         let mut wait_ui_sync_maybe_before = None;
+
         if open_browser {
-            if webbrowser::open(
-                // todo: what if https
-                &["http://", config::net::WEB_ADDR, ":", &web_port.to_string()].concat(),
-            )
-            .is_ok()
-            {
+            // fixme: fix this to not be included in library in some point
+            if try_open_browser(web_port) {
                 // it's clear this browser will take websocket start
                 wait_ui_sync_maybe_before = Some(wait_ui_sync);
             } else {
@@ -479,4 +476,40 @@ impl Ctrl {
             true
         }
     }
+}
+
+// see https://doc.rust-lang.org/reference/conditional-compilation.html
+// same configuration as "open" from "webbrowser" crate allows
+#[cfg(any(
+    target_os = "android",
+    target_os = "windows",
+    target_os = "macos",
+    target_os = "linux",
+    target_os = "freebsd",
+    targest_os = "netbsd",
+    target_os = "openbsd",
+    target_os = "haiku",
+    target_arch = "wasm32"
+))]
+fn try_open_browser(web_port: u16) -> bool {
+    webbrowser::open(
+        // todo: what if https
+        &["http://", config::net::WEB_ADDR, ":", &web_port.to_string()].concat(),
+    )
+    .is_ok()
+}
+
+#[cfg(not(any(
+    target_os = "android",
+    target_os = "windows",
+    target_os = "macos",
+    target_os = "linux",
+    target_os = "freebsd",
+    target_os = "netbsd",
+    target_os = "openbsd",
+    target_os = "haiku",
+    target_arch = "wasm32"
+)))]
+pub fn try_open_browser(web_port: u16) -> bool {
+    false
 }
