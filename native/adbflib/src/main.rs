@@ -8,12 +8,14 @@
 
 mod command_line;
 
-use adbflib::data::ipc::IFCollectionOutputData;
-use adbflib::{
+use adbfbinlib::{
     common::{logit, paths::SearchPath},
     ctrl::{Ctrl, UiUpdateMsg},
     data::{
-        self, audio_info::Container, collection::Collection, ipc::IPC,
+        self,
+        audio_info::Container,
+        collection::Collection,
+        ipc::{IFCollectionOutputData, IPC},
         IFInternalCollectionOutputData,
     },
     net::{subs::key_keeper, Net},

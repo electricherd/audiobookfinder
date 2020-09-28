@@ -18,7 +18,7 @@ travis-ci = { repository = "electricherd/audiobookfinder", branch = "master" }
 maintenance = { status = "actively-developed" }
 
 [lib]
-name = "adbflib"
+name = "adbfbinlib"
 path = "src/lib.rs"
 bench = true
 

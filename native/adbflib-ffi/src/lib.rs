@@ -66,7 +66,7 @@ pub extern "C" fn file_count_good(dart_port: i64, one_path: *const raw::c_char) 
     let rt = runtime!();
     let first_entry: &str = cstr!(one_path);
     let paths = vec![first_entry.to_string()];
-    let t = Isolate::new(dart_port).task(adbflib::file_count_good(paths));
+    let t = Isolate::new(dart_port).task(adbfbinlib::file_count_good(paths));
     rt.spawn(t);
     1
 }
