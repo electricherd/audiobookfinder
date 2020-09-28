@@ -7,3 +7,6 @@
 build/
 **/*.a
 **/*.so
+
+# is generated
+lib/ffi.dart
