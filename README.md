@@ -93,6 +93,11 @@ __It's crossplatform now!__
 It is an inline documentation from [CI](https://travis-ci.org/electricherd/audiobookfinder/) generated documentation - Rust does a nice job here as well!
 
 ### Changes
+* added mobile app build by using [flutterust](https://github.com/shekohex/flutterust) by [Shady Khalifa](https://github.com/shekohex/shekohex) :thumbsup: great
+  * [Dart](https://dart.dev/)/[Flutter](https://flutter.dev/) coding required as frontend on mobile app side
+  * add github actions as 3rd CI (quite new to me)
+  * distinguished lib and binary builds in CI
+  * will lead to architectural changes -> parts to: lib, binary, shared
 * webui path input dialog working, more results presented
 * changed a range based implementation with a regex based implementation, also for the interest of the regex crate in Rust
 * moved direct connection to net via ipc out, `net` is the long running slow part, (local) `collection` is the fast part

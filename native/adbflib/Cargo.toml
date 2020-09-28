@@ -28,6 +28,11 @@ path = "src/main.rs"
 
 # ################################################################################
 
+[features]
+default = ["cursive/crossterm-backend"]
+system-alloc = []
+
+
 [dependencies]
 async-std = "1.6"     # great async
 crossbeam = "0.7"     # a mpmc library also with Workgroup instead of std::thread::barrier
@@ -64,7 +69,6 @@ actix-web = "3.0"     # for mini webserver and websocket
 actix-files = "0.3"
 actix-web-actors = "3.0"
 
-webbrowser = "0.5"    # for opening webpage on machine
 get_if_addrs = "0.5"  # for range of localhosts
 
 smlang = "0.3"        # state machine for client server communication for data exchange
@@ -81,9 +85,11 @@ libp2p-noise = "0.24"
 [dependencies.cursive]
 version = "0.15"
 default-features = false
-[features]
-default = ["cursive/crossterm-backend"]
-system-alloc = []
+
+# https://doc.rust-lang.org/reference/conditional-compilation.html
+# same as used in "webbrowser" crate
+[target.'cfg(any(target_os = "android", target_os = "windows", target_os = "macos", target_os = "linux", target_os = "freebsd", targest_os = "netbsd",target_os = "openbsd", target_os = "haiku", target_arch = "wasm32"))'.dependencies]
+webbrowser = "0.5"
 
 # ############################################################################
 # see https://doc.rust-lang.org/cargo/reference/profiles.html
