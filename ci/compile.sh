@@ -13,7 +13,7 @@ main() {
     # compile
     case $TARGET in
       x86_64-unknown-linux-gnu|i686-unknown-linux-gnu|arm-unknown-linux-gnueabi|aarch64-unknown-linux-gnu|x86_64-apple-darwin)
-         cargo build --target $TARGET --release
+         cargo build --bin audiobookfinder --target $TARGET --release
       ;;
       armv7-unknown-linux-gnueabihf)
          docker run --volume "$PWD:/home/cross/project" ragnaroek/rust-raspberry:1.43.1
