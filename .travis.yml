@@ -110,4 +110,4 @@ ignore:
   - README-release.md
   - ci/
   - docs/
-
+  - .github/

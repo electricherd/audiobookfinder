@@ -172,6 +172,7 @@ skip_commits:
   files:
     - ci/
     - docs/
+    - .github/
     - .travis.yml
     - README.md
     - README-release.md
