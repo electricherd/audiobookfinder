@@ -12,13 +12,11 @@ use adbfbinlib::{
     common::{logit, paths::SearchPath},
     ctrl::{Ctrl, UiUpdateMsg},
     data::{
-        self,
-        audio_info::Container,
         collection::Collection,
         ipc::{IFCollectionOutputData, IPC},
-        IFInternalCollectionOutputData,
     },
     net::{subs::key_keeper, Net},
+    shared,
 };
 use async_std::task;
 use crossbeam::{channel::unbounded, sync::WaitGroup};
@@ -26,7 +24,6 @@ use ctrlc;
 use exitcode;
 use log::{error, info, trace};
 use num_cpus;
-use rayon::prelude::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator};
 use std::{
     cmp, env,
     io::{self, Error},
@@ -181,78 +178,49 @@ fn main() -> io::Result<()> {
 
         let synced_to_ui_messages = tx_from_collector_to_ui.clone();
 
-        // start the parallel search threads with rayon, each path its own
-        let init_collection = Collection::new();
-        let collection_protected = SArc::new(SMutex::new(init_collection));
+        // set up data
+        let collection_protected = SArc::new(SMutex::new(Collection::new()));
 
-        let output_data = SArc::new(SMutex::new(IFInternalCollectionOutputData::new()));
-        let handle_container = SArc::new(SMutex::new(Container::new()));
-
-        let current_search_path = search_path.lock().unwrap().read();
-        &current_search_path
-            .par_iter()
-            .enumerate()
-            .for_each(|(index, elem)| {
-                let sender_loop = synced_to_ui_messages.clone();
-                let collection_data_in_iterator = collection_protected.clone();
-                let single_path_collection_data = data::search_in_single_path(
-                    has_ui,
-                    handle_container.clone(),
-                    collection_data_in_iterator,
-                    sender_loop,
-                    index,
-                    elem,
-                );
-                // accumulate data
-                {
-                    // todo: add trait doesn't work??
-                    let mut locker = output_data.lock().unwrap();
-                    locker.nr_found_songs += single_path_collection_data.nr_found_songs;
-                    locker.nr_internal_duplicates +=
-                        single_path_collection_data.nr_internal_duplicates;
-                    locker.nr_searched_files += single_path_collection_data.nr_searched_files;
-                }
-            });
+        // search parallelly
+        let output_data = shared::collection_search(
+            collection_protected.clone(),
+            search_path,
+            synced_to_ui_messages,
+            has_ui,
+        );
 
         info!("collector finished!!");
         if has_ui || has_net {
             // send own peer and others that are finished
-            output_data
+            let memory_used = collection_protected
                 .lock()
-                .and_then(|data| {
-                    let memory_used = collection_protected
-                        .lock()
-                        .and_then(|collection| Ok(collection.memory()))
-                        .unwrap_or_else(|_| {
-                            error!("locking collection didn't work here!");
-                            0
-                        });
+                .and_then(|collection| Ok(collection.memory()))
+                .unwrap_or_else(|_| {
+                    error!("locking collection didn't work here!");
+                    0
+                });
 
-                    let mut collection_output = IFCollectionOutputData::from(&*data);
-                    // to have not 0 as data size minimum
-                    collection_output.size_of_data_in_kb =
-                        cmp::max(1, (memory_used / 1000) as usize);
+            let mut collection_output = IFCollectionOutputData::from(&output_data);
+            // to have not 0 as data size minimum
+            collection_output.size_of_data_in_kb = cmp::max(1, (memory_used / 1000) as usize);
 
-                    // to others via IPC
-                    if has_net {
-                        ipc_send_finished
-                            .send(IPC::DoneSearching(collection_output.clone()))
-                            .unwrap_or_else(|_| {
-                                error!("net has to be up and receiving this send!");
-                            });
-                    }
-                    // to myself (ui) via UiUpdateMsg
-                    if has_ui {
-                        tx_col
-                            .send(UiUpdateMsg::PeerSearchFinished(
-                                key_keeper::get_p2p_server_id(),
-                                collection_output,
-                            ))
-                            .unwrap_or_else(|e| error!("use one: {}", e));
-                    }
-                    Ok(())
-                })
-                .unwrap();
+            // to others via IPC
+            if has_net {
+                ipc_send_finished
+                    .send(IPC::DoneSearching(collection_output.clone()))
+                    .unwrap_or_else(|_| {
+                        error!("net has to be up and receiving this send!");
+                    });
+            }
+            // to myself (ui) via UiUpdateMsg
+            if has_ui {
+                tx_col
+                    .send(UiUpdateMsg::PeerSearchFinished(
+                        key_keeper::get_p2p_server_id(),
+                        collection_output,
+                    ))
+                    .unwrap_or_else(|e| error!("use one: {}", e));
+            }
         }
         if !has_ui {
             collection_protected

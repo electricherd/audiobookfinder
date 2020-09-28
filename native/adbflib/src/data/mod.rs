@@ -16,6 +16,7 @@ use std::{
 };
 
 /// Interface of what collection output data will return
+#[derive(Clone)]
 pub struct IFInternalCollectionOutputData {
     pub nr_searched_files: u32,
     pub nr_found_songs: u32,
