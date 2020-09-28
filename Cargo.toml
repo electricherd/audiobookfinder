@@ -5,3 +5,9 @@ members = ["native/*"]
 lto = true
 codegen-units = 1
 debug = true
+
+# ############################################################################
+# see https://doc.rust-lang.org/cargo/reference/profiles.html
+# profiles
+[profile.release.package.adbflib]
+codegen-units = 8
