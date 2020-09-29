@@ -86,7 +86,7 @@ __It's crossplatform now!__
 | ![Screenshot Linux v0.1.28 Running 1](https://user-images.githubusercontent.com/31503071/93353902-b9f83880-f83c-11ea-9f8d-5054f74a6dbc.png?raw=true) | ![Screenshot Linux v0.1.28 Running 2](https://user-images.githubusercontent.com/31503071/93353903-ba90cf00-f83c-11ea-935d-ebc79127954c.png?raw=true)| ![Screenshot Linux Selection](https://user-images.githubusercontent.com/31503071/91750242-1152a380-ebc3-11ea-8840-dc2576c47785.png?raw=true) | ![Screenshot Linux Running](https://user-images.githubusercontent.com/31503071/91750136-df414180-ebc2-11ea-8508-24c04e000ba9.png?raw=true)|
 | :------: | :------: | :------: | :------: |
 |  ![Screenshot Windows v0.1.28 Running 1](https://user-images.githubusercontent.com/31503071/93353900-b8c70b80-f83c-11ea-821c-68cc015e4b10.png?raw=true) | ![Screenshot Windows v0.1.28 Running 2](https://user-images.githubusercontent.com/31503071/93353901-b9f83880-f83c-11ea-9558-773279498f87.png?raw=true) | ![Screenshot Windows Selection](https://user-images.githubusercontent.com/31503071/91750262-17488480-ebc3-11ea-97be-54005f012669.png?raw=true) | ![Screenshot Windows Running](https://user-images.githubusercontent.com/31503071/91750257-144d9400-ebc3-11ea-9cb6-93dc4f7225e5.png?raw=true)|
-
+|  ![Screenshot Android App 0.0.3 Simulation](https://user-images.githubusercontent.com/31503071/94597515-f3de2b80-028d-11eb-9ac3-8628fe8b56b2.png?raw=true) | ![Screenshot Android App v0.0.3 device](https://user-images.githubusercontent.com/31503071/94597513-f3459500-028d-11eb-8cd8-f378eeff6e63.jpg?raw=true) |  | |
 ### Documentation
 
 [Documentation](https://electricherd.github.io/audiobookfinder/audiobookfinder/index.html) is generated.
@@ -94,6 +94,7 @@ __It's crossplatform now!__
 It is an inline documentation from [CI](https://travis-ci.org/electricherd/audiobookfinder/) generated documentation - Rust does a nice job here as well!
 
 ### Changes
+* added screenshots from experimental manually build mobile app
 * added mobile app build by using [flutterust](https://github.com/shekohex/flutterust) by [Shady Khalifa](https://github.com/shekohex/shekohex) :thumbsup: great
   * [Dart](https://dart.dev/)/[Flutter](https://flutter.dev/) coding required as frontend on mobile app side
   * add github actions as 3rd CI (quite new to me)
@@ -158,6 +159,7 @@ It is an inline documentation from [CI](https://travis-ci.org/electricherd/audio
 </details>
 
 ### ToDo
+* fix github actions CI for automatic build
 * try [crate vfs](https://github.com/manuel-woelker/rust-vfs) for unit test with files!! interesting and needed!
 * look for other tag libraries (e.g. symphonia-metadata [symphonia](https://github.com/pdeljanov/Symphonia))
 * a good and fast data collection with few more further lifetimes optimizations
