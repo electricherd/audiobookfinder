@@ -64,7 +64,7 @@ class _MyHomePageState extends State<MyHomePage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             RaisedButton(
-              color: _searching_path ? Colors.greenAccent : Colors.yellow,
+              color: _searching_path ? Colors.greenAccent : Colors.lime,
               child: Text(
                 'Search with adbf',
                 style: TextStyle(
@@ -88,7 +88,7 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
             const SizedBox(height: 50),
             RaisedButton(
-              color: _searching_peers ? Colors.greenAccent : Colors.yellow,
+              color: _searching_peers ? Colors.greenAccent : Colors.lime,
               child: Text(
                 'Start Peer Search',
                 style: TextStyle(
@@ -102,7 +102,15 @@ class _MyHomePageState extends State<MyHomePage> {
               },
             ),
             Text(
-              'Latest found peer: $_peer_id',
+              'First peer found:',
+            ),
+            const SizedBox(height: 5),
+            Text(
+              '$_peer_id',
+              style: TextStyle(
+                fontFamily: "monospace",
+                color: Colors.white,
+              ),
             )
           ],
         ),
@@ -123,7 +131,11 @@ class _MyHomePageState extends State<MyHomePage> {
   void _findNewPeer() async {
     _searching_peers = true;
     setState(() {});
-    final peer_int = await adbflib.findNewPeer();
+    int peer_int = await adbflib.findNewPeer();
+    // it's int not uint
+    if (peer_int < 0) {
+      peer_int *= -1;
+    }
     _peer_id = peer_int.toRadixString(16);
     _searching_peers = false;
     setState(() {});

@@ -7,8 +7,12 @@ use crate::{
     net::subs::peer_representation,
     shared,
 };
+use async_std::task;
 use crossbeam::{sync::WaitGroup, unbounded};
-use std::sync::{mpsc::channel, Arc, Mutex};
+use std::{
+    sync::{mpsc::channel, Arc, Mutex},
+    thread,
+};
 
 /// just return the number of audio files found for now
 pub fn ffi_file_count_good(input_path: Vec<String>) -> u32 {
@@ -36,41 +40,46 @@ pub fn ffi_file_count_good(input_path: Vec<String>) -> u32 {
 /// return the peer hash for testing yet
 pub async fn ffi_new_peer() -> u64 {
     //
-    let wait_net_thread = WaitGroup::new();
-    let wait_net_thread_trigger = wait_net_thread.clone();
-    //
+    let dummy_wait_net_thread = WaitGroup::new();
     let (ui_sender, reactor) = channel::<UiUpdateMsg>();
-
-    // nothing to send to net yet
     let (_, dummy_ipc_receive) = unbounded::<IPC>();
 
-    let _what = shared::net_search(wait_net_thread, Some(ui_sender), dummy_ipc_receive);
+    let single_shot_net_thread = thread::Builder::new()
+        .name("app_net".into())
+        .spawn(move || {
+            task::block_on(async move {
+                let _ =
+                    shared::net_search(dummy_wait_net_thread, Some(ui_sender), dummy_ipc_receive)
+                        .await;
+            });
+        })
+        .unwrap();
 
-    let mut out = 0;
+    // very interesting, the compiler is awesome!!
+    let out;
 
-    // try to trigger here if even necessary (single one doesn't wait at all??)
-    wait_net_thread_trigger.wait();
-
-    // loop over (cheap version here, but we are in async, so
-    while let Some(reaction) = reactor.try_iter().next() {
-        match reaction {
-            UiUpdateMsg::CollectionUpdate(_, _) => {}
-            UiUpdateMsg::NetUpdate(net_message) => {
-                match net_message {
-                    ForwardNetMsg::Add(peer) => {
-                        // yet only id is interesting
-                        out = peer_representation::peer_to_hash(&peer.id);
-                        // break;
+    // loop over fixme: (very cheap version here, that could be done more elegantly)
+    loop {
+        if let Ok(reaction) = reactor.try_recv() {
+            match reaction {
+                UiUpdateMsg::CollectionUpdate(_, _) => {}
+                UiUpdateMsg::NetUpdate(net_message) => {
+                    match net_message {
+                        ForwardNetMsg::Add(peer) => {
+                            // yet only id is interesting
+                            out = peer_representation::peer_to_hash(&peer.id);
+                            break;
+                        }
+                        ForwardNetMsg::Delete(_peer_id) => {}
+                        ForwardNetMsg::Stats(_) => {}
                     }
-                    ForwardNetMsg::Delete(_peer_id) => {}
-                    ForwardNetMsg::Stats(_) => {}
                 }
+                UiUpdateMsg::PeerSearchFinished(_peer_id, _data) => {}
+                UiUpdateMsg::StopUI => {}
             }
-            UiUpdateMsg::PeerSearchFinished(_peer_id, _data) => {
-                //
-            }
-            UiUpdateMsg::StopUI => {}
         }
     }
+    // kill this big thread / fixme: very inefficent yet
+    drop(single_shot_net_thread);
     out
 }
