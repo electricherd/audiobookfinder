@@ -41,6 +41,9 @@ impl From<io::Error> for AdbflibError {
 }
 
 pub async fn file_count_good(input_path: Vec<String>) -> Result<u32, AdbflibError> {
-    // todo: why does this just work?
     Ok(forwarder::ffi_file_count_good(input_path))
+}
+
+pub async fn find_new_peer() -> Result<u64, AdbflibError> {
+    Ok(forwarder::ffi_new_peer().await)
 }
