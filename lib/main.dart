@@ -86,7 +86,7 @@ class _MyHomePageState extends State<MyHomePage> {
             Text(
               'A number of $_findings audio files have been found!',
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 50),
             RaisedButton(
               color: _searching_peers ? Colors.greenAccent : Colors.yellow,
               child: Text(
@@ -101,7 +101,6 @@ class _MyHomePageState extends State<MyHomePage> {
                 }
               },
             ),
-            const SizedBox(height: 50),
             Text(
               'Latest found peer: $_peer_id',
             )
