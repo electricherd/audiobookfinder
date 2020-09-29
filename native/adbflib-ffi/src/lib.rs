@@ -70,3 +70,11 @@ pub extern "C" fn file_count_good(dart_port: i64, one_path: *const raw::c_char) 
     rt.spawn(t);
     1
 }
+
+#[no_mangle]
+pub extern "C" fn find_new_peer(dart_port: i64) -> u64 {
+    let rt = runtime!();
+    let t = Isolate::new(dart_port).task(adbfbinlib::find_new_peer());
+    rt.spawn(t);
+    1
+}

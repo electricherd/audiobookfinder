@@ -25,6 +25,20 @@ class Adbflib {
     return completer.future;
   }
 
+  Future<int> findNewPeer() {
+    // Dart integer seems to be of i64
+    final completer = Completer<int>();
+    final sendPort = singleCompletePort(completer);
+    final res = native.find_new_peer(
+      sendPort.nativePort
+    );
+    if (res != 1) {
+      _throwError();
+    }
+    return completer.future;
+  }
+
+
   void _throwError() {
     final length = native.last_error_length();
     final Pointer<Utf8> message = allocate(count: length);

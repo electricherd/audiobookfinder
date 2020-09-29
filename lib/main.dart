@@ -32,10 +32,14 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int _findings = 0;
-  bool _searching = false;
+  
+  bool _searching_path = false;
+  bool _searching_peers = false;
+  
   String _path = '';
-  Adbflib adbflib;
+  String _peer_id = '';
 
+  Adbflib adbflib;
   // AnimationController animController;
 
   @override
@@ -60,7 +64,7 @@ class _MyHomePageState extends State<MyHomePage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             RaisedButton(
-              color: _searching ? Colors.greenAccent : Colors.yellow,
+              color: _searching_path ? Colors.greenAccent : Colors.yellow,
               child: Text(
                 'Search with adbf',
                 style: TextStyle(
@@ -68,7 +72,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
               ),
               onPressed: () {
-                if (!_searching) {
+                if (!_searching_path) {
                   _getDirPath();
                 }
               },
@@ -81,6 +85,25 @@ class _MyHomePageState extends State<MyHomePage> {
             const SizedBox(height: 30),
             Text(
               'A number of $_findings audio files have been found!',
+            ),
+            const SizedBox(height: 10),
+            RaisedButton(
+              color: _searching_peers ? Colors.greenAccent : Colors.yellow,
+              child: Text(
+                'Start Peer Search',
+                style: TextStyle(
+                  color: Colors.white,
+                ),
+              ),
+              onPressed: () {
+                if (!_searching_peers) {
+                  _findNewPeer();
+                }
+              },
+            ),
+            const SizedBox(height: 50),
+            Text(
+              'Latest found peer: $_peer_id',
             )
           ],
         ),
@@ -91,10 +114,19 @@ class _MyHomePageState extends State<MyHomePage> {
   void _getDirPath() async {
     _path = await FilePicker.platform.getDirectoryPath();
     _findings = 0;
-    _searching = true;
+    _searching_path = true;
     setState(() {});
     _findings = await adbflib.fileCountGood(_path);
-    _searching = false;
+    _searching_path = false;
+    setState(() {});
+  }
+
+  void _findNewPeer() async {
+    _searching_peers = true;
+    setState(() {});
+    final peer_int = await adbflib.findNewPeer();
+    _peer_id = peer_int.toRadixString(16);
+    _searching_peers = false;
     setState(() {});
   }
 }
