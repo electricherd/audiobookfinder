@@ -1,6 +1,12 @@
 //! The forwarder module shall act as wrapper for the ffi mangled lib.rs
 //! calls, which shall be very thin and spare.
-use crate::{common::paths::SearchPath, ctrl::UiUpdateMsg, data::collection::Collection, shared};
+use crate::{
+    common::paths::SearchPath,
+    ctrl::UiUpdateMsg,
+    data::{collection::Collection, ipc::IPC},
+    shared,
+};
+use crossbeam::{sync::WaitGroup, unbounded};
 use std::sync::{mpsc::channel, Arc, Mutex};
 
 pub fn ffi_file_count_good(input_path: Vec<String>) -> u32 {
@@ -23,4 +29,20 @@ pub fn ffi_file_count_good(input_path: Vec<String>) -> u32 {
 
     // scope and block trickery for lifetime and mutability
     output_data_return_handle.nr_found_songs
+}
+
+/// return the peer hash for testing
+pub async fn ffi_new_peer() -> u64 {
+    // ???? for ui messages??
+    let has_ui = true;
+    //
+    let wait_net_thread = WaitGroup::new();
+    //
+    let (ui_sender, reactor) = channel::<UiUpdateMsg>();
+    let (_, ipc_receive) = unbounded::<IPC>();
+
+    let _what = shared::net_search(has_ui, wait_net_thread, ui_sender, ipc_receive);
+
+    //match reactor.
+    0
 }

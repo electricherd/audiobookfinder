@@ -15,7 +15,7 @@ use adbfbinlib::{
         collection::Collection,
         ipc::{IFCollectionOutputData, IPC},
     },
-    net::{subs::key_keeper, Net},
+    net::subs::key_keeper,
     shared,
 };
 use async_std::task;
@@ -25,9 +25,7 @@ use exitcode;
 use log::{error, info, trace};
 use num_cpus;
 use std::{
-    cmp, env,
-    io::{self, Error},
-    process,
+    cmp, env, io, process,
     sync::{mpsc::channel, Arc as SArc, Mutex as SMutex},
 };
 
@@ -128,25 +126,12 @@ fn main() -> io::Result<()> {
         .spawn(move || {
             if has_net {
                 task::block_on(async move {
-                    // This thread will not end itself
-                    // - can be terminated by ui message
-                    // - collector finished (depending on definition)
-
-                    info!("net started!!");
-                    let net_system_messages = tx_net;
-                    let mut network = Net::new(has_ui, net_system_messages);
-
-                    // startup net synchronization
-                    wait_net.wait();
-
-                    network.lookup(ipc_receive).await;
-                    info!("net finished!!");
-                    Ok::<(), Error>(())
+                    shared::net_search(has_ui, wait_net, tx_net, ipc_receive).await
                 })
             } else {
                 info!("no net!");
                 drop(wait_net);
-                Ok::<(), Error>(())
+                Ok::<(), std::io::Error>(())
             }
         })?;
 
