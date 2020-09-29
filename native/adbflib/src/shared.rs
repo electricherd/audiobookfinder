@@ -3,9 +3,15 @@
 use crate::{
     common::paths::SearchPath,
     ctrl::UiUpdateMsg,
-    data::{self, audio_info::Container, collection::Collection, IFInternalCollectionOutputData},
+    data::{
+        self, audio_info::Container, collection::Collection, ipc::IPC,
+        IFInternalCollectionOutputData,
+    },
+    net::Net,
 };
+use crossbeam::{self, sync::WaitGroup};
 use rayon::prelude::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator};
+use std::io::Error;
 use std::sync::{mpsc::Sender, Arc, Mutex};
 
 pub fn collection_search(
@@ -46,4 +52,25 @@ pub fn collection_search(
         });
     let out = &*output_data_handle2.lock().unwrap();
     out.clone()
+}
+
+pub async fn net_search(
+    has_ui: bool,
+    wait_net: WaitGroup,
+    net_system_messages: Sender<UiUpdateMsg>,
+    ipc_receive: crossbeam::Receiver<IPC>,
+) -> Result<(), std::io::Error> {
+    // This thread will not end itself
+    // - can be terminated by ui message
+    // - collector finished (depending on definition)
+
+    info!("net started!!");
+    let mut network = Net::new(has_ui, net_system_messages);
+
+    // startup net synchronization
+    wait_net.wait();
+
+    network.lookup(ipc_receive).await;
+    info!("net finished!!");
+    Ok::<(), Error>(())
 }
