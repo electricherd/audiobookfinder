@@ -125,9 +125,10 @@ fn main() -> io::Result<()> {
         .name("net".into())
         .spawn(move || {
             if has_net {
-                task::block_on(async move {
-                    shared::net_search(has_ui, wait_net, tx_net, ipc_receive).await
-                })
+                let sender = Some(tx_net);
+                task::block_on(
+                    async move { shared::net_search(wait_net, sender, ipc_receive).await },
+                )
             } else {
                 info!("no net!");
                 drop(wait_net);

@@ -33,15 +33,14 @@ pub fn ffi_file_count_good(input_path: Vec<String>) -> u32 {
 
 /// return the peer hash for testing
 pub async fn ffi_new_peer() -> u64 {
-    // ???? for ui messages??
-    let has_ui = true;
     //
     let wait_net_thread = WaitGroup::new();
     //
     let (ui_sender, reactor) = channel::<UiUpdateMsg>();
+
     let (_, ipc_receive) = unbounded::<IPC>();
 
-    let _what = shared::net_search(has_ui, wait_net_thread, ui_sender, ipc_receive);
+    let _what = shared::net_search(wait_net_thread, Some(ui_sender), ipc_receive);
 
     //match reactor.
     0
