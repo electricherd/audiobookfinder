@@ -55,9 +55,8 @@ pub fn collection_search(
 }
 
 pub async fn net_search(
-    has_ui: bool,
     wait_net: WaitGroup,
-    net_system_messages: Sender<UiUpdateMsg>,
+    net_system_messages: Option<Sender<UiUpdateMsg>>,
     ipc_receive: crossbeam::Receiver<IPC>,
 ) -> Result<(), std::io::Error> {
     // This thread will not end itself
@@ -65,12 +64,12 @@ pub async fn net_search(
     // - collector finished (depending on definition)
 
     info!("net started!!");
-    let mut network = Net::new(has_ui, net_system_messages);
+    let mut network = Net {};
 
     // startup net synchronization
     wait_net.wait();
 
-    network.lookup(ipc_receive).await;
+    network.lookup(net_system_messages, ipc_receive).await;
     info!("net finished!!");
     Ok::<(), Error>(())
 }

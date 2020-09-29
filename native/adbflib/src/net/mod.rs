@@ -22,34 +22,22 @@ use libp2p::{
 use std::{self, error::Error, sync::mpsc::Sender};
 
 /// The Net component keeps control about everything from net.
-///
-/// # Arguments
-/// * 'has_ui' - if there is an ui present, that would need update messages///
-/// * 'ui_sender' - to send out update ui messages
-pub struct Net {
-    has_ui: bool,
-    ui_sender: Sender<ctrl::UiUpdateMsg>,
-}
+pub struct Net {}
 
 impl Net {
-    /// Create a new Net component.    
-    pub fn new(has_ui: bool, ui_sender: Sender<ctrl::UiUpdateMsg>) -> Self {
-        Net { has_ui, ui_sender }
-    }
-
     /// Lookup yet is the start of the networking. It looks for possible mDNS clients and spawns eventually
     ///
     /// # Arguments
+    /// * 'ui_sender' - to send out update ui messages if ui should be notified
     /// * 'ipc_receiver' - message receiver for internal mass message (called IPC)
-    pub async fn lookup(&mut self, ipc_receiver: Receiver<IPC>) {
-        let has_ui = self.has_ui.clone();
-
-        // to controller messages (mostly tui now)
-        let ui_update_sender = self.ui_sender.clone();
-
+    pub async fn lookup(
+        &mut self,
+        ui_sender: Option<Sender<ctrl::UiUpdateMsg>>,
+        ipc_receiver: Receiver<IPC>,
+    ) {
         // prepare everything for mdns thread
         let my_peer_id = key_keeper::get_p2p_server_id();
-        Self::build_swarm_and_run(&my_peer_id, &ui_update_sender, ipc_receiver, has_ui)
+        Self::build_swarm_and_run(&my_peer_id, ui_sender, ipc_receiver)
             .await
             .unwrap();
     }
@@ -59,14 +47,12 @@ impl Net {
     ///
     /// # Arguments
     /// * 'own_peer_id' - peer id for display mainly
-    /// * 'ctrl_sender' - sender for ui update messages
+    /// * 'ctrl_sender' - sender for ui update messages if necessary
     /// * 'ipc_receiver' - passed on mass message receiver
-    /// * 'has_ui' - info on whether usage of ui
     async fn build_swarm_and_run(
         own_peer_id: &PeerId,
-        ctrl_sender: &std::sync::mpsc::Sender<ctrl::UiUpdateMsg>,
+        ctrl_sender: Option<Sender<ctrl::UiUpdateMsg>>,
         ipc_receiver: Receiver<IPC>,
-        has_ui: bool,
     ) -> Result<(), Box<dyn Error>> {
         let local_key = &*key_keeper::SERVER_KEY;
         let local_peer_id = PeerId::from(local_key.public());
@@ -77,15 +63,12 @@ impl Net {
             Some(*key_keeper::PRESHARED_SECRET),
         );
 
+        let ui_data = UiData::new(ctrl_sender.clone());
+
         let mut swarm = {
             // Create a Kademlia behaviour.
             let store = MemoryStore::new(local_peer_id.clone());
             let kademlia = Kademlia::new(local_peer_id.clone(), store);
-            let ui_data = UiData::new(if has_ui {
-                Some(ctrl_sender.clone())
-            } else {
-                None
-            });
 
             let behaviour = behavior::AdbfBehavior {
                 kademlia,
@@ -97,9 +80,9 @@ impl Net {
         };
 
         // start animation
-        if has_ui {
+        if let Some(ui_sender) = ctrl_sender {
             info!("Start netsearch animation!");
-            ctrl_sender
+            ui_sender
                 .send(ctrl::UiUpdateMsg::CollectionUpdate(
                     ctrl::CollectionPathAlive::HostSearch,
                     ctrl::Status::ON,
@@ -129,13 +112,5 @@ impl Net {
             Poll::<()>::Pending
         }));
         Ok(())
-    }
-}
-
-impl Drop for Net {
-    fn drop(&mut self) {
-        if !self.has_ui {
-            println!("Dropping/destroying net");
-        }
     }
 }
