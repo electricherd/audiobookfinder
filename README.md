@@ -44,11 +44,11 @@ the "costs" you have and what it looks like in Simon Brand's
 # Table of Contents
 0. [My first program in Rust](#my-first-program-in-rust)
 1. [Features](#features)
-2. [Screenshots](#screenshots)
-3. [Documentation](#documentation)
+2. [Documentation](#documentation)
+3. [Architecture](#architecture)
 4. [Changes](#changes)
-5. [ToDo](#todo)
-6. [Architecture](#architecture)
+5. [Screenshots](#screenshots)
+6. [ToDo](#todo)
 7. [CI Continuous Integration](#CI)
 8. [Goals](#goals)
 9. [Dependencies](#dependencies)
@@ -81,17 +81,16 @@ __It's crossplatform now!__
 * [BK-tree](https://en.wikipedia.org/wiki/BK-tree) data structure for approximate string matching
 * simple mobile app based on [ffi](https://en.wikipedia.org/wiki/Foreign_function_interface) interface [Dart](https://dart.dev/) / [Flutter](https://flutter.dev/) / [flutterust](https://github.com/shekohex/flutterust)
 
-### Screenshots
-<!-- the files are linked in issue section of https://github.com/electricherd/audiobookfinder/issues/28  -->
-| ![Screenshot Linux v0.1.28 Running 1](https://user-images.githubusercontent.com/31503071/93353902-b9f83880-f83c-11ea-9f8d-5054f74a6dbc.png?raw=true) | ![Screenshot Linux v0.1.28 Running 2](https://user-images.githubusercontent.com/31503071/93353903-ba90cf00-f83c-11ea-935d-ebc79127954c.png?raw=true)| ![Screenshot Linux Selection](https://user-images.githubusercontent.com/31503071/91750242-1152a380-ebc3-11ea-8840-dc2576c47785.png?raw=true) | ![Screenshot Linux Running](https://user-images.githubusercontent.com/31503071/91750136-df414180-ebc2-11ea-8508-24c04e000ba9.png?raw=true)|
-| :------: | :------: | :------: | :------: |
-|  ![Screenshot Windows v0.1.28 Running 1](https://user-images.githubusercontent.com/31503071/93353900-b8c70b80-f83c-11ea-821c-68cc015e4b10.png?raw=true) | ![Screenshot Windows v0.1.28 Running 2](https://user-images.githubusercontent.com/31503071/93353901-b9f83880-f83c-11ea-9558-773279498f87.png?raw=true) | ![Screenshot Windows Selection](https://user-images.githubusercontent.com/31503071/91750262-17488480-ebc3-11ea-97be-54005f012669.png?raw=true) | ![Screenshot Windows Running](https://user-images.githubusercontent.com/31503071/91750257-144d9400-ebc3-11ea-9cb6-93dc4f7225e5.png?raw=true)|
-| ![Screenshot Android App 0.0.3 Device](https://user-images.githubusercontent.com/31503071/94609005-85559980-029e-11eb-916a-4e195b932f29.jpg?raw=true) | ![Screenshot Android App v0.0.3 device](https://user-images.githubusercontent.com/31503071/94609007-85ee3000-029e-11eb-8869-03ae0affbf3b.jpg?raw=true)|  ![Screenshot Android App 0.0.3 Simulation](https://user-images.githubusercontent.com/31503071/94597515-f3de2b80-028d-11eb-9ac3-8628fe8b56b2.png?raw=true) | ![Screenshot Android App v0.0.3 device](https://user-images.githubusercontent.com/31503071/94597513-f3459500-028d-11eb-8cd8-f378eeff6e63.jpg?raw=true) |
 ### Documentation
 
 [Documentation](https://electricherd.github.io/audiobookfinder/audiobookfinder/index.html) is generated.
 
 It is an inline documentation from [CI](https://travis-ci.org/electricherd/audiobookfinder/) generated documentation - Rust does a nice job here as well!
+
+
+### Architecture
+![Diagram](docs/diag_architecture_general.svg)
+
 
 ### Changes
 * since marrying [flutterust](https://github.com/shekohex/flutterust) and old adbflib, package name now is adbflib, the library is now adbfbinlib (yes, but for now)
@@ -161,6 +160,14 @@ It is an inline documentation from [CI](https://travis-ci.org/electricherd/audio
     * found emojis :grin:
 </details>
 
+### Screenshots
+<!-- the files are linked in issue section of https://github.com/electricherd/audiobookfinder/issues/28  -->
+| ![Screenshot Linux v0.1.28 Running 1](https://user-images.githubusercontent.com/31503071/93353902-b9f83880-f83c-11ea-9f8d-5054f74a6dbc.png?raw=true) | ![Screenshot Linux v0.1.28 Running 2](https://user-images.githubusercontent.com/31503071/93353903-ba90cf00-f83c-11ea-935d-ebc79127954c.png?raw=true)| ![Screenshot Linux Selection](https://user-images.githubusercontent.com/31503071/91750242-1152a380-ebc3-11ea-8840-dc2576c47785.png?raw=true) | ![Screenshot Linux Running](https://user-images.githubusercontent.com/31503071/91750136-df414180-ebc2-11ea-8508-24c04e000ba9.png?raw=true)|
+| :------: | :------: | :------: | :------: |
+|  ![Screenshot Windows v0.1.28 Running 1](https://user-images.githubusercontent.com/31503071/93353900-b8c70b80-f83c-11ea-821c-68cc015e4b10.png?raw=true) | ![Screenshot Windows v0.1.28 Running 2](https://user-images.githubusercontent.com/31503071/93353901-b9f83880-f83c-11ea-9558-773279498f87.png?raw=true) | ![Screenshot Windows Selection](https://user-images.githubusercontent.com/31503071/91750262-17488480-ebc3-11ea-97be-54005f012669.png?raw=true) | ![Screenshot Windows Running](https://user-images.githubusercontent.com/31503071/91750257-144d9400-ebc3-11ea-9cb6-93dc4f7225e5.png?raw=true)|
+| ![Screenshot Android App 0.0.3 Device](https://user-images.githubusercontent.com/31503071/94609005-85559980-029e-11eb-916a-4e195b932f29.jpg?raw=true) | ![Screenshot Android App v0.0.3 device](https://user-images.githubusercontent.com/31503071/94609007-85ee3000-029e-11eb-8869-03ae0affbf3b.jpg?raw=true)|  ![Screenshot Android App 0.0.3 Simulation](https://user-images.githubusercontent.com/31503071/94597515-f3de2b80-028d-11eb-9ac3-8628fe8b56b2.png?raw=true) | ![Screenshot Android App v0.0.3 device](https://user-images.githubusercontent.com/31503071/94597513-f3459500-028d-11eb-8cd8-f378eeff6e63.jpg?raw=true) |
+
+
 ### ToDo
 * fix library documentation on travis, only binary now (due to other libs) 
 * fix github actions CI for automatic build
@@ -178,10 +185,6 @@ It is an inline documentation from [CI](https://travis-ci.org/electricherd/audio
 * ~~add [ctrlc](http://detegr.github.io/doc/ctrlc/) functionality for signal handling in main~~
 * ~~let state machine *talk* (as ipc) with data collection via [crossbeam](https://github.com/crossbeam-rs/crossbeam) (first only the finish search status)~~
 * ~~make div from html page to extra single file for later multiple clients on one page~~
-
-### Architecture
-![Diagram](docs/diag_architecture_general.svg)
-
 
 ### CI
 The Continuous Integration is done on 2 services, Travis and AppVeyor but will probably once completely moved to AppVeyor because Travis recently only had old LTS 16.04 images, and no possible Windows compilation (they are working on it), so there is:
