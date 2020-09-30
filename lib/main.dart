@@ -13,12 +13,12 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Adbflib Flutter',
+      title: 'adbfflutter',
       theme: ThemeData(
         primarySwatch: Colors.blue,
         brightness: Brightness.dark,
       ),
-      home: MyHomePage(title: 'Adbflib Flutter Demo'),
+      home: MyHomePage(title: 'Adbfflutter'),
     );
   }
 }

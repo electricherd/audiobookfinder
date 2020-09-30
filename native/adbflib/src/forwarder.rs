@@ -1,5 +1,6 @@
 //! The forwarder module shall act as wrapper for the ffi mangled lib.rs
-//! calls, which shall be very thin and spare.
+//! calls, which shall be very thin and spare there, but extensive here
+//! to prepare clean calls to adbfflutter.
 use crate::{
     common::paths::SearchPath,
     ctrl::{ForwardNetMsg, UiUpdateMsg},
@@ -44,6 +45,8 @@ pub async fn ffi_new_peer() -> u64 {
     let (ui_sender, reactor) = channel::<UiUpdateMsg>();
     let (_, dummy_ipc_receive) = unbounded::<IPC>();
 
+    // initiate a thread (which will be ... (todo: lazy_static maybe later, and keep it running)
+    // which handles net communication
     let single_shot_net_thread = thread::Builder::new()
         .name("app_net".into())
         .spawn(move || {

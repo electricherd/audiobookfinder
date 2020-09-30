@@ -94,6 +94,7 @@ __It's crossplatform now!__
 It is an inline documentation from [CI](https://travis-ci.org/electricherd/audiobookfinder/) generated documentation - Rust does a nice job here as well!
 
 ### Changes
+* since marrying [flutterust](https://github.com/shekohex/flutterust) and old adbflib, package name now is adbflib, the library is now adbfbinlib (yes, but for now)
 * added and fixed first shot mobile app mdns feature ... it just works :open_mouth: :blush:
 * produced apk can even be design tested in android studio
 * had to introduce platform dependent crate compilation, here only [webbrowser crate](https://crates.io/crates/webbrowser) 
@@ -155,7 +156,7 @@ It is an inline documentation from [CI](https://travis-ci.org/electricherd/audio
     * more documentation locally as html: `cargo doc --no-deps --open`
     * file logging in (use [glogg](http://glogg.bonnefon.org/))
     * logging mechanism introduced (`logit.rs`). It was needed because of tui console output was not readable (either syslog or console)
-     * run e.g. with `RUST_LOG=adbflib::net=debug RUST_BACKTRACE=full cargo run -- -n ~/Audiobooks`
+     * run e.g. with `RUST_LOG=adbfbinlib::net=debug RUST_BACKTRACE=full cargo run -- -n ~/Audiobooks`
     * ssh client with example key works, key now external
     * found emojis :grin:
 </details>
@@ -219,7 +220,7 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
 - [x] logging (own module for that), good
 - [x] CI with [travis](https://travis-ci.org/electricherd/audiobookfinder/) works, cross compiling is still difficult with [trust](https://github.com/japaric/trust), [cross](https://github.com/japaric/cross/), [docker](https://www.docker.com/), need to watch closely to [steed](https://github.com/japaric/steed) for some problem solving.
 - [x] travis automatically built and automatically deployed own public [documentation](https://electricherd.github.io/audiobookfinder/audiobookfinder/index.html)
-- [x] making a library ([adbflib](https://electricherd.github.io/audiobookfinder/adbflib/index.html) as the main part of the program)
+- [x] making a library ([adbfbinlib](https://electricherd.github.io/audiobookfinder/adbfbinlib/index.html) as the main part of the program)
 - [x] using a Boost-SML style [state machine](https://github.com/korken89/smlang-rs) now, nice one!
 - [ ] learning and understanding rust macros (some day)
 - [x] exchange of data over all kinds of boundaries (net, thread) via de-/serialization using [serde](https://docs.serde.rs/serde/) and its json feature for webui

@@ -14,6 +14,7 @@ use rayon::prelude::{IndexedParallelIterator, IntoParallelRefIterator, ParallelI
 use std::io::Error;
 use std::sync::{mpsc::Sender, Arc, Mutex};
 
+/// high level function to search path
 pub fn collection_search(
     collection_handler: Arc<Mutex<Collection>>,
     search_path: Arc<Mutex<SearchPath>>,
@@ -54,6 +55,7 @@ pub fn collection_search(
     out.clone()
 }
 
+/// high level function to startup net functionality
 pub async fn net_search(
     wait_net: WaitGroup,
     net_system_messages: Option<Sender<UiUpdateMsg>>,

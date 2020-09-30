@@ -1,4 +1,4 @@
-//! The adbflib is a LIB and a facade to many modules that interact with
+//! The adbfbinlib is a LIB and a facade to many modules that interact with
 //! the audiobookfinder program.
 //! In this file all crates are name before the modules which use them.
 #![crate_name = "adbfbinlib"]
@@ -40,10 +40,12 @@ impl From<io::Error> for AdbflibError {
     }
 }
 
+/// the library interface for returning number of audio files found
 pub async fn file_count_good(input_path: Vec<String>) -> Result<u32, AdbflibError> {
     Ok(forwarder::ffi_file_count_good(input_path))
 }
 
+/// the library interface for returning the first peer found on network
 pub async fn find_new_peer() -> Result<u64, AdbflibError> {
     Ok(forwarder::ffi_new_peer().await)
 }
