@@ -79,7 +79,7 @@ __It's crossplatform now!__
 * [appveyor](#CI) and [travis](#CI) CI
 * build-in unit-testing the right way
 * [BK-tree](https://en.wikipedia.org/wiki/BK-tree) data structure for approximate string matching
-* experimental simple mobile app based on [ffi](https://en.wikipedia.org/wiki/Foreign_function_interface) interface [Dart](https://dart.dev/) / [Flutter](https://flutter.dev/) / [flutterust](https://github.com/shekohex/flutterust)
+* simple mobile app based on [ffi](https://en.wikipedia.org/wiki/Foreign_function_interface) interface [Dart](https://dart.dev/) / [Flutter](https://flutter.dev/) / [flutterust](https://github.com/shekohex/flutterust)
 
 ### Screenshots
 <!-- the files are linked in issue section of https://github.com/electricherd/audiobookfinder/issues/28  -->
@@ -95,7 +95,8 @@ It is an inline documentation from [CI](https://travis-ci.org/electricherd/audio
 
 ### Changes
 * added and fixed first shot mobile app mdns feature ... it just works :open_mouth: :blush:
-* added screenshots from experimental manually build mobile app
+* produced apk can even be design tested in android studio
+* had to introduce platform dependent crate compilation, here only [webbrowser crate](https://crates.io/crates/webbrowser) 
 * added mobile app build by using [flutterust](https://github.com/shekohex/flutterust) by [Shady Khalifa](https://github.com/shekohex/shekohex) :thumbsup: great
   * [Dart](https://dart.dev/)/[Flutter](https://flutter.dev/) coding required as frontend on mobile app side
   * add github actions as 3rd CI (quite new to me)
@@ -160,6 +161,7 @@ It is an inline documentation from [CI](https://travis-ci.org/electricherd/audio
 </details>
 
 ### ToDo
+* fix library documentation on travis, only binary now (due to other libs) 
 * fix github actions CI for automatic build
 * try [crate vfs](https://github.com/manuel-woelker/rust-vfs) for unit test with files!! interesting and needed!
 * look for other tag libraries (e.g. symphonia-metadata [symphonia](https://github.com/pdeljanov/Symphonia))
@@ -195,9 +197,10 @@ The Continuous Integration is done on 2 services, Travis and AppVeyor but will p
 
 ### Goals
 The primary goal is to learn Rust and to cover various aspects of the language, of which some of I already used inside the program, such as:
-- [ ] have the Rust frontend/backend as IOS and/or Android app, with a small glue code (because beside the tui it's a html5 webapp frontend). [WASM](https://www.rust-lang.org/what/wasm) is not reachable since it uses `no_std`
 - [x] borrowing: the borrow checker, some issues but I am fine with it now
 - [ ] async/await: almost there
+- [ ] easy cross compile (and test) for raspberry (v1 and v2, v3)... ok the tui update needs adjustment
+- [x] have the Rust frontend/backend as IOS and/or Android app, with a small glue code (because beside the tui it's a html5 webapp frontend). [WASM](https://www.rust-lang.org/what/wasm) is not reachable since it uses `no_std`
 - [x] shared-data over different threads (not yet lifetime optimized)
 - [x] multi-threading, a lot of threads and communication is inside, also  ([Rayon](https://github.com/rayon-rs/rayon))
 - [x] learning [futures](https://en.wikipedia.org/wiki/Futures_and_promises)
@@ -213,9 +216,7 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
 - [ ] traits: getting better with unfortunately unused [observer pattern](../../wiki/Observer-pattern) 
 - [x] thread-pool: a simple self written but nice to use implemention :blush: but not needed any more
 - [x] simple timers: inside async: super easy
-- [ ] before multiple c-library dependency: easy cross compile (and test) for raspberry (v1 and v2, v3)... ok the tui update needs adjustment
 - [x] logging (own module for that), good
-- [ ] cross compiling in general, it's good but not perfect (continue a bit with [xargo](https://github.com/japaric/xargo), [cross](https://github.com/japaric/cross/))
 - [x] CI with [travis](https://travis-ci.org/electricherd/audiobookfinder/) works, cross compiling is still difficult with [trust](https://github.com/japaric/trust), [cross](https://github.com/japaric/cross/), [docker](https://www.docker.com/), need to watch closely to [steed](https://github.com/japaric/steed) for some problem solving.
 - [x] travis automatically built and automatically deployed own public [documentation](https://electricherd.github.io/audiobookfinder/audiobookfinder/index.html)
 - [x] making a library ([adbflib](https://electricherd.github.io/audiobookfinder/adbflib/index.html) as the main part of the program)
