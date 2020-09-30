@@ -87,6 +87,8 @@ version = "0.15"
 default-features = false
 
 # https://doc.rust-lang.org/reference/conditional-compilation.html
-# same as used in "webbrowser" crate
+# needed because github actions build is some other kind and breaks
+# the build.
+# important: has to be the same as used in "webbrowser" crate
 [target.'cfg(any(target_os = "android", target_os = "windows", target_os = "macos", target_os = "linux", target_os = "freebsd", targest_os = "netbsd",target_os = "openbsd", target_os = "haiku", target_arch = "wasm32"))'.dependencies]
 webbrowser = "0.5"
