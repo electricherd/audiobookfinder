@@ -145,7 +145,6 @@ jobs:
 
       - name: Upload Release
         id: upload-release-asset
-        if: matrix.os == 'ubuntu-latest'
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
