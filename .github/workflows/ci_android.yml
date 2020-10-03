@@ -10,6 +10,18 @@ jobs:
     name: Compile and Build - Android
     runs-on: ubuntu-latest
     steps:
+      - name: condition release tag
+        id: cond_publish_release
+        # https://github.com/marketplace/actions/publish-with-tag-action
+        uses: novom/publish-with-tag-action@v1.0.4
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: show version
+        run:
+          - echo ${{ steps.cond_publish_release.outputs.version }}
+          - echo ${{ steps.cond_publish_release.outputs.tag }}
+
       - name: Cache LLVM and Clang
         id: cache-llvm
         uses: actions/cache@v2
@@ -104,16 +116,6 @@ jobs:
 
       - name: Install Android Targets
         run: rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android i686-linux-android
-
-      - name: condition release tag
-        id: cond_publish_release
-        # https://github.com/marketplace/actions/publish-with-tag-action
-        uses: novom/publish-with-tag-action@v1.0.4
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run:
-          - echo ${{ steps.cond_publish_release.outputs.version }}
-          - echo ${{ steps.cond_publish_release.outputs.tag }}
 
       - name: condition Release
         id: create_release
