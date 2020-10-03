@@ -197,7 +197,7 @@ The Continuous Integration is done on 2 services, Travis and AppVeyor but will p
     * [Audiobookfinder Build Debian Buster Raspberry](https://travis-ci.org/electricherd/audiobookfinder) ![travis](https://travis-matrix-badges.herokuapp.com/repos/electricherd/audiobookfinder/branches/master/2)
     * only until version 0.1.18: Build Linux 14.04
 * On Github with Github Actions
-    * [![Actions Status](https://github.com/electricherd/audiobookfinder/workflows/CI%20%28Android%2C%20iOS%29/badge.svg)](https://github.com/electricherd/audiobookfinder/actions)
+    * Android-Build: [![Actions Status](https://github.com/electricherd/audiobookfinder/workflows/Android%20Build/badge.svg)](https://github.com/electricherd/audiobookfinder/actions)
 
 ### Goals
 The primary goal is to learn Rust and to cover various aspects of the language, of which some of I already used inside the program, such as:
@@ -249,8 +249,9 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
 * https://learning-rust.github.io/docs/a5.comments_and_documenting_the_code.html howto documentation
 
 ### 3rd party (excluding Rust crates), all [MIT](https://tldrlegal.com/license/mit-license) licenses
-* https://getbootstrap.com/docs/4.3/getting-started/introduction/
-* https://jquery.com/
-* https://gist.github.com/ismasan/299789
-* https://github.com/tempor1s/bktree-rs
-* https://github.com/shekohex/flutterust
+* <img src="https://upload.wikimedia.org/wikipedia/commons/c/ce/Unofficial_JavaScript_logo.svg" align="middle" width="21em"/>https://getbootstrap.com/docs/4.3/getting-started/introduction/
+* <img src="https://upload.wikimedia.org/wikipedia/commons/c/ce/Unofficial_JavaScript_logo.svg" align="middle" width="21em"/>https://jquery.com/
+* <img src="https://upload.wikimedia.org/wikipedia/commons/c/ce/Unofficial_JavaScript_logo.svg" align="middle" width="21em"/>https://gist.github.com/ismasan/299789
+* <img src="https://www.rust-lang.org/logos/rust-logo-blk.svg" align="middle" width="21em"/>https://github.com/tempor1s/bktree-rs
+* <img src="https://www.vectorlogo.zone/logos/flutterio/flutterio-icon.svg" align="middle" width="21em"/><img src="https://www.rust-lang.org/logos/rust-logo-blk.svg" align="middle" width="21em"/><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Dart-logo.png/240px-Dart-logo.png" align="middle" width="21em"/>https://github.com/shekohex/flutterust
+* <img src="https://www.vectorlogo.zone/logos/flutterio/flutterio-icon.svg" align="middle" width="21em"/>https://pub.dev/packages/file_picker
