@@ -10,6 +10,16 @@ jobs:
     name: Compile and Build - iOS
     runs-on: macos-latest
     steps:
+      - name: condition release tag
+        id: cond_publish_release
+        # https://github.com/marketplace/actions/publish-with-tag-action
+        uses: novom/publish-with-tag-action@v1.0.4
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run:
+          - run: echo ${{ steps.cond_publish_release.outputs.version }}
+          - run: echo ${{ steps.cond_publish_release.outputs.tag }}
+
       - name: Cache LLVM and Clang
         id: cache-llvm
         uses: actions/cache@v2

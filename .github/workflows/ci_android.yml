@@ -105,8 +105,19 @@ jobs:
       - name: Install Android Targets
         run: rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android i686-linux-android
 
-      - name: Create Release
+      - name: condition release tag
+        id: cond_publish_release
+        # https://github.com/marketplace/actions/publish-with-tag-action
+        uses: novom/publish-with-tag-action@v1.0.4
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run:
+          - run: echo ${{ steps.cond_publish_release.outputs.version }}
+          - run: echo ${{ steps.cond_publish_release.outputs.tag }}
+
+      - name: condition Release
         id: create_release
+        # https://github.com/marketplace/actions/release-with-commit
         uses: ChanTsune/release-with-commit@v1.0.0
         with:
           regexp: "Release (\\d+([.]\\d+)*)\n*((\\s|\\S)+)"
@@ -120,7 +131,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run cargo make android - Debug
-        if: steps.create_release.outputs.upload_url == null
+        if: steps.create_release.outputs.upload_url == null && steps.cond_publish_release.outputs.tag == null
         uses: actions-rs/cargo@v1
         continue-on-error: false
         with:
@@ -128,11 +139,11 @@ jobs:
           args: android-dev
 
       - name: Build APK (x86_64, Debug)
-        if: steps.create_release.outputs.upload_url == null
+        if: steps.create_release.outputs.upload_url == null && steps.cond_publish_release.outputs.tag == null
         run: flutter build apk --debug
 
       - name: Run cargo make android - Release
-        if: steps.create_release.outputs.upload_url != null
+        if: steps.create_release.outputs.upload_url != null || steps.cond_publish_release.outputs.tag != null
         uses: actions-rs/cargo@v1
         continue-on-error: false
         with:
@@ -140,12 +151,12 @@ jobs:
           args: android-arm --profile release
 
       - name: Build APK (arm64, Release)
-        if: steps.create_release.outputs.upload_url == null
+        if: steps.create_release.outputs.upload_url == null && steps.cond_publish_release.outputs.tag == null
         run: flutter build apk --release --target-platform android-arm64
 
       - name: Upload Release
         id: upload-release-asset
-        if: steps.create_release.outputs.upload_url != null
+        if: steps.create_release.outputs.upload_url != null || steps.cond_publish_release.outputs.tag != null
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
