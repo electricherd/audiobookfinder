@@ -36,7 +36,7 @@ jobs:
           components: rustfmt
 
       - name: Install WASM Target
-          run: rustup target add wasm32-unknown-unknown
+        run: rustup target add wasm32-unknown-unknown
 
       - name: Cache Cargo
         uses: actions/cache@v2
