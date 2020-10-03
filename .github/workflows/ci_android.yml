@@ -145,11 +145,12 @@ jobs:
 
       - name: Upload Release
         id: upload-release-asset
+        if: steps.create_release.outputs.upload_url != null
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./build/app/outputs/flutter-apk/app-debug.apk
+          asset_path: ./build/app/outputs/flutter-apk/app-release.apk
           asset_name: adbfflutter-arm64.apk
           asset_content_type: application/octet-stream
