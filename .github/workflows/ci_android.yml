@@ -112,8 +112,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run:
-          - run: echo ${{ steps.cond_publish_release.outputs.version }}
-          - run: echo ${{ steps.cond_publish_release.outputs.tag }}
+          - echo ${{ steps.cond_publish_release.outputs.version }}
+          - echo ${{ steps.cond_publish_release.outputs.tag }}
 
       - name: condition Release
         id: create_release
