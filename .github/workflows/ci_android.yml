@@ -59,11 +59,11 @@ jobs:
           args: cargo-make
 
       - name: Install Cargo Tools (cbindgen, v0.14.4)
-          uses: actions-rs/cargo@v1
-          continue-on-error: true
-          with:
-            command: install
-            args: cbindgen --version 0.14.4
+        uses: actions-rs/cargo@v1
+        continue-on-error: true
+        with:
+          command: install
+          args: cbindgen --version 0.14.4
 
       - name: Install Cargo Tools (dart-bindgen)
         uses: actions-rs/cargo@v1
@@ -106,18 +106,18 @@ jobs:
         run: rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android i686-linux-android
 
       - name: Create Release
-          id: create_release
-          uses: ChanTsune/release-with-commit@v1.0.0
-          with:
-            regexp: "Release (\\d+([.]\\d+)*)\n*((\\s|\\S)+)"
-            regexp_options: "us"
-            release_name: "version $1"
-            tag_name: "v$1"
-            body: "$3"
-            draft: false
-            prerelease: false
-          env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        id: create_release
+        uses: ChanTsune/release-with-commit@v1.0.0
+        with:
+          regexp: "Release (\\d+([.]\\d+)*)\n*((\\s|\\S)+)"
+          regexp_options: "us"
+          release_name: "version $1"
+          tag_name: "v$1"
+          body: "$3"
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run cargo make android - Debug
         if: steps.create_release.outputs.upload_url == null
@@ -132,12 +132,12 @@ jobs:
         run: flutter build apk --debug
 
       - name: Run cargo make android - Release
-          if: steps.create_release.outputs.upload_url != null
-          uses: actions-rs/cargo@v1
-          continue-on-error: false
-          with:
-            command: make
-            args: android-arm --profile release
+        if: steps.create_release.outputs.upload_url != null
+        uses: actions-rs/cargo@v1
+        continue-on-error: false
+        with:
+          command: make
+          args: android-arm --profile release
 
       - name: Build APK (arm64, Release)
         if: steps.create_release.outputs.upload_url == null
