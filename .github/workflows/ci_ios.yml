@@ -18,7 +18,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: show version
-        run: echo "${{ steps.cond_publish_release.outputs.version ${{ steps.cond_publish_release.outputs.tag }}"
+        run: echo ${{ steps.cond_publish_release.outputs.version }}
+      - name: show tag
+        run: echo ${{ steps.cond_publish_release.outputs.tag }}
 
       - name: Cache LLVM and Clang
         id: cache-llvm
