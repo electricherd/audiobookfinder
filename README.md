@@ -248,6 +248,7 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
 * https://thoughtbot.com/blog/json-event-based-convention-websockets : websockets to js commands
 * https://github.com/Ragnaroek/rust-on-raspberry-docker : headachefree compiling for raspberry pi locally with docker
 * https://learning-rust.github.io/docs/a5.comments_and_documenting_the_code.html howto documentation
+* https://github.com/actions : a better CI with repo of scripts
 
 ### 3rd party (excluding Rust crates), all [MIT](https://tldrlegal.com/license/mit-license) licenses
 * <img src="https://upload.wikimedia.org/wikipedia/commons/c/ce/Unofficial_JavaScript_logo.svg" align="middle" width="21em"/>https://getbootstrap.com/docs/4.3/getting-started/introduction/

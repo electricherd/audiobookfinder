@@ -115,9 +115,22 @@ jobs:
           command: make
           args: ios --profile release
 
+      - name: Run cargo make ios  - debug
+        if: steps.cond_release_text.outputs.upload_url == null && steps.cond_tagged_release.outputs.tag_name == null
+        uses: actions-rs/cargo@v1
+        continue-on-error: false
+        with:
+          command: make
+          args: ios --profile debug
+
+      - name: Build iOS App - release
+        if: steps.cond_release_text.outputs.upload_url != null || steps.cond_tagged_release.outputs.tag_name != null
+        run: flutter build ios --release --no-codesign --simulator
+
       - name: Build iOS App - debug
         if: steps.cond_release_text.outputs.upload_url == null && steps.tag.outputs.tag == null
         run: flutter build ios --debug --no-codesign --simulator
+
 
       # ####################### upload intermediate result dependent if release in text or tagged
       - name: Upload Release - Release in text
