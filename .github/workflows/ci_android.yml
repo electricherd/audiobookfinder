@@ -24,7 +24,7 @@ jobs:
         # https://github.com/marketplace/actions/release-with-commit
         uses: ChanTsune/release-with-commit@v1.0.0
         with:
-          regexp: "Release (\\d+([.]\\d+)*)\n*((\\s|\\S)+)"
+          regexp: "(\\d+([.]\\d+)*)\n*((\\s|\\S)+)Release(\\d+([.]\\d+)*)\n*((\\s|\\S)+)"
           regexp_options: "us"
           release_name: "version $1"
           tag_name: "v$1"
