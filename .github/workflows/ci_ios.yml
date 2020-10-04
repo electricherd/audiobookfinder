@@ -10,6 +10,7 @@ jobs:
     name: Compile and Build - iOS
     runs-on: macos-latest
     steps:
+      - uses: actions/checkout@v1
       # #################### build conditions
       - name: condition tagged
         id: cond_tagged_release

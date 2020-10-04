@@ -10,6 +10,7 @@ jobs:
     name: Compile and Build - Android
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v1
       # #################### build conditions
       - name: condition tagged
         id: cond_tagged_release
@@ -33,6 +34,13 @@ jobs:
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set env
+        run: echo ::set-env name=MY_VERSION::$(echo ${GITHUB_REF:10})
+
+      - run: echo ${{ steps.cond_release_text.outputs.upload_url }}
+      - run: echo ${{ steps.cond_tagged_release.outputs.tag_name }}
+      - run: echo $RELEASE_VERSION
 
       # ##################### setup build environment
       - name: Cache LLVM and Clang
