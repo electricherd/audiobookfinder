@@ -45,6 +45,8 @@ pub async fn ffi_new_peer() -> u64 {
     let (ui_sender, reactor) = channel::<UiUpdateMsg>();
     let (_, dummy_ipc_receive) = unbounded::<IPC>();
 
+    // todo: make it a lazy static as RUNTIME, to also hold the same IP, otherwise it will
+    //       always change it's ip!
     // initiate a thread (which will be ... (todo: lazy_static maybe later, and keep it running)
     // which handles net communication
     let single_shot_net_thread = thread::Builder::new()
