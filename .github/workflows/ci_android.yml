@@ -10,22 +10,14 @@ jobs:
     name: Compile and Build - Android
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v1
-        with:
-          node-version: '12.13'
+      - name: condition tagged
+        id: cond_tagged
+        # https://github.com/marketplace/actions/get-tag
+        uses: dawidd6/action-get-tag@v1
+        continue-on-error: true
 
-      - name: condition release tag
-        id: cond_publish_release
-        # https://github.com/marketplace/actions/publish-with-tag-action
-        uses: novom/publish-with-tag-action@v1.0.4
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: show version
-        run: echo ${{ steps.cond_publish_release.outputs.version }}
       - name: show tag
-        run: echo ${{ steps.cond_publish_release.outputs.tag }}
+        run: echo ${{ steps.cond_tagged.outputs.tag }}
 
       - name: Cache LLVM and Clang
         id: cache-llvm
@@ -138,7 +130,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run cargo make android - Debug
-        if: steps.create_release.outputs.upload_url == null && steps.cond_publish_release.outputs.tag == null
+        if: steps.create_release.outputs.upload_url == null && steps.tag.outputs.tag == null
         uses: actions-rs/cargo@v1
         continue-on-error: false
         with:
@@ -146,11 +138,11 @@ jobs:
           args: android-dev
 
       - name: Build APK (x86_64, Debug)
-        if: steps.create_release.outputs.upload_url == null && steps.cond_publish_release.outputs.tag == null
+        if: steps.create_release.outputs.upload_url == null && steps.tag.outputs.tag == null
         run: flutter build apk --debug
 
       - name: Run cargo make android - Release
-        if: steps.create_release.outputs.upload_url != null || steps.cond_publish_release.outputs.tag != null
+        if: steps.create_release.outputs.upload_url != null || steps.tag.outputs.tag != null
         uses: actions-rs/cargo@v1
         continue-on-error: false
         with:
@@ -158,12 +150,12 @@ jobs:
           args: android-arm --profile release
 
       - name: Build APK (arm64, Release)
-        if: steps.create_release.outputs.upload_url == null && steps.cond_publish_release.outputs.tag == null
+        if: steps.create_release.outputs.upload_url == null && steps.tag.outputs.tag == null
         run: flutter build apk --release --target-platform android-arm64
 
       - name: Upload Release
         id: upload-release-asset
-        if: steps.create_release.outputs.upload_url != null || steps.cond_publish_release.outputs.tag != null
+        if: steps.create_release.outputs.upload_url != null || steps.tag.outputs.tag != null
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
