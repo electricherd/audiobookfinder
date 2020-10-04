@@ -10,15 +10,31 @@ jobs:
     name: Compile and Build - Android
     runs-on: ubuntu-latest
     steps:
+      # #################### build conditions
       - name: condition tagged
-        id: cond_tagged
-        # https://github.com/marketplace/actions/get-tag
-        uses: dawidd6/action-get-tag@v1
+        id: cond_tagged_release
+        # https://github.com/marketplace/actions/get-the-upload-url-for-a-release
+        uses: bruceadams/get-release@v1.2.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         continue-on-error: true
 
-      - name: show tag
-        run: echo ${{ steps.cond_tagged.outputs.tag }}
+      - name: condition Release
+        id: cond_release_text
+        # https://github.com/marketplace/actions/release-with-commit
+        uses: ChanTsune/release-with-commit@v1.0.0
+        with:
+          regexp: "Release (\\d+([.]\\d+)*)\n*((\\s|\\S)+)"
+          regexp_options: "us"
+          release_name: "version $1"
+          tag_name: "v$1"
+          body: "$3"
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      # ##################### setup build environment
       - name: Cache LLVM and Clang
         id: cache-llvm
         uses: actions/cache@v2
@@ -114,23 +130,9 @@ jobs:
       - name: Install Android Targets
         run: rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android i686-linux-android
 
-      - name: condition Release
-        id: create_release
-        # https://github.com/marketplace/actions/release-with-commit
-        uses: ChanTsune/release-with-commit@v1.0.0
-        with:
-          regexp: "Release (\\d+([.]\\d+)*)\n*((\\s|\\S)+)"
-          regexp_options: "us"
-          release_name: "version $1"
-          tag_name: "v$1"
-          body: "$3"
-          draft: false
-          prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
+      # ############### Release/Debug build dependent
       - name: Run cargo make android - Debug
-        if: steps.create_release.outputs.upload_url == null && steps.tag.outputs.tag == null
+        if: steps.cond_release_text.outputs.upload_url == null && steps.cond_tagged_release.outputs.tag_name == null
         uses: actions-rs/cargo@v1
         continue-on-error: false
         with:
@@ -138,11 +140,11 @@ jobs:
           args: android-dev
 
       - name: Build APK (x86_64, Debug)
-        if: steps.create_release.outputs.upload_url == null && steps.tag.outputs.tag == null
+        if: steps.cond_release_text.outputs.upload_url == null && steps.cond_tagged_release.outputs.tag_name == null
         run: flutter build apk --debug
 
       - name: Run cargo make android - Release
-        if: steps.create_release.outputs.upload_url != null || steps.tag.outputs.tag != null
+        if: steps.cond_release_text.outputs.upload_url != null || steps.cond_tagged_release.outputs.tag_name != null
         uses: actions-rs/cargo@v1
         continue-on-error: false
         with:
@@ -150,17 +152,30 @@ jobs:
           args: android-arm --profile release
 
       - name: Build APK (arm64, Release)
-        if: steps.create_release.outputs.upload_url == null && steps.tag.outputs.tag == null
+        if: steps.cond_release_text.outputs.upload_url != null || steps.cond_tagged_release.outputs.tag_name != null
         run: flutter build apk --release --target-platform android-arm64
 
-      - name: Upload Release
-        id: upload-release-asset
-        if: steps.create_release.outputs.upload_url != null || steps.tag.outputs.tag != null
+      # ####################### upload release dependent and release in text or tagged
+      - name: Upload Release - Release in text
+        id: upload-release-text-asset
+        if: steps.cond_release_text.outputs.upload_url != null && steps.cond_tagged_release.outputs.tag_name == null
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          upload_url: ${{ steps.cond_release_text.outputs.upload_url }}
           asset_path: ./build/app/outputs/flutter-apk/app-release.apk
           asset_name: adbfflutter-arm64.apk
+          asset_content_type: application/octet-stream
+
+      - name: Upload Release - Release with tag
+        id: upload-release-tagged-asset
+        if: steps.cond_tagged_release.outputs.tag_name != null
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.cond_tagged_release.outputs.upload_url }}
+          asset_path: ./build/app/outputs/flutter-apk/app-release.apk
+          asset_name: adbfflutter-${{ steps.cond_tagged_release.outputs.tag_name }}-arm64.apk
           asset_content_type: application/octet-stream
