@@ -40,7 +40,7 @@ jobs:
 
       - run: echo ${{ steps.cond_release_text.outputs.upload_url }}
       - run: echo ${{ steps.cond_tagged_release.outputs.tag_name }}
-      - run: echo $RELEASE_VERSION
+      - run: echo $MY_VERSION
 
       # ##################### setup build environment
       - name: Cache LLVM and Clang
