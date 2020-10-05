@@ -99,7 +99,7 @@ jobs:
           args: ios --profile release
 
       - name: Run cargo make ios  - debug
-        if: steps.extract_tag.output.tag = ''
+        if: steps.extract_tag.output.tag == ''
         uses: actions-rs/cargo@v1
         continue-on-error: false
         with:

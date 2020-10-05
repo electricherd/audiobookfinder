@@ -47,7 +47,6 @@ pub async fn ffi_new_peer() -> u64 {
 
     // todo: make it a lazy static as RUNTIME, to also hold the same IP, otherwise it will
     //       always change its IP!
-    // which handles net communication
     let single_shot_net_thread = thread::Builder::new()
         .name("app_net".into())
         .spawn(move || {
