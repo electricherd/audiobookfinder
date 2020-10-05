@@ -146,5 +146,5 @@ jobs:
         with:
           upload_url: ${{ github.event.release.upload_url }}
           asset_path: ./build/app/outputs/flutter-apk/app-release.apk
-          asset_name: adbfflutter-${{ env:TAGGED}}-arm64.apk
+          asset_name: adbfflutter-${{ env:TAGGED }}-arm64.apk
           asset_content_type: application/octet-stream
