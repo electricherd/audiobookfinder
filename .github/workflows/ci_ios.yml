@@ -23,7 +23,7 @@ jobs:
 
       - name: check tagged
         shell: bash
-        run: echo ${{ $steps.extract_tag.output.tag }}
+        run: echo ${{ steps.extract_tag.output.tag }}
 
       # ##################### setup build environment
       - name: Cache LLVM and Clang
