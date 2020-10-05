@@ -10,7 +10,6 @@ jobs:
     name: Compile and Build - Android
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
       # #################### build conditions
       - name: condition tagged
         id: cond_tagged_release
@@ -36,7 +35,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set env
-        run: echo ::set-env name=MY_VERSION::$(echo ${GITHUB_REF:10})
+        run: echo ::set-env name=MY_VERSION::$(echo ${GITHUB_REF:11})
 
       - run: echo ${{ steps.cond_release_text.outputs.upload_url }}
       - run: echo ${{ steps.cond_tagged_release.outputs.tag_name }}
@@ -183,7 +182,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.cond_tagged_release.outputs.upload_url }}
+          upload_url: ${{ github.event.release.upload_url }}
           asset_path: ./build/app/outputs/flutter-apk/app-release.apk
           asset_name: adbfflutter-${{ steps.cond_tagged_release.outputs.tag_name }}-arm64.apk
           asset_content_type: application/octet-stream
