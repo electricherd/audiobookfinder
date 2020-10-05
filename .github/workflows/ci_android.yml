@@ -12,6 +12,7 @@ jobs:
     steps:
       # #################### build conditions
       - name: Set tagged
+        # https://docs.github.com/en/free-pro-team@latest/actions/reference/environment-variables
         run: echo ::set-env name=TAGGED::$(echo ${GITHUB_REF:11} | awk '/v([0-9]+\.)+[0-9]+/{print $0}')
 
       # ##################### setup build environment
@@ -112,7 +113,7 @@ jobs:
 
       # ############### Release/Debug build dependent
       - name: Run cargo make android - Debug
-        if: $TAGGED == ''
+        if: ${env:TAGGED} == ''
         uses: actions-rs/cargo@v1
         continue-on-error: false
         with:
@@ -120,11 +121,11 @@ jobs:
           args: android-dev
 
       - name: Build APK (x86_64, Debug)
-        if: $TAGGED == ''
+        if: ${env:TAGGED} == ''
         run: flutter build apk --debug
 
       - name: Run cargo make android - Release
-        if: $TAGGED != ''
+        if: ${env:TAGGED} != ''
         uses: actions-rs/cargo@v1
         continue-on-error: false
         with:
@@ -132,18 +133,18 @@ jobs:
           args: android-arm --profile release
 
       - name: Build APK (arm64, Release)
-        if: $TAGGED != ''
+        if: ${env:TAGGED} != ''
         run: flutter build apk --release --target-platform android-arm64
 
       # ####################### upload release dependent and release in text or tagged
       - name: Upload Release - Release with tag
         id: upload-release-tagged-asset
-        if: $TAGGED != ''
+        if: ${env:TAGGED} != ''
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ github.event.release.upload_url }}
           asset_path: ./build/app/outputs/flutter-apk/app-release.apk
-          asset_name: adbfflutter-$TAGGED-arm64.apk
+          asset_name: adbfflutter-${{ env:TAGGED}}-arm64.apk
           asset_content_type: application/octet-stream
