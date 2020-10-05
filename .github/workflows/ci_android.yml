@@ -11,6 +11,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # #################### build conditions
+      - id: get_version
+        uses: battila7/get-version-action@v2
+
       - name: condition tagged
         id: cond_tagged_release
         # https://github.com/marketplace/actions/get-the-upload-url-for-a-release
@@ -39,6 +42,9 @@ jobs:
 
       - run: echo ${{ steps.cond_release_text.outputs.upload_url }}
       - run: echo ${{ steps.cond_tagged_release.outputs.tag_name }}
+      - run: echo ${{ github.event.release.upload_url }}
+      - run: echo ${{ steps.get_version.outputs.version }}
+      - run: echo ${{ steps.get_version.outputs.version-without-v }}
       - run: echo $MY_VERSION
 
       # ##################### setup build environment
