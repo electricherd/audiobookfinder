@@ -17,6 +17,14 @@ jobs:
         # https://docs.github.com/en/free-pro-team@latest/actions/reference/environment-variables
         run: echo "##[set-output name=tag;]$(echo ${GITHUB_REF:11} | awk '/v([0-9]+\.)+[0-9]+/{print $0}')"
 
+      - name: check tag raw
+        shell: bash
+        run: echo ${GITHUB_REF:11}
+
+      - name: check tagged
+        shell: bash
+        run: echo ${{ $steps.extract_tag.output.tag }}
+
       # ##################### setup build environment
       - name: Cache LLVM and Clang
         id: cache-llvm
