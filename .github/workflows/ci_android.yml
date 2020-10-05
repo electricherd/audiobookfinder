@@ -11,11 +11,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # #################### build conditions
-      - id: tagger
-          uses: digital-ai/query-tag-action@v2
-          with:
-            include: 'v[:digit:]'
-
       - name: condition tagged
         id: cond_tagged_release
         # https://github.com/marketplace/actions/get-the-upload-url-for-a-release
