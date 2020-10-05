@@ -61,7 +61,7 @@ pub async fn ffi_new_peer() -> u64 {
     // very interesting, the compiler is awesome!!
     let out;
 
-    // loop over fixme: (very cheap version here, that could be done more elegantly)
+    // loop over fixme: (very cheap version here, that could be done more elegantly) with poll
     loop {
         if let Ok(reaction) = reactor.try_recv() {
             match reaction {

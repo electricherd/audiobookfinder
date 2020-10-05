@@ -11,15 +11,11 @@ jobs:
     runs-on: macos-latest
     steps:
       # #################### build conditions
-      - name: Manual extract tag if tag is v*.*.*
+      - name: Manual extract tag if tag is '*.*.*'
         id: extract_tag
         shell: bash
         # https://docs.github.com/en/free-pro-team@latest/actions/reference/environment-variables
-        run: echo "##[set-output name=tag;]$(echo ${GITHUB_REF#refs/heads/} | awk '/v([0-9]+\.)+[0-9]+/{print $0}')"
-
-      - name: check tag raw
-        shell: bash
-        run: echo ${GITHUB_REF:11}
+        run: echo "##[set-output name=tag;]$(echo ${GITHUB_REF#refs/heads/} | awk '/([0-9]+\.)+[0-9]+/{print $0}')"
 
       - name: check tagged
         shell: bash
