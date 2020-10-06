@@ -130,7 +130,7 @@ jobs:
 
       # ############### Release/Debug build dependent
       - name: Run cargo make ios  - Release
-        if: $vtag != ''
+        if: ${ env:vtag } != ''
         uses: actions-rs/cargo@v1
         continue-on-error: false
         with:
@@ -138,7 +138,7 @@ jobs:
           args: ios --profile release
 
       - name: Run cargo make ios  - debug
-        if: $vtag == ''
+        if: ${ env:vtag } == ''
         uses: actions-rs/cargo@v1
         continue-on-error: false
         with:
@@ -146,18 +146,18 @@ jobs:
           args: ios --profile debug
 
       - name: Build iOS App - release
-        if: $vtag != ''
+        if: ${ env:vtag } != ''
         run: flutter build ios --release --no-codesign --simulator
 
       - name: Build iOS App - debug
-        if: $vtag == ''
+        if: ${ env:vtag } == ''
         run: flutter build ios --debug --no-codesign --simulator
 
 
       # ####################### upload intermediate result dependent if release in text or tagged
       - name: Upload Release - Release with tag
         id: upload-release-tagged-asset
-        if: $vtag != ''
+        if: ${ env:vtag } != ''
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
