@@ -23,10 +23,10 @@ jobs:
 
       - name: check tagged
         shell: bash
-        run: echo ${{ steps.extract_tag.output.tag }}
+        run: echo ${{ steps.extract_tag.outputs.tag }}
 
-      - name: release
-        if: steps.extract_tag.output.tag != ''
+      - name: Release
+        if: steps.extract_tag.outputs.tag != null
         shell: bash
         run: echo "Building release"
 
@@ -145,7 +145,7 @@ jobs:
 
       # ############### Release/Debug build dependent
       - name: Run cargo make ios  - Release
-        if: steps.extract_tag.output.tag != ''
+        if: steps.extract_tag.outputs.tag != null
         uses: actions-rs/cargo@v1
         continue-on-error: false
         with:
@@ -153,7 +153,7 @@ jobs:
           args: ios --profile release
 
       - name: Run cargo make ios  - debug
-        if: steps.extract_tag.output.tag == ''
+        if: steps.extract_tag.outputs.tag == null
         uses: actions-rs/cargo@v1
         continue-on-error: false
         with:
@@ -161,23 +161,23 @@ jobs:
           args: ios --profile debug
 
       - name: Build iOS App - release
-        if: steps.extract_tag.output.tag != ''
+        if: steps.extract_tag.outputs.tag != null
         run: flutter build ios --release --no-codesign --simulator
 
       - name: Build iOS App - debug
-        if: steps.extract_tag.output.tag == ''
+        if: steps.extract_tag.outputs.tag == null
         run: flutter build ios --debug --no-codesign --simulator
 
 
       # ####################### upload intermediate result dependent if release in text or tagged
       - name: Upload Release - Release with tag
         id: upload-release-tagged-asset
-        if: steps.extract_tag.output.tag != ''
+        if: steps.extract_tag.outputs.tag != ''
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ github.event.release.upload_url }}
           asset_path: ./build/ios/iphoneos/Runner.app
-          asset_name: adbfflutter-ios-intermediate-${{ steps.extract_tag.output.tag }}.app
+          asset_name: adbfflutter-ios-intermediate-${{ steps.extract_tag.outputs.tag }}.app
           asset_content_type: application/octet-stream
