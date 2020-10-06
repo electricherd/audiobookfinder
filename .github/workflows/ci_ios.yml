@@ -14,8 +14,60 @@ jobs:
       - name: Manual extract tag if tag is '*.*.*'
         id: extract_tag
         shell: bash
+        env:
+          MGIT_REF: ${{ GITHUB_REF }}
         # https://docs.github.com/en/free-pro-team@latest/actions/reference/environment-variables
         run: echo "##[set-output name=tag;]$(echo ${GITHUB_REF#refs/tags/} | awk '/([0-9]+\.)+[0-9]+/{print $0}')"
+
+      - name: env check
+        shell: bash
+        run: echo ::set-env name=TAGGED::$(echo ${GITHUB_REF:11} | awk '/([0-9]+\.)+[0-9]+/{print $0}')
+
+      - name: env check tag
+        shell: bash
+        run: echo ::set-env name=TAGGED2::$(echo ${GITHUB_REF#refs/tags/} | awk '/([0-9]+\.)+[0-9]+/{print $0}')
+
+      - name: env check heads
+        shell: bash
+        run: echo ::set-env name=TAGGED3::$(echo ${GITHUB_REF#refs/heads/} | awk '/([0-9]+\.)+[0-9]+/{print $0}')
+
+      - name: show check
+        run: echo ${env:TAGGED}
+
+      - name: show check tag
+        run: echo ${env:TAGGED2}
+
+      - name: show check head
+        run: echo ${env:TAGGED3}
+
+      - name: check alone
+        shell: bash
+        run: echo ${GITHUB_REF#refs/tags/}
+
+      - name: check alone2
+        shell: bash
+        run: echo ${GITHUB_REF#refs/heads/}
+
+      - name: check alone3
+        shell: bash
+        run: echo ${GITHUB_REF#refs/heads/}
+
+      - name: check raw
+        shell: bash
+        run: echo ${GITHUB_REF#refs/tags/} | awk '/([0-9]+\.)+[0-9]+/{print $0}'
+
+      - name: check raw2
+        shell: bash
+        run: echo ${GITHUB_REF:11} | awk '/([0-9]+\.)+[0-9]+/{print $0}'
+
+      - name: check some
+        shell: bash
+        run: echo $(${GITHUB_REF:11} | awk '/([0-9]+\.)+[0-9]+/{print $0})'
+
+      - name: check some
+        shell: bash
+        run: echo $(${GITHUB_REF#refs/heads/} | awk '/([0-9]+\.)+[0-9]+/{print $0})'
+
 
       - name: check tagged
         shell: bash
