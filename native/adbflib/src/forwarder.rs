@@ -40,7 +40,7 @@ pub fn ffi_file_count_good(input_path: Vec<String>) -> u32 {
 
 /// return the peer hash for testing yet
 pub async fn ffi_new_peer() -> u64 {
-    //
+    // mock input parameters
     let dummy_wait_net_thread = WaitGroup::new();
     let (ui_sender, reactor) = channel::<UiUpdateMsg>();
     let (_, dummy_ipc_receive) = unbounded::<IPC>();

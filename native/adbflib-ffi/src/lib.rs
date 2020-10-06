@@ -65,6 +65,7 @@ pub unsafe extern "C" fn error_message_utf8(buf: *mut raw::c_char, length: i32) 
 pub extern "C" fn file_count_good(dart_port: i64, one_path: *const raw::c_char) -> i32 {
     let rt = runtime!();
     let first_entry: &str = cstr!(one_path);
+    // todo: is capable of using more than 1 path but for simplicity only one path now
     let paths = vec![first_entry.to_string()];
     let t = Isolate::new(dart_port).task(adbfbinlib::file_count_good(paths));
     rt.spawn(t);

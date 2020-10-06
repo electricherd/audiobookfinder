@@ -44,16 +44,17 @@ the "costs" you have and what it looks like in Simon Brand's
 # Table of Contents
 0. [My first program in Rust](#my-first-program-in-rust)
 1. [Features](#features)
-2. [Documentation](#documentation)
-3. [Architecture](#architecture)
-4. [Changes](#changes)
-5. [Screenshots](#screenshots)
-6. [ToDo](#todo)
-7. [CI Continuous Integration](#CI)
-8. [Goals](#goals)
-9. [Dependencies](#dependencies)
-10. [Tools](#tools)
-11. [Useful links](#useful-links)
+2. [Releases](#releases)
+3. [Documentation](#documentation)
+4. [Architecture](#architecture)
+5. [Changes](#changes)
+6. [Screenshots](#screenshots)
+7. [ToDo](#todo)
+8. [CI Continuous Integration](#CI)
+9. [Goals](#goals)
+10. [Dependencies](#dependencies)
+11. [Tools](#tools)
+12. [Useful links](#useful-links)
 
 ## My first program in Rust
 I planned to do something useful for myself. The program collects information about audio books on different
@@ -81,11 +82,17 @@ __It's crossplatform now!__
 * [BK-tree](https://en.wikipedia.org/wiki/BK-tree) data structure for approximate string matching
 * simple mobile app based on [ffi](https://en.wikipedia.org/wiki/Foreign_function_interface) interface [Dart](https://dart.dev/) / [Flutter](https://flutter.dev/) / [flutterust](https://github.com/shekohex/flutterust)
 
+### Releases
+There are [Ubuntu Release Builds](https://github.com/electricherd/audiobookfinder/releases/latest), a [Windows Build](https://github.com/electricherd/audiobookfinder/releases/latest)
+and an low-feature [Android App](https://github.com/electricherd/audiobookfinder/releases/latest) downloadable.
+
+
 ### Documentation
 
-[Documentation](https://electricherd.github.io/audiobookfinder/audiobookfinder/index.html) is generated.
+The [documentation](https://electricherd.github.io/audiobookfinder/audiobookfinder/index.html) is fully generated.
 
 It is an inline documentation from [CI](https://travis-ci.org/electricherd/audiobookfinder/) generated documentation - Rust does a nice job here as well!
+
 
 
 ### Architecture
@@ -93,6 +100,7 @@ It is an inline documentation from [CI](https://travis-ci.org/electricherd/audio
 
 
 ### Changes
+* github action, (it's a good idea but too many marketplace) as CI brought up, the app for android is downloadable and fast :grin:
 * since marrying [flutterust](https://github.com/shekohex/flutterust) and old adbflib, package name now is adbflib, the library is now adbfbinlib (yes, but for now)
 * added and fixed first shot mobile app mdns feature ... it just works :open_mouth: :blush:
 * produced apk can even be design tested in android studio
@@ -169,8 +177,7 @@ It is an inline documentation from [CI](https://travis-ci.org/electricherd/audio
 
 
 ### ToDo
-* fix library documentation on travis, only binary now (due to other libs) 
-* fix github actions CI for automatic build
+* add signature key, and google developer key to android app, and some time later process for a correct ios app
 * try [crate vfs](https://github.com/manuel-woelker/rust-vfs) for unit test with files!! interesting and needed!
 * look for other tag libraries (e.g. symphonia-metadata [symphonia](https://github.com/pdeljanov/Symphonia))
 * a good and fast data collection with few more further lifetimes optimizations
@@ -180,6 +187,7 @@ It is an inline documentation from [CI](https://travis-ci.org/electricherd/audio
 * think of a protocol what adbf clients agree on and exchange (e.g. still searching, files found, etc)
 * maybe a little AI layer on determining audio books duplicates/same author by similar spelling, etc.
 * internationalization (which is not really supported yet by Rust)
+* ~~fix github actions CI for automatic build~~
 * ~~implement as android/ios app using [flutterust](https://github.com/electricherd/flutterust).~~
 * ~~change webui to be started without collection start, to be able use path selection from within webui later~~
 * ~~add [ctrlc](http://detegr.github.io/doc/ctrlc/) functionality for signal handling in main~~
