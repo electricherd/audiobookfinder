@@ -151,15 +151,15 @@ jobs:
 
       # https://github.com/actions/create-release
       - name: Create Release
-          id: create_release
-          uses: actions/create-release@v1
-          env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          with:
-            tag_name: ${{ steps.extract_tag.outputs.tag }}
-            release_name: Release ${{ steps.extract_tag.outputs.tag }}
-            draft: false
-            prerelease: false
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.extract_tag.outputs.tag }}
+          release_name: Release ${{ steps.extract_tag.outputs.tag }}
+          draft: false
+          prerelease: false
 
       # https://github.com/marketplace/actions/upload-a-release-asset
       - name: Upload Release Asset
