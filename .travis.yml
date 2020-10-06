@@ -108,6 +108,6 @@ ignore:
   - appveyor.yml
   - README.md
   - README-release.md
-  - ci/
-  - docs/
-  - .github/
+  - ci/*
+  - docs/*
+  - .github/*
