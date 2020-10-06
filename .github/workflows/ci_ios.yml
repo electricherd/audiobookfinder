@@ -128,7 +128,7 @@ jobs:
       # https://github.com/marketplace/actions/upload-asset
       - name: Upload Release - Release with tag
         if: steps.extract_tag.outputs.tag != ''
-        uses: Shopify/upload-to-release
+        uses: Shopify/upload-to-release@1
         with:
           name: adbfflutter-ios-intermediate-${{ steps.extract_tag.outputs.tag }}.app
           path: ./build/ios/iphoneos/Runner.app

@@ -152,7 +152,7 @@ jobs:
       # https://github.com/marketplace/actions/upload-asset
       - name: Upload Release - Release with tag
         if: steps.extract_tag.outputs.tag != ''
-        uses: Shopify/upload-to-release
+        uses: Shopify/upload-to-release@1
         with:
           name: adbfflutter-${{ steps.extract_tag.outputs.tag }}-arm64.apk
           path: ./build/app/outputs/flutter-apk/app-release.apk
