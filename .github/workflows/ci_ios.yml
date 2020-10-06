@@ -15,9 +15,13 @@ jobs:
         id: extract_tag
         shell: bash
         env:
-          MGIT_REF: ${env:GITHUB_REF}
+          MGIT_REF: ${GITHUB_REF#refs/tags/}
         # https://docs.github.com/en/free-pro-team@latest/actions/reference/environment-variables
-        run: echo "##[set-output name=tag;]$(echo ${GITHUB_REF#refs/tags/} | awk '/([0-9]+\.)+[0-9]+/{print $0}')"
+        run: echo "##[set-output name=tag;]$(echo ${GITHUB_REF#refs/tags/} | awk '/v([0-9]+\.)+[0-9]+/{print $0}')"
+
+      - name: check tagged
+        shell: bash
+        run: echo ${{ steps.extract_tag.output.tag }}
 
       - name: env check
         shell: bash
@@ -66,12 +70,7 @@ jobs:
 
       - name: check some
         shell: bash
-        run: echo $(${GITHUB_REF#refs/heads/} | awk '/([0-9]+\.)+[0-9]+/{print $0})'
-
-
-      - name: check tagged
-        shell: bash
-        run: echo ${{ steps.extract_tag.output.tag }}
+        run: echo $(${GITHUB_REF#refs/heads/} | awk '/([0-9]+\.)+[0-9]+/{print $0}))'
 
       # ##################### setup build environment
       - name: Cache LLVM and Clang
