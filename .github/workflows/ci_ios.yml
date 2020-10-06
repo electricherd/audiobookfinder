@@ -11,9 +11,21 @@ jobs:
     runs-on: macos-latest
     steps:
       # #################### build conditions
-      - name: vtag env variable
+      - name: mtag variable
         shell: bash
-        run: echo "vtag=$(echo ${GITHUB_REF#refs/tags/} | awk '/v([0-9]+\.)+[0-9]+/{print $0}')" >> $GITHUB_ENV
+        run: echo "mtag=$(echo ${GITHUB_REF#refs/tags/} | awk '/v([0-9]+\.)+[0-9]+/{print $0}')" >> $GITHUB_ENV
+
+      - name: Manual extract tag if tag is '*.*.*'
+        id: extract_tag
+        shell: bash
+        env:
+          OUT_PAR: $mtag
+        # https://docs.github.com/en/free-pro-team@latest/actions/reference/environment-variables
+        run: echo "$OUT_PAR"
+
+      - name: check tagged
+        shell: bash
+        run: echo ${{ steps.extract_tag.output.tag }}
 
       - name: env check tag
         shell: bash
@@ -130,7 +142,7 @@ jobs:
 
       # ############### Release/Debug build dependent
       - name: Run cargo make ios  - Release
-        if: ${ env:vtag } != ''
+        if: steps.extract_tag.output.tag != ''
         uses: actions-rs/cargo@v1
         continue-on-error: false
         with:
@@ -138,7 +150,7 @@ jobs:
           args: ios --profile release
 
       - name: Run cargo make ios  - debug
-        if: ${ env:vtag } == ''
+        if: steps.extract_tag.output.tag == ''
         uses: actions-rs/cargo@v1
         continue-on-error: false
         with:
@@ -146,23 +158,23 @@ jobs:
           args: ios --profile debug
 
       - name: Build iOS App - release
-        if: ${ env:vtag } != ''
+        if: steps.extract_tag.output.tag != ''
         run: flutter build ios --release --no-codesign --simulator
 
       - name: Build iOS App - debug
-        if: ${ env:vtag } == ''
+        if: steps.extract_tag.output.tag == ''
         run: flutter build ios --debug --no-codesign --simulator
 
 
       # ####################### upload intermediate result dependent if release in text or tagged
       - name: Upload Release - Release with tag
         id: upload-release-tagged-asset
-        if: ${ env:vtag } != ''
+        if: steps.extract_tag.output.tag != ''
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ github.event.release.upload_url }}
           asset_path: ./build/ios/iphoneos/Runner.app
-          asset_name: adbfflutter-ios-intermediate-$vtag.app
+          asset_name: adbfflutter-ios-intermediate-${{ steps.extract_tag.output.tag }}.app
           asset_content_type: application/octet-stream

@@ -113,7 +113,7 @@ jobs:
 
       # ############### Release/Debug build dependent
       - name: Run cargo make android - Debug
-        if: ${{ vtag }} == ''
+        if: ${{ env.vtag }} == ''
         uses: actions-rs/cargo@v1
         continue-on-error: false
         with:
@@ -121,11 +121,11 @@ jobs:
           args: android-dev
 
       - name: Build APK (x86_64, Debug)
-        if: ${{ vtag }} == ''
+        if: ${{ env.vtag }} == ''
         run: flutter build apk --debug
 
       - name: Run cargo make android - Release
-        if: ${{ vtag }} != ''
+        if: ${{ env.vtag }} != ''
         uses: actions-rs/cargo@v1
         continue-on-error: false
         with:
@@ -133,13 +133,13 @@ jobs:
           args: android-arm --profile release
 
       - name: Build APK (arm64, Release)
-        if: ${{ vtag }} != ''
+        if: ${{ env.vtag }} != ''
         run: flutter build apk --release --target-platform android-arm64
 
       # ####################### upload release dependent and release in text or tagged
       - name: Upload Release - Release with tag
         id: upload-release-tagged-asset
-        if: ${{ vtag }} != ''
+        if: ${{ env.vtag }} != ''
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
