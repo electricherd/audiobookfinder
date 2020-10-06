@@ -13,15 +13,13 @@ jobs:
       # #################### build conditions
       - name: mtag variable
         shell: bash
-        run: echo "mtag=$(echo ${GITHUB_REF#refs/tags/} | awk '/v([0-9]+\.)+[0-9]+/{print $0}')" >> $GITHUB_ENV
+        run: echo "vtag=$(echo ${GITHUB_REF#refs/tags/} | awk '/v([0-9]+\.)+[0-9]+/{print $0}')" >> $GITHUB_ENV
 
       - name: Manual extract tag if tag is '*.*.*'
         id: extract_tag
         shell: bash
-        env:
-          OUT_PAR: $mtag
         # https://docs.github.com/en/free-pro-team@latest/actions/reference/environment-variables
-        run: echo "$OUT_PAR"
+        run: echo "##[set-output name=tag;]${{ env.vtag }}"
 
       - name: check tagged
         shell: bash
