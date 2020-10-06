@@ -16,60 +16,15 @@ jobs:
         shell: bash
         run: echo "vtag=$(echo ${GITHUB_REF#refs/tags/} | awk '/v([0-9]+\.)+[0-9]+/{print $0}')" >> $GITHUB_ENV
 
-      - name: Manual extract tag if tag is '*.*.*'
+      - name: Extractor for vtag env
         id: extract_tag
         shell: bash
         run: echo ::set-output name=tag::${{ env.vtag }}
-
-      - name: check tagged
-        shell: bash
-        run: echo ${{ steps.extract_tag.outputs.tag }}
 
       - name: Release
         if: steps.extract_tag.outputs.tag != null
         shell: bash
         run: echo "Building release"
-
-      - name: env check tag
-        shell: bash
-        run: echo ::set-env name=TAGGED2::$(echo ${GITHUB_REF#refs/tags/})
-
-      - name: env check heads
-        shell: bash
-        run: echo ::set-env name=TAGGED3::$(echo ${GITHUB_REF#refs/tags/} | awk '/([0-9]+\.)+[0-9]+/{print $0}')
-
-      - name: show check
-        run: echo ${env:TAGGED}
-
-      - name: show check tag 2
-        run: echo ${env:TAGGED2}
-
-      - name: show check tag 3
-        run: echo ${env:TAGGED3}
-
-      - name: check alone
-        shell: bash
-        run: echo ${GITHUB_REF#refs/tags/}
-
-      - name: check alone2
-        shell: bash
-        run: echo ${GITHUB_REF#refs/heads/}
-
-      - name: check raw
-        shell: bash
-        run: echo ${GITHUB_REF#refs/tags/} | awk '/([0-9]+\.)+[0-9]+/{print $0}'
-
-      - name: check raw2
-        shell: bash
-        run: echo ${GITHUB_REF:11} | awk '/([0-9]+\.)+[0-9]+/{print $0}'
-
-      - name: check some
-        shell: bash
-        run: echo $(${GITHUB_REF:11} | awk '/([0-9]+\.)+[0-9]+/{print $0}')
-
-      - name: check some 2
-        shell: bash
-        run: echo $(${GITHUB_REF#refs/heads/} | awk '/([0-9]+\.)+[0-9]+/{print $0}')
 
       # ##################### setup build environment
       - name: Cache LLVM and Clang

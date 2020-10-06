@@ -16,14 +16,10 @@ jobs:
         shell: bash
         run: echo "vtag=$(echo ${GITHUB_REF#refs/tags/} | awk '/v([0-9]+\.)+[0-9]+/{print $0}')" >> $GITHUB_ENV
 
-      - name: Manual extract tag if tag is '*.*.*'
+      - name: Extractor for vtag env
         id: extract_tag
         shell: bash
         run: echo "##[set-output name=tag;]${{ env.vtag }}"
-
-      - name: check tagged
-        shell: bash
-        run: echo ${{ steps.extract_tag.outputs.tag }}
 
       - name: Release
         if: steps.extract_tag.outputs.tag != null
