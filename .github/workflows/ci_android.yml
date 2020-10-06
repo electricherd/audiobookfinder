@@ -28,7 +28,7 @@ jobs:
       - name: Release
         if: steps.extract_tag.outputs.tag != null
         shell: bash
-        run: echo "Building release"
+        run: echo "Building release with upload url: ${{ steps.release.outputs.upload_url }}"
 
       # ##################### setup build environment
       - name: Cache LLVM and Clang
@@ -151,15 +151,14 @@ jobs:
         if: steps.extract_tag.outputs.tag != null
         run: flutter build apk --release --target-platform android-arm64
 
-      # ####################### upload release dependent and release in text or tagged
+      # ####################### upload intermediate result dependent if release in text or tagged
+
+      # https://github.com/marketplace/actions/upload-asset
       - name: Upload Release - Release with tag
-        id: upload-release-tagged-asset
-        if: steps.extract_tag.outputs.tag != null
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        if: steps.extract_tag.outputs.tag != ''
+        uses: Shopify/upload-to-release
         with:
-          upload_url: ${{ steps.release.outputs.upload_url }}
-          asset_path: ./build/app/outputs/flutter-apk/app-release.apk
-          asset_name: adbfflutter-${{ steps.extract_tag.outputs.tag }}-arm64.apk
-          asset_content_type: application/octet-stream
+          name: adbfflutter-${{ steps.extract_tag.outputs.tag }}-arm64.apk
+          path: ./build/app/outputs/flutter-apk/app-release.apk
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          content-type: application/octet-stream
