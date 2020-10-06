@@ -11,15 +11,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # #################### build conditions
-      - name: Manual extract tag if tag is '*.*.*'
-        id: extract_tag
+      - name: vtag env variable
         shell: bash
-        # https://docs.github.com/en/free-pro-team@latest/actions/reference/environment-variables
-        run: echo "##[set-output name=tag;]$(echo ${GITHUB_REF#refs/tags/} | awk '/([0-9]+\.)+[0-9]+/{print $0}')"
-
-      - name: check tagged
-        shell: bash
-        run: echo ${{ steps.extract_tag.output.tag }}
+        run: echo "vtag=$(echo ${GITHUB_REF#refs/tags/} | awk '/v([0-9]+\.)+[0-9]+/{print $0}')" >> $GITHUB_ENV
 
       # ##################### setup build environment
       - name: Cache LLVM and Clang
@@ -119,7 +113,7 @@ jobs:
 
       # ############### Release/Debug build dependent
       - name: Run cargo make android - Debug
-        if: steps.extract_tag.output.tag == ''
+        if: $vtag == ''
         uses: actions-rs/cargo@v1
         continue-on-error: false
         with:
@@ -127,11 +121,11 @@ jobs:
           args: android-dev
 
       - name: Build APK (x86_64, Debug)
-        if: steps.extract_tag.output.tag == ''
+        if: $vtag == ''
         run: flutter build apk --debug
 
       - name: Run cargo make android - Release
-        if: steps.extract_tag.output.tag != ''
+        if: $vtag != ''
         uses: actions-rs/cargo@v1
         continue-on-error: false
         with:
@@ -139,18 +133,18 @@ jobs:
           args: android-arm --profile release
 
       - name: Build APK (arm64, Release)
-        if: steps.extract_tag.output.tag != ''
+        if: $vtag != ''
         run: flutter build apk --release --target-platform android-arm64
 
       # ####################### upload release dependent and release in text or tagged
       - name: Upload Release - Release with tag
         id: upload-release-tagged-asset
-        if: steps.extract_tag.output.tag != ''
+        if: $vtag != ''
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ github.event.release.upload_url }}
           asset_path: ./build/app/outputs/flutter-apk/app-release.apk
-          asset_name: adbfflutter-${{ steps.extract_tag.output.tag }}-arm64.apk
+          asset_name: adbfflutter-$vtag-arm64.apk
           asset_content_type: application/octet-stream
