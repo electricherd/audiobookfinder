@@ -6,11 +6,11 @@ on: [push, pull_request]
 name: iOS Build
 
 jobs:
-  ci:
+  build:
     name: Compile and Build - iOS
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v1
+      # use to your like https://github.com/marketplace?type=actions
       # #################### build conditions
       - name: vtag variable
         shell: bash
@@ -20,6 +20,10 @@ jobs:
         id: extract_tag
         shell: bash
         run: echo ::set-output name=tag::${{ env.vtag }}
+
+      - name: "Get upload_url"
+        run: echo "::set-output name=upload_url::https://uploads.github.com/repos/$GITHUB_REPOSITORY/releases/$(jq --raw-output '.release.id' $GITHUB_EVENT_PATH)/assets{?name,label}"
+        id: release
 
       - name: Release
         if: steps.extract_tag.outputs.tag != null
@@ -117,7 +121,7 @@ jobs:
 
       - name: Build iOS App - release
         if: steps.extract_tag.outputs.tag != null
-        run: flutter build ios --release --no-codesign --simulator
+        run: flutter build ios --release --no-codesign
 
       - name: Build iOS App - debug
         if: steps.extract_tag.outputs.tag == null
@@ -132,7 +136,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ github.event.release.upload_url }}
+          upload_url: ${{ steps.release.outputs.upload_url }}
           asset_path: ./build/ios/iphoneos/Runner.app
           asset_name: adbfflutter-ios-intermediate-${{ steps.extract_tag.outputs.tag }}.app
           asset_content_type: application/octet-stream
