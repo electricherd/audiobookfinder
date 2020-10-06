@@ -149,26 +149,14 @@ jobs:
 
       # ####################### upload intermediate result dependent if release in text or tagged
 
-      # https://github.com/actions/create-release
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ steps.extract_tag.outputs.tag }}
-          release_name: Release ${{ steps.extract_tag.outputs.tag }}
-          draft: false
-          prerelease: false
-
-      # https://github.com/marketplace/actions/upload-a-release-asset
+      # https://github.com/marketplace/actions/upload-files-to-a-github-release
       - name: Upload Release Asset
-        id: upload-release-asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        if: steps.extract_tag.outputs.tag != null
+        uses: svenstaro/upload-release-action@v2
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
-          asset_path: ./build/app/outputs/flutter-apk/app-release.apk
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: ./build/app/outputs/flutter-apk/app-release.apk
           asset_name: adbfflutter-${{ steps.extract_tag.outputs.tag }}-arm64.apk
-          asset_content_type: application/octet-stream
+          tag: ${{ github.ref }}
+          overwrite: true
+          body: "This is the experimental android app - to test!"
