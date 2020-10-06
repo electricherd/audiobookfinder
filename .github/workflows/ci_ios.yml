@@ -21,14 +21,10 @@ jobs:
         shell: bash
         run: echo ::set-output name=tag::${{ env.vtag }}
 
-      - name: "Get upload_url"
-        run: echo "::set-output name=upload_url::https://uploads.github.com/repos/$GITHUB_REPOSITORY/releases/$(jq --raw-output '.release.id' $GITHUB_EVENT_PATH)/assets{?name,label}"
-        id: release
-
       - name: Release
         if: steps.extract_tag.outputs.tag != null
         shell: bash
-        run: echo "Building release with upload url: ${{ steps.release.outputs.upload_url }}"
+        run: echo "Building release"
 
       # ##################### setup build environment
       - name: Cache LLVM and Clang
