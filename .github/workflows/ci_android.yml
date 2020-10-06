@@ -19,11 +19,16 @@ jobs:
       - name: Manual extract tag if tag is '*.*.*'
         id: extract_tag
         shell: bash
-        run: echo ::set-output name=tag::${{ env.vtag }}
+        run: echo "##[set-output name=tag;]${{ env.vtag }}"
 
       - name: check tagged
         shell: bash
         run: echo ${{ steps.extract_tag.output.tag }}
+
+      - name: release
+        if: steps.extract_tag.output.tag != ''
+        shell: bash
+        run: echo "Building release"
 
       # ##################### setup build environment
       - name: Cache LLVM and Clang
