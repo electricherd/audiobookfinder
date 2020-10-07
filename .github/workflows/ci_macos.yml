@@ -116,4 +116,4 @@ jobs:
           asset_name: audiobookfinder-${{ steps.extract_tag.outputs.tag }}-macos.zip
           tag: ${{ github.ref }}
           overwrite: true
-            body: "This is the github action build"
+          body: "This is the github action build"
