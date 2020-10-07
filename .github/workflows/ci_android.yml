@@ -68,6 +68,7 @@ jobs:
             target/i686-linux-android
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
+      # todo: check https://github.com/actions-rs/install
       - name: Install Cargo Make
         uses: actions-rs/cargo@v1
         continue-on-error: true
@@ -159,4 +160,4 @@ jobs:
           asset_name: adbfflutter-${{ steps.extract_tag.outputs.tag }}-arm64.apk
           tag: ${{ github.ref }}
           overwrite: true
-          body: "This is the experimental android app - to test!"
+          body: "This is the github action build"

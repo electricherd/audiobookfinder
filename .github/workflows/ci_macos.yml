@@ -1,0 +1,102 @@
+on: [push, pull_request]
+# this from  from https://github.com/sunshine-protocol/sunscreen Appache 2.0 license
+#
+
+# name is (urlencode) connected to README.md svg badge (change it there as well)
+name: MacOS Build
+
+jobs:
+  build:
+    name: Compile and Build - MacOS
+    runs-on: macos-latest
+    steps:
+      # use to your like https://github.com/marketplace?type=actions
+      # #################### build conditions
+      - name: vtag variable
+        shell: bash
+        run: echo "vtag=$(echo ${GITHUB_REF#refs/tags/} | awk '/v([0-9]+\.)+[0-9]+/{print $0}')" >> $GITHUB_ENV
+
+      - name: Extractor for vtag env
+        id: extract_tag
+        shell: bash
+        run: echo ::set-output name=tag::${{ env.vtag }}
+
+      - name: Release
+        if: steps.extract_tag.outputs.tag != null
+        shell: bash
+        run: echo "Building release"
+
+      # ##################### setup build environment
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
+      - name: Install Rust Toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+          components: rustfmt
+
+      - name: Cache Cargo
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            ~/.cargo/bin
+            target/x86_64-apple-darwin
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Install iOS Targets
+        run: rustup target add x86_64-apple-darwin
+
+      # ############### Release/Debug build dependent
+      - name: Run cargo make ios  - Release
+        if: steps.extract_tag.outputs.tag == null
+        uses: actions-rs/cargo@v1
+        continue-on-error: false
+        with:
+          command: build
+          args: --bin audiobookfinder --release --target x86_64-apple-darwin
+
+      - name: Run cargo make ios  - debug
+        if: steps.extract_tag.outputs.tag != null
+        uses: actions-rs/cargo@v1
+        continue-on-error: false
+        with:
+          command: make
+          args: --bin audiobookfinder --debug --target x86_64-apple-darwin
+
+      # #########################  compress binary
+
+      # https://github.com/svenstaro/upx-action
+      - name: Compress binaries
+        if: steps.extract_tag.outputs.tag == null
+        uses: svenstaro/upx-action@v2
+        with:
+          file: ./target/release/audiobookfinder
+          args: --best
+          strip: true
+
+      # https://github.com/marketplace/actions/action-7z
+      - uses: edgarrc/action-7z@v1.0.4
+        if: steps.extract_tag.outputs.tag == null
+        with:
+          args: >
+                 7z a -t7z -mx=9 package.7z
+                 ./target/release/audiobookfinder
+                 ./README-release.md
+
+      # ####################### upload intermediate result dependent if release in text or tagged
+
+      # https://github.com/marketplace/actions/upload-files-to-a-github-release
+      - name: Upload Release Asset
+        if: steps.extract_tag.outputs.tag == null
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: package.7z
+          asset_name: audiobookfinder-${{ steps.extract_tag.outputs.tag }}-macos.7z
+          tag: ${{ github.ref }}
+          overwrite: true

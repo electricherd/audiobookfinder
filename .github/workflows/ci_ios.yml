@@ -116,7 +116,8 @@ jobs:
           args: ios --profile debug
 
       - name: Build iOS App - release
-        if: steps.extract_tag.outputs.tag != null
+        # todo: no release build for now - no key from apple yet
+        if: false && steps.extract_tag.outputs.tag != null
         run: flutter build ios --release --no-codesign
 
       - name: Build iOS App - debug
