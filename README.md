@@ -205,9 +205,10 @@ The Continuous Integration is done on 2 services, Travis and AppVeyor but will p
     * [Audiobookfinder Build Debian Buster Raspberry](https://travis-ci.org/electricherd/audiobookfinder) ![travis](https://travis-matrix-badges.herokuapp.com/repos/electricherd/audiobookfinder/branches/master/2)
     * only until version 0.1.18: Build Linux 14.04
 * On Github with Github Actions
-    * Android-Build: [![Actions Status](https://github.com/electricherd/audiobookfinder/workflows/Android%20Build/badge.svg)](https://github.com/electricherd/audiobookfinder/actions)
-    * iOS-Build: [![Actions Status](https://github.com/electricherd/audiobookfinder/workflows/iOS%20Build/badge.svg)](https://github.com/electricherd/audiobookfinder/actions)
-
+    * Android-Build: [![Actions Status](https://github.com/electricherd/audiobookfinder/workflows/Android%20Build/badge.svg)](https://github.com/electricherd/audiobookfinder/actions?query=workflow%3A%22Android+Build%22)
+    * iOS-Build: [![Actions Status](https://github.com/electricherd/audiobookfinder/workflows/iOS%20Build/badge.svg)](https://github.com/electricherd/audiobookfinder/actions?query=workflow%3A%22iOS+Build%22)
+    * MacOS-Build: [![Actions Status](https://github.com/electricherd/audiobookfinder/workflows/iOS%20Build/badge.svg)](https://github.com/electricherd/audiobookfinder/actions?query=workflow%3A%22MacOS+Build%22)
+    
 ### Goals
 The primary goal is to learn Rust and to cover various aspects of the language, of which some of I already used inside the program, such as:
 - [x] borrowing: the borrow checker, some issues but I am fine with it now

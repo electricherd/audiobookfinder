@@ -48,7 +48,7 @@ jobs:
             target/x86_64-apple-darwin
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: Install iOS Targets
+      - name: Install MacOS Targets
         run: rustup target add x86_64-apple-darwin
 
       # ############### Release/Debug build dependent
@@ -60,13 +60,13 @@ jobs:
           command: build
           args: --bin audiobookfinder --release --target x86_64-apple-darwin
 
-      - name: Run cargo make ios  - debug
+      - name: Run cargo make MacOS  - debug
         if: steps.extract_tag.outputs.tag != null
         uses: actions-rs/cargo@v1
         continue-on-error: false
         with:
           command: make
-          args: --bin audiobookfinder --debug --target x86_64-apple-darwin
+          args: --bin audiobookfinder --target x86_64-apple-darwin
 
       # #########################  compress binary
 
@@ -74,18 +74,21 @@ jobs:
       - name: Compress binaries
         if: steps.extract_tag.outputs.tag == null
         uses: svenstaro/upx-action@v2
+        continue-on-error: false
         with:
-          file: ./target/release/audiobookfinder
+          file: ./target/x86_64-apple-darwin/release/audiobookfinder
           args: --best
           strip: true
 
       # https://github.com/marketplace/actions/action-7z
-      - uses: edgarrc/action-7z@v1.0.4
+      - name: 7zip Release files
         if: steps.extract_tag.outputs.tag == null
+        uses: edgarrc/action-7z@v1.0.4
+        continue-on-error: false
         with:
           args: >
                  7z a -t7z -mx=9 package.7z
-                 ./target/release/audiobookfinder
+                 ./target/x86_64-apple-darwin/release/audiobookfinder
                  ./README-release.md
 
       # ####################### upload intermediate result dependent if release in text or tagged
