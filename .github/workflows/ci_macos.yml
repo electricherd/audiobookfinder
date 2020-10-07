@@ -52,7 +52,7 @@ jobs:
         run: rustup target add x86_64-apple-darwin
 
       # ############### Release/Debug build dependent
-      - name: Run cargo make ios  - Release
+      - name: Run cargo make MacOS  - Release
         if: steps.extract_tag.outputs.tag == null
         uses: actions-rs/cargo@v1
         continue-on-error: false
@@ -80,16 +80,29 @@ jobs:
           args: --best
           strip: true
 
-      # https://github.com/marketplace/actions/action-7z
-      - name: 7zip Release files
+      # https://github.com/marketplace/actions/easy-zip-files
+      - name: zip files
         if: steps.extract_tag.outputs.tag == null
-        uses: edgarrc/action-7z@v1.0.4
+        uses: papeloto/action-zip@v1
         continue-on-error: false
         with:
-          args: >
-                 7z a -t7z -mx=9 package.7z
+          files: >
                  ./target/x86_64-apple-darwin/release/audiobookfinder
                  ./README-release.md
+          recursive: false
+          dest: packaged
+
+      # https://github.com/marketplace/actions/action-7z
+      # not on MacOS
+      #- name: 7zip Release files
+      #  if: steps.extract_tag.outputs.tag == null
+      #  uses: edgarrc/action-7z@v1.0.4
+      #  continue-on-error: false
+      #  with:
+      #    args: >
+      #           7z a -t7z -mx=9 packaged
+      #           ./target/x86_64-apple-darwin/release/audiobookfinder
+      #           ./README-release.md
 
       # ####################### upload intermediate result dependent if release in text or tagged
 
@@ -99,7 +112,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: package.7z
-          asset_name: audiobookfinder-${{ steps.extract_tag.outputs.tag }}-macos.7z
+          file: packaged
+          asset_name: audiobookfinder-${{ steps.extract_tag.outputs.tag }}-macos.zip
           tag: ${{ github.ref }}
           overwrite: true
