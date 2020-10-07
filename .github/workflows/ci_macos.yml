@@ -53,7 +53,7 @@ jobs:
 
       # ############### Release/Debug build dependent
       - name: Run cargo make MacOS  - Release
-        if: steps.extract_tag.outputs.tag == null
+        if: steps.extract_tag.outputs.tag != null
         uses: actions-rs/cargo@v1
         continue-on-error: false
         with:
@@ -61,7 +61,7 @@ jobs:
           args: --bin audiobookfinder --release --target x86_64-apple-darwin
 
       - name: Run cargo make MacOS  - debug
-        if: steps.extract_tag.outputs.tag != null
+        if: steps.extract_tag.outputs.tag == null
         uses: actions-rs/cargo@v1
         continue-on-error: false
         with:
@@ -72,7 +72,7 @@ jobs:
 
       # https://github.com/svenstaro/upx-action
       - name: Compress binaries
-        if: steps.extract_tag.outputs.tag == null
+        if: steps.extract_tag.outputs.tag != null
         uses: svenstaro/upx-action@v2
         continue-on-error: false
         with:
@@ -82,7 +82,7 @@ jobs:
 
       # https://github.com/marketplace/actions/easy-zip-files
       - name: zip files
-        if: steps.extract_tag.outputs.tag == null
+        if: steps.extract_tag.outputs.tag != null
         uses: papeloto/action-zip@v1
         continue-on-error: false
         with:
@@ -95,7 +95,7 @@ jobs:
       # https://github.com/marketplace/actions/action-7z
       # not on MacOS
       #- name: 7zip Release files
-      #  if: steps.extract_tag.outputs.tag == null
+      #  if: steps.extract_tag.outputs.tag != null
       #  uses: edgarrc/action-7z@v1.0.4
       #  continue-on-error: false
       #  with:
@@ -108,7 +108,7 @@ jobs:
 
       # https://github.com/marketplace/actions/upload-files-to-a-github-release
       - name: Upload Release Asset
-        if: steps.extract_tag.outputs.tag == null
+        if: steps.extract_tag.outputs.tag != null
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
@@ -116,3 +116,4 @@ jobs:
           asset_name: audiobookfinder-${{ steps.extract_tag.outputs.tag }}-macos.zip
           tag: ${{ github.ref }}
           overwrite: true
+            body: "This is the github action build"
