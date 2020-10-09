@@ -25,7 +25,7 @@ pub fn ffi_file_count_good(input_path: Vec<String>) -> u32 {
     let synced_to_ui_messages = Arc::new(Mutex::new(tx.clone()));
     let has_ui = false;
 
-    // set up data
+    // set up data and run search
     let collection_protected = Arc::new(Mutex::new(Collection::new()));
     let output_data_return_handle = shared::collection_search(
         collection_protected,
