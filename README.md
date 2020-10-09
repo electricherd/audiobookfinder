@@ -260,9 +260,9 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
 * https://github.com/actions : a better CI with repo of scripts
 
 ### 3rd party (excluding Rust crates), all [MIT](https://tldrlegal.com/license/mit-license) licenses
-* <img src="https://upload.wikimedia.org/wikipedia/commons/c/ce/Unofficial_JavaScript_logo.svg" align="middle" width="21em"/>https://getbootstrap.com/docs/4.3/getting-started/introduction/
-* <img src="https://upload.wikimedia.org/wikipedia/commons/c/ce/Unofficial_JavaScript_logo.svg" align="middle" width="21em"/>https://jquery.com/
-* <img src="https://upload.wikimedia.org/wikipedia/commons/c/ce/Unofficial_JavaScript_logo.svg" align="middle" width="21em"/>https://gist.github.com/ismasan/299789
-* <img src="https://www.rust-lang.org/logos/rust-logo-blk.svg" align="middle" width="21em"/>https://github.com/tempor1s/bktree-rs
-* <img src="https://www.vectorlogo.zone/logos/flutterio/flutterio-icon.svg" align="middle" width="21em"/><img src="https://www.rust-lang.org/logos/rust-logo-blk.svg" align="middle" width="21em"/><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Dart-logo.png/240px-Dart-logo.png" align="middle" width="21em"/>https://github.com/shekohex/flutterust
-* <img src="https://www.vectorlogo.zone/logos/flutterio/flutterio-icon.svg" align="middle" width="21em"/>https://pub.dev/packages/file_picker
+* https://getbootstrap.com/docs/4.3/getting-started/introduction/
+* https://jquery.com/
+* https://gist.github.com/ismasan/299789
+* https://github.com/tempor1s/bktree-rs
+* https://github.com/shekohex/flutterust
+* https://pub.dev/packages/file_picker

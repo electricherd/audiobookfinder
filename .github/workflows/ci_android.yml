@@ -158,6 +158,5 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: ./build/app/outputs/flutter-apk/app-release.apk
           asset_name: adbfflutter-${{ steps.extract_tag.outputs.tag }}-arm64.apk
-          tag: ${{ github.ref }}
+          tag: ${{ steps.extract_tag.outputs.tag }}
           overwrite: true
-          body: "This is the github action build"

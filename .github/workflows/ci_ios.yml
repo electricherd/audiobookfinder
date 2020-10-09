@@ -116,9 +116,10 @@ jobs:
           args: ios --profile debug
 
       - name: Build iOS App - release
+        if: steps.extract_tag.outputs.tag != null
         # todo: no release build for now - no key from apple yet
-        if: false && steps.extract_tag.outputs.tag != null
-        run: flutter build ios --release --no-codesign
+        # run: flutter build ios --release --no-codesign
+        run: flutter build ios --debug --no-codesign --simulator
 
       - name: Build iOS App - debug
         if: steps.extract_tag.outputs.tag == null
@@ -134,6 +135,5 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: ./build/ios/iphoneos/Runner.app
           asset_name: adbfflutter-ios-intermediate-${{ steps.extract_tag.outputs.tag }}.app
-          tag: ${{ github.ref }}
+          tag: ${{ steps.extract_tag.outputs.tag }}
           overwrite: true
-          body: "This is the experimental, intermediat ios app - to test!"

@@ -19,3 +19,12 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+
+Other MIT licensed included Software/Software components:
+* https://getbootstrap.com/docs/4.3/getting-started/introduction/
+* https://jquery.com/
+* https://gist.github.com/ismasan/299789
+* https://github.com/tempor1s/bktree-rs
+* https://github.com/shekohex/flutterust
+* https://pub.dev/packages/file_picker

@@ -36,8 +36,5 @@ command line search with client net search (background)
 use along with `RUST_LOG`, see at [env-logger](https://docs.rs/env_logger/0.7.1/env_logger/#enabling-logging).
 and e.g. `RUST_LOG=adbfbinlib::ctrl=trace` for logging trace of adbfbinlib ctrl module
 
-## Licenses, etc. 3rd party (excluding Rust crates) all [MIT](https://tldrlegal.com/license/mit-license) licenses: 
-* https://getbootstrap.com/docs/4.0/about/license/
-* https://jquery.org/license/
-* https://gist.github.com/ismasan/299789
-* https://github.com/tempor1s/bktree-rs
+
+Licenses: See provided license file LICENCE

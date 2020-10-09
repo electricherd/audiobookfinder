@@ -89,6 +89,7 @@ jobs:
           files: >
                  ./target/x86_64-apple-darwin/release/audiobookfinder
                  ./README-release.md
+                 ./LICENSE
           recursive: false
           dest: packaged
 
@@ -114,6 +115,5 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: packaged
           asset_name: audiobookfinder-${{ steps.extract_tag.outputs.tag }}-macos.zip
-          tag: ${{ github.ref }}
+          tag: ${{ steps.extract_tag.outputs.tag }}
           overwrite: true
-          body: "This is the github action build"

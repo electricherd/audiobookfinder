@@ -1,0 +1,30 @@
+on: [push]
+name: Prepare release
+jobs:
+  build:
+    name: Prepare Release on github
+    runs-on: ubuntu-latest
+    steps:
+      # #################### build conditions
+      - name: vtag variable
+        shell: bash
+        run: echo "vtag=$(echo ${GITHUB_REF#refs/tags/} | awk '/v([0-9]+\.)+[0-9]+/{print $0}')" >> $GITHUB_ENV
+
+      - name: Extractor for vtag env
+        id: extract_tag
+        shell: bash
+        run: echo ::set-output name=tag::${{ env.vtag }}
+
+      # ####################### upload intermediate result dependent if release in text or tagged
+
+      # https://github.com/marketplace/actions/upload-files-to-a-github-release
+      - name: Upload README.md
+        if: steps.extract_tag.outputs.tag != null
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: README-release.md
+          asset_name: README-release-${{ steps.extract_tag.outputs.tag }}.md
+          tag: ${{ steps.extract_tag.outputs.tag }}
+          overwrite: true
+          body: "Audiobookfinder and adbfflutter are Rust based programs to collect audio(book) data over local network with same clients."
