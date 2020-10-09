@@ -5,3 +5,6 @@ gradle-wrapper.jar
 /gradlew.bat
 /local.properties
 GeneratedPluginRegistrant.java
+# don't include secret key file for signing
+key.properties
+key.jks
