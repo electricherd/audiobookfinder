@@ -147,7 +147,7 @@ jobs:
       # help from https://dev.to/cddelta/signing-flutter-android-apps-for-release-in-github-actions-2892
       - name: Create Key from github secret for Release
         if: steps.extract_tag.outputs.tag != null
-        run: echo ${{ secrets.$SIGNING_KEY }} | base64 -d > android/key.jks
+        run: echo ${{ secrets.SIGNING_KEY }} | base64 -d > android/key.jks
 
       # https://flutter.dev/docs/deployment/android#signing-the-app
       - name: Build APK (arm64, Release)
