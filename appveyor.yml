@@ -170,9 +170,17 @@ deploy:
 # don't build on travis configuration changes
 skip_commits:
   files:
-    - ci/
-    - docs/
     - .github/
     - .travis.yml
+    - android/
+    - ci/
+    - docs/
+    - ios/
+    - lib/
+    - native/adbflib-ffi/
+    - packages/
+    - testaudio/
     - README.md
     - README-release.md
+    - Makefile.toml
+    - pubspec.yaml

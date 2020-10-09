@@ -106,8 +106,15 @@ after_success: |
 # don't build on appveyor configuration changes
 ignore:
   - appveyor.yml
+  - .github/**
+  - ci/**
+  - docs/*
+  - ios/**
+  - lib/**
+  - native/adbflib-ffi/**
+  - packages/**
+  - testaudio/*
   - README.md
   - README-release.md
-  - ci/*
-  - docs/*
-  - .github/*
+  - Makefile.toml
+  - pubspec.yaml
