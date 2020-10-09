@@ -1,7 +1,7 @@
 # audiobookfinder (adbf)
 
 For documentation also see [audiobookfinder](https://github.com/electricherd/audiobookfinder). The audiobookfinder
-is an application to search for audio(book) files, and share the found data along with (local network) connected 
+is an application to search for audio(book) files, and share the found data along with (local network) connected
 devices to (later) identify duplicates, different quality versions, etc.
 
 
