@@ -60,12 +60,12 @@ jobs:
           command: build
           args: --bin audiobookfinder --release --target x86_64-apple-darwin
 
-      - name: Run cargo make MacOS  - debug
+      - name: Run cargo make MacOS  - Debug
         if: steps.extract_tag.outputs.tag == null
         uses: actions-rs/cargo@v1
         continue-on-error: false
         with:
-          command: make
+          command: build
           args: --bin audiobookfinder --target x86_64-apple-darwin
 
       # #########################  compress binary
