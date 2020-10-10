@@ -254,7 +254,7 @@ impl Tui {
 
     ///    # Example test
     ///  ```
-    ///  use adbflib::ctrl::tui::Tui;
+    ///  use adbfbinlib::ctrl::tui::Tui;
     ///
     ///  let boundary = 15;
     ///  let input_vec: Vec<String> =
@@ -262,7 +262,7 @@ impl Tui {
     ///         "A cool hat does not fit you.".into()];
     ///  let expected_output: Vec<String> =
     ///     vec!["The duc..mming.".into(), "A cool ..t you.".into()];
-    ///  let output = adbflib::ctrl::tui::Tui::split_intelligently_ralign_vec(&input_vec, boundary);
+    ///  let output = adbfbinlib::ctrl::tui::Tui::split_intelligently_ralign_vec(&input_vec, boundary);
     ///  ```
     // todo: not public... only due to testing
     pub fn split_intelligently_ralign_vec(vec: &Vec<String>, max_len: usize) -> Vec<String> {
