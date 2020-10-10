@@ -9,11 +9,18 @@ use crate::{
     shared,
 };
 use async_std::task;
-use crossbeam::{sync::WaitGroup, unbounded};
+use futures::{future::FutureExt, select};
+
+use crossbeam::{sync::WaitGroup, unbounded, Receiver as CReceiver};
 use std::{
     sync::{mpsc::channel, Arc, Mutex},
     thread,
 };
+
+lazy_static! {
+    /// a static runtime for all network activity
+    static ref NET_RUNTIME: CReceiver<UiUpdateMsg> = create_net_runtime();
+}
 
 /// just return the number of audio files found for now
 pub fn ffi_file_count_good(input_path: Vec<String>) -> u32 {
@@ -40,30 +47,13 @@ pub fn ffi_file_count_good(input_path: Vec<String>) -> u32 {
 
 /// return the peer hash for testing yet
 pub async fn ffi_new_peer() -> u64 {
-    // mock input parameters
-    let dummy_wait_net_thread = WaitGroup::new();
-    let (ui_sender, reactor) = channel::<UiUpdateMsg>();
-    let (_, dummy_ipc_receive) = unbounded::<IPC>();
-
-    // todo: make it a lazy static as RUNTIME, to also hold the same IP, otherwise it will
-    //       always change its IP!
-    let single_shot_net_thread = thread::Builder::new()
-        .name("app_net".into())
-        .spawn(move || {
-            task::block_on(async move {
-                let _ =
-                    shared::net_search(dummy_wait_net_thread, Some(ui_sender), dummy_ipc_receive)
-                        .await;
-            });
-        })
-        .unwrap();
+    // get network runtime
+    let net_receiver = &NET_RUNTIME.clone();
 
     // very interesting, the compiler is awesome!!
     let out;
-
-    // loop over fixme: (very cheap version here, that could be done more elegantly) with poll
     loop {
-        if let Ok(reaction) = reactor.try_recv() {
+        if let Ok(reaction) = net_receiver.try_recv() {
             match reaction {
                 UiUpdateMsg::CollectionUpdate(_, _) => {}
                 UiUpdateMsg::NetUpdate(net_message) => {
@@ -82,7 +72,78 @@ pub async fn ffi_new_peer() -> u64 {
             }
         }
     }
-    // kill this big thread / fixme: very inefficent yet
-    drop(single_shot_net_thread);
     out
+}
+
+/// open a net thread and return receiver to receive from thread
+fn create_net_runtime() -> CReceiver<UiUpdateMsg> {
+    // mock input parameters
+    // outgoing crossbeam receiver
+    let (forwarder_ui, receiver_ui) = unbounded::<UiUpdateMsg>();
+    println!("creating...");
+    // net thread with forwarding message from normal receiver to crossbeam receiver
+    thread::Builder::new()
+        .name("app_net".into())
+        .spawn(move || {
+            println!("thread spawned...");
+            let dummy_wait_net_thread = WaitGroup::new();
+            let (ui_sender, reactor) = channel::<UiUpdateMsg>();
+            let (_, dummy_ipc_receive) = unbounded::<IPC>();
+
+            task::block_on(async move {
+                println!("async spawned...");
+                let net_fut =
+                    shared::net_search(dummy_wait_net_thread, Some(ui_sender), dummy_ipc_receive)
+                        .fuse();
+                let mut net = Box::pin(net_fut);
+                println!("net_creating...");
+
+                loop {
+                    println!("trying...");
+                    let mut receiver = Box::pin(
+                        async {
+                            println!("rec1...");
+                            let out = reactor.try_recv();
+                            println!("rec2...");
+                            out
+                        }
+                        .fuse(),
+                    );
+                    println!("pinned receiver...");
+                    select! {
+                        _ = receiver => {
+                            println!("receiver...");
+                            match receiver.await {
+                                Ok(received_msg) => {
+                                    println!("receiver ok...");
+                                    if forwarder_ui.send(received_msg).is_err() {
+                                        panic!("wasn't captured");
+                                    }
+                                },
+                                Err(_) => {}, // is all fine, received was bad, maybe end?
+                            }
+                        },
+                        _ = net => unreachable!(), // should run forever
+                    }
+                }
+                // finish the whole lazy stuff
+                //drop(single_shot_net_thread);
+            })
+        })
+        .unwrap();
+    receiver_ui
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn external_test_net_runtime() {
+        //
+        task::block_on(async move {
+            ffi_new_peer().await;
+        });
+        assert!(false);
+    }
 }
