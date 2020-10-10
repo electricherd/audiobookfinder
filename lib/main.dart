@@ -134,7 +134,7 @@ class _MyHomePageState extends State<MyHomePage> {
     int peer_int = await adbflib.findNewPeer();
     // it's int not uint
     if (peer_int < 0) {
-      peer_int *= -1;
+      peer_int = -peer_int;
     }
     _peer_id = peer_int.toRadixString(16);
     _searching_peers = false;
