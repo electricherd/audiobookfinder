@@ -9,11 +9,9 @@ use crate::{
     shared,
 };
 use async_std::task;
-use futures::{future::FutureExt, select};
-
 use crossbeam::{sync::WaitGroup, unbounded, Receiver as CReceiver};
 use std::{
-    sync::{mpsc::channel, Arc, Mutex},
+    sync::{Arc, Mutex},
     thread,
 };
 
@@ -28,7 +26,7 @@ pub fn ffi_file_count_good(input_path: Vec<String>) -> u32 {
     let cleaned_paths = SearchPath::new(&input_path);
     let search_path = Arc::new(Mutex::new(cleaned_paths));
 
-    let (tx, _rx) = channel::<UiUpdateMsg>();
+    let (tx, _rx) = unbounded::<UiUpdateMsg>();
     let synced_to_ui_messages = Arc::new(Mutex::new(tx.clone()));
     let has_ui = false;
 
@@ -53,7 +51,7 @@ pub async fn ffi_new_peer() -> u64 {
     // very interesting, the compiler is awesome!!
     let out;
     loop {
-        if let Ok(reaction) = net_receiver.try_recv() {
+        if let Ok(reaction) = net_receiver.recv() {
             match reaction {
                 UiUpdateMsg::CollectionUpdate(_, _) => {}
                 UiUpdateMsg::NetUpdate(net_message) => {
@@ -77,73 +75,23 @@ pub async fn ffi_new_peer() -> u64 {
 
 /// open a net thread and return receiver to receive from thread
 fn create_net_runtime() -> CReceiver<UiUpdateMsg> {
-    // mock input parameters
     // outgoing crossbeam receiver
-    let (forwarder_ui, receiver_ui) = unbounded::<UiUpdateMsg>();
-    println!("creating...");
-    // net thread with forwarding message from normal receiver to crossbeam receiver
+    let (ui_sender, reactor) = unbounded::<UiUpdateMsg>();
     thread::Builder::new()
         .name("app_net".into())
         .spawn(move || {
-            println!("thread spawned...");
-            let dummy_wait_net_thread = WaitGroup::new();
-            let (ui_sender, reactor) = channel::<UiUpdateMsg>();
-            let (_, dummy_ipc_receive) = unbounded::<IPC>();
-
             task::block_on(async move {
-                println!("async spawned...");
-                let net_fut =
-                    shared::net_search(dummy_wait_net_thread, Some(ui_sender), dummy_ipc_receive)
-                        .fuse();
-                let mut net = Box::pin(net_fut);
-                println!("net_creating...");
-
-                loop {
-                    println!("trying...");
-                    let mut receiver = Box::pin(
-                        async {
-                            println!("rec1...");
-                            let out = reactor.try_recv();
-                            println!("rec2...");
-                            out
-                        }
-                        .fuse(),
-                    );
-                    println!("pinned receiver...");
-                    select! {
-                        _ = receiver => {
-                            println!("receiver...");
-                            match receiver.await {
-                                Ok(received_msg) => {
-                                    println!("receiver ok...");
-                                    if forwarder_ui.send(received_msg).is_err() {
-                                        panic!("wasn't captured");
-                                    }
-                                },
-                                Err(_) => {}, // is all fine, received was bad, maybe end?
-                            }
-                        },
-                        _ = net => unreachable!(), // should run forever
-                    }
+                // mock input parameters
+                let dummy_wait_net_thread = WaitGroup::new();
+                let (_, dummy_ipc_receive) = unbounded::<IPC>();
+                match shared::net_search(dummy_wait_net_thread, Some(ui_sender), dummy_ipc_receive)
+                    .await
+                {
+                    Ok(_) => {}
+                    Err(e) => error!("network error: {}", e),
                 }
-                // finish the whole lazy stuff
-                //drop(single_shot_net_thread);
-            })
+            });
         })
         .unwrap();
-    receiver_ui
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn external_test_net_runtime() {
-        //
-        task::block_on(async move {
-            ffi_new_peer().await;
-        });
-        assert!(false);
-    }
+    reactor
 }

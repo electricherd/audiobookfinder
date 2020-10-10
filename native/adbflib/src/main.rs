@@ -26,7 +26,7 @@ use log::{error, info, trace};
 use num_cpus;
 use std::{
     cmp, env, io, process,
-    sync::{mpsc::channel, Arc as SArc, Mutex as SMutex},
+    sync::{Arc as SArc, Mutex as SMutex},
 };
 
 /// The main application which is central part of communicating with
@@ -72,7 +72,7 @@ fn main() -> io::Result<()> {
     //
     // prepare the message system
     //
-    let (tx, rx) = channel::<UiUpdateMsg>();
+    let (tx, rx) = unbounded::<UiUpdateMsg>();
 
     // these will be taken directly
     let tx_net = tx.clone();
@@ -129,6 +129,12 @@ fn main() -> io::Result<()> {
                 task::block_on(
                     async move { shared::net_search(wait_net, sender, ipc_receive).await },
                 )
+                .map_err(|error| {
+                    std::io::Error::new(
+                        std::io::ErrorKind::Other,
+                        format!("network error: {}", error),
+                    )
+                })
             } else {
                 info!("no net!");
                 drop(wait_net);

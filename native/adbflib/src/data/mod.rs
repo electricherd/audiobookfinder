@@ -8,11 +8,11 @@ mod tag_readers;
 
 use self::{audio_info::Container, collection::Collection, ipc::IPC};
 use super::ctrl::{CollectionPathAlive, ForwardNetMsg, NetInfoMsg, Status, UiUpdateMsg};
-use crossbeam::channel::Sender as CrossbeamSender;
+use crossbeam::channel::Sender as CSender;
 use std::{
     ops::Add,
     path::Path,
-    sync::{mpsc::Sender, Arc as SArc, Mutex as SMutex},
+    sync::{Arc as SArc, Mutex as SMutex},
 };
 
 /// Interface of what collection output data will return
@@ -48,7 +48,7 @@ pub fn search_in_single_path(
     has_ui: bool,
     collection_data: SArc<SMutex<Container>>,
     collection_protected: SArc<SMutex<Collection>>,
-    mutex_to_ui_msg: SArc<SMutex<Sender<UiUpdateMsg>>>,
+    mutex_to_ui_msg: SArc<SMutex<CSender<UiUpdateMsg>>>,
     index: usize,
     elem: &str,
 ) -> IFInternalCollectionOutputData {
@@ -150,10 +150,7 @@ pub fn search_in_single_path(
 }
 
 #[allow(dead_code)]
-pub fn publish_local_storage(
-    container_handle: SArc<SMutex<Container>>,
-    ipc_sender: CrossbeamSender<IPC>,
-) {
+pub fn publish_local_storage(container_handle: SArc<SMutex<Container>>, ipc_sender: CSender<IPC>) {
     // send to ipc
     //
     let container = container_handle.lock().unwrap();

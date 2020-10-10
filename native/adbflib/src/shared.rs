@@ -9,16 +9,18 @@ use crate::{
     },
     net::Net,
 };
-use crossbeam::{self, sync::WaitGroup};
+use crossbeam::{sync::WaitGroup, Receiver as CReceiver, Sender as CSender};
 use rayon::prelude::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator};
-use std::io::Error;
-use std::sync::{mpsc::Sender, Arc, Mutex};
+use std::{
+    error::Error,
+    sync::{Arc, Mutex},
+};
 
 /// high level function to search path
 pub fn collection_search(
     collection_handler: Arc<Mutex<Collection>>,
     search_path: Arc<Mutex<SearchPath>>,
-    sender_handler: Arc<Mutex<Sender<UiUpdateMsg>>>,
+    sender_handler: Arc<Mutex<CSender<UiUpdateMsg>>>,
     has_ui: bool,
 ) -> IFInternalCollectionOutputData {
     let output_data = IFInternalCollectionOutputData::new();
@@ -58,9 +60,9 @@ pub fn collection_search(
 /// high level function to startup net functionality
 pub async fn net_search(
     wait_net: WaitGroup,
-    net_system_messages: Option<Sender<UiUpdateMsg>>,
-    ipc_receive: crossbeam::Receiver<IPC>,
-) -> Result<(), std::io::Error> {
+    net_system_messages: Option<CSender<UiUpdateMsg>>,
+    ipc_receive: CReceiver<IPC>,
+) -> Result<(), Box<dyn Error>> {
     // This thread will not end itself
     // - can be terminated by ui message
     // - collector finished (depending on definition)
@@ -68,10 +70,8 @@ pub async fn net_search(
     info!("net started!!");
     let mut network = Net {};
 
-    // startup net synchronization
+    // startup net thread synchronization
     wait_net.wait();
 
-    network.lookup(net_system_messages, ipc_receive).await;
-    info!("net finished!!");
-    Ok::<(), Error>(())
+    network.lookup(net_system_messages, ipc_receive).await
 }
