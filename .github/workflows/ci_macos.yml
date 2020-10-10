@@ -114,6 +114,6 @@ jobs:
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: packaged
-          asset_name: audiobookfinder-${{ steps.extract_tag.outputs.tag }}-macos.zip
+          asset_name: audiobookfinder-x86_64-apple-darwin-${{ steps.extract_tag.outputs.tag }}.zip
           tag: ${{ steps.extract_tag.outputs.tag }}
           overwrite: true
