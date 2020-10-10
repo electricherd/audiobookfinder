@@ -87,7 +87,8 @@ impl Net {
                     ctrl::CollectionPathAlive::HostSearch,
                     ctrl::Status::ON,
                 ))
-                .unwrap();
+                .unwrap_or(()); // fixme: for no ui, there should not be Some(ui_sender)
+                                //        but for ... -nk it would panic!
         }
         // kick off the network actor framework
         Swarm::listen_on(&mut swarm, "/ip4/0.0.0.0/tcp/0".parse().unwrap()).unwrap();
