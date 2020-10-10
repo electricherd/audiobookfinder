@@ -11,7 +11,7 @@ use super::{
     net::subs::peer_representation::{self, PeerRepresentation},
 };
 use async_std::task;
-use crossbeam::sync::WaitGroup;
+use crossbeam::{sync::WaitGroup, Receiver as CReceiver};
 use libp2p_core::PeerId;
 use std::{
     collections::hash_map::DefaultHasher,
@@ -125,7 +125,7 @@ impl Ctrl {
     pub fn run(
         new_id: PeerId,
         paths: Arc<Mutex<SearchPath>>,
-        receiver: Receiver<UiUpdateMsg>,
+        receiver: CReceiver<UiUpdateMsg>,
         with_net: bool,
         wait_main: WaitGroup,
         has_webui: bool,
@@ -322,7 +322,7 @@ impl Ctrl {
     }
 
     fn spawn_message_loop(
-        receiver: Receiver<UiUpdateMsg>,
+        receiver: CReceiver<UiUpdateMsg>,
         multiplex_send: Vec<Sender<InternalUiMsg>>,
     ) -> Result<thread::JoinHandle<()>, std::io::Error> {
         thread::Builder::new()
@@ -404,7 +404,7 @@ impl Ctrl {
     /// which kind of defines an extra layer for convenience, and to
     /// be extended and so on.
     fn run_message_forwarding(
-        receiver: &Receiver<UiUpdateMsg>,
+        receiver: &CReceiver<UiUpdateMsg>,
         multiplex_send: &Vec<Sender<InternalUiMsg>>,
     ) -> bool {
         if let Ok(forward_sys_message) = receiver.recv() {
