@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:adbflib/adbflib.dart';
 
 import 'search_tab.dart';
 import 'peer_tab.dart';
@@ -18,7 +19,30 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         brightness: Brightness.dark,
       ),
-      home: DefaultTabController(
+      home: MyHomePage(),
+    );
+  }
+}
+
+class MyHomePage extends StatefulWidget {
+  MyHomePage({Key key}) : super(key: key);
+  @override
+  _MyHomePageState createState() => _MyHomePageState();
+}
+
+class _MyHomePageState extends State<MyHomePage> {
+  Adbflib adbflib;
+
+  @override
+  void initState() {
+    super.initState();
+    adbflib = Adbflib();
+    Adbflib.setup();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DefaultTabController(
         length: 2,
         child: Scaffold(
           appBar: AppBar(
@@ -42,12 +66,11 @@ class MyApp extends StatelessWidget {
           ),
           body: TabBarView(
             children: [
-              SearchTab(),
+              SearchTab(adbflib),
               PeerTab(),
             ],
           ),
         ),
-      ),
-    );
+      );
   }
 }

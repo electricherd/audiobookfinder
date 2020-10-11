@@ -6,13 +6,18 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:flutter/material.dart';
 
 class SearchTab extends StatefulWidget {
-  SearchTab({Key key, this.title}) : super(key: key);
-  final String title;
+  Adbflib adbflib;
+  SearchTab(this.adbflib, {Key key}) : super(key: key);
+
+
   @override
-  _SearchTabState createState() => _SearchTabState();
+  _SearchTabState createState() => _SearchTabState(adbflib);
 }
 
 class _SearchTabState extends State<SearchTab> {
+  Adbflib adbflib;
+  _SearchTabState(this.adbflib);
+
   int _findings = 0;
 
   bool _searching_path = false;
@@ -20,20 +25,6 @@ class _SearchTabState extends State<SearchTab> {
 
   String _path = '';
   String _peer_id = '';
-
-  Adbflib adbflib;
-  // AnimationController animController;
-
-  @override
-  void initState() {
-    super.initState();
-    adbflib = Adbflib();
-    Adbflib.setup();
-
-    // animController = AnimationController(
-    //   duration: Duration(milliseconds: 1200),
-    // );
-  }
 
   @override
   Widget build(BuildContext context) {
