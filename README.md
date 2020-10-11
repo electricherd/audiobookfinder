@@ -100,6 +100,10 @@ It is an inline documentation from [CI](https://travis-ci.org/electricherd/audio
 
 
 ### Changes
+* flutter app:
+    * added tab view for search and network
+    * network access is static but yet not fully functional to list all
+    * added display of own id - to be used when pressing `Start Peer Search`
 * github action, (it's a good idea but too many marketplace) as CI brought up, the app for android is downloadable and fast :grin:
 * since marrying [flutterust](https://github.com/shekohex/flutterust) and old adbflib, package name now is adbflib, the library is now adbfbinlib (yes, but for now)
 * added and fixed first shot mobile app mdns feature ... it just works :open_mouth: :blush:
@@ -177,6 +181,11 @@ It is an inline documentation from [CI](https://travis-ci.org/electricherd/audio
 
 
 ### ToDo
+
+* flutter app:
+    * start network thread on start
+    * add list of found peers
+    * add UiUpdateMessages somewhere
 * add signature key, and google developer key to android app, and some time later process for a correct ios app
 * try [crate vfs](https://github.com/manuel-woelker/rust-vfs) for unit test with files!! interesting and needed!
 * look for other tag libraries (e.g. symphonia-metadata [symphonia](https://github.com/pdeljanov/Symphonia))
