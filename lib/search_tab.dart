@@ -13,11 +13,11 @@ class SearchTab extends StatefulWidget {
 }
 
 class _SearchTabState extends State<SearchTab> with AutomaticKeepAliveClientMixin<SearchTab> {
-  Adbflib adbflib;
-  _SearchTabState(this.adbflib);
+  Adbflib _adbflib;
+  _SearchTabState(this._adbflib);
 
   int _findings = 0;
-  bool _searching_path = false;
+  bool _searchingPath = false;
   String _path = '';
 
   @override
@@ -31,7 +31,7 @@ class _SearchTabState extends State<SearchTab> with AutomaticKeepAliveClientMixi
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 RaisedButton(
-                  color: _searching_path ? Colors.greenAccent : Colors.lime,
+                  color: _searchingPath ? Colors.greenAccent : Colors.lime,
                   child: Text(
                     'Search with adbf',
                     style: TextStyle(
@@ -39,7 +39,7 @@ class _SearchTabState extends State<SearchTab> with AutomaticKeepAliveClientMixi
                     ),
                   ),
                   onPressed: () {
-                    if (!_searching_path) {
+                    if (!_searchingPath) {
                       _getDirPath();
                     }
                   },
@@ -63,10 +63,10 @@ class _SearchTabState extends State<SearchTab> with AutomaticKeepAliveClientMixi
   void _getDirPath() async {
     _path = await FilePicker.platform.getDirectoryPath();
     _findings = 0;
-    _searching_path = true;
+    _searchingPath = true;
     setState(() {});
-    _findings = await adbflib.fileCountGood(_path);
-    _searching_path = false;
+    _findings = await _adbflib.fileCountGood(_path);
+    _searchingPath = false;
     setState(() {});
   }
 }
