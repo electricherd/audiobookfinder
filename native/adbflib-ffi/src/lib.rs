@@ -79,3 +79,8 @@ pub extern "C" fn find_new_peer(dart_port: i64) -> u64 {
     rt.spawn(t);
     1
 }
+
+#[no_mangle]
+pub extern "C" fn get_own_peer() -> u64 {
+    adbfbinlib::get_own_peer()
+}

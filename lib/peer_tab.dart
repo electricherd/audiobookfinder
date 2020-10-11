@@ -12,11 +12,20 @@ class PeerTab extends StatefulWidget {
 }
 
 class _PeerTabState extends State<PeerTab> with AutomaticKeepAliveClientMixin<PeerTab> {
-  Adbflib adbflib;
-  _PeerTabState(this.adbflib);
+  Adbflib _adbflib;
+  _PeerTabState(this._adbflib);
 
-  String _peer_id = '';
-  bool _searching_peers = false;
+  String _peerId = '';
+  bool _searchingPeers = false;
+  String _ownIdString = '';
+
+  @override
+  void initState() {
+    super.initState();
+    final int ownIntId = _adbflib.getOwnPeerId();
+    _ownIdString = i64AsU64ToString(ownIntId);
+  }
+
 
   @override
   bool get wantKeepAlive => true;
@@ -29,9 +38,21 @@ class _PeerTabState extends State<PeerTab> with AutomaticKeepAliveClientMixin<Pe
           child: Column(
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
-              const SizedBox(height: 50),
+              const SizedBox(height: 20),
+              Text(
+                "Own Peer ID: $_ownIdString",
+                style: TextStyle(
+                  fontFamily: "monospace",
+                  color: Colors.white,
+                ),
+              ),
+              Divider(
+                height: 50,
+                thickness: 2,
+                color: Colors.white,
+              ),
               RaisedButton(
-                color: _searching_peers ? Colors.greenAccent : Colors.lime,
+                color: _searchingPeers ? Colors.greenAccent : Colors.lime,
                 child: Text(
                   'Start Peer Search',
                   style: TextStyle(
@@ -39,7 +60,7 @@ class _PeerTabState extends State<PeerTab> with AutomaticKeepAliveClientMixin<Pe
                   ),
                 ),
                 onPressed: () {
-                  if (!_searching_peers) {
+                  if (!_searchingPeers) {
                     _findNewPeer();
                   }
                 },
@@ -49,12 +70,17 @@ class _PeerTabState extends State<PeerTab> with AutomaticKeepAliveClientMixin<Pe
               ),
               const SizedBox(height: 5),
               Text(
-                '$_peer_id',
+                '$_peerId',
                 style: TextStyle(
                   fontFamily: "monospace",
                   color: Colors.white,
                 ),
-              )
+              ),
+              Divider(
+                height: 60,
+                thickness: 4,
+                color: Colors.white,
+              ),
             ],
           ),
         ),
@@ -63,16 +89,26 @@ class _PeerTabState extends State<PeerTab> with AutomaticKeepAliveClientMixin<Pe
   }
 
   void _findNewPeer() async {
-    _searching_peers = true;
+    _searchingPeers = true;
     setState(() {});
-    int peer_int = await adbflib.findNewPeer();
-    // it's int not uint
-    if (peer_int < 0) {
-      peer_int = -peer_int;
-    }
-    _peer_id = peer_int.toRadixString(16);
-    _searching_peers = false;
+    final int peerInt = await _adbflib.findNewPeer();
+    _peerId = i64AsU64ToString(peerInt);
+    _searchingPeers = false;
     setState(() {});
   }
 
+  // please ... this is a complete hack about
+  // dart's non capability for u64, and some strange behavior with
+  // numbers!!!
+  String i64AsU64ToString(int number) {
+    String out = '';
+    if (number > 0) {
+      out = number.toRadixString(16);
+    } else {
+      final lastHexDigit = (number % 16);
+      number = -((number >> 4)^0xfffffffffffffff) -1;
+      out = (number.toRadixString(16)) + ((lastHexDigit).toRadixString(16)) ;
+    }
+    return out;
+  }
 }
