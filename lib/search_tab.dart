@@ -12,7 +12,7 @@ class SearchTab extends StatefulWidget {
   _SearchTabState createState() => _SearchTabState(adbflib);
 }
 
-class _SearchTabState extends State<SearchTab> {
+class _SearchTabState extends State<SearchTab> with AutomaticKeepAliveClientMixin<SearchTab> {
   Adbflib adbflib;
   _SearchTabState(this.adbflib);
 
@@ -20,6 +20,8 @@ class _SearchTabState extends State<SearchTab> {
   bool _searching_path = false;
   String _path = '';
 
+  @override
+  bool get wantKeepAlive => true;
   @override
   Widget build(BuildContext context) {
     return Container(

@@ -31,46 +31,58 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  Adbflib adbflib;
+  Adbflib _adbflib;
+  SearchTab _searchTab;
+  PeerTab _peerTab;
 
   @override
   void initState() {
     super.initState();
-    adbflib = Adbflib();
+    _adbflib = Adbflib();
     Adbflib.setup();
+
+    _searchTab = SearchTab(_adbflib);
+    _peerTab = PeerTab(_adbflib);
   }
 
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-        length: 2,
-        child: Scaffold(
-          appBar: AppBar(
-            bottom: TabBar(
-              tabs: [
-                Tab(
-                    child: Align(
-                      alignment: Alignment.center,
-                      child: Text("Search"),
-                    )
-                ),
-                Tab(
-                    child: Align(
-                      alignment: Alignment.center,
-                      child: Text("Network"),
-                    )
-                )
+      length: 2,
+      child: Builder(builder: (BuildContext context) {
+        final TabController tabController = DefaultTabController.of(context);
+        tabController.addListener(() {
+          if (!tabController.indexIsChanging) {
+            // To get index of current tab use tabController.index
+          }
+        });
+        return Scaffold(
+            appBar: AppBar(
+              bottom: TabBar(
+                tabs: [
+                  Tab(
+                      child: Align(
+                        alignment: Alignment.center,
+                        child: Text("Search"),
+                      )
+                  ),
+                  Tab(
+                      child: Align(
+                        alignment: Alignment.center,
+                        child: Text("Network"),
+                      )
+                  )
+                ],
+              ),
+              title: Text('adfbfflutter'),
+            ),
+            body: TabBarView(
+              children: [
+              _searchTab,
+              _peerTab,
               ],
             ),
-            title: Text('adfbfflutter'),
-          ),
-          body: TabBarView(
-            children: [
-              SearchTab(adbflib),
-              PeerTab(adbflib),
-            ],
-          ),
-        ),
-      );
+        );
+    }));
   }
 }

@@ -11,13 +11,15 @@ class PeerTab extends StatefulWidget {
   _PeerTabState createState() => _PeerTabState(adbflib);
 }
 
-class _PeerTabState extends State<PeerTab> {
+class _PeerTabState extends State<PeerTab> with AutomaticKeepAliveClientMixin<PeerTab> {
   Adbflib adbflib;
   _PeerTabState(this.adbflib);
 
   String _peer_id = '';
   bool _searching_peers = false;
 
+  @override
+  bool get wantKeepAlive => true;
   @override
   Widget build(BuildContext context) {
     return Container(
