@@ -38,6 +38,9 @@ class Adbflib {
     return completer.future;
   }
 
+  int getOwnPeerId() {
+    return native.get_own_peer();
+  }
 
   void _throwError() {
     final length = native.last_error_length();
