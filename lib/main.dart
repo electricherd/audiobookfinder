@@ -67,7 +67,7 @@ class _MyHomePageState extends State<MyHomePage> {
           body: TabBarView(
             children: [
               SearchTab(adbflib),
-              PeerTab(),
+              PeerTab(adbflib),
             ],
           ),
         ),
