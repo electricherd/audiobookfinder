@@ -100,10 +100,9 @@ It is an inline documentation from [CI](https://travis-ci.org/electricherd/audio
 
 
 ### Changes
+* updated screenshots
 * flutter app:
-    * added tab view for search and network
-    * network access is static but yet not fully functional to list all
-    * added display of own id - to be used when pressing `Start Peer Search`
+    * network view ready and functioning
 * github action, (it's a good idea but too many marketplace) as CI brought up, the app for android is downloadable and fast :grin:
 * since marrying [flutterust](https://github.com/shekohex/flutterust) and old adbflib, package name now is adbflib, the library is now adbfbinlib (yes, but for now)
 * added and fixed first shot mobile app mdns feature ... it just works :open_mouth: :blush:
@@ -121,8 +120,6 @@ It is an inline documentation from [CI](https://travis-ci.org/electricherd/audio
 * webui now starts with a selection dialog where you can add/change preselected folders/dirs
 * defined a trait for tag information, now: id3, mp4, flac but no awesomeness ...
 * debugging messages for collection, now collection is a bktree
-* webui shows search ongoing on other peers, and then result (number of audio files)
-* webui changes, option added for with or without automatic browser opening, bump
 * state machine was added, wrapped in a layer of a custom net behaviour in the libp2p swarm ([architecture design](#architecture) updated)
 * my unfortunately now unused [observer pattern](../../wiki/Observer-pattern) was added to wiki - a better version of what
  could be found in internet (Rust is very restrictive, some patterns don't work that well).
@@ -130,6 +127,8 @@ It is an inline documentation from [CI](https://travis-ci.org/electricherd/audio
 <details>
   <summary>click for older changes</summary>
 
+    * webui shows search ongoing on other peers, and then result (number of audio files)
+    * webui changes, option added for with or without automatic browser opening, bump
     * boostrap, jquery upgraded, some webui animation, better net communication struct, multiaddr on peer per webui tooltip
     * peers in webui can now deregister because of e.g. timeout
     * using libp2p network swarm, replacing single-on mdsn with it, but having same functionality
@@ -177,15 +176,12 @@ It is an inline documentation from [CI](https://travis-ci.org/electricherd/audio
 | ![Screenshot Linux v0.1.28 Running 1](https://user-images.githubusercontent.com/31503071/93353902-b9f83880-f83c-11ea-9f8d-5054f74a6dbc.png?raw=true) | ![Screenshot Linux v0.1.28 Running 2](https://user-images.githubusercontent.com/31503071/93353903-ba90cf00-f83c-11ea-935d-ebc79127954c.png?raw=true)| ![Screenshot Linux Selection](https://user-images.githubusercontent.com/31503071/91750242-1152a380-ebc3-11ea-8840-dc2576c47785.png?raw=true) | ![Screenshot Linux Running](https://user-images.githubusercontent.com/31503071/91750136-df414180-ebc2-11ea-8508-24c04e000ba9.png?raw=true)|
 | :------: | :------: | :------: | :------: |
 |  ![Screenshot Windows v0.1.28 Running 1](https://user-images.githubusercontent.com/31503071/93353900-b8c70b80-f83c-11ea-821c-68cc015e4b10.png?raw=true) | ![Screenshot Windows v0.1.28 Running 2](https://user-images.githubusercontent.com/31503071/93353901-b9f83880-f83c-11ea-9558-773279498f87.png?raw=true) | ![Screenshot Windows Selection](https://user-images.githubusercontent.com/31503071/91750262-17488480-ebc3-11ea-97be-54005f012669.png?raw=true) | ![Screenshot Windows Running](https://user-images.githubusercontent.com/31503071/91750257-144d9400-ebc3-11ea-9cb6-93dc4f7225e5.png?raw=true)|
-| ![Screenshot Android App 0.0.3 Device](https://user-images.githubusercontent.com/31503071/94609005-85559980-029e-11eb-916a-4e195b932f29.jpg?raw=true) | ![Screenshot Android App v0.0.3 device](https://user-images.githubusercontent.com/31503071/94609007-85ee3000-029e-11eb-8869-03ae0affbf3b.jpg?raw=true)|  ![Screenshot Android App 0.0.3 Simulation](https://user-images.githubusercontent.com/31503071/94597515-f3de2b80-028d-11eb-9ac3-8628fe8b56b2.png?raw=true) | ![Screenshot Android App v0.0.3 device](https://user-images.githubusercontent.com/31503071/94597513-f3459500-028d-11eb-8cd8-f378eeff6e63.jpg?raw=true) |
+| ![Screenshot Android App 0.0.5 Device](https://user-images.githubusercontent.com/31503071/95867238-395c2780-0d69-11eb-9f07-45eb915efee2.jpg?raw=true) | ![Screenshot Android App v0.0.5 device](https://user-images.githubusercontent.com/31503071/95867232-382afa80-0d69-11eb-8aa4-532c5ed7e5d8.jpg?raw=true)|  ![Screenshot Android App 0.0.3 Simulation](https://user-images.githubusercontent.com/31503071/94597515-f3de2b80-028d-11eb-9ac3-8628fe8b56b2.png?raw=true) | ![Screenshot Android App v0.0.3 device](https://user-images.githubusercontent.com/31503071/94597513-f3459500-028d-11eb-8cd8-f378eeff6e63.jpg?raw=true) |
 
 
 ### ToDo
 
-* flutter app:
-    * start network thread on start
-    * add list of found peers
-    * add UiUpdateMessages somewhere
+* fix debug build on CI
 * add signature key, and google developer key to android app, and some time later process for a correct ios app
 * try [crate vfs](https://github.com/manuel-woelker/rust-vfs) for unit test with files!! interesting and needed!
 * look for other tag libraries (e.g. symphonia-metadata [symphonia](https://github.com/pdeljanov/Symphonia))
@@ -196,6 +192,10 @@ It is an inline documentation from [CI](https://travis-ci.org/electricherd/audio
 * think of a protocol what adbf clients agree on and exchange (e.g. still searching, files found, etc)
 * maybe a little AI layer on determining audio books duplicates/same author by similar spelling, etc.
 * internationalization (which is not really supported yet by Rust)
+* ~~flutter app:~~
+    * ~~start network thread on start~~
+    * ~~add list of found peers~~
+    * ~~add UiUpdateMessages somewhere~~
 * ~~fix github actions CI for automatic build~~
 * ~~implement as android/ios app using [flutterust](https://github.com/electricherd/flutterust).~~
 * ~~change webui to be started without collection start, to be able use path selection from within webui later~~
