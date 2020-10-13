@@ -142,7 +142,7 @@ impl UIList {
         if self.cnt.iter().find(|e| e.peerid == peer_string).is_none() {
             self.cnt.push(UIListInner {
                 peerid: peer_string,
-                finished: -1,
+                finished: -1, // -1 on dart side should show that it is not yet completed
                 searched: 0,
             });
         }
