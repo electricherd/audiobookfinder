@@ -51,7 +51,7 @@ class _SearchTabState extends State<SearchTab> with AutomaticKeepAliveClientMixi
     //            ),
                 const SizedBox(height: 30),
                 Text(
-                  'A number of $_findings audio files have been found!',
+                  'A number of $_findings audio files have been analyzed!',
                 ),
             ],
         ),
