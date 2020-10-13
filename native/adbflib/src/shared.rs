@@ -9,7 +9,10 @@ use crate::{
     },
     net::Net,
 };
-use crossbeam::{sync::WaitGroup, Receiver as CReceiver, Sender as CSender};
+use crossbeam::{
+    channel::{Receiver as CReceiver, Sender as CSender},
+    sync::WaitGroup,
+};
 use rayon::prelude::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator};
 use std::{
     error::Error,

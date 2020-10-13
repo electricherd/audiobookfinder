@@ -12,7 +12,10 @@ use crate::{
     shared,
 };
 use async_std::task;
-use crossbeam::{sync::WaitGroup, unbounded, Receiver as CReceiver};
+use crossbeam::{
+    channel::{unbounded, Receiver as CReceiver},
+    sync::WaitGroup,
+};
 use libp2p_core::PeerId;
 use serde_json;
 use std::{

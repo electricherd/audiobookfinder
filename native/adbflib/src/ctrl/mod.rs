@@ -11,7 +11,7 @@ use super::{
     net::subs::peer_representation::{self, PeerRepresentation},
 };
 use async_std::task;
-use crossbeam::{sync::WaitGroup, Receiver as CReceiver};
+use crossbeam::{channel::Receiver as CReceiver, sync::WaitGroup};
 use libp2p_core::PeerId;
 use std::{
     collections::hash_map::DefaultHasher,
