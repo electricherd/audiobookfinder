@@ -1,6 +1,6 @@
 [package]
 name = "adbflib-ffi"
-version = "0.0.3"
+version = "0.0.4"
 authors = ["Sven Krömeke <skroemeke@gmail.com>"]
 edition = "2018"
 

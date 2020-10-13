@@ -54,3 +54,8 @@ pub async fn find_new_peer() -> Result<u64, AdbflibError> {
 pub fn get_own_peer() -> u64 {
     net::subs::peer_representation::peer_to_hash(&net::subs::key_keeper::get_p2p_server_id())
 }
+
+/// the library interface for returning ui messages
+pub async fn get_ui_messages() -> Result<String, AdbflibError> {
+    Ok(forwarder::ffi_ui_messages_as_json().await)
+}

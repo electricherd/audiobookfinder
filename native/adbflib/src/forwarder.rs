@@ -4,20 +4,27 @@
 use crate::{
     common::paths::SearchPath,
     ctrl::{ForwardNetMsg, UiUpdateMsg},
-    data::{collection::Collection, ipc::IPC},
-    net::subs::peer_representation,
+    data::{
+        collection::Collection,
+        ipc::{IFCollectionOutputData, IPC},
+    },
+    net::subs::peer_representation::{peer_to_hash, peer_to_hash_string},
     shared,
 };
 use async_std::task;
 use crossbeam::{sync::WaitGroup, unbounded, Receiver as CReceiver};
+use libp2p_core::PeerId;
+use serde_json;
 use std::{
     sync::{Arc, Mutex},
     thread,
 };
 
 lazy_static! {
-    /// a static runtime for all network activity
+    /// a static immutable runtime for all network activity
     static ref NET_RUNTIME: CReceiver<UiUpdateMsg> = create_net_runtime();
+    /// a static mutable data collection
+    static ref NET_UI : Mutex<UIList> = Mutex::new(UIList { cnt: Vec::new() });
 }
 
 /// just return the number of audio files found for now
@@ -58,7 +65,7 @@ pub async fn ffi_new_peer() -> u64 {
                     match net_message {
                         ForwardNetMsg::Add(peer) => {
                             // yet only id is interesting
-                            out = peer_representation::peer_to_hash(&peer.id);
+                            out = peer_to_hash(&peer.id);
                             break;
                         }
                         ForwardNetMsg::Delete(_peer_id) => {}
@@ -66,11 +73,60 @@ pub async fn ffi_new_peer() -> u64 {
                     }
                 }
                 UiUpdateMsg::PeerSearchFinished(_peer_id, _data) => {}
-                UiUpdateMsg::StopUI => {}
+                UiUpdateMsg::StopUI => unreachable!(),
             }
         }
     }
     out
+}
+
+/// return the peer hash for testing yet
+pub async fn ffi_ui_messages_as_json() -> String {
+    // unwrap using NET_UI is save unless you
+    // run this function simultaneously many instances
+
+    // get network runtime
+    let net_receiver = &NET_RUNTIME.clone();
+
+    // break loop if a yet noticeable change happens
+    loop {
+        if let Ok(reaction) = net_receiver.recv() {
+            match reaction {
+                UiUpdateMsg::CollectionUpdate(_, _) => {}
+                UiUpdateMsg::NetUpdate(net_message) => match net_message {
+                    ForwardNetMsg::Add(peer) => {
+                        let ui_list = &mut NET_UI.lock().unwrap();
+                        {
+                            ui_list.add_peer(&peer.id);
+                            break;
+                        }
+                    }
+                    ForwardNetMsg::Delete(peer_id) => {
+                        let ui_list = &mut NET_UI.lock().unwrap();
+                        {
+                            ui_list.remove_peer(&peer_id);
+                            break;
+                        }
+                    }
+                    ForwardNetMsg::Stats(_) => {}
+                },
+                UiUpdateMsg::PeerSearchFinished(peer_id, data) => {
+                    let ui_list = &mut NET_UI.lock().unwrap();
+                    {
+                        ui_list.add_finished(&peer_id, &data);
+                        break;
+                    }
+                }
+                UiUpdateMsg::StopUI => unreachable!(),
+            }
+        }
+    }
+    let ui_list = &NET_UI.lock().unwrap();
+    {
+        let json: &UIList = &*ui_list;
+        let peers_ui_json = serde_json::to_string(json).unwrap();
+        peers_ui_json
+    }
 }
 
 /// open a net thread and return receiver to receive from thread
@@ -94,4 +150,58 @@ fn create_net_runtime() -> CReceiver<UiUpdateMsg> {
         })
         .unwrap();
     reactor
+}
+
+/// struct viewable for ffi inner part
+/// #[allow(non_camel_case_types)]
+#[derive(Serialize, Deserialize, Clone)]
+struct UIListInner {
+    // normally peer would be the hash key, but since we use it as json container
+    // it's a bit itchy
+    peer_id: String,
+    finished_found: i32,
+    searched: u32,
+}
+#[derive(Serialize, Deserialize)]
+struct UIList {
+    cnt: Vec<UIListInner>,
+}
+impl UIList {
+    fn add_peer(&mut self, peer_id: &PeerId) {
+        let peer_string = peer_to_hash_string(peer_id);
+        if self.cnt.iter().find(|e| e.peer_id == peer_string).is_none() {
+            self.cnt.push(UIListInner {
+                peer_id: peer_string,
+                finished_found: -1,
+                searched: 0,
+            });
+        }
+    }
+    fn remove_peer(&mut self, peer_id: &PeerId) {
+        //todo: as soon as this is not experimental:
+        //      self.cnt.drain_filter(|e| e.peer_id == peer_to_hash(peer_id));
+        let peer_string = peer_to_hash_string(peer_id);
+        let mut i = 0;
+        while i != self.cnt.len() {
+            if self.cnt[i].peer_id == peer_string {
+                self.cnt.remove(i);
+                break;
+            } else {
+                i += 1;
+            }
+        }
+    }
+    fn add_finished(&mut self, peer_id: &PeerId, data: &IFCollectionOutputData) {
+        let peer_string = peer_to_hash_string(peer_id);
+        let mut i = 0;
+        while i != self.cnt.len() {
+            if self.cnt[i].peer_id == peer_string {
+                self.cnt[i].finished_found = data.nr_found_songs as i32;
+                self.cnt[i].searched = data.nr_searched_files;
+                break;
+            } else {
+                i += 1;
+            }
+        }
+    }
 }
