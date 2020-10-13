@@ -45,11 +45,6 @@ pub async fn file_count_good(input_path: Vec<String>) -> Result<u32, AdbflibErro
     Ok(forwarder::ffi_file_count_good(input_path))
 }
 
-/// the library interface for returning the first peer found on network
-pub async fn find_new_peer() -> Result<u64, AdbflibError> {
-    Ok(forwarder::ffi_new_peer().await)
-}
-
 /// the library interface for returning own peer id
 pub fn get_own_peer() -> u64 {
     net::subs::peer_representation::peer_to_hash(&net::subs::key_keeper::get_p2p_server_id())
