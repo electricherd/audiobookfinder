@@ -8,7 +8,7 @@ use crate::{
         collection::Collection,
         ipc::{IFCollectionOutputData, IPC},
     },
-    net::subs::peer_representation::{peer_to_hash, peer_to_hash_string},
+    net::subs::peer_representation::peer_to_hash_string,
     shared,
 };
 use async_std::task;
@@ -50,40 +50,11 @@ pub fn ffi_file_count_good(input_path: Vec<String>) -> u32 {
     output_data_return_handle.nr_found_songs
 }
 
-/// return the peer hash for testing yet
-pub async fn ffi_new_peer() -> u64 {
-    // get network runtime
-    let net_receiver = &NET_RUNTIME.clone();
-
-    // very interesting, the compiler is awesome!!
-    let out;
-    loop {
-        if let Ok(reaction) = net_receiver.recv() {
-            match reaction {
-                UiUpdateMsg::CollectionUpdate(_, _) => {}
-                UiUpdateMsg::NetUpdate(net_message) => {
-                    match net_message {
-                        ForwardNetMsg::Add(peer) => {
-                            // yet only id is interesting
-                            out = peer_to_hash(&peer.id);
-                            break;
-                        }
-                        ForwardNetMsg::Delete(_peer_id) => {}
-                        ForwardNetMsg::Stats(_) => {}
-                    }
-                }
-                UiUpdateMsg::PeerSearchFinished(_peer_id, _data) => {}
-                UiUpdateMsg::StopUI => unreachable!(),
-            }
-        }
-    }
-    out
-}
-
-/// return the peer hash for testing yet
+/// return the json of peer uis
 pub async fn ffi_ui_messages_as_json() -> String {
-    // unwrap using NET_UI is save unless you
-    // run this function simultaneously many instances
+    // todo: unwrap using NET_UI is save unless you
+    //       run this function simultaneously many instances, secure this though
+    //       it is not intended to be used like that!!
 
     // get network runtime
     let net_receiver = &NET_RUNTIME.clone();
