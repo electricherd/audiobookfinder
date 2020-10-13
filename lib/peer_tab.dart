@@ -18,12 +18,15 @@ class _PeerTabState extends State<PeerTab> with AutomaticKeepAliveClientMixin<Pe
   String _peerId = '';
   bool _searchingPeers = false;
   String _ownIdString = '';
+  String _peerData;
 
   @override
   void initState() {
     super.initState();
     final int ownIntId = _adbflib.getOwnPeerId();
     _ownIdString = i64AsU64ToString(ownIntId);
+    //
+    this._startNetMessaging();
   }
 
 
@@ -81,6 +84,12 @@ class _PeerTabState extends State<PeerTab> with AutomaticKeepAliveClientMixin<Pe
                 thickness: 4,
                 color: Colors.white,
               ),
+              Text(
+                ': $_peerData',
+                style: TextStyle(
+                  color: Colors.white,
+                ),
+              ),
             ],
           ),
         ),
@@ -96,6 +105,14 @@ class _PeerTabState extends State<PeerTab> with AutomaticKeepAliveClientMixin<Pe
     _searchingPeers = false;
     setState(() {});
   }
+
+  void _startNetMessaging() async {
+    while (true) {
+      _peerData = await _adbflib.getNetUiMessages();
+      setState(() {});
+    }
+  }
+
 
   // please ... this is a complete hack about
   // dart's non capability for u64, and some strange behavior with
