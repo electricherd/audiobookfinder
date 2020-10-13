@@ -1,7 +1,27 @@
 // peer_tab.dart
+import 'dart:convert';
 import 'package:adbflib/adbflib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+
+// https://flutter.dev/docs/development/data-and-backend/json
+class UIListElement {
+  final String peerid;
+  final int finished;
+  final int searched;
+
+  UIListElement(this.peerid, this.finished, this.searched);
+  UIListElement.fromJson(Map<String, dynamic> json)
+      : peerid = json['peerid'],
+        finished = json['finished'],
+        searched = json['searched'];
+  Map<String, dynamic> toJson() =>
+      {
+        'peerid': peerid,
+        'finished': finished,
+        'searched': searched,
+      };
+}
 
 
 class PeerTab extends StatefulWidget {
@@ -15,18 +35,16 @@ class _PeerTabState extends State<PeerTab> with AutomaticKeepAliveClientMixin<Pe
   Adbflib _adbflib;
   _PeerTabState(this._adbflib);
 
-  String _peerId = '';
-  bool _searchingPeers = false;
   String _ownIdString = '';
-  String _peerData;
+  List<UIListElement> _uiList = [];
 
   @override
   void initState() {
     super.initState();
     final int ownIntId = _adbflib.getOwnPeerId();
     _ownIdString = i64AsU64ToString(ownIntId);
-    //
-    this._startNetMessaging();
+    // async looping
+    this._startLoopNetMessaging();
   }
 
 
@@ -54,41 +72,11 @@ class _PeerTabState extends State<PeerTab> with AutomaticKeepAliveClientMixin<Pe
                 thickness: 2,
                 color: Colors.white,
               ),
-              RaisedButton(
-                color: _searchingPeers ? Colors.greenAccent : Colors.lime,
-                child: Text(
-                  'Start Peer Search',
-                  style: TextStyle(
-                    color: Colors.white,
-                  ),
-                ),
-                onPressed: () {
-                  if (!_searchingPeers) {
-                    _findNewPeer();
-                  }
-                },
-              ),
-              Text(
-                'First peer found:',
-              ),
-              const SizedBox(height: 5),
-              Text(
-                '$_peerId',
-                style: TextStyle(
-                  fontFamily: "monospace",
-                  color: Colors.white,
-                ),
-              ),
-              Divider(
-                height: 60,
-                thickness: 4,
-                color: Colors.white,
-              ),
-              Text(
-                ': $_peerData',
-                style: TextStyle(
-                  color: Colors.white,
-                ),
+              Expanded(
+                child: ListView.builder(
+                  itemBuilder: _buildPeerItem,
+                  itemCount: _uiList.length,
+                )
               ),
             ],
           ),
@@ -97,19 +85,27 @@ class _PeerTabState extends State<PeerTab> with AutomaticKeepAliveClientMixin<Pe
     );
   }
 
-  void _findNewPeer() async {
-    _searchingPeers = true;
-    setState(() {});
-    final int peerInt = await _adbflib.findNewPeer();
-    _peerId = i64AsU64ToString(peerInt);
-    _searchingPeers = false;
-    setState(() {});
+  Widget _buildPeerItem(BuildContext context, int index) {
+    return Card(
+      child: Column(
+        children: <Widget>[
+          Text(_uiList[index].peerid,
+            style: TextStyle(
+              fontFamily: "monospace",
+              color: Colors.white,
+            ),
+          )
+        ],
+      ),
+    );
   }
 
-  void _startNetMessaging() async {
+  // https://flutter.dev/docs/development/data-and-backend/json
+  void _startLoopNetMessaging() async {
     while (true) {
-      _peerData = await _adbflib.getNetUiMessages();
-      setState(() {});
+      final String uiJson = await _adbflib.getNetUiMessages();
+      _uiList = (jsonDecode(uiJson) as List).map((m) => UIListElement.fromJson(m)).toList();
+       setState(() {});
     }
   }
 

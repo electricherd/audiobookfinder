@@ -124,7 +124,7 @@ pub async fn ffi_ui_messages_as_json() -> String {
     let ui_list = &NET_UI.lock().unwrap();
     {
         let json: &UIList = &*ui_list;
-        let peers_ui_json = serde_json::to_string(json).unwrap();
+        let peers_ui_json = serde_json::to_string(&json.cnt).unwrap();
         peers_ui_json
     }
 }
@@ -153,26 +153,25 @@ fn create_net_runtime() -> CReceiver<UiUpdateMsg> {
 }
 
 /// struct viewable for ffi inner part
-/// #[allow(non_camel_case_types)]
 #[derive(Serialize, Deserialize, Clone)]
+#[allow(non_camel_case_types)]
 struct UIListInner {
     // normally peer would be the hash key, but since we use it as json container
     // it's a bit itchy
-    peer_id: String,
-    finished_found: i32,
+    peerid: String,
+    finished: i32,
     searched: u32,
 }
-#[derive(Serialize, Deserialize)]
 struct UIList {
-    cnt: Vec<UIListInner>,
+    pub cnt: Vec<UIListInner>,
 }
 impl UIList {
     fn add_peer(&mut self, peer_id: &PeerId) {
         let peer_string = peer_to_hash_string(peer_id);
-        if self.cnt.iter().find(|e| e.peer_id == peer_string).is_none() {
+        if self.cnt.iter().find(|e| e.peerid == peer_string).is_none() {
             self.cnt.push(UIListInner {
-                peer_id: peer_string,
-                finished_found: -1,
+                peerid: peer_string,
+                finished: -1,
                 searched: 0,
             });
         }
@@ -183,7 +182,7 @@ impl UIList {
         let peer_string = peer_to_hash_string(peer_id);
         let mut i = 0;
         while i != self.cnt.len() {
-            if self.cnt[i].peer_id == peer_string {
+            if self.cnt[i].peerid == peer_string {
                 self.cnt.remove(i);
                 break;
             } else {
@@ -195,8 +194,8 @@ impl UIList {
         let peer_string = peer_to_hash_string(peer_id);
         let mut i = 0;
         while i != self.cnt.len() {
-            if self.cnt[i].peer_id == peer_string {
-                self.cnt[i].finished_found = data.nr_found_songs as i32;
+            if self.cnt[i].peerid == peer_string {
+                self.cnt[i].finished = data.nr_found_songs as i32;
                 self.cnt[i].searched = data.nr_searched_files;
                 break;
             } else {
