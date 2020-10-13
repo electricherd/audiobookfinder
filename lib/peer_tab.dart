@@ -67,11 +67,18 @@ class _PeerTabState extends State<PeerTab> with AutomaticKeepAliveClientMixin<Pe
                   color: Colors.white,
                 ),
               ),
-              Divider(
+              const Divider(
                 height: 50,
                 thickness: 2,
                 color: Colors.white,
               ),
+              const Text(
+                "peers on network: ",
+                style: TextStyle(
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 20),
               Expanded(
                 child: ListView.builder(
                   itemBuilder: _buildPeerItem,
@@ -87,14 +94,42 @@ class _PeerTabState extends State<PeerTab> with AutomaticKeepAliveClientMixin<Pe
 
   Widget _buildPeerItem(BuildContext context, int index) {
     return Card(
-      child: Column(
+      child: Row(
         children: <Widget>[
-          Text(_uiList[index].peerid,
-            style: TextStyle(
-              fontFamily: "monospace",
-              color: Colors.white,
-            ),
-          )
+          // to define a height
+          const SizedBox(height: 60),
+          Expanded (
+            flex: 5,
+            child: Text(_uiList[index].peerid,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: "monospace",
+                color: Colors.white,
+              ),
+            )
+          ),
+          Expanded (
+              flex: 3,
+              child: Text( (_uiList[index].finished < 0) ?
+                         "" :
+                         "analyzed ${_uiList[index].finished}",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white,
+                ),
+              )
+          ),
+          Expanded (
+              flex: 2,
+              child: Text( (_uiList[index].finished < 0) ?
+              "" :
+              "of ${_uiList[index].searched}",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white,
+                ),
+              )
+          ),
         ],
       ),
     );
