@@ -1,7 +1,7 @@
 //! Holds the peer representation, which is a hash of the PeerId
 //! which is also a hash or the public key inside.
 //! It's for convenience and smaller footprint.
-use libp2p_core::PeerId;
+use libp2p::core::PeerId;
 use std::{collections::hash_map::DefaultHasher, hash::Hasher};
 
 /// Since peer lacks some functionality, PeerRepresentation is for convenience

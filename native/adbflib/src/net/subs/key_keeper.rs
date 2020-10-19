@@ -1,8 +1,11 @@
 //! A component to use secure communication
 //! using keys. It is not yet clear ...
 //! basically what libp2p offers is best.
-use libp2p::{self, pnet::PreSharedKey};
-use libp2p_core::{identity, PeerId};
+use libp2p::{
+    self,
+    core::{identity, PeerId},
+    pnet::PreSharedKey,
+};
 
 pub fn get_p2p_server_id<'a>() -> PeerId {
     PeerId::from(SERVER_KEY.public())

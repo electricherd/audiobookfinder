@@ -10,14 +10,16 @@ use super::{
     ui_data::UiData,
 };
 use crossbeam::channel::Receiver;
-use libp2p::swarm::{
-    protocols_handler, NetworkBehaviour,
-    NetworkBehaviourAction::{self, GenerateEvent},
-    PollParameters, ProtocolsHandler,
-};
-use libp2p_core::{
-    connection::{ConnectedPoint, ConnectionId},
-    Multiaddr, PeerId,
+use libp2p::{
+    core::{
+        connection::{ConnectedPoint, ConnectionId},
+        Multiaddr, PeerId,
+    },
+    swarm::{
+        protocols_handler, NetworkBehaviour,
+        NetworkBehaviourAction::{self, GenerateEvent},
+        PollParameters, ProtocolsHandler,
+    },
 };
 use std::{
     collections::vec_deque::VecDeque,

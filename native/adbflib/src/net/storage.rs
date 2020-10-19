@@ -7,12 +7,14 @@ use super::{
     subs::peer_representation::{self, PeerRepresentation},
 };
 use bincode;
-use libp2p::kad::{
-    record,
-    store::{MemoryStore, RecordStore},
-    Kademlia, KademliaEvent, PeerRecord, PutRecordOk, QueryResult, Quorum, Record,
+use libp2p::{
+    core::PeerId,
+    kad::{
+        record,
+        store::{MemoryStore, RecordStore},
+        Kademlia, KademliaEvent, PeerRecord, PutRecordOk, QueryResult, Quorum, Record,
+    },
 };
-use libp2p_core::PeerId;
 
 #[allow(non_camel_case_types)]
 #[derive(Serialize, Deserialize, Clone, Debug)]

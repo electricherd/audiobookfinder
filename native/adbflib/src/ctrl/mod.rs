@@ -12,7 +12,7 @@ use super::{
 };
 use async_std::task;
 use crossbeam::{channel::Receiver as CReceiver, sync::WaitGroup};
-use libp2p_core::PeerId;
+use libp2p::core::PeerId;
 use std::{
     collections::hash_map::DefaultHasher,
     hash::Hasher,

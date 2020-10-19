@@ -6,7 +6,7 @@ use super::{
     subs::peer_representation,
 };
 use crossbeam::channel::Sender as CSender;
-use libp2p_core::{Multiaddr, PeerId};
+use libp2p::core::{Multiaddr, PeerId};
 use std::collections::HashSet;
 
 pub struct UiData {

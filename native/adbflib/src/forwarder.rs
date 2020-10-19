@@ -16,7 +16,7 @@ use crossbeam::{
     channel::{unbounded, Receiver as CReceiver},
     sync::WaitGroup,
 };
-use libp2p_core::PeerId;
+use libp2p::core::PeerId;
 use serde_json;
 use std::{
     sync::{Arc, Mutex},

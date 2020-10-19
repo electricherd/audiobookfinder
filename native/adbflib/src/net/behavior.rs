@@ -16,8 +16,11 @@ use super::{
     storage::NetStorage,
     subs::peer_representation,
 };
-use async_std::io;
 use libp2p::{
+    core::{
+        either::EitherTransport, identity, muxing::StreamMuxerBox, transport, transport::upgrade,
+        PeerId, Transport,
+    },
     kad::{store::MemoryStore, Kademlia, KademliaEvent},
     mdns::{Mdns, MdnsEvent},
     pnet::{PnetConfig, PreSharedKey},
@@ -25,12 +28,9 @@ use libp2p::{
     yamux::Config as YamuxConfig,
     NetworkBehaviour,
 };
-use libp2p_core::{
-    either::EitherTransport, identity, transport::upgrade, PeerId, StreamMuxer, Transport,
-};
 use libp2p_noise::{Keypair, NoiseConfig, X25519Spec};
 use libp2p_tcp::TcpConfig;
-use std::{error::Error, time::Duration};
+use std::time::Duration;
 
 /// The swarm injected behavior is the key element for the whole communication
 /// See https://docs.rs/libp2p/latest/libp2p/swarm/trait.NetworkBehaviour.html for more
@@ -108,25 +108,11 @@ impl NetworkBehaviourEventProcess<SMOutEvents> for AdbfBehavior {
 pub fn build_noise_transport(
     key_pair: &identity::Keypair,
     psk: Option<PreSharedKey>,
-) -> impl Transport<
-    Output = (
-        PeerId,
-        impl StreamMuxer<
-                OutboundSubstream = impl Send,
-                Substream = impl Send,
-                Error = impl Into<io::Error>,
-            > + Send
-            + Sync,
-    ),
-    Error = impl Error + Send,
-    Listener = impl Send,
-    Dial = impl Send,
-    ListenerUpgrade = impl Send,
-> + Clone {
-    let dh_keys = Keypair::<X25519Spec>::new()
-        .into_authentic(&key_pair)
+) -> transport::Boxed<(PeerId, StreamMuxerBox)> {
+    let noise_keys = Keypair::<X25519Spec>::new()
+        .into_authentic(key_pair)
         .unwrap();
-    let noise_config = NoiseConfig::xx(dh_keys).into_authenticated();
+    let noise_config = NoiseConfig::xx(noise_keys).into_authenticated();
     let yamux_config = YamuxConfig::default();
 
     let base_transport = TcpConfig::new().nodelay(true);
@@ -141,6 +127,7 @@ pub fn build_noise_transport(
         .authenticate(noise_config)
         .multiplex(yamux_config)
         .timeout(Duration::from_secs(20))
+        .boxed()
 }
 
 impl AdbfBehavior {

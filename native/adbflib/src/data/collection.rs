@@ -6,7 +6,7 @@ use super::{
         CommonAudioInfo, FlacTagReader, ID3TagReader, MP3TagReader, MP4TagReader, TagReader,
     },
 };
-use libp2p_core::PeerId;
+use libp2p::core::PeerId;
 use std::{
     collections::HashSet,
     fs::{self, DirEntry},
