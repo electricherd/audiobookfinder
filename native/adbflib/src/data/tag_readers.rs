@@ -32,8 +32,6 @@ impl<'a> TagReader<'a> for MP4TagReader {
     fn read_tag_from(&self, file_buffer: &mut BufReader<File>) -> Result<CommonAudioInfo, String> {
         match mp4tag::read_from(file_buffer.get_mut()) {
             Ok(tag) => {
-                // track info need extra treatment in mp4ameta
-                let (track, total_tracks) = tag.track_number();
                 // year needs extra treatment
                 let year = tag
                     .year()
@@ -44,12 +42,12 @@ impl<'a> TagReader<'a> for MP4TagReader {
                     artist: tag.artist().unwrap_or("").to_string(),
                     duration: Duration::from_secs(tag.duration().unwrap_or(0.0) as u64),
                     album: tag.album().map(|op| op.to_string()),
-                    track,
+                    track: tag.track_number(),
                     album_artist: tag.album_artist().map(|op| op.to_string()),
                     genre: tag.genre().map(|op| op.to_string()),
                     disc: None,        // no supported
                     total_discs: None, // no supported
-                    total_tracks,
+                    total_tracks: tag.total_tracks(),
                     year,
                 };
                 Ok(info)
