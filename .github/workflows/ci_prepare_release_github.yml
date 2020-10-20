@@ -17,6 +17,11 @@ jobs:
 
       # ####################### upload release file description
 
+      # https://docs.github.com/en/free-pro-team@latest/actions/reference/environment-variables
+      # needed to read file from repo ... otherwise it's empty?!
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
       # https://github.com/marketplace/actions/create-a-release
       - name: Create Release
         if: steps.extract_tag.outputs.tag != null
