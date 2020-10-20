@@ -152,7 +152,8 @@ jobs:
       # https://flutter.dev/docs/deployment/android#signing-the-app
       - name: Build APK (arm64, Release)
         if: steps.extract_tag.outputs.tag != null
-        run: flutter build apk --release --target-platform android-arm64
+        # https://flutter.dev/docs/perf/app-size
+        run: flutter build apk --release --target-platform android-arm64 --obfuscate --split-debug-info=build/dart-debug-info/${{ steps.extract_tag.outputs.tag }}/android
         env:
           KEY_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}

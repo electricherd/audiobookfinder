@@ -119,7 +119,7 @@ jobs:
         if: steps.extract_tag.outputs.tag != null
         # todo: no release build for now - no key from apple yet
         # run: flutter build ios --release --no-codesign
-        run: flutter build ios --debug --no-codesign --simulator
+        run: flutter build ios --debug --no-codesign --simulator --obfuscate --split-debug-info=build/dart-debug-info/${{ steps.extract_tag.outputs.tag }}/ios
 
       - name: Build iOS App - debug
         if: steps.extract_tag.outputs.tag == null
@@ -133,7 +133,8 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: ./build/ios/iphoneos/Runner.app
-          asset_name: adbfflutter-ios-intermediate-${{ steps.extract_tag.outputs.tag }}.app
+          #file: ./build/ios/iphoneos/Runner.app
+          file: ./build/ios/iphonesimulator/Runner.app
+          asset_name: adbfflutter-ios-intermediate-simulator-${{ steps.extract_tag.outputs.tag }}.app
           tag: ${{ steps.extract_tag.outputs.tag }}
           overwrite: true
