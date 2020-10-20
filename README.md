@@ -100,6 +100,8 @@ It is an inline documentation from [CI](https://travis-ci.org/electricherd/audio
 
 
 ### Changes
+
+* fixed and beautified CI process
 * updated screenshots
 * flutter app:
     * network view ready and functioning
@@ -120,13 +122,13 @@ It is an inline documentation from [CI](https://travis-ci.org/electricherd/audio
 * webui now starts with a selection dialog where you can add/change preselected folders/dirs
 * defined a trait for tag information, now: id3, mp4, flac but no awesomeness ...
 * debugging messages for collection, now collection is a bktree
-* state machine was added, wrapped in a layer of a custom net behaviour in the libp2p swarm ([architecture design](#architecture) updated)
-* my unfortunately now unused [observer pattern](../../wiki/Observer-pattern) was added to wiki - a better version of what
- could be found in internet (Rust is very restrictive, some patterns don't work that well).
 
 <details>
   <summary>click for older changes</summary>
 
+    * state machine was added, wrapped in a layer of a custom net behaviour in the libp2p swarm ([architecture design](#architecture) updated)
+    * my unfortunately now unused [observer pattern](../../wiki/Observer-pattern) was added to wiki - a better version of what
+      could be found in internet (Rust is very restrictive, some patterns don't work that well).
     * webui shows search ongoing on other peers, and then result (number of audio files)
     * webui changes, option added for with or without automatic browser opening, bump
     * boostrap, jquery upgraded, some webui animation, better net communication struct, multiaddr on peer per webui tooltip
@@ -181,7 +183,7 @@ It is an inline documentation from [CI](https://travis-ci.org/electricherd/audio
 
 ### ToDo
 
-* fix debug build on CI
+* add kademlia push of android data found to network to all clients for adbfflutter
 * add signature key, and google developer key to android app, and some time later process for a correct ios app
 * try [crate vfs](https://github.com/manuel-woelker/rust-vfs) for unit test with files!! interesting and needed!
 * look for other tag libraries (e.g. symphonia-metadata [symphonia](https://github.com/pdeljanov/Symphonia))

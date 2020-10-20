@@ -15,16 +15,18 @@ jobs:
         shell: bash
         run: echo ::set-output name=tag::${{ env.vtag }}
 
-      # ####################### upload intermediate result dependent if release in text or tagged
+      # ####################### upload release file description
 
-      # https://github.com/marketplace/actions/upload-files-to-a-github-release
-      - name: Upload README.md
+      # https://github.com/marketplace/actions/create-a-release
+      - name: Create Release
         if: steps.extract_tag.outputs.tag != null
-        uses: svenstaro/upload-release-action@v2
+        uses: actions/create-release@v1
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: ./README-release.md
-          asset_name: README-release-${{ steps.extract_tag.outputs.tag }}.md
-          tag: ${{ steps.extract_tag.outputs.tag }}
-          overwrite: true
-          body: "Audiobookfinder and adbfflutter are Rust based programs to collect audio(book) data over local network with same clients."
+          tag_name: ${{ steps.extract_tag.outputs.tag }}
+          release_name: Release ${{ steps.extract_tag.outputs.tag }}
+          body_path: docs/changes.md
+          draft: false
+          prerelease: false

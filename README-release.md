@@ -43,7 +43,7 @@ command line search with client net search (background)
 ###### Windows (with Powershell):
 `$env:ADBF_LOG`  = `'console'`, `'system'`, `'file'` (default is `system`)
 
-use along with `RUST_LOG`, see at [env-logger](https://docs.rs/env_logger/0.7.1/env_logger/#enabling-logging).
+use along with `RUST_LOG`, see at [env-logger](https://docs.rs/env_logger/latest/env_logger/#enabling-logging).
 and e.g. `RUST_LOG=adbfbinlib::ctrl=trace` for logging trace of adbfbinlib ctrl module
 
 
