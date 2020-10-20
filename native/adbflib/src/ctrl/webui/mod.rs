@@ -23,7 +23,7 @@ use actix_web::{
 use actix_web_actors::ws;
 use actors::{ActorSyncStartup, ActorWSServerMonitor, ActorWebSocket, MRegisterWSClient};
 use crossbeam::sync::WaitGroup;
-use get_if_addrs;
+use if_addrs;
 use std::{
     io,
     net::IpAddr,
@@ -61,7 +61,7 @@ impl WebUI {
         let connection_count = Arc::new(Mutex::new(0));
         let path_arc = self.paths.clone();
 
-        let local_addresses = get_if_addrs::get_if_addrs().unwrap();
+        let local_addresses = if_addrs::get_if_addrs().unwrap();
 
         // data
         let initial_state = Arc::new(Mutex::new(WebServerState {
