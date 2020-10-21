@@ -6,14 +6,17 @@ use crate::{
     ctrl::{ForwardNetMsg, UiUpdateMsg},
     data::{
         collection::Collection,
-        ipc::{IFCollectionOutputData, IPC},
+        ipc::{
+            IFCollectionOutputData,
+            IPC::{self, DoneSearching},
+        },
     },
     net::subs::peer_representation::peer_to_hash_string,
     shared,
 };
 use async_std::task;
 use crossbeam::{
-    channel::{unbounded, Receiver as CReceiver},
+    channel::{unbounded, Receiver, Sender},
     sync::WaitGroup,
 };
 use libp2p::core::PeerId;
@@ -25,7 +28,7 @@ use std::{
 
 lazy_static! {
     /// a static immutable runtime for all network activity
-    static ref NET_RUNTIME: CReceiver<UiUpdateMsg> = create_net_runtime();
+    static ref NET_RUNTIME: Mutex<(Receiver<UiUpdateMsg>,Sender<IPC>)> = Mutex::new(create_net_runtime());
     /// a static mutable data collection
     static ref NET_UI : Mutex<UIList> = Mutex::new(UIList { cnt: Vec::new() });
 }
@@ -60,7 +63,7 @@ pub async fn ffi_ui_messages_as_json() -> String {
     //       it is not intended to be used like that!!
 
     // get network runtime
-    let net_receiver = &NET_RUNTIME.clone();
+    let (net_receiver, _) = &*NET_RUNTIME.lock().unwrap();
 
     // break loop if a yet noticeable change happens
     loop {
@@ -103,19 +106,35 @@ pub async fn ffi_ui_messages_as_json() -> String {
     }
 }
 
+/// send ipc found out
+pub fn ffi_send_ipc_search_done(nr_searched_files: u32, nr_found_songs: u32) -> bool {
+    //
+    // get network runtime
+    let (_, ipc_sender) = &mut *NET_RUNTIME.lock().unwrap();
+    let sending = IFCollectionOutputData {
+        nr_searched_files,
+        nr_found_songs,
+        size_of_data_in_kb: 0,
+        nr_internal_duplicates: 0,
+    };
+    ipc_sender.send(DoneSearching(sending)).is_ok()
+}
+
+// ------------------------------------------------------------------------------------------
+
 /// open a net thread and return receiver to receive from thread
-fn create_net_runtime() -> CReceiver<UiUpdateMsg> {
+fn create_net_runtime() -> (Receiver<UiUpdateMsg>, Sender<IPC>) {
     // outgoing crossbeam receiver
     let (ui_sender, reactor) = unbounded::<UiUpdateMsg>();
+    let (ipc_sender, ipc_receive) = unbounded::<IPC>();
     thread::Builder::new()
         .name("app_net".into())
         .spawn(move || {
             task::block_on(async move {
                 // mock input parameters
                 let dummy_wait_net_thread = WaitGroup::new();
-                let (_, dummy_ipc_receive) = unbounded::<IPC>();
-                match shared::net_search(dummy_wait_net_thread, Some(ui_sender), dummy_ipc_receive)
-                    .await
+
+                match shared::net_search(dummy_wait_net_thread, Some(ui_sender), ipc_receive).await
                 {
                     Ok(_) => {}
                     Err(e) => error!("network error: {}", e),
@@ -123,7 +142,7 @@ fn create_net_runtime() -> CReceiver<UiUpdateMsg> {
             });
         })
         .unwrap();
-    reactor
+    (reactor, ipc_sender)
 }
 
 /// struct viewable for ffi inner part
