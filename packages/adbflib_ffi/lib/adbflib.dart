@@ -41,6 +41,11 @@ class Adbflib {
     return completer.future;
   }
 
+  void sendSearchResults(int searched, int found) {
+    native.send_ipc_search_done(searched, found);
+  }
+
+
   void _throwError() {
     final length = native.last_error_length();
     final Pointer<Utf8> message = allocate(count: length);
