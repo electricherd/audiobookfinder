@@ -32,6 +32,6 @@ jobs:
         with:
           tag_name: ${{ steps.extract_tag.outputs.tag }}
           release_name: Release ${{ steps.extract_tag.outputs.tag }}
-          body_path: docs/changes.md
+          body_path: docs/release_changes.md
           draft: false
           prerelease: false
