@@ -4,7 +4,8 @@
 //! different names, but same albums, etc, get all stats about it).
 //! It acts as a wrapper around adbflib, which holds major parts of the implemention.
 //!
-//! Use ADBF_LOG = console, system, file for enabling logging according to your likes.
+//! Use e.g. ADBF_LOG_LVL=file RUST_BACKTRACE=full RUST_LOG=adbflib::webui=trace system,
+//! file for enabling logging according to your likes.
 
 mod command_line;
 
