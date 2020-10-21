@@ -92,7 +92,6 @@ jobs:
         if: steps.extract_tag.outputs.tag != null
         run: >
             create-dmg \
-            --volname "Adbflib Installer" \
             --volicon "docs/sheep.icns" \
             --background "docs/installer_background.png" \
             --window-pos 200 120 \
