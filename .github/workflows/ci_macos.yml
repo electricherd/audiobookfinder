@@ -70,15 +70,16 @@ jobs:
 
       # #########################  compress binary
 
+      # disable for finding macos-problem
       # https://github.com/svenstaro/upx-action
-      - name: Compress binaries
-        if: steps.extract_tag.outputs.tag != null
-        uses: svenstaro/upx-action@v2
-        continue-on-error: false
-        with:
-          file: ./target/x86_64-apple-darwin/release/audiobookfinder
-          args: --best
-          strip: true
+      #- name: Compress binaries
+      #  if: steps.extract_tag.outputs.tag != null
+      #  uses: svenstaro/upx-action@v2
+      #  continue-on-error: false
+      #  with:
+      #    file: ./target/x86_64-apple-darwin/release/audiobookfinder
+      #    args: --best
+      #    strip: true
 
       # https://github.com/marketplace/actions/easy-zip-files
       - name: zip files
