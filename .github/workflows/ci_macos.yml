@@ -25,6 +25,12 @@ jobs:
         if: steps.extract_tag.outputs.tag != null
         shell: bash
         run: echo "Building release"
+      # ############################### Installation
+
+      # https://github.com/create-dmg/create-dmg
+      - name: Install Installer Helper
+        if: steps.extract_tag.outputs.tag != null
+        run: brew install create-dmg
 
       # ##################### setup build environment
       - name: Checkout sources

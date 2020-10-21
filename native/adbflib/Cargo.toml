@@ -94,6 +94,7 @@ webbrowser = "0.5"
 
 # https://crates.io/crates/cargo-deb
 [package.metadata.deb]
+name="audiobookfinder"
 license-file = ["../../LICENSE", "0"]
 extended-description = """\
 A multi-agend local network program to search and share audiobook data \
