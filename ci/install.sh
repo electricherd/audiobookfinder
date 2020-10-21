@@ -24,42 +24,9 @@ main() {
     #
     # is jessie libnss-mdns-dev
     case $TARGET in
-      x86_64-unknown-linux-gnu)
-         case $UBUNTU_VER in
-           LTS_14.04)
-           sudo apt-get install -qq libavahi-compat-libdnssd-dev -y \
-           && sudo add-apt-repository ppa:james-page/0mq -y \
-           && sudo apt-get update -qq \
-           && sudo apt-get install libsodium-dev -y
-           ;;
-           # xenial has libsodium-dev already
-           LTS_16.04)
-           # sudo apt-get update -qq \
-           ;;
-         esac
-         #docker build -t electricherd/adbfimage:0.1.13 ci/docker/x86_64-unknown-linux-gnu
-      ;;
-      i686-unknown-linux-gnu)
-       rustup target install i686-unknown-linux-gnu \
-         && sudo apt-get update -qq \
-         && sudo apt-get install libsodium-dev -y
-      ;;
       armv7-unknown-linux-gnueabihf)
          sudo apt-get update -qq \
          && docker pull ragnaroek/rust-raspberry:1.43.1
-      ;;
-      arm-unknown-linux-gnueabi)
-       sudo apt-get install -qq libavahi-compat-libdnssd-dev -y
-      ;;
-      aarch64-unknown-linux-gnu)
-       sudo apt-get install -qq libavahi-compat-libdnssd-dev -y \
-        && sudo add-apt-repository ppa:chris-lea/libsodium -y \
-        && sudo apt-get update -qq \
-        && sudo apt-get install libsodium-dev -y
-      ;;
-      x86_64-apple-darwin)
-       ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)" < /dev/null 2> /dev/null \
-        && brew install libsodium
       ;;
     esac
 
