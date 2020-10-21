@@ -63,6 +63,7 @@ init:
   #  for deployment
   - sh: sudo apt-get --yes install p7zip-full # upx-ucl is now in install
   # for cargo-deb run (11 is the version number: taken from https://apt.llvm.org/)
+  - sh: sudo apt-get --yes install python3-lldb-11
   - sh: wget https://apt.llvm.org/llvm.sh
   - sh: chmod +x llvm.sh
   - sh: sudo ./llvm.sh 11
