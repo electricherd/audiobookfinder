@@ -7,6 +7,7 @@ sudo: required
 env:
   global:
     - CRATE_NAME=audiobookfinder
+    - PACKAGE_NAME=adbflib
 
 notification:
      email:
@@ -75,6 +76,7 @@ after_script:
   - set +e
 
 before_deploy:
+  - cargo deb -p $PACKAGE_NAME --target=$target
   - cp target/$TARGET/release/$CRATE_NAME target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET
   - ./upx -9 target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET -o target/release/$CRATE_NAME
   - 7z a -r target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET-$TRAVIS_TAG.7z ./target/release/$CRATE_NAME ./README-release.md ./LICENSE
@@ -88,6 +90,7 @@ deploy:
   file:
     - target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET-$TRAVIS_TAG.7z
     - target/release/$CRATE_NAME-$UBUNTU_VER-$TARGET-$TRAVIS_TAG.7z.sha256
+    - target/debian/$PACKAGE_NAME_*
   provider: releases
   skip_cleanup: true
   on:

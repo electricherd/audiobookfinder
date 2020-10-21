@@ -91,3 +91,16 @@ default-features = false
 # important: has to be the same as used in "webbrowser" crate
 [target.'cfg(any(target_os = "android", target_os = "windows", target_os = "macos", target_os = "linux", target_os = "freebsd", targest_os = "netbsd",target_os = "openbsd", target_os = "haiku", target_arch = "wasm32"))'.dependencies]
 webbrowser = "0.5"
+
+# https://crates.io/crates/cargo-deb
+[package.metadata.deb]
+license-file = ["../../LICENSE", "0"]
+extended-description = """\
+A multi-agend local network program to search and share audiobook data \
+over the network, even with the supplied mobile app."""
+section = "network"
+priority = "optional"
+assets = [
+    ["target/release/audiobookfinder", "usr/bin/", "755"],
+    ["../../README.md", "usr/share/doc/audiobookfinder/README", "644"],
+]

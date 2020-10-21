@@ -8,6 +8,7 @@ image:
 environment:
   global:
     CRATE_NAME: audiobookfinder
+    PACKAGE_NAME: adbflib
   matrix:
 # don't use "configuration" variable in this file!!!
     - target: x86_64-unknown-linux-gnu
@@ -58,11 +59,8 @@ cache:
 # ACCEPT_EULA for some windows packages .. whatever
 init:
   - sh: sudo apt-get update
-# comment next line for quick build
-#  - sh: sudo DEBIAN_FRONTEND=noninteractive ACCEPT_EULA=Y apt-get upgrade -yq
   - sh: sudo apt-get --yes install build-essential
-#  - sh: sudo apt-get --yes install libsodium-dev
-#  for deployment
+  #  for deployment
   - sh: sudo apt-get --yes install p7zip-full # upx-ucl is now in install
 
 # scripts that run after cloning repository
@@ -79,27 +77,18 @@ install:
   - sh: sh ./rustup.sh -y 
 # for debugging: ls -al
   - sh: source $HOME/.cargo/env
-# it's a clean install so not needed: rustup update
-# comment next line for quick build
-#  - sh: rustup toolchain install nightly
+  # it's a clean install so not needed: rustup update
   - sh: rustup target install $target
+  # install debian packager https://crates.io/crates/cargo-deb
+  - sh: cargo install cargo-deb
   #
   # cmd (powershell should only be triggered with windows build)
   #
-  # trying NuGet and powershell for lib installation
-  - cmd: appveyor DownloadFile https://dist.nuget.org/win-x86-commandline/latest/nuget.exe
-#  - cmd: nuget install libsodium -Version %LIBSODIUM_WIN_VER%
-#  - cmd: set SODIUM_LIB_DIR=%ProgramFiles(x86)%\Microsoft SDKs\NuGetPackages\libsodium\runtimes\win-x64\native
-#  - cmd: set SODIUM_STATIC=1
-  - cmd: nuget locals all -list
   # upx for windows
   - cmd: appveyor DownloadFile https://github.com/upx/upx/releases/download/v3.96/upx-3.96-win64.zip
   - cmd: 7z e upx-3.96-win64.zip upx-3.96-win64\upx.exe
   - cmd: upx.exe --version
   - cmd: echo "%CRATE_NAME%-%target%-%APPVEYOR_REPO_TAG_NAME%"
-  # old way test download https://libsodium.gitbook.io/doc/installation
-  #- cmd: appveyor-retry appveyor DownloadFile https://download.libsodium.org/libsodium/releases/libsodium-%LIBSODIUM_WIN_VER%-stable-msvc.zip -FileName libsodium.7z 
-  #- cmd: 7z x -y libsodium.7z -oC:\build_libs\libsodium
   - cmd: curl -sSf -o rustup-init.exe https://win.rustup.rs
   - cmd: rustup-init.exe --default-host %target% --default-toolchain %CHANNEL% -y
   - cmd: set PATH=%PATH%;C:\Users\appveyor\.cargo\bin
@@ -121,6 +110,8 @@ test_script:
   - cmd: target\%target%\release\%CRATE_NAME%.exe -- testaudio
 
 after_build:
+  - sh: cargo deb -p $PACKAGE_NAME --target=$target
+  #
   - sh: cp target/$target/release/$CRATE_NAME target/release/$CRATE_NAME-$UBUNTU_VER-$target
   - sh: strip -s target/release/$CRATE_NAME-$UBUNTU_VER-$target -o target/release/$CRATE_NAME-$UBUNTU_VER-$target.stripped
   - sh: ./upx --best target/release/$CRATE_NAME-$UBUNTU_VER-$target.stripped -o target/release/$CRATE_NAME
@@ -147,6 +138,8 @@ artifacts:
     name: linuxBuild
   - path: $CRATE_NAME-$UBUNTU_VER-$target-$APPVEYOR_REPO_TAG_NAME.7z.sha256
     name: linuxSha
+  - path: target/$target/debian/$PACKAGE_NAME_*
+    name: linuxDeb
 
 deploy:
 # due to mutually exclusive branch and tagged (https://www.appveyor.com/docs/branches/)
