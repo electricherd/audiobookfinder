@@ -5,7 +5,6 @@ use super::{
     IFInternalCollectionOutputData,
 };
 
-// todo: move to mod
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct IFCollectionOutputData {
     pub nr_searched_files: u32,
