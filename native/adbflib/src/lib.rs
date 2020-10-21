@@ -56,6 +56,9 @@ pub async fn get_ui_messages() -> Result<String, AdbflibError> {
 }
 
 /// the library interface for sending own results
-pub fn send_ipc_search_done(nr_searched_files: u32, nr_found_songs: u32) -> bool {
-    forwarder::ffi_send_ipc_search_done(nr_searched_files, nr_found_songs)
+pub async fn send_ipc_search_done(
+    nr_searched_files: u32,
+    nr_found_songs: u32,
+) -> Result<bool, AdbflibError> {
+    Ok(forwarder::ffi_send_ipc_search_done(nr_searched_files, nr_found_songs).await)
 }

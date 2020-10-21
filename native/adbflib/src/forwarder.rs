@@ -107,7 +107,7 @@ pub async fn ffi_ui_messages_as_json() -> String {
 }
 
 /// send ipc found out
-pub fn ffi_send_ipc_search_done(nr_searched_files: u32, nr_found_songs: u32) -> bool {
+pub async fn ffi_send_ipc_search_done(nr_searched_files: u32, nr_found_songs: u32) -> bool {
     //
     // get network runtime
     let (_, ipc_sender) = &mut *NET_RUNTIME.lock().unwrap();
