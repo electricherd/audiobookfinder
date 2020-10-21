@@ -4,8 +4,13 @@
 //! different names, but same albums, etc, get all stats about it).
 //! It acts as a wrapper around adbflib, which holds major parts of the implemention.
 //!
-//! Use e.g. ADBF_LOG_LVL=file RUST_BACKTRACE=full RUST_LOG=adbflib::webui=trace system,
-//! file for enabling logging according to your likes.
+//! For debugging, use e.g.
+//!   ADBF_LOG_LVL=file RUST_BACKTRACE=full RUST_LOG=adbfbinlib::webui=trace
+//!
+//!               ADBF_LOG_LVL=file   : is the method
+//!               RUST_BACKTRACE=full : is Rust's trace level
+//!  RUST_LOG=adbfbinlib::webui=trace : is program's inner debugging mod
+//!
 
 mod command_line;
 
