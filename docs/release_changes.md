@@ -3,8 +3,8 @@
 Audiobookfinder and adbfflutter are Rust based programs to collect audio(book) data over local
 network with same clients.
 
-Changes in this Release
-   * added sending out of audio files found also from android app
+##### Changes in this Release
+* added sending out of audio files found also from android app
 
 
 <details>
