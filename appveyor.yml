@@ -62,6 +62,11 @@ init:
   - sh: sudo apt-get --yes install build-essential
   #  for deployment
   - sh: sudo apt-get --yes install p7zip-full # upx-ucl is now in install
+  # for cargo-deb run (11 is the version number: taken from https://apt.llvm.org/)
+  - sh: wget https://apt.llvm.org/llvm.sh
+  - sh: chmod +x llvm.sh
+  - sh: sudo ./llvm.sh 11
+
 
 # scripts that run after cloning repository
 install:
@@ -111,6 +116,7 @@ test_script:
 
 after_build:
   - sh: cargo deb -p $PACKAGE_NAME --target=$target
+  - sh: cp target/$target/debian/* $CRATE_NAME-$UBUNTU_VER-$target-$APPVEYOR_REPO_TAG_NAME.deb
   #
   - sh: cp target/$target/release/$CRATE_NAME target/release/$CRATE_NAME-$UBUNTU_VER-$target
   - sh: strip -s target/release/$CRATE_NAME-$UBUNTU_VER-$target -o target/release/$CRATE_NAME-$UBUNTU_VER-$target.stripped
@@ -138,7 +144,7 @@ artifacts:
     name: linuxBuild
   - path: $CRATE_NAME-$UBUNTU_VER-$target-$APPVEYOR_REPO_TAG_NAME.7z.sha256
     name: linuxSha
-  - path: target/$target/debian/$PACKAGE_NAME_*
+  - path: $CRATE_NAME-$UBUNTU_VER-$target-$APPVEYOR_REPO_TAG_NAME.deb
     name: linuxDeb
 
 deploy:
