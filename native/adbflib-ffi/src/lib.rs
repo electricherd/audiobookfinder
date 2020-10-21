@@ -84,3 +84,8 @@ pub extern "C" fn get_net_ui_messages(dart_port: i64) -> i32 {
     rt.spawn(t);
     1
 }
+
+#[no_mangle]
+pub extern "C" fn send_ipc_search_done(nr_searched: u32, nr_found: u32) {
+    adbfbinlib::send_ipc_search_done(nr_searched, nr_found);
+}

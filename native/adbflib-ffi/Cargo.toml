@@ -1,6 +1,6 @@
 [package]
 name = "adbflib-ffi"
-version = "0.0.4"
+version = "0.0.5"
 authors = ["Sven Krömeke <skroemeke@gmail.com>"]
 edition = "2018"
 
@@ -12,9 +12,9 @@ crate-type = ["rlib", "staticlib"]
 adbflib = { path = "../adbflib" }
 tokio = { version = "0.2", features = ["rt-threaded"] }
 ffi_helpers = "0.2"
-allo-isolate = "0.1.2"
+allo-isolate = "0.1"
 lazy_static = "1.4"
 
 [build-dependencies]
-cbindgen = "0.14.2"
+cbindgen = "0.14"
 dart-bindgen = "0.1"
