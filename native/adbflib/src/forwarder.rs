@@ -27,9 +27,9 @@ use std::{
 };
 
 lazy_static! {
-    /// a static immutable runtime for all network activity
+    /// A static mutable runtime for all network activity (sender needs mutability)
     static ref NET_RUNTIME: Mutex<(Receiver<UiUpdateMsg>,Sender<IPC>)> = Mutex::new(create_net_runtime());
-    /// a static mutable data collection
+    /// A static mutable data collection, its inside to be sent to Dart via FFI
     static ref NET_UI : Mutex<UIList> = Mutex::new(UIList { cnt: Vec::new() });
 }
 
