@@ -104,4 +104,5 @@ priority = "optional"
 assets = [
     ["target/release/audiobookfinder", "usr/bin/", "755"],
     ["../../README-release.md", "usr/share/doc/audiobookfinder/README.md", "644"],
+    ["../../LICENSE", "usr/share/doc/audiobookfinder/LICENSE", "644"],
 ]
