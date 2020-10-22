@@ -59,8 +59,9 @@ pub fn ffi_file_count_good(input_path: Vec<String>) -> u32 {
 /// return the json of peer uis
 pub async fn ffi_ui_messages_as_json() -> String {
     // todo: unwrap using NET_UI is save unless you
-    //       run this function simultaneously many instances, secure this though
-    //       it is not intended to be used like that!!
+    //       run this function simultaneously many instances, secure this because
+    //       at least 2 functions now use net component, and simultaneous usage
+    //       is more probable now!
 
     // get network runtime
     let (net_receiver, _) = &*NET_RUNTIME.lock().unwrap();
@@ -90,7 +91,7 @@ pub async fn ffi_ui_messages_as_json() -> String {
                 UiUpdateMsg::PeerSearchFinished(peer_id, data) => {
                     let ui_list = &mut NET_UI.lock().unwrap();
                     {
-                        ui_list.add_finished(&peer_id, &data);
+                        ui_list.add_search_finished(&peer_id, &data);
                         break;
                     }
                 }
@@ -122,7 +123,8 @@ pub async fn ffi_send_ipc_search_done(nr_searched_files: u32, nr_found_songs: u3
 
 // ------------------------------------------------------------------------------------------
 
-/// open a net thread and return receiver to receive from thread
+/// Opens a net thread and return ui message receiver and ipc message sender
+/// to be used as static instance for Dart-to-backend communication.
 fn create_net_runtime() -> (Receiver<UiUpdateMsg>, Sender<IPC>) {
     // outgoing crossbeam receiver
     let (ui_sender, reactor) = unbounded::<UiUpdateMsg>();
@@ -145,7 +147,8 @@ fn create_net_runtime() -> (Receiver<UiUpdateMsg>, Sender<IPC>) {
     (reactor, ipc_sender)
 }
 
-/// struct viewable for ffi inner part
+/// Struct viewable for ffi inner part and used as json export
+/// !!! change Dart names as well, cause variable names MUST be in sync
 #[derive(Serialize, Deserialize, Clone)]
 #[allow(non_camel_case_types)]
 struct UIListInner {
@@ -155,6 +158,7 @@ struct UIListInner {
     finished: i32,
     searched: u32,
 }
+/// Container and helper to fill UIListInner easier
 struct UIList {
     pub cnt: Vec<UIListInner>,
 }
@@ -183,7 +187,7 @@ impl UIList {
             }
         }
     }
-    fn add_finished(&mut self, peer_id: &PeerId, data: &IFCollectionOutputData) {
+    fn add_search_finished(&mut self, peer_id: &PeerId, data: &IFCollectionOutputData) {
         let peer_string = peer_to_hash_string(peer_id);
         let mut i = 0;
         while i != self.cnt.len() {

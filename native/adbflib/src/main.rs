@@ -11,7 +11,6 @@
 //!               RUST_BACKTRACE=full : is Rust's trace level
 //!  RUST_LOG=adbfbinlib::webui=trace : is program's inner debugging mod
 //!
-
 mod command_line;
 
 use adbfbinlib::{
