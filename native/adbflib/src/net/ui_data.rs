@@ -5,16 +5,16 @@ use super::{
     sm::*,
     subs::peer_representation,
 };
-use crossbeam::channel::Sender as CSender;
+use crossbeam::channel::Sender;
 use libp2p::core::{Multiaddr, PeerId};
 use std::collections::HashSet;
 
 pub struct UiData {
-    sender: Option<CSender<UiUpdateMsg>>,
+    sender: Option<Sender<UiUpdateMsg>>,
     ui_shown_peers: HashSet<PeerId>,
 }
 impl UiData {
-    pub fn new(sender: Option<CSender<UiUpdateMsg>>) -> Self {
+    pub fn new(sender: Option<Sender<UiUpdateMsg>>) -> Self {
         Self {
             sender,
             ui_shown_peers: HashSet::new(),
