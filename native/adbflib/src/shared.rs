@@ -19,7 +19,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-/// high level function to search path
+/// High level function to search path
 pub fn collection_search(
     collection_handler: Arc<Mutex<Collection>>,
     search_path: Arc<Mutex<SearchPath>>,
@@ -60,13 +60,12 @@ pub fn collection_search(
     out.clone()
 }
 
-/// high level function to startup net functionality
+/// High level function to startup net functionality
 pub async fn net_search(
     wait_net: WaitGroup,
     net_system_messages: Option<CSender<UiUpdateMsg>>,
     ipc_receive: CReceiver<IPC>,
 ) -> Result<(), Box<dyn Error>> {
-    // This thread will not end itself
     // - can be terminated by ui message
     // - collector finished (depending on definition)
 
