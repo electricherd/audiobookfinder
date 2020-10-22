@@ -10,7 +10,7 @@ use crate::{
     net::Net,
 };
 use crossbeam::{
-    channel::{Receiver as CReceiver, Sender as CSender},
+    channel::{Receiver, Sender},
     sync::WaitGroup,
 };
 use rayon::prelude::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator};
@@ -23,7 +23,7 @@ use std::{
 pub fn collection_search(
     collection_handler: Arc<Mutex<Collection>>,
     search_path: Arc<Mutex<SearchPath>>,
-    sender_handler: Arc<Mutex<CSender<UiUpdateMsg>>>,
+    sender_handler: Arc<Mutex<Sender<UiUpdateMsg>>>,
     has_ui: bool,
 ) -> IFInternalCollectionOutputData {
     let output_data = IFInternalCollectionOutputData::new();
@@ -63,8 +63,8 @@ pub fn collection_search(
 /// High level function to startup net functionality
 pub async fn net_search(
     wait_net: WaitGroup,
-    net_system_messages: Option<CSender<UiUpdateMsg>>,
-    ipc_receive: CReceiver<IPC>,
+    net_system_messages: Option<Sender<UiUpdateMsg>>,
+    ipc_receive: Receiver<IPC>,
 ) -> Result<(), Box<dyn Error>> {
     // - can be terminated by ui message
     // - collector finished (depending on definition)
