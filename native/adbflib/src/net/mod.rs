@@ -11,7 +11,7 @@ mod ui_data;
 use self::{sm_behaviour::SMBehaviour, storage::NetStorage, subs::key_keeper, ui_data::UiData};
 use super::{ctrl, data::ipc::IPC};
 use async_std::task::{self, Context, Poll};
-use crossbeam::channel::{Receiver as CReceiver, Sender as CSender};
+use crossbeam::channel::{Receiver, Sender};
 use futures::prelude::*;
 use futures_util::StreamExt;
 use libp2p::{
@@ -32,8 +32,8 @@ impl Net {
     /// * 'ipc_receiver' - message receiver for internal mass message (called IPC)
     pub async fn lookup(
         &mut self,
-        ui_sender: Option<CSender<ctrl::UiUpdateMsg>>,
-        ipc_receiver: CReceiver<IPC>,
+        ui_sender: Option<Sender<ctrl::UiUpdateMsg>>,
+        ipc_receiver: Receiver<IPC>,
     ) -> Result<(), Box<dyn Error>> {
         // prepare everything for mdns thread
         let my_peer_id = key_keeper::get_p2p_server_id();
@@ -49,8 +49,8 @@ impl Net {
     /// * 'ipc_receiver' - passed on mass message receiver
     async fn build_swarm_and_run(
         own_peer_id: &PeerId,
-        ctrl_sender: Option<CSender<ctrl::UiUpdateMsg>>,
-        ipc_receiver: CReceiver<IPC>,
+        ctrl_sender: Option<Sender<ctrl::UiUpdateMsg>>,
+        ipc_receiver: Receiver<IPC>,
     ) -> Result<(), Box<dyn Error>> {
         let local_key = &*key_keeper::SERVER_KEY;
         let local_peer_id = PeerId::from(local_key.public());

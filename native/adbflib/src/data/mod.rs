@@ -12,7 +12,7 @@ use crossbeam::channel::Sender;
 use std::{
     ops::Add,
     path::Path,
-    sync::{Arc as SArc, Mutex as SMutex},
+    sync::{Arc, Mutex},
 };
 
 /// Interface of what collection output data will return
@@ -46,9 +46,9 @@ impl IFInternalCollectionOutputData {
 /// The collection search! Searches on the file system a concrete, single path.
 pub fn search_in_single_path(
     has_ui: bool,
-    collection_data: SArc<SMutex<Container>>,
-    collection_protected: SArc<SMutex<Collection>>,
-    mutex_to_ui_msg: SArc<SMutex<Sender<UiUpdateMsg>>>,
+    collection_data: Arc<Mutex<Container>>,
+    collection_protected: Arc<Mutex<Collection>>,
+    mutex_to_ui_msg: Arc<Mutex<Sender<UiUpdateMsg>>>,
     index: usize,
     elem: &str,
 ) -> IFInternalCollectionOutputData {
@@ -150,7 +150,7 @@ pub fn search_in_single_path(
 }
 
 #[allow(dead_code)]
-pub fn publish_local_storage(container_handle: SArc<SMutex<Container>>, ipc_sender: Sender<IPC>) {
+pub fn publish_local_storage(container_handle: Arc<Mutex<Container>>, ipc_sender: Sender<IPC>) {
     // send to ipc
     //
     let container = container_handle.lock().unwrap();
