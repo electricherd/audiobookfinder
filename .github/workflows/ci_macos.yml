@@ -104,18 +104,7 @@ jobs:
       - name: Make install package
         if: steps.extract_tag.outputs.tag != null
         run: |
-            create-dmg
-            --volname "Adbf"
-            --volicon "docs/sheep.icns"
-            --background "docs/installer_background.png"
-            --window-pos 200 120
-            --window-size 800 400
-            --icon-size 100
-            --icon "Application.app" 200 190
-            --hide-extension "audiobookfinder.app"
-            --app-drop-link 600 185
-            "adbf-installer.dmg"
-            "./target/x86_64-apple-darwin/release/tmp/"
+            create-dmg --volname "Adbf" --volicon "docs/sheep.icns" --background "docs/installer_background.png" --window-pos 200 120 --window-size 800 400 --icon-size 100 --icon "Application.app" 200 190 --hide-extension "audiobookfinder.app" --app-drop-link 600 185 "adbf-installer.dmg" "./target/x86_64-apple-darwin/release/tmp/"
 
       # https://github.com/marketplace/actions/easy-zip-files
       - name: zip files
