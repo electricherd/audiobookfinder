@@ -112,7 +112,7 @@ test_script:
   - cmd: target\%target%\release\%CRATE_NAME%.exe -- testaudio
 
 after_build:
-  - sh: cargo deb -p $PACKAGE_NAME --target=$target
+  - sh: LLVM_CONFIG_PATH=/usr/bin/llvm-config-7 cargo deb -p $PACKAGE_NAME --target=$target
   - sh: cp target/$target/debian/* $CRATE_NAME-$UBUNTU_VER-$target-$APPVEYOR_REPO_TAG_NAME.deb
   #
   - sh: cp target/$target/release/$CRATE_NAME target/release/$CRATE_NAME-$UBUNTU_VER-$target
