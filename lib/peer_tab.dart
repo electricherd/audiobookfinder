@@ -109,21 +109,10 @@ class _PeerTabState extends State<PeerTab> with AutomaticKeepAliveClientMixin<Pe
             )
           ),
           Expanded (
-              flex: 3,
+              flex: 5,
               child: Text( (_uiList[index].finished < 0) ?
                          "" :
-                         "analyzed ${_uiList[index].finished}",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.white,
-                ),
-              )
-          ),
-          Expanded (
-              flex: 2,
-              child: Text( (_uiList[index].finished < 0) ?
-              "" :
-              "of ${_uiList[index].searched}",
+                         "analyzed ${_uiList[index].finished} of ${_uiList[index].searched}",
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Colors.white,
