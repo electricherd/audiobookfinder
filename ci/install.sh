@@ -12,17 +12,6 @@ main() {
 
     # install additional libraries
     #
-    # libavahi-compat-libdnssd-dev
-    #   - debian: is not in standard installation but in deb repo
-    #   - macos:  not foundable
-    # libsodium-dev
-    #   - debian:
-    #      - i686: it is only after trusty in repo, but PPA exists
-    #      - armhf: is not in trusty, but PPA exists
-    #   - macos:  need to be tested/see below
-    #
-    #
-    # is jessie libnss-mdns-dev
     case $TARGET in
       armv7-unknown-linux-gnueabihf)
          sudo apt-get update -qq \
