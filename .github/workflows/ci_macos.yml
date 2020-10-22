@@ -96,11 +96,6 @@ jobs:
         if: steps.extract_tag.outputs.tag != null
         run: cp ./target/x86_64-apple-darwin/release/audiobookfinder ./target/x86_64-apple-darwin/release/tmp/audiobookfinder.app
 
-      - name: Read about install package
-        if: steps.extract_tag.outputs.tag != null
-        run: |
-          create-dmg --help
-
       - name: Make install package
         if: steps.extract_tag.outputs.tag != null
         run: |
@@ -134,12 +129,22 @@ jobs:
       # ####################### upload intermediate result dependent if release in text or tagged
 
       # https://github.com/marketplace/actions/upload-files-to-a-github-release
-      - name: Upload Release Asset
+      - name: Upload Release Asset - Zip
         if: steps.extract_tag.outputs.tag != null
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: packaged
           asset_name: audiobookfinder-x86_64-apple-darwin-${{ steps.extract_tag.outputs.tag }}.zip
+          tag: ${{ steps.extract_tag.outputs.tag }}
+          overwrite: true
+
+      - name: Upload Release Asset - dmg
+        if: steps.extract_tag.outputs.tag != null
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: adbf-installer.dmg
+          asset_name: audiobookfinder-install-${{ steps.extract_tag.outputs.tag }}.dmg
           tag: ${{ steps.extract_tag.outputs.tag }}
           overwrite: true
