@@ -95,7 +95,7 @@ webbrowser = "0.5"
 # https://crates.io/crates/cargo-deb
 [package.metadata.deb]
 name="audiobookfinder"
-license-file = ["../../LICENSE", "0"]
+license-file = ["../../LICENSE", "4"]
 extended-description = """\
 A multi-agend local network program to search and share audiobook data \
 over the network, even with the supplied mobile app."""
@@ -103,5 +103,5 @@ section = "network"
 priority = "optional"
 assets = [
     ["target/release/audiobookfinder", "usr/bin/", "755"],
-    ["../../README.md", "usr/share/doc/audiobookfinder/README", "644"],
+    ["../../README-release.md", "usr/share/doc/audiobookfinder/README.md", "644"],
 ]
