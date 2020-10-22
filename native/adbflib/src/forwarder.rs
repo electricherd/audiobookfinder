@@ -33,8 +33,10 @@ lazy_static! {
     static ref NET_UI : Mutex<UIList> = Mutex::new(UIList { cnt: Vec::new() });
 }
 
-/// just return the number of audio files found for now
+/// Return the number of audio files found for now
 pub fn ffi_file_count_good(input_path: Vec<String>) -> u32 {
+    // todo: return other values of IFInternalCollectionOutputData
+
     // prepare data
     let cleaned_paths = SearchPath::new(&input_path);
     let search_path = Arc::new(Mutex::new(cleaned_paths));
