@@ -63,7 +63,7 @@ init:
   #  for deployment
   - sh: sudo apt-get --yes install p7zip-full # upx-ucl is now in install
   # for cargo-deb run (10 is the version number: taken from https://apt.llvm.org/) to LTS18 it's only 10
-  - sh: sudo apt-get --yes install clang python3-lldb-10 llvm-7
+  - sh: sudo apt-get --yes install clang python3-lldb-10 llvm-10 libclang-10-dev
 
 # scripts that run after cloning repository
 install:
@@ -112,7 +112,7 @@ test_script:
   - cmd: target\%target%\release\%CRATE_NAME%.exe -- testaudio
 
 after_build:
-  - sh: LLVM_CONFIG_PATH=/usr/bin/llvm-config-7 LIBCLANG_PATH=/usr/lib/x86_64-linux-gnu cargo deb -p $PACKAGE_NAME --target=$target
+  - sh: LLVM_CONFIG_PATH=/usr/bin/llvm-config-10 LIBCLANG_PATH=/usr/lib/x86_64-linux-gnu cargo deb -p $PACKAGE_NAME --target=$target
   - sh: cp target/$target/debian/* $CRATE_NAME-$UBUNTU_VER-$target-$APPVEYOR_REPO_TAG_NAME.deb
   #
   - sh: cp target/$target/release/$CRATE_NAME target/release/$CRATE_NAME-$UBUNTU_VER-$target
