@@ -96,6 +96,11 @@ jobs:
         if: steps.extract_tag.outputs.tag != null
         run: cp ./target/x86_64-apple-darwin/release/audiobookfinder ./target/x86_64-apple-darwin/release/tmp/audiobookfinder.app
 
+      - name: Read about install package
+        if: steps.extract_tag.outputs.tag != null
+        run: |
+          create-dmg --help
+
       - name: Make install package
         if: steps.extract_tag.outputs.tag != null
         run: |
@@ -110,7 +115,7 @@ jobs:
             --hide-extension "audiobookfinder.app"
             --app-drop-link 600 185
             "adbf-installer.dmg"
-            "./target/x86_64-apple-darwin/release/tmp"
+            "./target/x86_64-apple-darwin/release/tmp/"
 
       # https://github.com/marketplace/actions/easy-zip-files
       - name: zip files
