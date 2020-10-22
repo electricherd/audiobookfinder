@@ -114,18 +114,6 @@ jobs:
           recursive: false
           dest: packaged
 
-      # https://github.com/marketplace/actions/action-7z
-      # not on MacOS
-      #- name: 7zip Release files
-      #  if: steps.extract_tag.outputs.tag != null
-      #  uses: edgarrc/action-7z@v1.0.4
-      #  continue-on-error: false
-      #  with:
-      #    args: >
-      #           7z a -t7z -mx=9 packaged
-      #           ./target/x86_64-apple-darwin/release/audiobookfinder
-      #           ./README-release.md
-
       # ####################### upload intermediate result dependent if release in text or tagged
 
       # https://github.com/marketplace/actions/upload-files-to-a-github-release
@@ -145,6 +133,6 @@ jobs:
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: adbf-installer.dmg
-          asset_name: audiobookfinder-install-${{ steps.extract_tag.outputs.tag }}.dmg
+          asset_name: audiobookfinder-x86_64-apple-darwin-${{ steps.extract_tag.outputs.tag }}.dmg
           tag: ${{ steps.extract_tag.outputs.tag }}
           overwrite: true
