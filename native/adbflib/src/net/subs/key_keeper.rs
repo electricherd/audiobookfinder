@@ -7,12 +7,15 @@ use libp2p::{
     pnet::PreSharedKey,
 };
 
+/// Gets a newly generated server ID
 pub fn get_p2p_server_id<'a>() -> PeerId {
     PeerId::from(SERVER_KEY.public())
 }
 
 lazy_static! {
+    /// Generates a new ed25519 key-pair
     pub static ref SERVER_KEY: identity::Keypair = identity::Keypair::generate_ed25519();
+    /// This is the to be hidden/read preshare key for the net communication process
     pub static ref PRESHARED_SECRET: PreSharedKey = {
         PreSharedKey::new([
             0x23, 0x89, 0xb4, 0x82, 0x42, 0x89, 0x7e, 0x8f, 0x54, 0x85, 0xd1, 0x3e, 0xd1, 0x2e,
