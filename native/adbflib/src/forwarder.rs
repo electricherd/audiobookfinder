@@ -56,7 +56,7 @@ pub fn ffi_file_count_good(input_path: Vec<String>) -> u32 {
     output_data_return_handle.nr_found_songs
 }
 
-/// return the json of peer uis
+/// Return the json of peer uis which holds a vector of UIListInner
 pub async fn ffi_ui_messages_as_json() -> String {
     // todo: unwrap using NET_UI is save unless you
     //       run this function simultaneously many instances, secure this because
