@@ -107,7 +107,7 @@ pub async fn ffi_ui_messages_as_json() -> String {
     }
 }
 
-/// send ipc found out
+/// Send ipc found files (yet only 2 of 4 values)
 pub async fn ffi_send_ipc_search_done(nr_searched_files: u32, nr_found_songs: u32) -> bool {
     //
     // get network runtime
