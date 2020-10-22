@@ -88,11 +88,13 @@ jobs:
       #    strip: true
 
       #
-      - name: Prepare install package
+      - name: Prepare install package 1
         if: steps.extract_tag.outputs.tag != null
-        run: |
-            mkdir -p ./target/x86_64-apple-darwin/release/tmp
-            && cp ./target/x86_64-apple-darwin/release/audiobookfinder ./target/x86_64-apple-darwin/release/tmp/audiobookfinder.app
+        run: mkdir -p ./target/x86_64-apple-darwin/release/tmp
+
+      - name: Prepare install package 2
+        if: steps.extract_tag.outputs.tag != null
+        run: cp ./target/x86_64-apple-darwin/release/audiobookfinder ./target/x86_64-apple-darwin/release/tmp/audiobookfinder.app
 
       - name: Make install package
         if: steps.extract_tag.outputs.tag != null

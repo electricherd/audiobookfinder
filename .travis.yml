@@ -70,9 +70,6 @@ install:
   - echo $CRATE_NAME-$target-$TRAVIS_TAG
   # needed for cargo-deb (from https://apt.llvm.org/), clang is separately (and installed like 7 version)
   - sudo apt-get --yes install clang libclang1
-  - wget https://apt.llvm.org/llvm.sh
-  - chmod +x llvm.sh
-  - sudo ./llvm.sh 11
 
 script:
   # compile

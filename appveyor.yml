@@ -52,8 +52,8 @@ matrix:
 
 # build configuration, i.e. Debug, Release, etc.
 
-cache:
-  - '.cargo'
+#cache:
+#  - '.cargo'
 
 # scripts that are called at very beginning, before repo cloning
 # ACCEPT_EULA for some windows packages .. whatever
@@ -64,10 +64,6 @@ init:
   - sh: sudo apt-get --yes install p7zip-full # upx-ucl is now in install
   # for cargo-deb run (10 is the version number: taken from https://apt.llvm.org/) to LTS18 it's only 10
   - sh: sudo apt-get --yes install python3-lldb-10
-  - sh: wget https://apt.llvm.org/llvm.sh
-  - sh: chmod +x llvm.sh
-  - sh: sudo ./llvm.sh 10
-
 
 # scripts that run after cloning repository
 install:
