@@ -62,7 +62,7 @@ id3 = "0.5"              # id3 tags
 metaflac = "0.2"
 
 num_cpus = "1.13"   # addition to rayon for cpu count
-rayon = "1.4"       # for multi-threading, very good
+rayon = "1.5"       # for multi-threading, very good
 
 actix = "0.10"         # basic for webserver
 actix-web = "3.1"     # for mini webserver and websocket
@@ -73,7 +73,7 @@ if-addrs = "0.6"  # for range of localhosts
 
 smlang = "0.3"        # state machine for client server communication for data exchange
 serde_json = "1.0"    # couldn't find actix json to work, this is good and well documented
-bincode = "1.3.1"     # for binary serialization
+bincode = "1.3"     # for binary serialization
 
 # libp2p network stack for secure p2p with mdns and general communication
 libp2p = "0.29"
