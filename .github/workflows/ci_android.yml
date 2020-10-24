@@ -71,9 +71,9 @@ jobs:
       # https://github.com/actions-rs/install
       - name: Install Cargo Make (v0.32)
         uses: actions-rs/install@v0.1
-          with:
-            crate: cargo-make
-            version: 0.32
+        with:
+          crate: cargo-make
+          version: 0.32
 
       - name: Install Cargo Tools (cbindgen, v0.15)
         uses: actions-rs/install@v0.1
