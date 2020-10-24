@@ -73,13 +73,13 @@ jobs:
         uses: actions-rs/install@v0.1
         with:
           crate: cargo-make
-          version: 0.32
+          version: ^0.32
 
       - name: Install Cargo Tools (cbindgen, v0.15)
         uses: actions-rs/install@v0.1
         with:
           crate: cbindgen
-          version: 0.15
+          version: ^0.15
 
       - name: Install Cargo Tools (dart-bindgen, v0.1)
         uses: actions-rs/cargo@v1
