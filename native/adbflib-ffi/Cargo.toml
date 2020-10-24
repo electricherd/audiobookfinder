@@ -16,5 +16,5 @@ allo-isolate = "0.1"
 lazy_static = "1.4"
 
 [build-dependencies]
-cbindgen = "0.14"
+cbindgen = "0.15"
 dart-bindgen = "0.1"
