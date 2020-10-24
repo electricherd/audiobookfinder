@@ -68,7 +68,6 @@ jobs:
             target/i686-linux-android
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
-      # https://github.com/actions-rs/install
       - name: Install Cargo Make (v0.32)
         uses: actions-rs/install@v0.1
         with:
@@ -86,7 +85,7 @@ jobs:
         continue-on-error: true
         with:
           command: install
-          args: dart-bindgen --features cli --version 0.1
+          args: dart-bindgen --features cli --version ^0.1
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v1
