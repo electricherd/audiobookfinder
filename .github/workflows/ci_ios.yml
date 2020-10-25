@@ -26,15 +26,6 @@ jobs:
         shell: bash
         run: echo "Building release"
 
-      - name: Tester for anything github actions releated but only in debug
-        if: steps.extract_tag.outputs.tag == null
-        continue-on-error: true
-        shell: bash
-        run: >-
-            echo
-            "Testing yml feature"
-            && echo " of line break"
-
       # ##################### setup build environment
       - name: Cache LLVM and Clang
         id: cache-llvm
