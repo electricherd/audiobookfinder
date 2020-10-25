@@ -91,15 +91,27 @@ jobs:
       - name: Prepare install package
         if: steps.extract_tag.outputs.tag != null
         run: |
+          chmod a+x ./target/x86_64-apple-darwin/release/audiobookfinder
           mkdir -p ./target/x86_64-apple-darwin/release/tmp
-          cp ./target/x86_64-apple-darwin/release/audiobookfinder ./target/x86_64-apple-darwin/release/tmp/audiobookfinder.app
+          cp ./target/x86_64-apple-darwin/release/audiobookfinder ./target/x86_64-apple-darwin/release/tmp/audiobookfinder
           cp README-release.md ./target/x86_64-apple-darwin/release/tmp
           cp LICENSE ./target/x86_64-apple-darwin/release/tmp
 
       - name: Make install package
         if: steps.extract_tag.outputs.tag != null
-        run: |
-          create-dmg --volname "Adbf" --volicon "docs/sheep.icns" --background "docs/installer_background.png" --window-pos 200 120 --window-size 800 400 --icon-size 100 --icon "audiobookfinder.app" 200 190 --hide-extension "audiobookfinder.app" --app-drop-link 600 185 "adbf-installer.dmg" "./target/x86_64-apple-darwin/release/tmp/"
+        # https://stackoverflow.com/questions/3790454/how-do-i-break-a-string-over-multiple-lines
+        run: >-
+          create-dmg
+          --volname "Adbf"
+          --volicon "docs/sheep.icns"
+          --background "docs/installer_background.png"
+          --window-pos 200 120 --window-size 800 400
+          --icon-size 100
+          --icon "audiobookfinder.app" 200 190
+          --hide-extension "audiobookfinder"
+          --app-drop-link 600 185
+          "adbf-installer.dmg"
+          "./target/x86_64-apple-darwin/release/tmp/"
 
       # https://github.com/marketplace/actions/easy-zip-files
       - name: zip files

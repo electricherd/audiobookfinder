@@ -68,19 +68,21 @@ jobs:
             target/i686-linux-android
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: Install Cargo Make (v0.32)
-        uses: actions-rs/install@v0.1
+      # todo: some time again, test https://github.com/actions-rs/install
+      - name: Install Cargo Tools (cargo-make, v0.32)
+        uses: actions-rs/cargo@v1
+        continue-on-error: true
         with:
-          crate: cargo-make
-          version: ^0.32
-          use-tool-cache: true
+          command: install
+          args: cargo-make --version ^0.32
+
 
       - name: Install Cargo Tools (cbindgen, v0.15)
-        uses: actions-rs/install@v0.1
+        uses: actions-rs/cargo@v1
+        continue-on-error: true
         with:
-          crate: cbindgen
-          version: ^0.15
-          use-tool-cache: true
+          command: install
+          args: cbindgen --version ^0.15
 
       - name: Install Cargo Tools (dart-bindgen, v0.1)
         uses: actions-rs/cargo@v1
