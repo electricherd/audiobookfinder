@@ -25,6 +25,18 @@ jobs:
         if: steps.extract_tag.outputs.tag != null
         shell: bash
         run: echo "Building release"
+
+      # #############################  Tester
+
+      - name: Tester for anything github actions releated but only in debug
+        if: steps.extract_tag.outputs.tag == null
+        continue-on-error: true
+        shell: bash
+        run: >-
+          echo
+          "Testing yml feature"
+          && echo " of line break"
+
       # ############################### Installation
 
       # https://github.com/create-dmg/create-dmg
@@ -92,14 +104,14 @@ jobs:
         if: steps.extract_tag.outputs.tag != null
         run: |
           chmod a+x ./target/x86_64-apple-darwin/release/audiobookfinder
-          mkdir -p ./target/x86_64-apple-darwin/release/tmp
-          cp ./target/x86_64-apple-darwin/release/audiobookfinder ./target/x86_64-apple-darwin/release/tmp/audiobookfinder
-          cp README-release.md ./target/x86_64-apple-darwin/release/tmp
-          cp LICENSE ./target/x86_64-apple-darwin/release/tmp
+          mkdir -p ./target/x86_64-apple-darwin/release/macosapp
+          cp ./target/x86_64-apple-darwin/release/audiobookfinder ./target/x86_64-apple-darwin/release/macosapp/audiobookfinder
+          cp README-release.md ./target/x86_64-apple-darwin/release/macosapp
+          cp LICENSE ./target/x86_64-apple-darwin/release/macosapp
 
+      # https://github.com/create-dmg/create-dmg
       - name: Make install package
         if: steps.extract_tag.outputs.tag != null
-        # https://stackoverflow.com/questions/3790454/how-do-i-break-a-string-over-multiple-lines
         run: >-
           create-dmg
           --volname "Adbf"
@@ -108,10 +120,11 @@ jobs:
           --window-pos 200 120 --window-size 800 400
           --icon-size 100
           --icon "audiobookfinder.app" 200 190
-          --hide-extension "audiobookfinder"
+          --eula "./target/x86_64-apple-darwin/release/macosapp/LICENSE"
           --app-drop-link 600 185
+          --hdiutil-verbose
           "adbf-installer.dmg"
-          "./target/x86_64-apple-darwin/release/tmp/"
+          "./target/x86_64-apple-darwin/release/macosapp/"
 
       # https://github.com/marketplace/actions/easy-zip-files
       - name: zip files
