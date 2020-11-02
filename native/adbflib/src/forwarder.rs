@@ -54,6 +54,15 @@ pub fn ffi_file_count_good(input_path: Vec<String>) -> u32 {
         has_ui,
     );
 
+    let (_, ipc_sender) = &mut *NET_RUNTIME.lock().unwrap();
+    let sending = IFCollectionOutputData {
+        nr_searched_files: output_data_return_handle.nr_searched_files,
+        nr_found_songs: output_data_return_handle.nr_found_songs,
+        size_of_data_in_kb: 0,
+        nr_internal_duplicates: output_data_return_handle.nr_internal_duplicates,
+    };
+    ipc_sender.send(DoneSearching(sending)).unwrap();
+
     // scope and block trickery for lifetime and mutability
     output_data_return_handle.nr_found_songs
 }
@@ -107,20 +116,6 @@ pub async fn ffi_ui_messages_as_json() -> String {
         let peers_ui_json = serde_json::to_string(&json.cnt).unwrap();
         peers_ui_json
     }
-}
-
-/// Send ipc found files (yet only 2 of 4 values)
-pub async fn ffi_send_ipc_search_done(nr_searched_files: u32, nr_found_songs: u32) -> bool {
-    //
-    // get network runtime
-    let (_, ipc_sender) = &mut *NET_RUNTIME.lock().unwrap();
-    let sending = IFCollectionOutputData {
-        nr_searched_files,
-        nr_found_songs,
-        size_of_data_in_kb: 0,
-        nr_internal_duplicates: 0,
-    };
-    ipc_sender.send(DoneSearching(sending)).is_ok()
 }
 
 // ------------------------------------------------------------------------------------------

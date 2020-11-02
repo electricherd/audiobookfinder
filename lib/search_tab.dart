@@ -66,7 +66,6 @@ class _SearchTabState extends State<SearchTab> with AutomaticKeepAliveClientMixi
     _searchingPath = true;
     setState(() {});
     _findings = await _adbflib.fileCountGood(_path);
-    _adbflib.sendSearchResults(0, _findings);
     _searchingPath = false;
     setState(() {});
   }

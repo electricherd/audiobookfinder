@@ -84,11 +84,3 @@ pub extern "C" fn get_net_ui_messages(dart_port: i64) -> i32 {
     rt.spawn(t);
     1
 }
-
-#[no_mangle]
-pub extern "C" fn send_ipc_search_done(dart_port: i64, nr_searched: u32, nr_found: u32) -> i32 {
-    let rt = runtime!();
-    let t = Isolate::new(dart_port).task(adbfbinlib::send_ipc_search_done(nr_searched, nr_found));
-    rt.spawn(t);
-    1
-}

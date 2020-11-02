@@ -41,20 +41,6 @@ class Adbflib {
     return completer.future;
   }
 
-  Future<bool> sendSearchResults(int searched, int found) {
-    final completer = Completer<bool>();
-    final sendPort = singleCompletePort(completer);
-    final res = native.send_ipc_search_done(
-        sendPort.nativePort,
-        searched,
-        found
-    );
-    if (res != 1) {
-      _throwError();
-    }
-    return completer.future;
-  }
-
   void _throwError() {
     final length = native.last_error_length();
     final Pointer<Utf8> message = allocate(count: length);
