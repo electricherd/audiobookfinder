@@ -65,7 +65,7 @@ num_cpus = "1.13"   # addition to rayon for cpu count
 rayon = "1.5"       # for multi-threading, very good
 
 actix = "0.10"         # basic for webserver
-actix-web = "3.1"     # for mini webserver and websocket
+actix-web = "3.2"     # for mini webserver and websocket
 actix-files = "0.4"
 actix-web-actors = "3.0"
 
