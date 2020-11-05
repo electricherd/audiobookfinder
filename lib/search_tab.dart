@@ -35,7 +35,7 @@ class _SearchTabState extends State<SearchTab> with AutomaticKeepAliveClientMixi
                   child: Text(
                     'Search with adbf',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: _searchingPath ? Colors.greenAccent : Colors.black,
                     ),
                   ),
                   onPressed: () {
