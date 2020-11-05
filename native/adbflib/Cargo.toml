@@ -34,7 +34,7 @@ system-alloc = []
 
 
 [dependencies]
-async-std = "1.6"     # great async
+async-std = "1.7"     # great async
 crossbeam = "0.8"     # a mpmc library also with Workgroup instead of std::thread::barrier
 serde = "1.0"         # serialize anything, awesome for communication items
 serde_derive = "1.0"  # macro usage from serde
