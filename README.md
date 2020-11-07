@@ -101,6 +101,7 @@ It is an inline documentation from [CI](https://travis-ci.org/electricherd/audio
 
 ### Changes
 
+* added linux debian .deb package deployment
 * fixed and beautified CI process
 * updated screenshots
 * flutter app:
