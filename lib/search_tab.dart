@@ -30,25 +30,35 @@ class _SearchTabState extends State<SearchTab> with AutomaticKeepAliveClientMixi
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                RaisedButton(
-                  color: _searchingPath ? Colors.greenAccent : Colors.lime,
-                  child: Text(
-                    'Search with adbf',
-                    style: TextStyle(
-                      color: _searchingPath ? Colors.greenAccent : Colors.black,
+                Stack(
+                  alignment: Alignment.center,
+                  children: <Widget> [
+                    Opacity(
+                      opacity: _searchingPath ? 0.0 : 1.0,
+                      child:
+                        RaisedButton(
+                          color: Colors.lime,
+                          child: Text(
+                            'Search with adbf',
+                            style: TextStyle(
+                              color: Colors.black,
+                            ),
+                          ),
+                          onPressed: () {
+                            if (!_searchingPath) {
+                              _getDirPath();
+                            }
+                          },
+                        ),
                     ),
-                  ),
-                  onPressed: () {
-                    if (!_searchingPath) {
-                      _getDirPath();
-                    }
-                  },
-                ),
-    //            SpinKitWave(
-    //              color: Colors.blue,
-    //              size: 30.0,
-    //              controller: animController,
-    //            ),
+                   Opacity(
+                     opacity: _searchingPath ? 1.0 : 0.0,
+                     child: SpinKitWave(
+                      color: Colors.blue,
+                      size: 30.0,
+                     ),
+                   ),
+                ]),
                 const SizedBox(height: 30),
                 Text(
                   'A number of $_findings audio files have been analyzed!',
@@ -61,12 +71,18 @@ class _SearchTabState extends State<SearchTab> with AutomaticKeepAliveClientMixi
   }
 
   void _getDirPath() async {
+    final String oldPath = _path;
     _path = await FilePicker.platform.getDirectoryPath();
-    _findings = 0;
-    _searchingPath = true;
-    setState(() {});
-    _findings = await _adbflib.fileCountGood(_path);
-    _searchingPath = false;
-    setState(() {});
+    if (oldPath != _path && _path.isNotEmpty) {
+      _findings = 0;
+      _searchingPath = true;
+      setState(() {});
+      _findings = await _adbflib.fileCountGood(_path);
+      _searchingPath = false;
+      // todo: leaving this for a while, if this could help with
+      // problems
+      FilePicker.platform.clearTemporaryFiles();
+      setState(() {});
+    }
   }
 }
