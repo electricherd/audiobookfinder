@@ -5,8 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:adbflib/adbflib.dart';
 
+import 'license_tab.dart';
 import 'search_tab.dart';
 import 'peer_tab.dart';
+
+
 
 void main() => runApp(MyApp());
 
@@ -32,8 +35,10 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   Adbflib _adbflib;
+
   SearchTab _searchTab;
   PeerTab _peerTab;
+  LicenseTab _licenseTab;
 
   @override
   void initState() {
@@ -43,12 +48,13 @@ class _MyHomePageState extends State<MyHomePage> {
 
     _searchTab = SearchTab(_adbflib);
     _peerTab = PeerTab(_adbflib);
+    _licenseTab = LicenseTab();
   }
 
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 2,
+      length: 3,
       child: Builder(builder: (BuildContext context) {
         final TabController tabController = DefaultTabController.of(context);
         tabController.addListener(() {
@@ -71,6 +77,12 @@ class _MyHomePageState extends State<MyHomePage> {
                         alignment: Alignment.center,
                         child: Text("Network"),
                       )
+                  ),
+                  Tab(
+                      child: Align(
+                        alignment: Alignment.center,
+                        child: Text("Licenses"),
+                      )
                   )
                 ],
               ),
@@ -80,6 +92,7 @@ class _MyHomePageState extends State<MyHomePage> {
               children: [
               _searchTab,
               _peerTab,
+              _licenseTab,
               ],
             ),
         );
