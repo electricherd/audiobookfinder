@@ -101,9 +101,9 @@ It is an inline documentation from [CI](https://travis-ci.org/electricherd/audio
 
 ### Changes
 
+* added licenses tab to flutter app
 * added linux debian .deb package deployment
 * fixed and beautified CI process
-* updated screenshots
 * flutter app:
     * network view ready and functioning
 * github action, (it's a good idea but too many marketplace) as CI brought up, the app for android is downloadable and fast :grin:
@@ -120,13 +120,13 @@ It is an inline documentation from [CI](https://travis-ci.org/electricherd/audio
 * changed a range based implementation with a regex based implementation, also for the interest of the regex crate in Rust
 * moved direct connection to net via ipc out, `net` is the long running slow part, (local) `collection` is the fast part
 * added `ADBF_LOG` env variable
-* webui now starts with a selection dialog where you can add/change preselected folders/dirs
-* defined a trait for tag information, now: id3, mp4, flac but no awesomeness ...
-* debugging messages for collection, now collection is a bktree
 
 <details>
   <summary>click for older changes</summary>
 
+    * webui now starts with a selection dialog where you can add/change preselected folders/dirs
+    * defined a trait for tag information, now: id3, mp4, flac but no awesomeness ...
+    * debugging messages for collection, now collection is a bktree
     * state machine was added, wrapped in a layer of a custom net behaviour in the libp2p swarm ([architecture design](#architecture) updated)
     * my unfortunately now unused [observer pattern](../../wiki/Observer-pattern) was added to wiki - a better version of what
       could be found in internet (Rust is very restrictive, some patterns don't work that well).
