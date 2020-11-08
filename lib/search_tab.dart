@@ -30,6 +30,19 @@ class _SearchTabState extends State<SearchTab> with AutomaticKeepAliveClientMixi
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                Padding(
+                    padding: EdgeInsets.all(30),
+                child: Text(
+                  'You can search local audio(book) files here by selecting '
+                  'a single search path using the search button below.\n'
+                  'The search '
+                  'results will be provided to other adbf-clients on the same '
+                  'local network over time, and it will listen to results '
+                  'from other clients as well and show them in the '
+                  'network tab.\n'
+                  'See the license tab for all licenses used.',
+                  textAlign: TextAlign.start)
+                ),
                 Stack(
                   alignment: Alignment.center,
                   children: <Widget> [
