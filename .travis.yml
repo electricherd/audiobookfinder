@@ -120,6 +120,7 @@ ignore:
   - docs/*
   - ios/*
   - lib/*
+  - licenses/*
   - native/adbflib-ffi/*
   - packages/*
   - testaudio/*
