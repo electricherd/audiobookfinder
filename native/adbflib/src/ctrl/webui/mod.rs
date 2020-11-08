@@ -30,17 +30,19 @@ use std::{
     sync::{mpsc::Receiver, Arc, Mutex},
 };
 
+/// Data of the webserver
 pub struct WebServerState {
     id: PeerRepresentation,
     nr_connections: Arc<Mutex<usize>>,
     web_port: u16,
 }
 
+/// WebUI keep data
 pub struct WebUI {
     id: PeerRepresentation,
-    #[allow(dead_code)]
-    serve_others: bool,
     paths: Arc<Mutex<SearchPath>>,
+    #[allow(dead_code)]
+    serve_others: bool, //todo: use it
 }
 
 impl WebUI {
