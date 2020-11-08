@@ -112,14 +112,15 @@ jobs:
       # https://github.com/create-dmg/create-dmg
       - name: Make install package
         if: steps.extract_tag.outputs.tag != null
+        continue-on-error: true
         run: >-
           create-dmg
           --volname "Adbf"
           --volicon "docs/sheep.icns"
           --background "docs/installer_background.png"
-          --window-pos 200 120 --window-size 800 400
+          --window-pos 100 100 --window-size 800 400
           --icon-size 100
-          --icon "audiobookfinder.app" 200 190
+          --icon "audiobookfinder.app" 150 150
           --eula "./target/x86_64-apple-darwin/release/macosapp/LICENSE"
           --app-drop-link 600 185
           --hdiutil-verbose
@@ -153,6 +154,7 @@ jobs:
           overwrite: true
 
       - name: Upload Release Asset - dmg
+        continue-on-error: true
         if: steps.extract_tag.outputs.tag != null
         uses: svenstaro/upload-release-action@v2
         with:
