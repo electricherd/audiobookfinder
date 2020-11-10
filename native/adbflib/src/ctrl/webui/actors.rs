@@ -33,9 +33,9 @@ pub struct ActorSyncStartup {
     inform_to: Addr<ActorWSServerMonitor>,
 }
 impl ActorSyncStartup {
-    pub fn new(startup_sync: Option<WaitGroup>, inform_to: Addr<ActorWSServerMonitor>) -> Self {
+    pub fn new(startup_sync: WaitGroup, inform_to: Addr<ActorWSServerMonitor>) -> Self {
         Self {
-            startup_sync,
+            startup_sync: Some(startup_sync),
             inform_to,
         }
     }
@@ -54,11 +54,10 @@ impl Handler<MSyncStartup> for ActorSyncStartup {
     type Result = ();
 
     fn handle(&mut self, _msg: MSyncStartup, _ctx: &mut Context<Self>) {
-        //ctx.stop();
         if self.startup_sync.is_some() {
-            let a = self.startup_sync.take();
+            let thread_waiter = self.startup_sync.take();
             trace!("webui: waiting ui sync");
-            a.unwrap().wait();
+            thread_waiter.unwrap().wait();
             trace!("webui: go");
             self.inform_to.do_send(MDoneSyncStartup {});
         } else {
@@ -96,6 +95,8 @@ impl ActorWSServerMonitor {
 impl Actor for ActorWSServerMonitor {
     type Context = Context<Self>;
 
+    /// starts, and also starts a reoccurring interval check on
+    /// message channels which will be forwarded.
     fn started(&mut self, ctx: &mut Self::Context) {
         trace!("server monitor got started");
 

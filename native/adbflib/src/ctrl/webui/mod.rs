@@ -57,7 +57,7 @@ impl WebUI {
     pub async fn run(
         &self,
         receiver: Receiver<InternalUiMsg>,
-        wait_ui_sync: Option<WaitGroup>,
+        wait_ui_sync: WaitGroup,
         web_port: u16,
     ) -> io::Result<()> {
         let connection_count = Arc::new(Mutex::new(0));
