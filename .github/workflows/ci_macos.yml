@@ -118,9 +118,10 @@ jobs:
           --volname "Adbf"
           --volicon "docs/sheep.icns"
           --background "docs/installer_background.png"
-          --window-pos 100 100 --window-size 800 400
+          --window-pos 100 100
+          --window-size 800 400
           --icon-size 100
-          --icon "audiobookfinder.app" 150 150
+          --icon "audiobookfinder.app" 50 50
           --eula "./target/x86_64-apple-darwin/release/macosapp/LICENSE"
           --app-drop-link 600 185
           --hdiutil-verbose
