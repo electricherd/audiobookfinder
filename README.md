@@ -169,7 +169,7 @@ It is an inline documentation from [CI](https://travis-ci.org/electricherd/audio
     * more documentation locally as html: `cargo doc --no-deps --open`
     * file logging in (use [glogg](http://glogg.bonnefon.org/))
     * logging mechanism introduced (`logit.rs`). It was needed because of tui console output was not readable (either syslog or console)
-     * run e.g. with `RUST_LOG=adbfbinlib::net=debug RUST_BACKTRACE=full cargo run -- -n ~/Audiobooks`
+     * run e.g. with `ADBF_LOG=file RUST_LOG=adbfbinlib::net=debug RUST_BACKTRACE=full cargo run -- -n ~/Audiobooks`
     * ssh client with example key works, key now external
     * found emojis :grin:
 </details>

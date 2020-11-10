@@ -48,9 +48,12 @@ impl Logit {
                 // now only from console, good is now:
                 //       RUST_LOG=audiobookfinder=trace,adbflib=trace
                 //       or
-                //         RUST_LOG=adbflib=trace
-                //         RUST_LOG=adbflib::net=trace
-                //         RUST_LOG=audiobookfinder=trace,adbflib=trace
+                //         RUST_LOG=adbfbinlib=trace
+                //         RUST_LOG=adbfbinlib::net=trace
+                //         RUST_LOG=audiobookfinder=trace,adbfbinlib=trace
+                //
+                //       and
+                //         ADBF_LOG=file (or console,system)
                 // see:
                 // https://rust-lang-nursery.github.io/rust-cookbook/development_tools/debugging/config_log.html
                 flexi_logger::Logger::with_env()
