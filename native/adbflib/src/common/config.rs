@@ -103,7 +103,18 @@ pub mod webui {
     pub static HTML_REPLACE_STATIC_WEB_ADDR: &str = "WEBSOCKET_ADDR";
     pub static HTML_REPLACE_STATIC_WEB_PORT: &str = "PORT_WEBSOCKET";
     pub static HTML_REPLACE_STATIC_URL_SOURCE: &str = "URL_SOURCE";
+    pub static HTML_REPLACE_STATIC_LICENSE: &str = "LICENSES";
 
+    pub const LICENSE_NR: usize = 5;
+    lazy_static! {
+        pub static ref LICENSES: [&'static str; LICENSE_NR] = [
+            include_str!("../../../../LICENSE"),
+            include_str!("../../../../licenses/flutter_file_picker.txt"),
+            include_str!("../../../../licenses/js_bootstrap.txt"),
+            include_str!("../../../../licenses/js_ws_events_dispatcher.txt"),
+            include_str!("../../../../licenses/rs_bktree-rs.txt")
+        ];
+    }
     pub static HTML_REPLACER_BEGIN: &str = "<!---";
     pub static HTML_REPLACER_END: &str = "--->";
 

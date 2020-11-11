@@ -108,7 +108,21 @@ fn replace_static_content(html_in: &str, id: &PeerRepresentation, port: u16) -> 
         .into_string()
         .unwrap_or(String::from("undefined"));
 
-    let changers: [ReplaceStatic; 9] = [
+    lazy_static! {
+        static ref LICENSES: String = config::webui::LICENSES
+            .into_iter()
+            .enumerate()
+            .map(|(index, txt)| {
+                if index < config::webui::LICENSE_NR - 1 {
+                    txt.to_string() + &"\n---------------------\n".to_string()
+                } else {
+                    txt.to_string()
+                }
+            })
+            .collect();
+    }
+
+    let changers: [ReplaceStatic; 10] = [
         ReplaceStatic {
             r: config::webui::HTML_REPLACE_STATIC_URL_SOURCE,
             c: config::net::HOMEPAGE.to_string(),
@@ -145,8 +159,11 @@ fn replace_static_content(html_in: &str, id: &PeerRepresentation, port: u16) -> 
             r: config::webui::HTML_REPLACE_VERSION,
             c: config::net::VERSION.to_string(),
         },
+        ReplaceStatic {
+            r: config::webui::HTML_REPLACE_STATIC_LICENSE,
+            c: LICENSES.to_string(),
+        },
     ];
-    // todo: look, how to optimize this ...
     linear_LUT_replacer(html_in, &changers)
 }
 

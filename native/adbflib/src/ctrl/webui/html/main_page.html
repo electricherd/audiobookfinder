@@ -52,7 +52,6 @@
           background-size: cover;
           -o-background-size: cover;
         }
-
         .accordion {
             width: 100%;
             margin: 30px auto 20px;
@@ -79,17 +78,14 @@
         .accordion div:last-child .link {
             border-bottom: 0
         }
-
         .accordion div {
             /* right: 12px; */
             left: auto;
             /* font-size: 16px */
         }
-
         .accordion div.open .link {
             color: #AA00FF
         }
-
         .accordion div.open i {
             color: #AA00FF
         }
@@ -132,10 +128,31 @@
         .table-fixed thead > tr > th {
             float: left;
         }
+        .modal .modal-body {
+            max-height: 450px;
+            overflow-y: auto;
+        }
       </style>
 </head>
 
 <body>
+<!-- modal license -->
+<div id="licensesModal" class="modal fade" role='dialog'>
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                All licenses used in adbf
+            </div>
+            <div class="modal-body" style="font-size: 11px">
+                <pre><!---LICENSES---></pre>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- overlay -->
 <div id="overlay">
     <div id="text">audiobookfinder is now inactive</div>
@@ -158,8 +175,12 @@
             <li class="nav-item">
                 <a class="nav-link" href="<!---URL_SOURCE--->" data-toggle="tooltip" data-placement="bottom" title="view the source code on github">Source Code</a>
             </li>
+            <li class="nav-item">
+                <p class="nav-link html_tooltip" data-toggle="modal" data-target="#licensesModal" title="show all licenses used">Licenses</p>
+            </li>
             <li class="nav-item"><p class="nav-link html_tooltip" data-toggle="tooltip" data-placement="bottom" data-html="true"
-                title="Own Peer: <b><i><!---PEER_HASH---></i></b>">Host '<!---HOSTNAME--->'</p></li>
+                title="Own Peer: <b><i><!---PEER_HASH---></i></b>">Host '<!---HOSTNAME--->'</p>
+            </li>
         </ul>
     </div>
     </div>
