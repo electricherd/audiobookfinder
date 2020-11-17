@@ -25,7 +25,7 @@ use libp2p::{
     mdns::{Mdns, MdnsEvent},
     pnet::{PnetConfig, PreSharedKey},
     swarm::NetworkBehaviourEventProcess,
-    yamux::Config as YamuxConfig,
+    yamux::YamuxConfig,
     NetworkBehaviour,
 };
 use libp2p_noise::{Keypair, NoiseConfig, X25519Spec};
