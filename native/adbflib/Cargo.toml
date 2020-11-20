@@ -56,7 +56,7 @@ futures = "0.3"     ####   # futures, used in state machine yet (and in many oth
 futures-util = "0.3"
 
 tree_magic_mini = "1.0"  # for faster file tree operations
-mp4ameta = "0.6"       # for mp4 audio metadata
+mp4ameta = "0.7"       # for mp4 audio metadata
 mp3-metadata = "0.3"
 id3 = "0.5"              # id3 tags
 metaflac = "0.2"
