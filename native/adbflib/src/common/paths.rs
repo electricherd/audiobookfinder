@@ -2,7 +2,8 @@
 use super::config::data::PATHS_MAX;
 use std::path::Path;
 
-/// This struct holds the search paths, which can change before startup but not later
+/// This struct holds the search paths, which can change before startup but not later.
+/// An Arc<SearchPath> shall be used in order to get current changes for all modules.
 pub struct SearchPath {
     paths: Vec<String>,
 }
