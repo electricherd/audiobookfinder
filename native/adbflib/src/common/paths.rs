@@ -8,6 +8,7 @@ pub struct SearchPath {
 }
 
 impl SearchPath {
+    /// Create a controlled SearchPath from a simple vector
     pub fn new(paths: &Vec<String>) -> Self {
         // 2) clean-up and straighten
         let cleaned_paths = clean_paths(&paths);
