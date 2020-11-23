@@ -86,16 +86,13 @@ class _SearchTabState extends State<SearchTab> with AutomaticKeepAliveClientMixi
   void _getDirPath() async {
     final String oldPath = _path;
     _path = await FilePicker.platform.getDirectoryPath();
-    if (oldPath != _path && _path.isNotEmpty) {
+    if (_path.isNotEmpty) {
       _findings = 0;
       _searchingPath = true;
       setState(() {});
       _findings = await _adbflib.fileCountGood(_path);
       _searchingPath = false;
-      // todo: leaving this for a while, if this could help with
-      // problems
-      FilePicker.platform.clearTemporaryFiles();
-      setState(() {});
     }
+    setState(() {});
   }
 }
