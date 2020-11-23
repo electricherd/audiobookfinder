@@ -4,12 +4,15 @@ Audiobookfinder and adbfflutter are Rust based programs to collect audio(book) d
 network with same clients.
 
 ##### Changes in this Release (version 0.1.38)
-* added license tab and more documentation text to app
-
+* fixed browser open option `-b`
+* added licenses to webui
+* libp2p and mp4ameta updates
 
 <details>
   <summary>Click for older changes</summary>
 
+    * v0.1.38
+        - added license tab and more documentation text to app
     * v0.1.37
         - app has a busy indicator when searching files
     * v0.1.36

@@ -83,8 +83,15 @@ __It's crossplatform now!__
 * simple mobile app based on [ffi](https://en.wikipedia.org/wiki/Foreign_function_interface) interface [Dart](https://dart.dev/) / [Flutter](https://flutter.dev/) / [flutterust](https://github.com/shekohex/flutterust)
 
 ### Releases
-There are [Ubuntu Release Builds](https://github.com/electricherd/audiobookfinder/releases/latest), a [Windows Build](https://github.com/electricherd/audiobookfinder/releases/latest)
-and an low-feature [Android App](https://github.com/electricherd/audiobookfinder/releases/latest) downloadable.
+There are [Ubuntu release install packages](https://github.com/electricherd/audiobookfinder/releases/latest),
+(.deb files for
+[LTS 20.04 focal](https://github.com/electricherd/audiobookfinder/releases/download/v0.1.39/audiobookfinder-LTS_20.04-x86_64-unknown-linux-gnu-v0.1.39.deb),
+[LTS 18.04 bionic](https://github.com/electricherd/audiobookfinder/releases/download/v0.1.39/audiobookfinder-LTS_18.04-x86_64-unknown-linux-gnu-v0.1.39.deb),
+[LTS 16.04 xenial](https://github.com/electricherd/audiobookfinder/releases/download/v0.1.39/audiobookfinder-LTS_16.04-x86_64-unknown-linux-gnu-v0.1.39.deb),
+a [MacOS build zipped](https://github.com/electricherd/audiobookfinder/releases/download/v0.1.39/audiobookfinder-x86_64-apple-darwin-v0.1.39.zip),
+a [Windows build 7-zipped](https://github.com/electricherd/audiobookfinder/releases/download/v0.1.39/audiobookfinder-x86_64-pc-windows-msvc-v0.1.39.7z),
+and an [Android apk](https://github.com/electricherd/audiobookfinder/releases/download/v0.1.39/adbfflutter-v0.1.39-arm64.apk)
+ready to be downloaded.
 
 
 ### Documentation
@@ -101,7 +108,7 @@ It is an inline documentation from [CI](https://travis-ci.org/electricherd/audio
 
 ### Changes
 
-* added licenses tab to flutter app
+* added licenses tab to flutter app and webui
 * added linux debian .deb package deployment
 * fixed and beautified CI process
 * flutter app:
@@ -119,11 +126,11 @@ It is an inline documentation from [CI](https://travis-ci.org/electricherd/audio
 * webui path input dialog working, more results presented
 * changed a range based implementation with a regex based implementation, also for the interest of the regex crate in Rust
 * moved direct connection to net via ipc out, `net` is the long running slow part, (local) `collection` is the fast part
-* added `ADBF_LOG` env variable
 
 <details>
   <summary>click for older changes</summary>
 
+    * added `ADBF_LOG` env variable
     * webui now starts with a selection dialog where you can add/change preselected folders/dirs
     * defined a trait for tag information, now: id3, mp4, flac but no awesomeness ...
     * debugging messages for collection, now collection is a bktree
