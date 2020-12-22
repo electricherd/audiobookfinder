@@ -248,8 +248,8 @@ impl Ctrl {
             let unlocker = this.lock().unwrap();
             paths = unlocker.paths.clone();
             with_net = unlocker.with_net;
-            let peer_bytes = &unlocker.peer_id.as_ref();
-            hasher.write(peer_bytes);
+            let peer_bytes = unlocker.peer_id.to_bytes();
+            hasher.write(peer_bytes.as_ref());
         }
         let peer_representation = hasher.finish();
 

@@ -11,7 +11,7 @@ pub type PeerRepresentation = u64;
 /// Return PeerRepresentation directly from PeerId
 pub fn peer_to_hash(peer_id: &PeerId) -> PeerRepresentation {
     let mut hasher = DefaultHasher::default();
-    hasher.write(peer_id.as_ref());
+    hasher.write(&peer_id.to_bytes());
     hasher.finish()
 }
 /// Return a hex string hash representation of PeerId

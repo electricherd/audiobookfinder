@@ -70,7 +70,7 @@ impl Net {
 
             let behaviour = behavior::AdbfBehavior {
                 kademlia,
-                mdns: Mdns::new()?,
+                mdns: Mdns::new().await?,
                 sm_behaviour: SMBehaviour::new(ipc_receiver, own_peer_id.clone(), ui_data),
                 storage: NetStorage::new(),
             };
