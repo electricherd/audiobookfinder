@@ -37,12 +37,12 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ${{ runner.temp }}/llvm/11.0
-          key: ${{ runner.os }}-cached-llvm-11.0
+          key: llvm-11.0
 
       - name: Install LLVM and Clang
         uses: KyleMayes/install-llvm-action@v1
         with:
-          version: '11.0'
+          version: "11.0"
           directory: ${{ runner.temp }}/llvm/11.0
           cached: ${{ steps.cache-llvm.outputs.cache-hit }}
 
@@ -129,9 +129,6 @@ jobs:
       - name: Install Android Targets
         shell: bash
         run: rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android i686-linux-android
-
-      - name: Test environment
-        run: ls -al /home/runner/android/ndk-bundle/toolchains/llvm/prebuilt/linux-x86_64/bin/
 
       # ############### Release/Debug build dependent
       - name: Run cargo make android - Debug
