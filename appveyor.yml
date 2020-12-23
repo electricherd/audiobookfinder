@@ -63,6 +63,7 @@ init:
   - sh: wget https://apt.llvm.org/llvm.sh -P /tmp/
   - sh: chmod +x /tmp/llvm.sh
   - sh: sudo /tmp/llvm.sh 11
+  - sh: sudo apt-get --yes install libclang1 libclang-dev
 
 # scripts that run after cloning repository
 install:
