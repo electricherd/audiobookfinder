@@ -129,6 +129,9 @@ jobs:
       - name: Install Android Targets
         run: rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android i686-linux-android
 
+     - name: Test environment
+       run: ls -al /home/runner/android/ndk-bundle/toolchains/llvm/prebuilt/linux-x86_64/bin/
+
       # ############### Release/Debug build dependent
       - name: Run cargo make android - Debug
         if: steps.extract_tag.outputs.tag == null
