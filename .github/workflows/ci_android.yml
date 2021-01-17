@@ -133,7 +133,7 @@ jobs:
       # cargo-ndk currently has version 2.1.0 but for make android-dev
       # this version doesn't work, but 1.0.0 did
       # todo: look for changes to stay updated
-      - name: Downgrade cargo-ndk
+      - name: Downgrade cargo-ndk (cargo-ndk, v1.0.0)
         shell: bash
         run: cargo install cargo-ndk --version 1.0.0
 
