@@ -140,7 +140,7 @@ jobs:
       # helper to find problems
       - name: find brotli-sys clang cc
         shell: bash
-        run: find -name x86_64-linux-android28-clang
+        run: find /home/runner -name x86_64-linux-android28-clang
 
       # ############### Release/Debug build dependent
       - name: Run cargo make android - Debug
