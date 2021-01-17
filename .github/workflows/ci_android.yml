@@ -130,6 +130,10 @@ jobs:
         shell: bash
         run: rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android i686-linux-android
 
+      - name: Info on Cargo NDK
+        shell: bash
+        run: cargo ndk --version
+
       # ############### Release/Debug build dependent
       - name: Run cargo make android - Debug
         if: steps.extract_tag.outputs.tag == null
