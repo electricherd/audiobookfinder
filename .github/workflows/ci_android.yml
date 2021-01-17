@@ -130,9 +130,12 @@ jobs:
         shell: bash
         run: rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android i686-linux-android
 
-      - name: Info on Cargo NDK
+      # cargo-ndk currently has version 2.1.0 but for make android-dev
+      # this version doesn't work, but 1.0.0 did
+      # todo: look for changes to stay updated
+      - name: Downgrade cargo-ndk
         shell: bash
-        run: cargo ndk --version
+        run: cargo install cargo-ndk --version 1.0.0
 
       # ############### Release/Debug build dependent
       - name: Run cargo make android - Debug
