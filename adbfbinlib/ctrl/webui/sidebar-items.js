@@ -1,0 +1,1 @@
+initSidebarItems({"mod":[["actors",""],["json",""],["pages",""],["rest_mod",""]],"struct":[["WebServerState","Data of the webserver"],["WebUI","WebUI keep data"]]});

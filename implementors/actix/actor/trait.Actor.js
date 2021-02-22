@@ -1,0 +1,3 @@
+(function() {var implementors = {};
+implementors["adbfbinlib"] = [{"text":"impl Actor for ActorSyncStartup","synthetic":false,"types":[]},{"text":"impl Actor for ActorWSServerMonitor","synthetic":false,"types":[]},{"text":"impl Actor for ActorWebSocket","synthetic":false,"types":[]}];
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

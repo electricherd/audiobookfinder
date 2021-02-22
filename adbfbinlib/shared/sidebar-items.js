@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["collection_search","High level function to search path"],["net_search","High level function to startup net functionality"]]});

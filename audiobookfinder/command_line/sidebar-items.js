@@ -1,0 +1,1 @@
+initSidebarItems({"constant":[["AUTHORS",""],["DESCRIPTION",""]],"fn":[["get_start_values","Get all start values which are passed from command line"]],"static":[["APP_TITLE",""],["ARG_BROWSER",""],["ARG_BROWSER_PORT",""],["ARG_KEEP_ALIVE",""],["ARG_NET",""],["ARG_TUI",""],["ARG_WEBUI",""],["INPUT_FOLDERS",""]]});

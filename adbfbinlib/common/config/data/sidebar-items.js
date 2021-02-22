@@ -1,0 +1,1 @@
+initSidebarItems({"static":[["IGNORE_AUDIO_FORMATS","ignore those tree_magic extensions. like m3u"],["PATHS_MAX","max of input paths/folders to be used by program"]]});

@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["AliveSym",""]],"static":[["DEBUG_TEXT_ID",""],["ID_HOST_ALIVE",""],["ID_HOST_INDEX",""],["ID_HOST_NUMBER",""],["PATHS_PREFIX_ID",""],["RECT",""],["SEPARATOR",""],["STR_ALIVE",""],["VIEW_LIST_ID",""]],"struct":[["AliveDisplayData",""],["AliveState",""],["Tui","The Tui wrapper holds cursive tui and the alive data of the ui-state needed."]]});

@@ -1,0 +1,1 @@
+initSidebarItems({"static":[["HOMEPAGE",""],["VERSION",""],["WEB_ADDR",""],["WEB_PORT_DEFAULT",""],["WEB_PORT_MAX",""],["WEB_PORT_MIN",""]]});

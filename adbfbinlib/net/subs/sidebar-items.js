@@ -1,0 +1,1 @@
+initSidebarItems({"mod":[["key_keeper","A component to use secure communication using keys. It is not yet clear ... basically what libp2p offers is best."],["peer_representation","Holds the peer representation, which is a hash of the PeerId which is also a hash or the public key inside. It's for convenience and smaller footprint."]]});

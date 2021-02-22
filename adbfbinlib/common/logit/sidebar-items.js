@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["Log",""]],"fn":[["read_env_level","Read env level given e.g. by command-line, environment variable"]],"struct":[["Logit","The logger for all log-types: warn, info, trace, error, debug"]]});

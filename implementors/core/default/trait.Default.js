@@ -1,0 +1,3 @@
+(function() {var implementors = {};
+implementors["adbfbinlib"] = [{"text":"impl&lt;K:&nbsp;Default, V:&nbsp;Default&gt; Default for BKTree&lt;K, V&gt; <span class=\"where fmt-newline\">where<br>&nbsp;&nbsp;&nbsp;&nbsp;K: Distance,&nbsp;</span>","synthetic":false,"types":[]}];
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

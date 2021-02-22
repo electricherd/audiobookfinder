@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["AudioInfo",""],["AudioInfoKey",""],["Container","The container keeps the collection data. It currently consists of a BKTree (https://en.wikipedia.org/wiki/BK-tree), because key is a string of lexical data."]]});

@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["clean_paths","Clean paths checks that paths exists and that intersection paths are exluded, also down-up-climbing of existing paths hierarchy are working!"]],"struct":[["SearchPath","This struct holds the search paths, which can change before startup but not later. An Arc shall be used in order to get current changes for all modules."]]});

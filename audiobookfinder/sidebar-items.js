@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["main","The main application which is central part of communicating with the adbflib, which is closely connected."]],"mod":[["command_line","Command line modules: has one function which takes input parameters from commandline and parses them."]]});

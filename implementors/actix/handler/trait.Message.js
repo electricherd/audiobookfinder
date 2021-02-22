@@ -1,0 +1,3 @@
+(function() {var implementors = {};
+implementors["adbfbinlib"] = [{"text":"impl Message for MSyncStartup","synthetic":false,"types":[]},{"text":"impl Message for MDoneSyncStartup","synthetic":false,"types":[]},{"text":"impl Message for MRegisterWSClient","synthetic":false,"types":[]},{"text":"impl Message for MServerEvent","synthetic":false,"types":[]}];
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

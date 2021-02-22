@@ -1,0 +1,3 @@
+(function() {var implementors = {};
+implementors["adbfbinlib"] = [{"text":"impl NetworkBehaviourEventProcess&lt;MdnsEvent&gt; for AdbfBehavior","synthetic":false,"types":[]},{"text":"impl NetworkBehaviourEventProcess&lt;KademliaEvent&gt; for AdbfBehavior","synthetic":false,"types":[]},{"text":"impl NetworkBehaviourEventProcess&lt;SMOutEvents&gt; for AdbfBehavior","synthetic":false,"types":[]}];
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

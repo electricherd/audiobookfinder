@@ -1,0 +1,1 @@
+initSidebarItems({"static":[["ID3_CAPACITY","distance of Levenshtein-algorithm"],["TOLERANCE",""]],"struct":[["Collection","capacity to read small portion of file Collection keeps control and result data of the build-up of the container."],["FilesStat","Only some statistics"],["Stats",""]],"type":[["FileFn",""]]});
