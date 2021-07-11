@@ -55,7 +55,7 @@ syslog = "5.0"           # another logger for system log
 futures = "0.3"     ####   # futures, used in state machine yet (and in many other crates)
 futures-util = "0.3"
 
-tree_magic_mini = "1.0"  # for faster file tree operations
+tree_magic_mini = "3.0"  # for faster file tree operations
 mp4ameta = "0.8"       # for mp4 audio metadata
 mp3-metadata = "0.3"
 id3 = "0.5"              # id3 tags
