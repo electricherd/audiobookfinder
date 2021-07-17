@@ -11,8 +11,3 @@ debug = true
 # profiles
 [profile.release.package.adbflib]
 codegen-units = 8
-
-# until this is resolved https://github.com/Lymia/enumset/issues/17
-[patch.crates-io.enumset_derive]
-git = "https://github.com/ocboogie/enumset"
-branch = "span-fix"

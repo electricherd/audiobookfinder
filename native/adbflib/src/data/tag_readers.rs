@@ -40,7 +40,7 @@ impl<'a> TagReader<'a> for MP4TagReader {
                 let info = CommonAudioInfo {
                     title: tag.title().unwrap_or("").to_string(),
                     artist: tag.artist().unwrap_or("").to_string(),
-                    duration: Duration::from_secs(tag.duration().unwrap_or(0.0) as u64),
+                    duration: tag.duration().unwrap_or(Duration::from_secs(0)),
                     album: tag.album().map(|op| op.to_string()),
                     track: tag.track_number(),
                     album_artist: tag.album_artist().map(|op| op.to_string()),

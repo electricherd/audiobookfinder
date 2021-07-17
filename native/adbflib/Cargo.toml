@@ -48,16 +48,16 @@ lazy_static = "1.4"   # awesome lib for lazy data structures
 
 hostname = "^0.3"    # for host recognition
 log = { version="0.4", features = ["release_max_level_off"]}    # basic log feature
-env_logger = "0.8"     # alongside log for logging
+env_logger = "0.9"     # alongside log for logging
 flexi_logger = {version = "0.17", features = ["colors"] }  # a more flexible logger
 syslog = "5.0"           # another logger for system log
 
 futures = "0.3"     ####   # futures, used in state machine yet (and in many other crates)
 futures-util = "0.3"
 
-mp4ameta = "0.8"       # for mp4 audio metadata
+mp4ameta = "0.11"       # for mp4 audio metadata
 mp3-metadata = "0.3"
-id3 = "0.5"              # id3 tags
+id3 = "0.6"              # id3 tags
 metaflac = "0.2"
 
 num_cpus = "1.13"   # addition to rayon for cpu count
@@ -75,9 +75,9 @@ serde_json = "1.0"    # couldn't find actix json to work, this is good and well 
 bincode = "1.3"     # for binary serialization
 
 # libp2p network stack for secure p2p with mdns and general communication
-libp2p = "0.34"
-libp2p-tcp = "0.27"
-libp2p-noise = "0.29"
+libp2p = "0.39"
+libp2p-tcp = "0.29"
+libp2p-noise = "0.32"
 
 cursive_core = "0.2.2"
 # cursive is the tui

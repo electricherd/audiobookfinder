@@ -16,7 +16,7 @@ use futures::prelude::*;
 use futures_util::StreamExt;
 use libp2p::{
     kad::{record::store::MemoryStore, Kademlia},
-    mdns::Mdns,
+    mdns::{Mdns, MdnsConfig},
     PeerId, Swarm,
 };
 use std::{self, error::Error};
@@ -70,7 +70,7 @@ impl Net {
 
             let behaviour = behavior::AdbfBehavior {
                 kademlia,
-                mdns: Mdns::new().await?,
+                mdns: Mdns::new(MdnsConfig::default()).await?,
                 sm_behaviour: SMBehaviour::new(ipc_receiver, own_peer_id.clone(), ui_data),
                 storage: NetStorage::new(),
             };

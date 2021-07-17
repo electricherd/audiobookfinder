@@ -58,7 +58,7 @@ static ID_HOST_ALIVE: &str = "id_host_alive";
 /// The Tui wrapper holds cursive tui and the
 /// alive data of the ui-state needed.
 pub struct Tui {
-    handle: Cursive,
+    cursive: Cursive,
     alive: AliveDisplayData,
 }
 
@@ -78,7 +78,7 @@ impl Tui {
 
         // now build the actual TUI object
         let mut tui = Self {
-            handle: later_handle,
+            cursive: later_handle,
             alive: AliveDisplayData {
                 host: AliveState {
                     draw_char: 0,
@@ -94,18 +94,19 @@ impl Tui {
             },
         };
         // quit by 'q' key
-        tui.handle.add_global_callback('q', |s| s.quit());
+        tui.cursive.add_global_callback('q', |s| s.quit());
         Ok(tui)
     }
 
     /// Refreshes the screen and returns
     /// if tui is shut down (e.g. due to 'q' quitting)
     pub async fn refresh(&mut self) -> bool {
-        if !self.handle.is_running() {
+        if !self.cursive.is_running() {
             trace!("Cursive is not running!");
             false
         } else {
-            self.handle.refresh();
+            //let runner = self.cursive.runner();
+            //self.cursive.step(); //refresh();
             true
         }
     }
@@ -125,13 +126,14 @@ impl Tui {
         tui_receiver: &Receiver<InternalUiMsg>,
     ) {
         // step ui
-        self.handle.step();
+        //self.cursive.s();
 
         if let Ok(message) = tui_receiver.try_recv() {
             match message {
                 InternalUiMsg::Update(forward_net_message) => match forward_net_message {
                     ForwardNetMsg::Add(ui_peer) => {
-                        if let Some(mut host_list) = self.handle.find_name::<ListView>(VIEW_LIST_ID)
+                        if let Some(mut host_list) =
+                            self.cursive.find_name::<ListView>(VIEW_LIST_ID)
                         {
                             let content = TextContent::new(
                                 peer_representation::peer_to_hash_string(&ui_peer.id),
@@ -142,7 +144,8 @@ impl Tui {
                         }
                     }
                     ForwardNetMsg::Delete(ui_peer_to_delete) => {
-                        if let Some(mut host_list) = self.handle.find_name::<ListView>(VIEW_LIST_ID)
+                        if let Some(mut host_list) =
+                            self.cursive.find_name::<ListView>(VIEW_LIST_ID)
                         {
                             for i in 0..host_list.len() {
                                 let child = host_list.get_row(i);
@@ -171,7 +174,7 @@ impl Tui {
                     }
                     ForwardNetMsg::Stats(net_message) => match net_message {
                         NetInfoMsg::ShowStats { show } => {
-                            let output = self.handle.find_name::<TextView>(ID_HOST_INDEX);
+                            let output = self.cursive.find_name::<TextView>(ID_HOST_INDEX);
                             if let Some(mut found) = output {
                                 found.set_content(show.line.to_string());
                             } else {
@@ -180,7 +183,7 @@ impl Tui {
                         }
                         NetInfoMsg::Debug(text) => {
                             if let Some(mut found) =
-                                self.handle.find_name::<TextView>(DEBUG_TEXT_ID)
+                                self.cursive.find_name::<TextView>(DEBUG_TEXT_ID)
                             {
                                 found.set_content(text);
                             } else {
@@ -246,7 +249,7 @@ impl Tui {
                     //       fix row identification when cursive gets better
                 }
                 InternalUiMsg::Terminate => {
-                    self.handle.quit();
+                    self.cursive.quit();
                 }
             }
         }
@@ -305,7 +308,7 @@ impl Tui {
                 &mut self.alive.paths[nr].draw_char,
             ),
         };
-        let mut output = self.handle.find_name::<TextView>(&view_name);
+        let mut output = self.cursive.find_name::<TextView>(&view_name);
         if let Some(ref mut found) = output {
             // change the data in place
             let char_idx_to_put = match on {
@@ -334,9 +337,8 @@ impl Tui {
     /// * `paths` - the paths as string to be searched
     /// * `with_net` - if the net list box has to be displayed
     fn build_tui(title: String, paths: &Vec<String>, with_net: bool) -> Result<Cursive, String> {
-        let later_handle = Cursive::default();
-
-        let screen_size = later_handle.screen_size();
+        let mut my_cursive = Cursive::default();
+        let screen_size = my_cursive.screen_size();
 
         let max_cols = screen_size.x / RECT;
 
@@ -425,9 +427,8 @@ impl Tui {
 
         // return the dialog
         let layer = Dialog::around(Layer::new(vertical_layout)).title(format!("Peer: {}", title));
-        let mut later_handle = later_handle;
-        later_handle.add_layer(layer);
-        Ok(later_handle)
+        my_cursive.add_layer(layer);
+        Ok(my_cursive)
     }
 } // impl Tui
 

@@ -12,7 +12,9 @@ use libp2p::{
     kad::{
         record,
         store::{MemoryStore, RecordStore},
-        Kademlia, KademliaEvent, PeerRecord, PutRecordOk, QueryResult, Quorum, Record,
+        Kademlia,
+        KademliaEvent::{self, OutboundQueryCompleted},
+        PeerRecord, PutRecordOk, QueryResult, Quorum, Record,
     },
 };
 
@@ -132,9 +134,11 @@ impl NetStorage {
         Self::get_data_finished(kademlia, query_key)
     }
 
-    pub fn on_retrieve(&self, message: KademliaEvent) {
-        match message {
-            KademliaEvent::QueryResult { result, .. } => match result {
+    pub fn on_retrieve(&self, event: KademliaEvent) {
+        match event {
+            OutboundQueryCompleted {
+                id: _id, result, ..
+            } => match result {
                 QueryResult::GetRecord(get_record) => match get_record {
                     Ok(ok) => {
                         for PeerRecord {
@@ -173,7 +177,9 @@ impl NetStorage {
                 },
                 _ => trace!("other kademlie query results arrived?!"),
             },
-            _ => (), // trace!("kademlie routing events occured!"),
+            _ => {
+                error!("outbound query expected");
+            }
         }
     }
 
