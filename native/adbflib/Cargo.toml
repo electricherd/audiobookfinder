@@ -34,7 +34,7 @@ system-alloc = []
 
 
 [dependencies]
-async-std = "1.8"     # great async
+async-std = "1.9"     # great async
 crossbeam = "0.8"     # a mpmc library also with Workgroup instead of std::thread::barrier
 serde = "1.0"         # serialize anything, awesome for communication items
 serde_derive = "1.0"  # macro usage from serde
@@ -55,7 +55,6 @@ syslog = "5.0"           # another logger for system log
 futures = "0.3"     ####   # futures, used in state machine yet (and in many other crates)
 futures-util = "0.3"
 
-tree_magic_mini = "3.0"  # for faster file tree operations
 mp4ameta = "0.8"       # for mp4 audio metadata
 mp3-metadata = "0.3"
 id3 = "0.5"              # id3 tags
@@ -80,6 +79,7 @@ libp2p = "0.34"
 libp2p-tcp = "0.27"
 libp2p-noise = "0.29"
 
+cursive_core = "0.2.2"
 # cursive is the tui
 [dependencies.cursive]
 version = "0.15"
@@ -91,6 +91,12 @@ default-features = false
 # important: has to be the same as used in "webbrowser" crate
 [target.'cfg(any(target_os = "android", target_os = "windows", target_os = "macos", target_os = "linux", target_os = "freebsd", targest_os = "netbsd",target_os = "openbsd", target_os = "haiku", target_arch = "wasm32"))'.dependencies]
 webbrowser = "0.5"
+
+# tree magic mini made some stupid mime type decision (problem only occurs in windows)
+[target.'cfg(not(target_os = "windows"))'.dependencies]
+tree_magic_mini = { version="3.0"}
+[target.'cfg(target_os = "windows")'.dependencies]
+tree_magic_mini = { version="3.0", features = ["tree_magic_db"]}
 
 # https://crates.io/crates/cargo-deb
 [package.metadata.deb]
