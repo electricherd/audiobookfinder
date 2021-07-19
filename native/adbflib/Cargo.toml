@@ -49,7 +49,7 @@ lazy_static = "1.4"   # awesome lib for lazy data structures
 hostname = "^0.3"    # for host recognition
 log = { version="0.4", features = ["release_max_level_off"]}    # basic log feature
 env_logger = "0.9"     # alongside log for logging
-flexi_logger = {version = "0.17", features = ["colors"] }  # a more flexible logger
+flexi_logger = {version = "0.18", features = ["colors"] }  # a more flexible logger
 syslog = "5.0"           # another logger for system log
 
 futures = "0.3"     ####   # futures, used in state machine yet (and in many other crates)
