@@ -18,18 +18,18 @@ use super::{
 };
 use libp2p::{
     core::{
-        either::EitherTransport, identity, muxing::StreamMuxerBox, transport, transport::upgrade,
-        PeerId, Transport,
+        either::EitherTransport, identity::Keypair, muxing::StreamMuxerBox, transport,
+        transport::upgrade, PeerId, Transport,
     },
     kad::{store::MemoryStore, Kademlia, KademliaEvent},
     mdns::{Mdns, MdnsEvent},
+    noise::{self, NoiseConfig, X25519Spec},
     pnet::{PnetConfig, PreSharedKey},
     swarm::NetworkBehaviourEventProcess,
+    tcp::TcpConfig,
     yamux::YamuxConfig,
     NetworkBehaviour,
 };
-use libp2p_noise::{Keypair, NoiseConfig, X25519Spec};
-use libp2p_tcp::TcpConfig;
 use std::time::Duration;
 
 /// The swarm injected behavior is the key element for the whole communication
@@ -106,10 +106,10 @@ impl NetworkBehaviourEventProcess<SMOutEvents> for AdbfBehavior {
 
 /// Build up the transport layer
 pub fn build_noise_transport(
-    key_pair: &identity::Keypair,
+    key_pair: &Keypair,
     psk: Option<PreSharedKey>,
 ) -> transport::Boxed<(PeerId, StreamMuxerBox)> {
-    let noise_keys = Keypair::<X25519Spec>::new()
+    let noise_keys = noise::Keypair::<X25519Spec>::new()
         .into_authentic(key_pair)
         .unwrap();
     let noise_config = NoiseConfig::xx(noise_keys).into_authenticated();
