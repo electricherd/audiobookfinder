@@ -34,7 +34,7 @@ pub fn collection_search(
 
     let current_search_path = search_path.lock().unwrap().read();
     // start the parallel search threads with rayon, each path its own
-    &current_search_path
+    current_search_path
         .par_iter()
         .enumerate()
         .for_each(|(index, elem)| {

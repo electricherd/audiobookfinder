@@ -108,6 +108,8 @@ It is an inline documentation from [CI](https://travis-ci.org/electricherd/audio
 
 ### Changes
 
+* fixed warnings according to latest Rust release
+* keep and fixed minor version from libp2p (very troublesome, because of mix of new libp2p which seperates features into different crates and the old which uses only libp2p crate)
 * added licenses tab to flutter app and webui
 * added linux debian .deb package deployment
 * fixed and beautified CI process
