@@ -108,6 +108,7 @@ It is an inline documentation from [CI](https://travis-ci.org/electricherd/audio
 
 ### Changes
 
+* only more tools' links ([gitui](https://github.com/extrawurst/gitui), [drawio-desktop](https://github.com/jgraph/drawio-desktop), [mermaid](https://github.com/mermaid-js/mermaid))
 * fixed warnings according to latest Rust release
 * keep and fixed minor version from libp2p (very troublesome, because of mix of new libp2p which seperates features into different crates and the old which uses only libp2p crate)
 * added licenses tab to flutter app and webui
@@ -271,7 +272,12 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
 * Logging:
   * [glogg](https://glogg.bonnefon.org/) a good logger on linux - since log has a coloring problem it still works pretty good
 * Git:
+  * [gitui](https://github.com/extrawurst/gitui) very good
   * [gitahead](https://gitahead.github.io/gitahead.com/) I like that
+* Documentation:
+  * [drawio-desktop](https://github.com/jgraph/drawio-desktop) nice
+  * [mermaid](https://github.com/mermaid-js/mermaid) can be used with drawio and github in a very natural way
+
 
 ### Useful links
 * https://jsfiddle.net/boilerplate/jquery : for people who don't really like js but need it:
