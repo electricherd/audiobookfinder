@@ -23,7 +23,7 @@ jobs:
       # due to https://github.com/rust-lang/rust/issues/63939#issuecomment-665952545
       - name: Install musl-tools
         shell: bash
-        run: apt install musl-tools
+        run: sudo apt install musl-tools
 
       - name: Extractor for vtag env
         id: extract_tag
