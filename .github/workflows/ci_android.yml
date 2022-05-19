@@ -16,10 +16,14 @@ jobs:
         shell: bash
         run: echo "vtag=$(echo ${GITHUB_REF#refs/tags/} | awk '/v([0-9]+\.)+[0-9]+/{print $0}')" >> $GITHUB_ENV
 
-      # due to https://stackoverflow.com/questions/63974024/error-when-getting-started-actix-web-failed-to-run-custom-build-command-for-br
       - name: Ensure UTF-8 console
         shell: bash
         run: export LANG=C.UTF-8
+
+      # due to https://github.com/rust-lang/rust/issues/63939#issuecomment-665952545
+      - name: Install musl-tools
+        shell: bash
+        run: apt install musl-tools
 
       - name: Extractor for vtag env
         id: extract_tag
