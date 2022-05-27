@@ -1,0 +1,13 @@
+[advisories]
+
+ignore = [
+    "RUSTSEC-2021-0124", # check tokio::sync::oneshot
+    "RUSTSEC-2020-0036", # in ffi_helper for android, probably difficult to solve
+    "RUSTSEC-2020-0016", # check mio version in dependencies
+    "RUSTSEC-2020-0056", # check time in depencies
+    "RUSTSEC-2021-0130", # check lru in libp2p
+]
+
+[output]
+deny = ["warnings", "yanked", "unsound", "unmaintained"]
+quiet = false
