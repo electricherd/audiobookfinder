@@ -1,2 +1,8 @@
 [target.arm-unknown-linux-gnueabihf]
 linker = "arm-linux-gnueabihf-gcc"
+
+# !!! this is for the github android build, this needs to be checked for local builds
+#     is probably ANDROID_NDK_HOME=/home/runner/android/ndk-bundle in github
+[target.aarch64-linux-android]
+ar = "/home/runner/android/ndk-bundle/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android-ar"
+linker = "/home/runner/android/ndk-bundle/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android28-clang"
