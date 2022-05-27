@@ -194,6 +194,7 @@ It is an inline documentation from [CI](https://travis-ci.org/electricherd/audio
 
 ### ToDo
 
+* remove TUI, since it is not working properly
 * add kademlia push of android data found to network to all clients for adbfflutter
 * add signature key, and google developer key to android app, and some time later process for a correct ios app
 * try [crate vfs](https://github.com/manuel-woelker/rust-vfs) for unit test with files!! interesting and needed!
