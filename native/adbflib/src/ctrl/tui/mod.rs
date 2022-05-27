@@ -15,7 +15,6 @@ use cursive::{
         Dialog, Layer, LinearLayout, ListChild, ListView, Panel, ResizedView, TextContent, TextView,
     },
     Cursive,
-    CursiveExt,
 };
 use std::{
     iter::Iterator,
