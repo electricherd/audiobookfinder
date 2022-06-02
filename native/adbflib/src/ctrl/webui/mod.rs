@@ -23,7 +23,7 @@ use actix_web::{
 use actix_web_actors::ws;
 use actors::{ActorSyncStartup, ActorWSServerMonitor, ActorWebSocket, MRegisterWSClient};
 use crossbeam::sync::WaitGroup;
-use local_ip_address::list_afinet_netifas;
+use if_addrs;
 use std::{
     io,
     net::IpAddr,
@@ -63,7 +63,7 @@ impl WebUI {
         let connection_count = Arc::new(Mutex::new(0));
         let path_arc = self.paths.clone();
 
-        let local_addresses = list_afinet_netifas().unwrap();
+        let local_addresses = if_addrs::get_if_addrs().unwrap();
 
         // data
         let initial_state = Arc::new(Mutex::new(WebServerState {
@@ -97,13 +97,17 @@ impl WebUI {
         let web_server = local_addresses
             .into_iter()
             .filter(|ipaddr| {
-                let (name, ip) = ipaddr;
+                let name = ipaddr.name.clone();
                 // only use loopback addresses no 2nd ethernet cards
-                if ip.is_loopback() {
-                    info!("{} {:?} is a loopback device, good!", ip.to_string(), name);
+                if ipaddr.addr.is_loopback() {
+                    info!(
+                        "{} {:?} is a loopback device, good!",
+                        ipaddr.addr.ip().to_string(),
+                        name
+                    );
                     true
                 } else {
-                    warn!("{} is not a loopback device!", ip.to_string());
+                    warn!("{} is not a loopback device!", ipaddr.addr.ip().to_string());
                     true
                 }
             })
@@ -152,7 +156,7 @@ impl WebUI {
                 })),
                 |web_server_binding_chain: Result<HttpServer<_, _, _, _>, io::Error>, ipaddr| {
                     web_server_binding_chain.and_then(|webserver| {
-                        let bind_format = match ipaddr.1 {
+                        let bind_format = match ipaddr.addr.ip() {
                             IpAddr::V4(ipv4) => format!("{}:{:?}", ipv4.to_string(), web_port),
                             IpAddr::V6(ipv6) => format!("{}:{:?}", ipv6.to_string(), web_port),
                         };

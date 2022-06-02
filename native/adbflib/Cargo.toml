@@ -68,7 +68,7 @@ actix-web = "3.3"     # * for mini webserver and websocket
 actix-files = "0.5"   # *
 actix-web-actors = "3.0" # *
 
-local-ip-address = "0.4"
+if-addrs = "0.7"  # for range of localhosts
 
 smlang = "0.3"        # * state machine for client server communication for data exchange
 serde_json = "1.0"    # couldn't find actix json to work, this is good and well documented
