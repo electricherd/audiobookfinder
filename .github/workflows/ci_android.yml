@@ -108,6 +108,9 @@ jobs:
       - name: Run Flutter pub get
         run: flutter pub get
 
+      - name: Set Android NDK Env
+        run: echo "ANDROID_NDK_HOME=/home/runner/android/ndk-bundle" >> $GITHUB_ENV
+
       - name: Set up JDK 1.8
         uses: actions/setup-java@v1
         with:
@@ -118,17 +121,14 @@ jobs:
 
       - name: Cache NDK
         id: cache-ndk
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
-          path: /home/runner/android/ndk-bundle
-          key: ${{ runner.os }}-ndk
+          path: $ANDROID_NDK_HOME
+          key: ${{ runner.os }}-${{ env.cache-name }}-ndk
 
       - name: Install Android NDK
         if: steps.cache-ndk.outputs.cache-hit != 'true'
-        run: $ANDROID_SDK_ROOT/tools/bin/sdkmanager ndk-bundle
-
-      - name: Set Android NDK Env
-        run: echo "ANDROID_NDK_HOME=/home/runner/android/ndk-bundle" >> $GITHUB_ENV
+        run: $ANDROID_SDK_ROOT/tools/bin/sdkmanager --install "ndk;21.3.6528147" --channel=3
 
       - name: Install Android Targets
         shell: bash
