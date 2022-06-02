@@ -6,10 +6,10 @@ linker = "arm-linux-gnueabihf-gcc"
 #linker = "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android28-clang"
 # rustflags = [ "-C", "target-feature=+crt-static", "-C", "link-arg=-lgcc" ]
 [target.armv7-linux-androideabi]
-linker = "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/$HOST/bin/armv7a-linux-androideabi28-clang"
+linker = "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi28-clang"
 [target.aarch64-linux-android]
-linker = "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/$HOST/bin/aarch64-linux-android28-clang"
+linker = "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android28-clang"
 [target.i686-linux-android]
-linker = "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/$HOST/bin/i686-linux-android28-clang"
+linker = "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/i686-linux-android28-clang"
 [target.x86_64-linux-android]
-linker = "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/$HOST/bin/x86_64-linux-android28-clang"
+linker = "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android28-clang"

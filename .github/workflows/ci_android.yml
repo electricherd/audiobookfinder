@@ -151,7 +151,13 @@ jobs:
       - name: find more
         continue-on-error: true
         shell: bash
-        run: ls $ANDROID_NDK_HOME/toolchains/llvm/prebuilt/$HOST/bin/ || echo "dir not found"
+        run: ls $ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/ || echo "dir not found"
+
+      # 3rd helper to env-vars
+      - name: find target / host
+        continue-on-error: true
+        shell: bash
+        run: echo "$CARGO_BUILD_TARGET" || echo "var not found"
 
       # ############### Release/Debug build dependent
       - name: Run cargo make android - Debug
