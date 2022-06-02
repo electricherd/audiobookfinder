@@ -119,7 +119,7 @@ jobs:
       # ANDROID_NDK_HOME is adapted to where "Setup Android SDK" decides (due to github logs)
       # to install it to ...
       - name: Set Android NDK Env
-        run: echo "ANDROID_NDK_HOME=$ANDROID_SDK_HOME/ndk-bundle" >> $GITHUB_ENV
+        run: echo "ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk-bundle" >> $GITHUB_ENV
 
       - name: Cache NDK
         id: cache-ndk
