@@ -142,9 +142,16 @@ jobs:
         run: cargo install cargo-ndk --version 1.0.0
 
       # helper to find problems
-      - name: find brotli-sys clang cc
+      - name: find clang android compiler
+        continue-on-error: true
         shell: bash
-        run: find /home/runner -name x86_64-linux-android28-clang
+        run: find /home/runner -name x86_64-linux-android28-clang || echo "not found"
+
+      # 2nd helper to find problems
+      - name: find more
+        continue-on-error: true
+        shell: bash
+        run: ls $ANDROID_NDK_HOME/toolchains/llvm/prebuilt/$HOST/bin/ || echo "dir not found"
 
       # ############### Release/Debug build dependent
       - name: Run cargo make android - Debug
