@@ -28,27 +28,22 @@ class MyApp extends StatelessWidget {
 }
 
 class MyHomePage extends StatefulWidget {
-  MyHomePage({Key key}) : super(key: key);
+  MyHomePage({Key? key}) : super(key: key);
   @override
   _MyHomePageState createState() => _MyHomePageState();
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  Adbflib _adbflib;
+  Adbflib _adbflib = Adbflib();
 
-  SearchTab _searchTab;
-  PeerTab _peerTab;
-  LicenseTab _licenseTab;
+  SearchTab _searchTab = SearchTab(_adbflib);
+  PeerTab _peerTab = PeerTab(_adbflib);
+  LicenseTab _licenseTab = LicenseTab();
 
   @override
   void initState() {
     super.initState();
-    _adbflib = Adbflib();
     Adbflib.setup();
-
-    _searchTab = SearchTab(_adbflib);
-    _peerTab = PeerTab(_adbflib);
-    _licenseTab = LicenseTab();
   }
 
   @override
