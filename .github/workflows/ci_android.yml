@@ -166,7 +166,7 @@ jobs:
 
       - name: Build APK (x86_64, Debug)
         if: steps.extract_tag.outputs.tag == null
-        run: flutter build apk --debug
+        run: flutter build apk --debug --no-sound-null-safety
 
       - name: Run cargo make android - Release
         if: steps.extract_tag.outputs.tag != null
