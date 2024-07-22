@@ -51,7 +51,7 @@ pub fn get_start_values() -> (Vec<String>, bool, bool, bool, bool, bool, u16, bo
         )
         .arg(
             clap::Arg::with_name("config")
-                .short("c")
+                .short('c')
                 .long("config")
                 .value_name("FILE")
                 .help("Sets custom config file (not implemented yet)")
@@ -59,24 +59,24 @@ pub fn get_start_values() -> (Vec<String>, bool, bool, bool, bool, bool, u16, bo
         )
         .arg(
             clap::Arg::with_name(ARG_TUI)
-                .short("t")
+                .short('t')
                 .long(ARG_TUI)
                 .help("Run with TUI")
                 .takes_value(false),
         )
         .arg(
             clap::Arg::with_name(ARG_WEBUI)
-                .short("w")
+                .short('w')
                 .long(ARG_WEBUI)
                 .help("Run with-in a webui.")
                 .takes_value(false),
         )
         .arg(
             clap::Arg::with_name(ARG_BROWSER_PORT)
-                .short("p")
+                .short('p')
                 .long(ARG_BROWSER_PORT)
                 .help(
-                    &vec![
+                    &*vec![
                         "Define port for webui (only works with webui).\nDefault port is:"
                             .to_string(),
                         config::net::WEB_PORT_DEFAULT.to_string(),
@@ -88,14 +88,14 @@ pub fn get_start_values() -> (Vec<String>, bool, bool, bool, bool, bool, u16, bo
         )
         .arg(
             clap::Arg::with_name(ARG_NET)
-                .short("n")
+                .short('n')
                 .long(ARG_NET)
                 .help("With net search for other audiobookfinders running in local network.")
                 .takes_value(false),
         )
         .arg(
             clap::Arg::with_name(ARG_KEEP_ALIVE)
-                .short("k")
+                .short('k')
                 .long(ARG_KEEP_ALIVE)
                 .help(
                     "With keep alive process will continue even after search has been performed.\
@@ -106,7 +106,7 @@ pub fn get_start_values() -> (Vec<String>, bool, bool, bool, bool, bool, u16, bo
         )
         .arg(
             clap::Arg::with_name(ARG_BROWSER)
-                .short("b")
+                .short('b')
                 .long(ARG_BROWSER)
                 .help("Shall browser not be openend automatically (only works with webui).")
                 .takes_value(false),
@@ -114,7 +114,7 @@ pub fn get_start_values() -> (Vec<String>, bool, bool, bool, bool, bool, u16, bo
         .arg(
             clap::Arg::with_name(INPUT_FOLDERS)
                 .help(
-                    &[
+                    &*[
                         "Sets multiple input folder(s) to be searched for audio files. (Max ",
                         &config::data::PATHS_MAX.to_string(),
                         " input folders will be used!)",
