@@ -58,6 +58,7 @@ impl Logit {
                 // https://rust-lang-nursery.github.io/rust-cookbook/development_tools/debugging/config_log.html
                 flexi_logger::Logger::try_with_env_or_str("info")
                     .unwrap()
+                    .use_utc()
                     .log_to_file(
                         FileSpec::default()
                             .directory(".")
