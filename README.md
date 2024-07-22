@@ -120,7 +120,7 @@ It is an inline documentation from [CI](https://travis-ci.org/electricherd/audio
 * since marrying [flutterust](https://github.com/shekohex/flutterust) and old adbflib, package name now is adbflib, the library is now adbfbinlib (yes, but for now)
 * added and fixed first shot mobile app mdns feature ... it just works :open_mouth: :blush:
 * produced apk can even be design tested in android studio
-* had to introduce platform dependent crate compilation, here only [webbrowser crate](https://crates.io/crates/webbrowser) 
+* had to introduce platform dependent crate compilation, here only [webbrowser crate](https://crates.io/crates/webbrowser)
 * added mobile app build by using [flutterust](https://github.com/shekohex/flutterust) by [Shady Khalifa](https://github.com/shekohex/shekohex) :thumbsup: great
   * [Dart](https://dart.dev/)/[Flutter](https://flutter.dev/) coding required as frontend on mobile app side
   * add github actions as 3rd CI (quite new to me)
@@ -194,6 +194,9 @@ It is an inline documentation from [CI](https://travis-ci.org/electricherd/audio
 
 ### ToDo
 
+* leave a good, well defined version
+* create secret by github if also usable by other build systems
+* fix build systems github actions, appveyor, travis (if still possible)
 * remove TUI, since it is not working properly
 * add kademlia push of android data found to network to all clients for adbfflutter
 * add signature key, and google developer key to android app, and some time later process for a correct ios app
@@ -231,7 +234,7 @@ The Continuous Integration is done on 2 services, Travis and AppVeyor but will p
     * Android-Build: [![Actions Status](https://github.com/electricherd/audiobookfinder/workflows/Android%20Build/badge.svg)](https://github.com/electricherd/audiobookfinder/actions?query=workflow%3A%22Android+Build%22)
     * iOS-Build: [![Actions Status](https://github.com/electricherd/audiobookfinder/workflows/iOS%20Build/badge.svg)](https://github.com/electricherd/audiobookfinder/actions?query=workflow%3A%22iOS+Build%22)
     * MacOS-Build: [![Actions Status](https://github.com/electricherd/audiobookfinder/workflows/MacOS%20Build/badge.svg)](https://github.com/electricherd/audiobookfinder/actions?query=workflow%3A%22MacOS+Build%22)
-    
+
 ### Goals
 The primary goal is to learn Rust and to cover various aspects of the language, of which some of I already used inside the program, such as:
 - [x] borrowing: the borrow checker, some issues but I am fine with it now
@@ -247,10 +250,10 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
 - [x] high-level functionality of different crates / including/using different crates (I don't want to reinvent the wheel, and yes, that is very nice)
 - [x] in-code documentation with html generation, really nice!
 - [x] easy command-line (always was looking for that, nice: [clap](https://github.com/kbknapp/clap-rs))
-- [x] channel/thread communication control with [crossbeam](https://github.com/crossbeam-rs/crossbeam) *Waitgroup* instead of std barrier 
-- [x] high level networking, client/server authorization/management from libp2p2 (mdns, swarm, noise-protocol transport layer) 
+- [x] channel/thread communication control with [crossbeam](https://github.com/crossbeam-rs/crossbeam) *Waitgroup* instead of std barrier
+- [x] high level networking, client/server authorization/management from libp2p2 (mdns, swarm, noise-protocol transport layer)
 - [x] use the test feature of Rust: that is just very, very nice, even an usage example can be done as a running test!!
-- [ ] traits: getting better with unfortunately unused [observer pattern](../../wiki/Observer-pattern) 
+- [ ] traits: getting better with unfortunately unused [observer pattern](../../wiki/Observer-pattern)
 - [x] thread-pool: a simple self written but nice to use implemention :blush: but not needed any more
 - [x] simple timers: inside async: super easy
 - [x] logging (own module for that), good

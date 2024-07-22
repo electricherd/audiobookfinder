@@ -1,16 +1,16 @@
 version: "{build}"
 
 image:
-- Ubuntu2004
-- Visual Studio 2017
-- Ubuntu1804
+  - Ubuntu2004
+  - Visual Studio 2017
+  - Ubuntu1804
 
 environment:
   global:
     CRATE_NAME: audiobookfinder
     PACKAGE_NAME: adbflib
   matrix:
-# don't use "configuration" variable in this file!!!
+    # don't use "configuration" variable in this file!!!
     - target: x86_64-unknown-linux-gnu
       UBUNTU_VER: LTS_18.04
       ARCH: amd64
@@ -66,6 +66,9 @@ init:
   # only for deb packaging (is not same version as llvm above)
   - sh: sudo apt-get --yes install libclang1 libclang-dev
 
+# turn automatic MSBuild off
+build: off
+
 # scripts that run after cloning repository
 install:
   #
@@ -77,8 +80,8 @@ install:
   - sh: ./upx --version
   - sh: echo $CRATE_NAME-$target-$APPVEYOR_REPO_TAG_NAME
   - sh: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > ./rustup.sh
-  - sh: sh ./rustup.sh -y 
-# for debugging: ls -al
+  - sh: sh ./rustup.sh -y
+  # for debugging: ls -al
   - sh: source $HOME/.cargo/env
   # it's a clean install so not needed: rustup update
   - sh: rustup target install $target
@@ -97,12 +100,12 @@ install:
   - cmd: set PATH=%PATH%;C:\Users\appveyor\.cargo\bin
   - cmd: del rustup-init.exe
   - cmd: rustc -Vv
-  - cmd: rustup target install %target%  
-  - cmd: cargo -V  
+  - cmd: rustup target install %target%
+  - cmd: cargo -V
 
 build_script:
-# comment next line for quick build
-#  - cargo build
+  # comment next line for quick build
+  #  - cargo build
   - sh: cargo build --bin $CRATE_NAME --release --target $target
   - cmd: cargo build --bin %CRATE_NAME% --release --target %target%
 
@@ -113,15 +116,15 @@ test_script:
   - cmd: target\%target%\release\%CRATE_NAME%.exe -- testaudio
 
 after_build:
-# linux
+  # linux
   - sh: LLVM_CONFIG_PATH=/usr/bin/llvm-config-10 LIBCLANG_PATH=/usr/lib/x86_64-linux-gnu cargo deb -p $PACKAGE_NAME --target=$target
   - sh: cp target/$target/debian/* $CRATE_NAME-$UBUNTU_VER-$target-$APPVEYOR_REPO_TAG_NAME.deb
-#  - sh: cp target/$target/release/$CRATE_NAME target/release/$CRATE_NAME-$UBUNTU_VER-$target
-#  - sh: strip -s target/release/$CRATE_NAME-$UBUNTU_VER-$target -o target/release/$CRATE_NAME-$UBUNTU_VER-$target.stripped
-#  - sh: ./upx --best target/release/$CRATE_NAME-$UBUNTU_VER-$target.stripped -o target/release/$CRATE_NAME
-#  - sh: 7z a -r $CRATE_NAME-$UBUNTU_VER-$target-$APPVEYOR_REPO_TAG_NAME.7z ./target/release/$CRATE_NAME ./README-release.md ./LICENSE
-#  - sh: sha256sum $CRATE_NAME-$UBUNTU_VER-$target-$APPVEYOR_REPO_TAG_NAME.7z > $CRATE_NAME-$UBUNTU_VER-$target-$APPVEYOR_REPO_TAG_NAME.7z.sha256
-# windows
+  #  - sh: cp target/$target/release/$CRATE_NAME target/release/$CRATE_NAME-$UBUNTU_VER-$target
+  #  - sh: strip -s target/release/$CRATE_NAME-$UBUNTU_VER-$target -o target/release/$CRATE_NAME-$UBUNTU_VER-$target.stripped
+  #  - sh: ./upx --best target/release/$CRATE_NAME-$UBUNTU_VER-$target.stripped -o target/release/$CRATE_NAME
+  #  - sh: 7z a -r $CRATE_NAME-$UBUNTU_VER-$target-$APPVEYOR_REPO_TAG_NAME.7z ./target/release/$CRATE_NAME ./README-release.md ./LICENSE
+  #  - sh: sha256sum $CRATE_NAME-$UBUNTU_VER-$target-$APPVEYOR_REPO_TAG_NAME.7z > $CRATE_NAME-$UBUNTU_VER-$target-$APPVEYOR_REPO_TAG_NAME.7z.sha256
+  # windows
   - cmd: copy "target\%target%\release\%CRATE_NAME%.exe" "target\release\%CRATE_NAME%-%target%-orig.exe"
   - cmd: upx --best "target\release\%CRATE_NAME%-%target%-orig.exe" -o "target\release\%CRATE_NAME%.exe"
   - cmd: 7z a -r "%CRATE_NAME%-%target%-%APPVEYOR_REPO_TAG_NAME%.7z" ".\target\release\%CRATE_NAME%.exe" ".\README-release.md" ".\LICENSE"
@@ -138,17 +141,17 @@ artifacts:
     name: windowsBuild
   - path: "%CRATE_NAME%-%target%-%APPVEYOR_REPO_TAG_NAME%.7z.sha256"
     name: windowsSha
-#  - path: $CRATE_NAME-$UBUNTU_VER-$target-$APPVEYOR_REPO_TAG_NAME.7z
-#    name: linuxBuild
-#  - path: $CRATE_NAME-$UBUNTU_VER-$target-$APPVEYOR_REPO_TAG_NAME.7z.sha256
-#    name: linuxSha
+  #  - path: $CRATE_NAME-$UBUNTU_VER-$target-$APPVEYOR_REPO_TAG_NAME.7z
+  #    name: linuxBuild
+  #  - path: $CRATE_NAME-$UBUNTU_VER-$target-$APPVEYOR_REPO_TAG_NAME.7z.sha256
+  #    name: linuxSha
   - path: $CRATE_NAME-$UBUNTU_VER-$target-$APPVEYOR_REPO_TAG_NAME.deb
     name: linuxDeb
 
 deploy:
-# due to mutually exclusive branch and tagged (https://www.appveyor.com/docs/branches/)
-# 2 provider sections would be needed to have tagged and branch release, would be needed
-# but branch is not important since until now, only master is used
+  # due to mutually exclusive branch and tagged (https://www.appveyor.com/docs/branches/)
+  # 2 provider sections would be needed to have tagged and branch release, would be needed
+  # but branch is not important since until now, only master is used
   provider: GitHub
   tag: $(APPVEYOR_REPO_TAG_NAME)
   auth_token:
