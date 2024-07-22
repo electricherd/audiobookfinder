@@ -1,13 +1,27 @@
 [package]
 edition = "2018"
 name = "adbflib"
-version = "0.1.40"
+version = "0.1.50"
 authors = ["Sven Kroemeke <skroemeke@gmail.com>"]
 license = "MIT" # http://spdx.org/licenses/
 repository = "https://github.com/electricherd/audiobookfinder"
 readme = "README.md"
 documentation = "https://electricherd.github.io/audiobookfinder/audiobookfinder/"
-keywords = ["rust", "tui", "mdns", "libp2p", "webui", "websockets", "actix", "rayon", "id3tag", "http-server", "flutterust", "flutter", "dart"]
+keywords = [
+    "rust",
+    "tui",
+    "mdns",
+    "libp2p",
+    "webui",
+    "websockets",
+    "actix",
+    "rayon",
+    "id3tag",
+    "http-server",
+    "flutterust",
+    "flutter",
+    "dart",
+]
 publish = false
 homepage = "https://github.com/electricherd/audiobookfinder"
 description = "A program to collect information from audio books, gathered from multiple clients."
@@ -34,50 +48,54 @@ system-alloc = []
 
 
 [dependencies]
-async-std = "1.11"     # great async
-crossbeam = "0.8"     # a mpmc library also with Workgroup instead of std::thread::barrier
-serde = "1.0"         # serialize anything, awesome for communication items
-serde_derive = "1.0"  # macro usage from serde
-ctrlc = "3.2"         # ctrl-c break events in main
-exitcode = "1.1"      # for ctrlc exit codes
-regex = "1.5"         # for html replacement
+async-std = "=1.12.0"     # great async
+crossbeam = "=0.8.4"      # a mpmc library also with Workgroup instead of std::thread::barrier
+serde = "=1.0.204"        # serialize anything, awesome for communication items
+serde_derive = "=1.0.204" # macro usage from serde
+ctrlc = "=3.4.4"          # ctrl-c break events in main
+exitcode = "=1.1.2"       # for ctrlc exit codes
+regex = "=1.10.5"         # for html replacement
 
-clap = "2.34"         # for the command line parsing
-dirs = "4.0"          # to browse dirs fast in taglib
-lazy_static = "1.4"   # awesome lib for lazy data structures
+clap = "=3.2.22"       # for the command line parsing TODO: update
+dirs = "=5.0.1"        # to browse dirs fast in taglib
+lazy_static = "=1.5.0" # awesome lib for lazy data structures
 
-hostname = "^0.3"    # for host recognition
-log = { version="0.4", features = ["release_max_level_off"]}    # basic log feature
-env_logger = "0.9"     # alongside log for logging
-flexi_logger = {version = "0.22", features = ["colors"] }  # a more flexible logger
-syslog = "5.0"           # another logger for system log
+hostname = "=0.3.1" # for host recognition
+log = { version = "=0.4.22", features = [
+    "release_max_level_off",
+] } # basic log feature
+env_logger = "=0.11.3" # alongside log for logging
+flexi_logger = { version = "=0.22.6", features = [
+    "colors",
+] } # a more flexible logger
+syslog = "=6.1.1" # another logger for system log
 
-futures = "0.3"     ####   # futures, used in state machine yet (and in many other crates)
-futures-util = "0.3"
+futures = "=0.3.30"      ####   # futures, used in state machine yet (and in many other crates)
+futures-util = "=0.3.30"
 
-mp4ameta = "0.11"       # for mp4 audio metadata
-mp3-metadata = "0.3"
-id3 = "0.6"              # id3 tags
-metaflac = "0.2"
+mp4ameta = "=0.11.0"    # for mp4 audio metadata
+mp3-metadata = "=0.3.4"
+id3 = "=0.6.6"          # id3 tags  TODO: update
+metaflac = "=0.2.7"
 
-num_cpus = "1.13"   # addition to rayon for cpu count
-rayon = "1.5"       # for multi-threading, very good
+num_cpus = "1.13" # addition to rayon for cpu count
+rayon = "=1.10.0" # for multi-threading, very good
 
-actix = "0.10"         # * basic for webserver
-actix-web = "3.3"     # * for mini webserver and websocket
-actix-files = "0.5"   # *
-actix-web-actors = "3.0" # *
+actix = "=0.10.0"           # * basic for webserver TODO: update
+actix-web = "=3.3.3"        # * for mini webserver and websocket TODO: update
+actix-files = "=0.6.6"      # *
+actix-web-actors = "=3.0.0" # *  TODO: update
 
-if-addrs = "0.7"  # for range of localhosts
+if-addrs = "=0.13.1" # for range of localhosts
 
-smlang = "0.3"        # * state machine for client server communication for data exchange
-serde_json = "1.0"    # couldn't find actix json to work, this is good and well documented
-bincode = "1.3"     # for binary serialization
+smlang = "=0.3.5"  # * state machine for client server communication for data exchange
+serde_json = "1.0" # couldn't find actix json to work, this is good and well documented
+bincode = "=1.3.3" # for binary serialization
 
 # libp2p network stack for secure p2p with mdns and general communication
-libp2p = "0.39.1" # *
+libp2p = "=0.40.0" # *
 
-cursive_core = "0.2.2"
+cursive_core = "=0.2.2"
 # cursive is the tui
 [dependencies.cursive]
 version = "0.18"
@@ -88,17 +106,17 @@ default-features = false
 # the build.
 # important: has to be the same as used in "webbrowser" crate
 [target.'cfg(any(target_os = "android", target_os = "windows", target_os = "macos", target_os = "linux", target_os = "freebsd", targest_os = "netbsd",target_os = "openbsd", target_os = "haiku", target_arch = "wasm32"))'.dependencies]
-webbrowser = "0.7"
+webbrowser = "=1.0.1"
 
 # tree magic mini made some stupid mime type decision (problem only occurs in windows)
 [target.'cfg(not(target_os = "windows"))'.dependencies]
-tree_magic_mini = { version="3.0"}
+tree_magic_mini = { version = "=3.1.5" }
 [target.'cfg(target_os = "windows")'.dependencies]
-tree_magic_mini = { version="3.0", features = ["tree_magic_db"]}
+tree_magic_mini = { version = "=3.1.5", features = ["tree_magic_db"] }
 
 # https://crates.io/crates/cargo-deb
 [package.metadata.deb]
-name="audiobookfinder"
+name = "audiobookfinder"
 license-file = ["../../LICENSE", "4"]
 extended-description = """\
 A multi-agend local network program to search and share audiobook data \
@@ -106,7 +124,19 @@ over the network, even with the supplied mobile app."""
 section = "network"
 priority = "optional"
 assets = [
-    ["target/release/audiobookfinder", "usr/bin/", "755"],
-    ["../../README-release.md", "usr/share/doc/audiobookfinder/README.md", "644"],
-    ["../../LICENSE", "usr/share/doc/audiobookfinder/LICENSE", "644"],
+    [
+        "target/release/audiobookfinder",
+        "usr/bin/",
+        "755",
+    ],
+    [
+        "../../README-release.md",
+        "usr/share/doc/audiobookfinder/README.md",
+        "644",
+    ],
+    [
+        "../../LICENSE",
+        "usr/share/doc/audiobookfinder/LICENSE",
+        "644",
+    ],
 ]
