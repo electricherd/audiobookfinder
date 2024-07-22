@@ -114,7 +114,7 @@ fn replace_static_content(html_in: &str, id: &PeerRepresentation, port: u16) -> 
             .enumerate()
             .map(|(index, txt)| {
                 if index < config::webui::LICENSE_NR - 1 {
-                    txt.to_string() + &"\n---------------------\n".to_string()
+                    [txt, "\n---------------------\n"].join("").to_string()
                 } else {
                     txt.to_string()
                 }
