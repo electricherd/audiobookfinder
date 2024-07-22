@@ -9,6 +9,7 @@ use super::{
     },
     ui_data::UiData,
 };
+use crate::net::sm_behaviour::protocols_handler::IntoProtocolsHandler;
 use crossbeam::channel::Receiver;
 use libp2p::{
     core::{
@@ -47,6 +48,7 @@ pub struct SMBehaviour {
     send_buffer: VecDeque<SMOutEvents>,
     ipc_receiver: Receiver<IPC>,
 }
+
 impl SMBehaviour {
     pub fn new(ipc_receiver: Receiver<IPC>, own_peer: PeerId, ui_data: UiData) -> Self {
         Self {
@@ -116,8 +118,22 @@ impl NetworkBehaviour for SMBehaviour {
     }
     fn inject_connected(&mut self, _: &PeerId) {}
     fn inject_disconnected(&mut self, _: &PeerId) {}
-    fn inject_connection_established(&mut self, _: &PeerId, _: &ConnectionId, _: &ConnectedPoint) {}
-    fn inject_connection_closed(&mut self, _: &PeerId, _: &ConnectionId, _: &ConnectedPoint) {}
+    fn inject_connection_established(
+        &mut self,
+        _: &PeerId,
+        _: &ConnectionId,
+        _: &ConnectedPoint,
+        _: Option<&Vec<Multiaddr>>,
+    ) {
+    }
+    fn inject_connection_closed(
+        &mut self,
+        _: &PeerId,
+        _: &ConnectionId,
+        _: &ConnectedPoint,
+        _: <<SMBehaviour as NetworkBehaviour>::ProtocolsHandler as IntoProtocolsHandler>::Handler,
+    ) {
+    }
 
     fn inject_event(
         &mut self,
@@ -132,12 +148,7 @@ impl NetworkBehaviour for SMBehaviour {
         &mut self,
         _: &mut Context,
         _: &mut impl PollParameters,
-    ) -> Poll<
-        NetworkBehaviourAction<
-            <Self::ProtocolsHandler as ProtocolsHandler>::InEvent,
-            Self::OutEvent,
-        >,
-    > {
+    ) -> Poll<NetworkBehaviourAction<SMOutEvents, Self::ProtocolsHandler>> {
         // use this poll for ipc, ipc message will be sent raw for now (not through SM)
         match self.ipc_receiver.try_recv() {
             Ok(ipc_msg) => {

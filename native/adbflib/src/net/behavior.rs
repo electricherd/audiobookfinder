@@ -35,6 +35,7 @@ use std::time::Duration;
 /// The swarm injected behavior is the key element for the whole communication
 /// See https://docs.rs/libp2p/latest/libp2p/swarm/trait.NetworkBehaviour.html for more
 #[derive(NetworkBehaviour)]
+#[behaviour(event_process = true)]
 pub struct AdbfBehavior {
     pub kademlia: Kademlia<MemoryStore>,
     pub mdns: Mdns,
