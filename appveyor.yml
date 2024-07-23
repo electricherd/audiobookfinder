@@ -29,7 +29,6 @@ environment:
       CHANNEL: stable
       platform: x64
 
-
 matrix:
   exclude:
     - image: Visual Studio 2017
@@ -43,19 +42,17 @@ matrix:
     - image: Ubuntu2004
       UBUNTU_VER: LTS_18.04
 
-
 #  allow_failures:
 #    - target: x86_64-pc-windows-msvc
 
 # build configuration, i.e. Debug, Release, etc.
 
 cache:
-  - '.cargo'
+  - ".cargo"
 
 # scripts that are called at very beginning, before repo cloning
 # ACCEPT_EULA for some windows packages .. whatever
 init:
-  - sh: sudo apt-get update
   - sh: sudo apt-get --yes install build-essential
   #  for deployment
   - sh: sudo apt-get --yes install p7zip-full # upx-ucl is now in install
@@ -131,7 +128,7 @@ after_build:
   - cmd: certUtil -hashfile "%CRATE_NAME%-%target%-%APPVEYOR_REPO_TAG_NAME%.7z" SHA256 > "%CRATE_NAME%-%target%-%APPVEYOR_REPO_TAG_NAME%.7z.sha256"
 
 #test_script:
-# comment next lines for quick build  
+# comment next lines for quick build
 #  - sh: cargo run --release --target $target -- testaudio
 #  - sh: cargo test --release --target $target
 #  - sh: ./target/$target/release/$CRATE_NAME -- testaudio
@@ -164,8 +161,7 @@ deploy:
     # branch: master
     # something very wrong with tag "v0.1.19" it claims
     # says: "GitHub" deployment for branch "master" has been skipped because current branch is "v0.1.19"
-    APPVEYOR_REPO_TAG: true       # deploy on tag push only
-
+    APPVEYOR_REPO_TAG: true # deploy on tag push only
 
 # don't build on travis configuration changes
 skip_commits:
