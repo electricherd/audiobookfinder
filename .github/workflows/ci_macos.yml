@@ -19,7 +19,7 @@ jobs:
       - name: Extractor for vtag env
         id: extract_tag
         shell: bash
-        run: echo ::set-output name=tag::${{ env.vtag }}
+        run: echo "{tag}==${{ env.vtag }}" >> $GITHUB_OUTPUT
 
       - name: Release
         if: steps.extract_tag.outputs.tag != null
@@ -135,9 +135,9 @@ jobs:
         continue-on-error: false
         with:
           files: >
-                 ./target/x86_64-apple-darwin/release/audiobookfinder
-                 ./README-release.md
-                 ./LICENSE
+            ./target/x86_64-apple-darwin/release/audiobookfinder
+            ./README-release.md
+            ./LICENSE
           recursive: false
           dest: packaged
 

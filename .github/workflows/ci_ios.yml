@@ -19,7 +19,7 @@ jobs:
       - name: Extractor for vtag env
         id: extract_tag
         shell: bash
-        run: echo ::set-output name=tag::${{ env.vtag }}
+        run: echo "{tag}==${{ env.vtag }}" >> $GITHUB_OUTPUT
 
       - name: Release
         if: steps.extract_tag.outputs.tag != null
@@ -73,7 +73,6 @@ jobs:
         with:
           command: install
           args: cargo-make --version ^0.32
-
 
       - name: Install Cargo Tools (cbindgen, v0.15)
         uses: actions-rs/cargo@v1

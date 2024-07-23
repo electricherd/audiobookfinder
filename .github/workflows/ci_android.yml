@@ -8,7 +8,7 @@ name: Android Build
 jobs:
   build:
     name: Compile and Build - Android
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       # use to your like https://github.com/marketplace?type=actions
       # #################### build conditions
@@ -28,7 +28,7 @@ jobs:
       - name: Extractor for vtag env
         id: extract_tag
         shell: bash
-        run: echo "##[set-output name=tag;]${{ env.vtag }}"
+        run: echo "{tag}==${{ env.vtag }}" >> $GITHUB_OUTPUT
 
       - name: Release
         if: steps.extract_tag.outputs.tag != null
@@ -85,7 +85,6 @@ jobs:
           command: install
           args: cargo-make --version ^0.32
 
-
       - name: Install Cargo Tools (cbindgen, v0.15)
         uses: actions-rs/cargo@v1
         continue-on-error: true
@@ -103,7 +102,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v1
         with:
-          channel: 'stable'
+          channel: "stable"
 
       - name: Run Flutter pub get
         run: flutter pub get

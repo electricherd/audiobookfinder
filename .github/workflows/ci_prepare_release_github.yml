@@ -3,7 +3,7 @@ name: Prepare release
 jobs:
   build:
     name: Prepare Release on github
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       # #################### build conditions
       - name: vtag variable
@@ -13,7 +13,7 @@ jobs:
       - name: Extractor for vtag env
         id: extract_tag
         shell: bash
-        run: echo ::set-output name=tag::${{ env.vtag }}
+        run: echo "{tag}==${{ env.vtag }}" >> $GITHUB_OUTPUT
 
       # ####################### upload release file description
 
