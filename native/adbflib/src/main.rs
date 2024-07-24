@@ -38,12 +38,12 @@ use std::{
 /// the adbflib, which is closely connected.
 fn main() -> io::Result<()> {
     // get start values from the input parser!!!
-    let (ui_paths, has_tui, has_webui, has_net, keep_alive, open_browser, web_port, has_ui) =
+    let (ui_paths, has_webui, has_net, keep_alive, open_browser, web_port, has_ui) =
         command_line::get_start_values();
 
     // read into paths
     let cleaned_paths = SearchPath::new(&ui_paths);
-    if cleaned_paths.len() != ui_paths.len() && !has_tui && !has_webui && !open_browser {
+    if cleaned_paths.len() != ui_paths.len() && !has_webui && !open_browser {
         println!("Some paths/folders intersect and will not be used!");
     }
 
@@ -53,10 +53,8 @@ fn main() -> io::Result<()> {
 
     // define collection thread pool
     let ctrlc_thread = 1;
-    let assumed_number_of_threads_used = if has_webui { 1 } else { 0 }
-        + if has_tui { 1 } else { 0 }
-        + if has_net { 1 } else { 0 }
-        + ctrlc_thread;
+    let assumed_number_of_threads_used =
+        if has_webui { 1 } else { 0 } + if has_net { 1 } else { 0 } + ctrlc_thread;
     let nr_cpus = num_cpus::get();
     let nr_threads_for_collection = if assumed_number_of_threads_used >= nr_cpus {
         1
@@ -108,7 +106,6 @@ fn main() -> io::Result<()> {
                     has_net,
                     wait_ui,
                     has_webui,
-                    has_tui,
                     open_browser,
                     web_port,
                 )

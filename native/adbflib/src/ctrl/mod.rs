@@ -1,14 +1,13 @@
 //! The ctrl module should be the general controller of the program.
 //! Right now, most controlling is in the net module, and here
 //! is only a light facade to the tui messages.
-pub mod tui; // todo: pub is not recommended, I use it for doctest
 mod webui;
 
-use self::{tui::Tui, webui::WebUI};
+use self::webui::WebUI;
 use super::{
     common::{config, paths::SearchPath},
     data::ipc::IFCollectionOutputData,
-    net::subs::peer_representation::{self, PeerRepresentation},
+    net::subs::peer_representation::PeerRepresentation,
 };
 use async_std::task;
 use crossbeam::{channel::Receiver as CReceiver, sync::WaitGroup};
@@ -83,7 +82,6 @@ pub struct NetStatsMsg {
 }
 
 enum Finisher {
-    TUI,
     WEBUI,
 }
 
@@ -129,7 +127,6 @@ impl Ctrl {
         with_net: bool,
         wait_main: WaitGroup,
         has_webui: bool,
-        has_tui: bool,
         open_browser: bool,
         web_port: u16,
     ) -> Result<(), std::io::Error> {
@@ -148,24 +145,7 @@ impl Ctrl {
         let mut internal_senders: Vec<Sender<InternalUiMsg>> = vec![];
 
         // 1) tui thread
-        let (sender_tui_to_register, receiver_to_tui_thread) = channel::<InternalUiMsg>();
-        let sender_tui_only_to_finish = sender_tui_to_register.clone();
-        let thread_tui = if has_tui {
-            let resender = sender_tui_to_register.clone();
-            let tui_waitgroup = wait_all_uis.clone();
-            let thread_finisher_tui = thread_finisher.clone();
-
-            internal_senders.push(sender_tui_to_register);
-            Self::spawn_tui(
-                arc_self_tui,
-                resender,
-                receiver_to_tui_thread,
-                tui_waitgroup,
-                thread_finisher_tui,
-            )?
-        } else {
-            std::thread::spawn(|| Ok(()))
-        };
+        let (sender_tui_only_to_finish, _receiver_to_tui_thread) = channel::<InternalUiMsg>();
 
         // 2) webui thread
         let (sender_wui, receiver_to_web_ui_thread) = channel::<InternalUiMsg>();
@@ -204,13 +184,6 @@ impl Ctrl {
         // either of these can finish and we want to block!
         match finish_threads.recv() {
             Ok(finished) => match finished {
-                Finisher::TUI => {
-                    info!("TUI finished first, so send to terminate WEBUI!");
-                    sender_wui.send(InternalUiMsg::Terminate).unwrap();
-                    let to_pass_through = thread_tui.join().unwrap();
-                    drop(forwarding_message_loop); // let drop message loop only after joining!!!
-                    to_pass_through
-                }
                 Finisher::WEBUI => {
                     info!("WEBUI finished first, so send to terminate TUI!");
                     sender_tui_only_to_finish
@@ -224,7 +197,6 @@ impl Ctrl {
             Err(e) => {
                 error!("something really bad happenend: {}!!", e);
                 drop(thread_webui);
-                drop(thread_tui);
                 drop(forwarding_message_loop);
                 // todo: make a new error
                 Ok::<(), std::io::Error>(())
@@ -279,48 +251,6 @@ impl Ctrl {
         })
     }
 
-    fn spawn_tui(
-        this: Arc<Mutex<Self>>,
-        resender: Sender<InternalUiMsg>,
-        receiver: Receiver<InternalUiMsg>,
-        sync_startup: WaitGroup,
-        thread_finisher: Sender<Finisher>,
-    ) -> Result<thread::JoinHandle<Result<(), std::io::Error>>, std::io::Error> {
-        let title;
-        let paths;
-        let with_net;
-        // lock block
-        {
-            let unlocker = this.lock().unwrap();
-            title = peer_representation::peer_to_hash_string(&unlocker.peer_id);
-            paths = unlocker.paths.clone();
-            with_net = unlocker.with_net.clone();
-        }
-
-        std::thread::Builder::new()
-            .name("tui".into())
-            .spawn(move || {
-                trace!("tui waits for sync");
-                // synchronizing
-                sync_startup.wait();
-                trace!("tui starts");
-                // do finally the necessary
-                // this blocks this async future
-                let fix_path = paths.lock().unwrap().read();
-                Self::run_tui(title, fix_path, with_net, receiver, resender).map_err(
-                    |error_text| std::io::Error::new(std::io::ErrorKind::Other, error_text),
-                )?;
-                info!("stopped tui");
-
-                // send finisher since it should also stop webui
-                thread_finisher.send(Finisher::TUI).unwrap_or_else(|_| {
-                    info!("probably receiver got webui finisher first!");
-                });
-
-                Ok::<(), std::io::Error>(())
-            })
-    }
-
     fn spawn_message_loop(
         receiver: CReceiver<UiUpdateMsg>,
         multiplex_send: Vec<Sender<InternalUiMsg>>,
@@ -332,33 +262,6 @@ impl Ctrl {
                     break;
                 }
             })
-    }
-
-    /// Run the UIs - there is less controlling rather than showing
-    fn run_tui(
-        title: String,
-        paths: Vec<String>,
-        with_net: bool,
-        tui_receiver: Receiver<InternalUiMsg>,
-        resender: Sender<InternalUiMsg>,
-    ) -> Result<(), String> {
-        info!("tui about to run");
-
-        // set up communication for tui messages
-        info!("spawning tui async thread");
-        let mut tui = Tui::new(title, &paths, with_net)?;
-
-        task::block_on(async move {
-            // message and refresh tui loop
-            loop {
-                // due to pressing 'q' tui will stop and hence also the loop
-                if !tui.refresh().await {
-                    break;
-                }
-                tui.run_cursive(&resender, &tui_receiver).await;
-            }
-        });
-        Ok(())
     }
 
     /// Run the controller

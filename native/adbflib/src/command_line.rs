@@ -5,7 +5,6 @@ use adbfbinlib::common::config;
 static APP_TITLE: &str = concat!("The audiobook finder (", env!("CARGO_PKG_NAME"), ")");
 
 static ARG_NET: &str = "net";
-static ARG_TUI: &str = "tui";
 static ARG_WEBUI: &str = "webui";
 static ARG_KEEP_ALIVE: &str = "keep";
 static ARG_BROWSER: &str = "browser";
@@ -20,14 +19,13 @@ const DESCRIPTION: &'static str = env!("CARGO_PKG_DESCRIPTION");
 ///
 /// Get all start values and returns the following tuple
 /// ui_paths,
-/// has_tui,
 /// has_webui,
 /// has_net,
 /// keep_alive,
 /// open_browser,
 /// web_port,
 /// has_ui,
-pub fn get_start_values() -> (Vec<String>, bool, bool, bool, bool, bool, u16, bool) {
+pub fn get_start_values() -> (Vec<String>, bool, bool, bool, bool, u16, bool) {
     let parse_args = clap::App::new(APP_TITLE)
         .version(config::net::VERSION)
         .author(AUTHORS)
@@ -56,13 +54,6 @@ pub fn get_start_values() -> (Vec<String>, bool, bool, bool, bool, bool, u16, bo
                 .value_name("FILE")
                 .help("Sets custom config file (not implemented yet)")
                 .takes_value(true),
-        )
-        .arg(
-            clap::Arg::with_name(ARG_TUI)
-                .short('t')
-                .long(ARG_TUI)
-                .help("Run with TUI")
-                .takes_value(false),
         )
         .arg(
             clap::Arg::with_name(ARG_WEBUI)
@@ -137,7 +128,6 @@ pub fn get_start_values() -> (Vec<String>, bool, bool, bool, bool, bool, u16, bo
     //
     let has_arg = |x: &str| parse_args.is_present(x);
 
-    let has_tui = has_arg(ARG_TUI);
     let has_webui = has_arg(ARG_WEBUI);
     let has_net = has_arg(ARG_NET);
     let has_port = has_arg(ARG_BROWSER_PORT);
@@ -156,7 +146,7 @@ pub fn get_start_values() -> (Vec<String>, bool, bool, bool, bool, bool, u16, bo
     let web_port = {
         let web_default_string = config::net::WEB_PORT_DEFAULT.to_string();
         // when to write to console
-        let has_to_write_console = !has_tui && has_webui;
+        let has_to_write_console = has_webui;
 
         let parsed_value = parse_args
             .value_of(ARG_BROWSER_PORT)
@@ -195,7 +185,7 @@ pub fn get_start_values() -> (Vec<String>, bool, bool, bool, bool, bool, u16, bo
     };
 
     // extended help for certain option combinations
-    if !has_tui && has_webui && !open_browser {
+    if has_webui && !open_browser {
         println!(
             "Open http://{}:{} to start!",
             config::net::WEB_ADDR,
@@ -204,14 +194,13 @@ pub fn get_start_values() -> (Vec<String>, bool, bool, bool, bool, bool, u16, bo
         println!("The webui needs to get the start signal from there");
     }
 
-    // either one will have a ui, representing data and error messages
-    let has_ui = has_tui || has_webui;
+    // either one will have a ui, representing data and error messages (only webui, before there was tui)
+    let has_ui = has_webui;
 
     // 1) convert to strings
     let unchecked_strings = all_pathes.iter().map(|s| s.to_string()).collect();
     (
         unchecked_strings,
-        has_tui,
         has_webui,
         has_net,
         keep_alive,
