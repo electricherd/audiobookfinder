@@ -64,7 +64,7 @@ init:
   - sh: sudo apt-get --yes install libclang1 libclang-dev
 
 # turn automatic MSBuild off
-build: off
+build: false
 
 # scripts that run after cloning repository
 install:
