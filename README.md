@@ -75,12 +75,13 @@ __It's crossplatform now!__
    to act as web ui client
 * multi-client via [libp2p](https://libp2p.io): [mDNS](https://en.wikipedia.org/wiki/Multicast_DNS),
   [kademlia](https://en.wikipedia.org/wiki/Kademlia) communication over [noise protocol](http://noiseprotocol.org/)
-* [tui](https://en.wikipedia.org/wiki/Text-based_user_interface) and [web ui](https://en.wikipedia.org/wiki/Web_application)
 * build-in [documentation](https://electricherd.github.io/audiobookfinder/audiobookfinder/index.html)
 * [appveyor](#CI) and [travis](#CI) CI
 * build-in unit-testing the right way
 * [BK-tree](https://en.wikipedia.org/wiki/BK-tree) data structure for approximate string matching
 * simple mobile app based on [ffi](https://en.wikipedia.org/wiki/Foreign_function_interface) interface [Dart](https://dart.dev/) / [Flutter](https://flutter.dev/) / [flutterust](https://github.com/shekohex/flutterust)
+[flutterustbridge](https://github.com/fzyzcjy/flutter_rust_bridge)
+
 
 ### Releases
 There are [Ubuntu release install packages](https://github.com/electricherd/audiobookfinder/releases/latest),
@@ -117,7 +118,7 @@ It is an inline documentation from [CI](https://travis-ci.org/electricherd/audio
 * flutter app:
     * network view ready and functioning
 * github action, (it's a good idea but too many marketplace) as CI brought up, the app for android is downloadable and fast :grin:
-* since marrying [flutterust](https://github.com/shekohex/flutterust) and old adbflib, package name now is adbflib, the library is now adbfbinlib (yes, but for now)
+* since marrying [flutterust](https://github.com/shekohex/flutterust) and old adbflib, package name now is adbflib, new for readers: [flutterustbridge](https://github.com/fzyzcjy/flutter_rust_bridge)
 * added and fixed first shot mobile app mdns feature ... it just works :open_mouth: :blush:
 * produced apk can even be design tested in android studio
 * had to introduce platform dependent crate compilation, here only [webbrowser crate](https://crates.io/crates/webbrowser)
@@ -197,7 +198,7 @@ It is an inline documentation from [CI](https://travis-ci.org/electricherd/audio
 * leave a good, well defined version
 * create secret by github if also usable by other build systems
 * fix build systems github actions, appveyor, travis (if still possible)
-* remove TUI, since it is not working properly
+* ~~remove TUI, since it is not working properly
 * add kademlia push of android data found to network to all clients for adbfflutter
 * add signature key, and google developer key to android app, and some time later process for a correct ios app
 * try [crate vfs](https://github.com/manuel-woelker/rust-vfs) for unit test with files!! interesting and needed!
@@ -239,12 +240,11 @@ The Continuous Integration is done on 2 services, Travis and AppVeyor but will p
 The primary goal is to learn Rust and to cover various aspects of the language, of which some of I already used inside the program, such as:
 - [x] borrowing: the borrow checker, some issues but I am fine with it now
 - [ ] async/await: almost there
-- [ ] easy cross compile (and test) for raspberry (v1 and v2, v3)... ok the tui update needs adjustment
+- [ ] easy cross compile, not done yet but easy nowadays (https://github.com/rust-cross/rust-musl-cross)
 - [x] have the Rust frontend/backend as IOS and/or Android app, with a small glue code (because beside the tui it's a html5 webapp frontend). [WASM](https://www.rust-lang.org/what/wasm) is not reachable since it uses `no_std`
 - [x] shared-data over different threads (not yet lifetime optimized)
 - [x] multi-threading, a lot of threads and communication is inside, also  ([Rayon](https://github.com/rayon-rs/rayon))
 - [x] learning [futures](https://en.wikipedia.org/wiki/Futures_and_promises)
-- [x] an optional graphical interface that even runs on console only machines (the [Cursive](https://github.com/gyscos/Cursive) TUI)
 - [x] webui, modern and nice with [actix](https://actix.rs/), [bootstrap](https://getbootstrap.com/), and [jquery](https://jquery.com)
 - [x] [architecture](#architecture) (modules), did some rework with file structure but it is not yet perfect in Rust, really. Now the code is better hidden inside a library... this gives some more opportunities
 - [x] high-level functionality of different crates / including/using different crates (I don't want to reinvent the wheel, and yes, that is very nice)
@@ -257,7 +257,6 @@ The primary goal is to learn Rust and to cover various aspects of the language, 
 - [x] thread-pool: a simple self written but nice to use implemention :blush: but not needed any more
 - [x] simple timers: inside async: super easy
 - [x] logging (own module for that), good
-- [x] CI with [travis](https://travis-ci.org/electricherd/audiobookfinder/) works, cross compiling is still difficult with [trust](https://github.com/japaric/trust), [cross](https://github.com/japaric/cross/), [docker](https://www.docker.com/), need to watch closely to [steed](https://github.com/japaric/steed) for some problem solving.
 - [x] travis automatically built and automatically deployed own public [documentation](https://electricherd.github.io/audiobookfinder/audiobookfinder/index.html)
 - [x] making a library ([adbfbinlib](https://electricherd.github.io/audiobookfinder/adbfbinlib/index.html) as the main part of the program)
 - [x] using a Boost-SML style [state machine](https://github.com/korken89/smlang-rs) now, nice one!
