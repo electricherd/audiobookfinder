@@ -110,15 +110,17 @@ jobs:
 
       # ANDROID_NDK_HOME is adapted to where "Setup Android SDK" decides (due to github logs)
       # to install it to ...
-      - uses: actions/checkout@v3
-      - uses: nttld/setup-ndk@v1
+      - name: NDK checkou
+        uses: actions/checkout@v3
+      - name: NDK setup
+        uses: nttld/setup-ndk@v1
         id: setup-ndk
         with:
           ndk-version: r21e
-          add-to-path: false
+          add-to-path: true
           link-to-sdk: true
           local-cache: true
-      - run: ./build.sh
+      - run: echo $ANDROID_NDK_HOME
         env:
           ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
 
