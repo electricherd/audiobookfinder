@@ -124,7 +124,7 @@ jobs:
 
       - name: Build iOS App - debug
         if: steps.extract_tag.outputs.tag == null
-        run: flutter build ios --debug --no-sound-null-safety --no-codesign --simulator
+        run: flutter build ios --debug --no-codesign --simulator
 
       # ####################### upload intermediate result dependent if release in text or tagged
 
