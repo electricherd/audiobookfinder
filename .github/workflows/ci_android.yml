@@ -78,26 +78,26 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       # todo: some time again, test https://github.com/actions-rs/install
-      - name: Install Cargo Tools (cargo-make, v0.32)
+      - name: Install Cargo Tools (cargo-make, v0.37.14)
         uses: actions-rs/cargo@v1
         continue-on-error: true
         with:
           command: install
-          args: cargo-make --version ^0.32
+          args: cargo-make --version ^0.37.14
 
-      - name: Install Cargo Tools (cbindgen, v0.15)
+      - name: Install Cargo Tools (cbindgen, v0.26.0)
         uses: actions-rs/cargo@v1
         continue-on-error: true
         with:
           command: install
-          args: cbindgen --version ^0.15
+          args: cbindgen --version ^0.26.0
 
-      - name: Install Cargo Tools (dart-bindgen, v0.1)
+      - name: Install Cargo Tools (dart-bindgen, v0.2.2)
         uses: actions-rs/cargo@v1
         continue-on-error: true
         with:
           command: install
-          args: dart-bindgen --features cli --version ^0.1
+          args: dart-bindgen --features cli --version ^0.2.2
 
       - name: Clone repository
         uses: actions/checkout@v4
@@ -131,9 +131,9 @@ jobs:
       # cargo-ndk currently has version 2.1.0 but for make android-dev
       # this version doesn't work, but 1.0.0 did
       # todo: look for changes to stay updated
-      - name: Downgrade cargo-ndk (cargo-ndk, v1.0.0)
+      - name: Downgrade cargo-ndk (cargo-ndk, v2.12.6)
         shell: bash
-        run: cargo install cargo-ndk --version 2.12.6
+        run: cargo install cargo-ndk --version ^2.12.6
 
       # 2nd helper to find problems
       - name: find more
